@@ -62,17 +62,26 @@ App läuft auf http://localhost:3000.
 3. **„Cover & Details laden"** klicken, um Beschreibung/Genre/Cover von BGG
    nachzuladen.
 
-### Wichtig: BGG blockt oft Server-/Cloud-IPs
+### Wichtig: BGG verlangt einen API-Token
 
-Die BGG-XML-API liegt hinter einem Bot-Schutz (Cloudflare) und antwortet von
-vielen Server-/Cloud-IPs (auch von Vercel) mit `401/403`. Der In-App-Button
-funktioniert daher nicht überall zuverlässig.
+Die BGG-XML-API benötigt **seit 2025 einen API-Token**. Ohne Token antwortet sie
+mit `401 Unauthorized` – unabhängig von der IP. Ohne Token funktioniert die App
+trotzdem voll, nur ohne Cover/Beschreibung/Genre (Platzhalter statt Cover).
 
-**Robuster Weg:** Das Anreichern lokal von einem normalen Internetanschluss
-gegen die (Produktions-)Datenbank laufen lassen:
+So bekommst du einen Token:
+
+1. Auf https://boardgamegeek.com/applications einloggen und eine **Application**
+   registrieren (die Freigabe kann laut BGG „a week or more" dauern).
+2. Dort einen **Token** erzeugen.
+3. Den Token als Umgebungsvariable `BGG_TOKEN` setzen:
+   - **Lokal:** in `.env` (`BGG_TOKEN="..."`)
+   - **Auf Vercel:** als Environment Variable `BGG_TOKEN`
+
+Danach klappt das Anreichern entweder über den Button **„Cover & Details laden"**
+in der App oder lokal per CLI:
 
 ```bash
-# DATABASE_URL in .env auf die Ziel-DB zeigen lassen, dann:
+# .env mit DATABASE_URL (Ziel-DB) und BGG_TOKEN befüllen, dann:
 npm run enrich
 ```
 
@@ -85,6 +94,7 @@ Da die Sammlung statisch ist, reicht das einmalig (bzw. nach jedem Import).
 3. Environment-Variablen in Vercel setzen:
    - `DATABASE_URL` = Neon-Connection-String
    - `SESSION_SECRET` = zufälliger String (≥ 32 Zeichen)
+   - `BGG_TOKEN` = BGG-API-Token (optional; nur für Cover & Details nötig)
 4. Migration gegen Neon ausführen (lokal mit gesetzter `DATABASE_URL`):
    ```bash
    npx prisma migrate deploy

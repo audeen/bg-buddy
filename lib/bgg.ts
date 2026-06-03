@@ -157,41 +157,52 @@ export function parseThingXml(xml: string): ThingDetails[] {
 export class BggBlockedError extends Error {
   constructor(public status: number) {
     super(
-      `BoardGameGeek hat die Anfrage blockiert (HTTP ${status}). ` +
-        "Das passiert oft bei Server-/Cloud-IPs (Cloudflare-Schutz). " +
-        "Tipp: das Anreichern lokal mit `npm run enrich` ausführen.",
+      `BoardGameGeek hat die Anfrage abgelehnt (HTTP ${status}). ` +
+        "Die XML-API verlangt seit 2025 einen API-Token. " +
+        "Registriere eine Application unter https://boardgamegeek.com/applications, " +
+        "erzeuge einen Token und setze ihn als Umgebungsvariable BGG_TOKEN " +
+        "(lokal in .env, auf Vercel als Environment Variable).",
     );
     this.name = "BggBlockedError";
   }
 }
 
-const BROWSER_HEADERS = {
-  "User-Agent":
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-  Accept: "application/xml,text/xml,*/*;q=0.9",
-  "Accept-Language": "de,en;q=0.8",
-};
+function buildHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    "User-Agent":
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    Accept: "application/xml,text/xml,*/*;q=0.9",
+    "Accept-Language": "de,en;q=0.8",
+  };
+  const token = process.env.BGG_TOKEN?.trim();
+  if (token) {
+    // BGG requires "Bearer <token>" (space, no colon) since 2025.
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+}
 
 /**
  * Fetches details for up to ~20 game ids from the BGG "thing" XML API.
  * Returns description, cover image, categories (genre) and mechanics.
+ *
+ * Requires the BGG_TOKEN env var (see https://boardgamegeek.com/applications).
  */
 export async function fetchThingBatch(ids: number[]): Promise<ThingDetails[]> {
   if (ids.length === 0) return [];
+  // Domain MUST be boardgamegeek.com WITHOUT a leading "www" for the token to work.
   const url = `https://boardgamegeek.com/xmlapi2/thing?id=${ids.join(",")}&stats=1`;
+  const headers = buildHeaders();
 
   let attempt = 0;
   let xml = "";
   while (attempt < 5) {
-    const res = await fetch(url, {
-      headers: BROWSER_HEADERS,
-      cache: "no-store",
-    });
+    const res = await fetch(url, { headers, cache: "no-store" });
     if (res.status === 200) {
       xml = await res.text();
       break;
     }
-    // 401/403 = blocked by bot protection -> retrying won't help
+    // 401/403 = missing/invalid token -> retrying won't help
     if (res.status === 401 || res.status === 403) {
       throw new BggBlockedError(res.status);
     }

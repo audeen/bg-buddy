@@ -7,8 +7,39 @@
  * Tipp: Lokal von einem normalen Internetanschluss ausführen – BGG blockiert
  * Anfragen von vielen Cloud-/Server-IPs (Cloudflare).
  */
+import { readFileSync } from "node:fs";
 import { PrismaClient } from "@prisma/client";
 import { fetchThingBatch, chunk, BggBlockedError } from "../lib/bgg";
+
+// Minimal .env loader (no extra dependency) so BGG_TOKEN/DATABASE_URL are set.
+function loadEnv(path = ".env") {
+  try {
+    for (const line of readFileSync(path, "utf8").split("\n")) {
+      const m = line.match(/^\s*([\w.-]+)\s*=\s*(.*)\s*$/);
+      if (!m) continue;
+      const key = m[1];
+      let val = m[2].trim();
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'"))
+      ) {
+        val = val.slice(1, -1);
+      }
+      if (process.env[key] === undefined) process.env[key] = val;
+    }
+  } catch {
+    // no .env file -> rely on the real environment
+  }
+}
+
+loadEnv();
+
+if (!process.env.BGG_TOKEN) {
+  console.warn(
+    "Warnung: BGG_TOKEN ist nicht gesetzt. Die BGG-XML-API verlangt seit 2025 " +
+      "einen Token (https://boardgamegeek.com/applications). Ohne Token kommt 401.",
+  );
+}
 
 const prisma = new PrismaClient();
 const BATCH_SIZE = 20;
