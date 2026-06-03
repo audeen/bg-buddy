@@ -1,0 +1,54 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { updateExpectedCountAction } from "@/app/actions";
+
+export function ExpectedCountControl({
+  meetupId,
+  value,
+}: {
+  meetupId: string;
+  value: number;
+}) {
+  const router = useRouter();
+  const [count, setCount] = useState(value);
+  const [pending, startTransition] = useTransition();
+
+  function save(next: number) {
+    const clamped = Math.max(1, Math.min(20, next));
+    setCount(clamped);
+    startTransition(async () => {
+      await updateExpectedCountAction(meetupId, clamped);
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-sm font-semibold">Erwartete Spieler:</span>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          className="btn btn-ghost px-3"
+          onClick={() => save(count - 1)}
+          disabled={pending || count <= 1}
+          aria-label="weniger"
+        >
+          −
+        </button>
+        <span className="min-w-8 text-center font-bold text-lg">{count}</span>
+        <button
+          type="button"
+          className="btn btn-ghost px-3"
+          onClick={() => save(count + 1)}
+          disabled={pending || count >= 20}
+          aria-label="mehr"
+        >
+          +
+        </button>
+      </div>
+      {pending && <span className="text-xs text-[var(--muted)]">gespeichert…</span>}
+    </div>
+  );
+}

@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  meetups Meetup[]
+  votes   Vote[]
+}
+
+model Game {
+  id                      Int      @id // BGG object id
+  name                    String
+  year                    Int?
+  description             String?
+  image                   String?
+  thumbnail               String?
+  minPlayers              Int?
+  maxPlayers              Int?
+  playingTime             Int?
+  minPlaytime             Int?
+  maxPlaytime             Int?
+  weight                  Float?
+  bggRating               Float?
+  rank                    Int?
+  ageRange                String?
+  languageDependence      String?
+  isExpansion             Boolean  @default(false)
+  categories              String[]
+  mechanics               String[]
+  bestPlayerCounts        Int[]
+  recommendedPlayerCounts Int[]
+  enriched                Boolean  @default(false)
+  updatedAt               DateTime @updatedAt
+
+  votes Vote[]
+}
+
+enum VoteMode {
+  PICK
+  TINDER
+}
+
+model Meetup {
+  id                  String    @id @default(cuid())
+  title               String
+  scheduledAt         DateTime?
+  location            String?
+  expectedPlayerCount Int       @default(4)
+  createdById         String
+  createdBy           User      @relation(fields: [createdById], references: [id])
+  createdAt           DateTime  @default(now())
+
+  votes Vote[]
+}
+
+model Vote {
+  id          String   @id @default(cuid())
+  meetupId    String
+  meetup      Meetup   @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameId      Int
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  playerCount Int
+  points      Int      @default(1)
+  mode        VoteMode
+  createdAt   DateTime @default(now())
+
+  @@index([meetupId, playerCount])
+  @@index([meetupId, gameId, playerCount])
+}
