@@ -6,6 +6,10 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { getCurrentUser } from "@/lib/auth";
 import { parseCollectionCsv } from "@/lib/bgg";
+import {
+  loadEnrichmentCache,
+  thingDetailsToDbFields,
+} from "@/lib/enrichment-cache";
 
 export async function loginAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
@@ -149,6 +153,9 @@ export async function importCsvAction(formData: FormData) {
     return { error: "Keine Spiele in der CSV gefunden. Ist es ein BGG-Export?" };
   }
 
+  const cache = loadEnrichmentCache();
+  let cacheApplied = 0;
+
   for (const g of games) {
     const base = {
       name: g.name,
@@ -167,11 +174,19 @@ export async function importCsvAction(formData: FormData) {
       bestPlayerCounts: g.bestPlayerCounts,
       recommendedPlayerCounts: g.recommendedPlayerCounts,
     };
-    // On update we deliberately keep description/image/categories/mechanics/enriched.
+    const cached = cache.get(g.id);
+    const extra = cached ? thingDetailsToDbFields(cached) : {};
+    if (cached) cacheApplied += 1;
+
     await prisma.game.upsert({
       where: { id: g.id },
-      update: base,
-      create: { id: g.id, enriched: false, ...base },
+      update: cached ? { ...base, ...extra } : base,
+      create: {
+        id: g.id,
+        enriched: false,
+        ...base,
+        ...extra,
+      },
     });
   }
 
@@ -183,5 +198,6 @@ export async function importCsvAction(formData: FormData) {
     total: games.length,
     standalone: games.length - expansions,
     expansions,
+    cacheApplied,
   };
 }

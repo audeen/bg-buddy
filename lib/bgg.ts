@@ -223,3 +223,14 @@ export function chunk<T>(arr: T[], size: number): T[][] {
   }
   return out;
 }
+
+export {
+  loadEnrichmentCache,
+  enrichmentCacheEntryCount,
+  thingDetailsToDbFields,
+  hasEnrichmentContent,
+  normalizeCacheEntry,
+  serializeEnrichmentCache,
+  enrichmentCachePath,
+  ENRICHMENT_CACHE_FILE,
+} from "@/lib/enrichment-cache";

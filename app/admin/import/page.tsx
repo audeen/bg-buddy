@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { ImportClient } from "@/components/ImportClient";
 import { LoginForm } from "@/components/LoginForm";
+import { enrichmentCacheEntryCount } from "@/lib/enrichment-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,11 @@ export default async function ImportPage() {
         </p>
       </div>
 
-      <ImportClient total={total} enriched={enriched} />
+      <ImportClient
+        total={total}
+        enriched={enriched}
+        cacheEntries={enrichmentCacheEntryCount()}
+      />
 
       {total > 0 && (
         <Link href="/games" className="btn btn-ghost w-fit">

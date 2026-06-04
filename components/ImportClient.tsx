@@ -5,16 +5,24 @@ import { useRouter } from "next/navigation";
 import { importCsvAction } from "@/app/actions";
 
 type ImportState =
-  | { ok: true; total: number; standalone: number; expansions: number }
+  | {
+      ok: true;
+      total: number;
+      standalone: number;
+      expansions: number;
+      cacheApplied: number;
+    }
   | { error: string }
   | null;
 
 export function ImportClient({
   total,
   enriched,
+  cacheEntries,
 }: {
   total: number;
   enriched: number;
+  cacheEntries: number;
 }) {
   const router = useRouter();
 
@@ -34,6 +42,34 @@ export function ImportClient({
   } | null>(null);
   const [enrichError, setEnrichError] = useState<string | null>(null);
   const [enrichDone, setEnrichDone] = useState(false);
+  const [applyingCache, setApplyingCache] = useState(false);
+  const [cacheApplyMsg, setCacheApplyMsg] = useState<string | null>(null);
+  const [cacheApplyOk, setCacheApplyOk] = useState(false);
+
+  async function runApplyCache() {
+    setApplyingCache(true);
+    setCacheApplyMsg(null);
+    setCacheApplyOk(false);
+    setEnrichError(null);
+    try {
+      const res = await fetch("/api/apply-cache", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setCacheApplyMsg(data.error ?? "Cache konnte nicht angewendet werden.");
+        return;
+      }
+      setCacheApplyOk(true);
+      setCacheApplyMsg(
+        `${data.updated} Spiele aus dem Offline-Cache aktualisiert (${data.enriched}/${data.total} angereichert).`,
+      );
+      setProgress({ enriched: data.enriched, total: data.total });
+    } catch {
+      setCacheApplyMsg("Netzwerkfehler beim Anwenden des Caches.");
+    } finally {
+      setApplyingCache(false);
+      router.refresh();
+    }
+  }
 
   async function runEnrichment() {
     setEnriching(true);
@@ -52,7 +88,6 @@ export function ImportClient({
           setEnrichDone(true);
           break;
         }
-        // be gentle with the BGG API
         await new Promise((r) => setTimeout(r, 1200));
       }
     } catch {
@@ -76,6 +111,18 @@ export function ImportClient({
           deine Sammlung als CSV und lade sie hier hoch. Bestehende Spiele werden
           aktualisiert.
         </p>
+        {cacheEntries > 0 ? (
+          <p className="text-sm text-[var(--accent)]">
+            <code className="text-xs">data/bgg-enrichment.json</code> enthält{" "}
+            {cacheEntries} Einträge — beim Import werden Cover &amp; Details daraus
+            übernommen (kein API-Token nötig).
+          </p>
+        ) : (
+          <p className="text-sm text-[var(--muted)]">
+            Noch keine Anreicherungs-Datei: siehe Schritt 2 oder{" "}
+            <code className="text-xs">docs/browser-prefetch-bgg.md</code>.
+          </p>
+        )}
         <form action={importFormAction} className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <input
             type="file"
@@ -92,6 +139,8 @@ export function ImportClient({
           <p className="text-sm text-[var(--accent)]">
             {importState.total} Einträge importiert ({importState.standalone}{" "}
             Spiele, {importState.expansions} Erweiterungen).
+            {importState.cacheApplied > 0 &&
+              ` ${importState.cacheApplied} mit Daten aus dem Offline-Cache angereichert.`}
           </p>
         )}
         {importState && "error" in importState && (
@@ -100,23 +149,45 @@ export function ImportClient({
       </section>
 
       <section className="card p-5 flex flex-col gap-3">
-        <h2 className="font-bold">2. Cover &amp; Details laden</h2>
+        <h2 className="font-bold">2. Offline-Cache anwenden</h2>
         <p className="text-sm text-[var(--muted)]">
-          Holt Beschreibung, Genre, Mechaniken und Cover-Bilder von BoardGameGeek
-          nach. Läuft in kleinen Schritten – du kannst es jederzeit erneut starten.
+          Wenn <code className="text-xs">bgg-enrichment.json</code> deployed ist:
+          ein Klick schreibt Cover &amp; Details in die Datenbank (ohne BGG-Token).
+          Vorher CSV importieren (Schritt 1), falls die Sammlung leer ist.
         </p>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={runEnrichment}
-            disabled={enriching || total === 0}
+        <button
+          type="button"
+          className="btn btn-primary w-fit"
+          onClick={runApplyCache}
+          disabled={applyingCache || cacheEntries === 0 || total === 0}
+        >
+          {applyingCache ? "Wird angewendet…" : "Offline-Cache jetzt anwenden"}
+        </button>
+
+        {cacheEntries === 0 && (
+          <p className="text-sm text-[var(--primary)]">
+            Auf dem Server wurde keine Cache-Datei gefunden — neu deployen oder{" "}
+            <code className="text-xs">docs/browser-prefetch-bgg.md</code>.
+          </p>
+        )}
+        {total === 0 && cacheEntries > 0 && (
+          <p className="text-sm text-[var(--primary)]">
+            Zuerst Schritt 1: CSV importieren, dann diesen Button.
+          </p>
+        )}
+        {cacheApplyMsg && (
+          <p
+            className={`text-sm ${cacheApplyOk ? "text-[var(--accent)]" : "text-[var(--primary)]"}`}
           >
-            {enriching ? "Lädt…" : "Cover & Details laden"}
-          </button>
-          <span className="text-sm text-[var(--muted)]">
-            {shownEnriched} / {shownTotal} angereichert
+            {cacheApplyMsg}
+          </p>
+        )}
+
+        <div className="flex items-center gap-3 text-sm text-[var(--muted)]">
+          <span>
+            {shownEnriched} / {shownTotal} in der DB angereichert
+            {cacheEntries > 0 ? ` · ${cacheEntries} Cache-Einträge` : ""}
           </span>
         </div>
 
@@ -126,9 +197,30 @@ export function ImportClient({
             style={{ width: `${pct}%` }}
           />
         </div>
+      </section>
+
+      <section className="card p-5 flex flex-col gap-3 border border-dashed border-[var(--surface-2)]">
+        <h2 className="font-bold text-sm">Optional: BGG-XML-API (mit Token)</h2>
+        <p className="text-sm text-[var(--muted)]">
+          Wenn deine Application freigegeben ist: <code className="text-xs">BGG_TOKEN</code>{" "}
+          setzen und unten klicken oder{" "}
+          <code className="text-xs">npm run prefetch-bgg</code> /{" "}
+          <code className="text-xs">npm run enrich</code>.
+        </p>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={runEnrichment}
+            disabled={enriching || total === 0}
+          >
+            {enriching ? "Lädt…" : "Live von BGG laden"}
+          </button>
+        </div>
 
         {enrichDone && (
-          <p className="text-sm text-[var(--accent)]">Fertig angereichert!</p>
+          <p className="text-sm text-[var(--accent)]">Live-Anreicherung fertig.</p>
         )}
         {enrichError && (
           <p className="text-sm text-[var(--primary)]">{enrichError}</p>

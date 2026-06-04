@@ -21,6 +21,7 @@
 /build
 
 # misc
+.bgg-probe/
 .DS_Store
 *.pem
 

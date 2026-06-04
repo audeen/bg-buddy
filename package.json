@@ -10,7 +10,11 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
-    "enrich": "tsx scripts/enrich.ts"
+    "enrich": "tsx scripts/enrich.ts",
+    "apply-cache": "tsx scripts/apply-cache.ts",
+    "prefetch-bgg": "tsx scripts/prefetch-bgg.ts",
+    "prefetch-covers": "tsx scripts/prefetch-covers-geekdo.ts",
+    "prefetch-geekdo": "tsx scripts/prefetch-geekdo.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

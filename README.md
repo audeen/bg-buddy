@@ -10,7 +10,7 @@ werden optional mit Cover, Beschreibung, Genre und Mechaniken angereichert.
 
 - **CSV-Import** der BGG-Collection (Spieleranzahl, Spielzeit, Komplexität,
   Rating, „beste Spieleranzahl" u. a. kommen direkt aus dem Export)
-- **Anreicherung** über die BGG-XML-API: Cover, Beschreibung, Genre, Mechaniken
+- **Anreicherung** per Offline-Cache (`data/bgg-enrichment.json`) oder optional BGG-XML-API
 - **Spielebrowser** mit Suche und Filter (Spieleranzahl, Genre)
 - **Niederschwellige Anmeldung** – nur ein Name, kein Passwort
 - **Treffen** anlegen mit jederzeit änderbarer erwarteter Spieleranzahl
@@ -58,34 +58,34 @@ App läuft auf http://localhost:3000.
 
 1. Auf BGG unter **Profile → Collection → Export Collection** die CSV
    herunterladen (eine Beispieldatei liegt unter `sample-data/collection.csv`).
-2. In der App anmelden, **Import** öffnen, CSV hochladen.
-3. **„Cover & Details laden"** klicken, um Beschreibung/Genre/Cover von BGG
-   nachzuladen.
+2. In der App anmelden, **Import** öffnen, CSV hochladen — Pick/Tinder/Ranking
+   funktionieren sofort (Spieleranzahl, Rating, … kommen aus der CSV).
 
-### Wichtig: BGG verlangt einen API-Token
+### Anreicherung ohne API-Token (empfohlen)
 
-Die BGG-XML-API benötigt **seit 2025 einen API-Token**. Ohne Token antwortet sie
-mit `401 Unauthorized` – unabhängig von der IP. Ohne Token funktioniert die App
-trotzdem voll, nur ohne Cover/Beschreibung/Genre (Platzhalter statt Cover).
+Cover, Beschreibung, Genre und Mechaniken einmalig im Browser holen — **kein
+`BGG_TOKEN` nötig**:
 
-So bekommst du einen Token:
+1. Anleitung: [`docs/browser-prefetch-bgg.md`](docs/browser-prefetch-bgg.md) (Konsole auf boardgamegeek.com)
+   oder einmalig: `npm run prefetch-geekdo collection.csv`
+2. Ergebnis als `data/bgg-enrichment.json` ins Projekt legen (oder committen für Vercel).
+3. CSV erneut importieren **oder**:
+   ```bash
+   npm run apply-cache
+   ```
 
-1. Auf https://boardgamegeek.com/applications einloggen und eine **Application**
-   registrieren (die Freigabe kann laut BGG „a week or more" dauern).
-2. Dort einen **Token** erzeugen.
-3. Den Token als Umgebungsvariable `BGG_TOKEN` setzen:
-   - **Lokal:** in `.env` (`BGG_TOKEN="..."`)
-   - **Auf Vercel:** als Environment Variable `BGG_TOKEN`
+### Optional: BGG-XML-API (wenn Application freigegeben)
 
-Danach klappt das Anreichern entweder über den Button **„Cover & Details laden"**
-in der App oder lokal per CLI:
+Die API verlangt seit 2025 einen Token (`401` ohne Token). Wenn du einen hast:
+
+1. `BGG_TOKEN` in `.env` (lokal) bzw. Vercel Environment Variables
+2. Cache-Datei füllen: `npm run prefetch-bgg collection.csv`
+3. Oder direkt in die DB: `npm run enrich`, oder Button „Live von BGG laden" im Import
 
 ```bash
-# .env mit DATABASE_URL (Ziel-DB) und BGG_TOKEN befüllen, dann:
-npm run enrich
+npm run prefetch-bgg   # schreibt data/bgg-enrichment.json
+npm run enrich         # schreibt direkt in DATABASE_URL
 ```
-
-Da die Sammlung statisch ist, reicht das einmalig (bzw. nach jedem Import).
 
 ## Deployment (Vercel + Neon, kostenlos)
 
@@ -94,13 +94,12 @@ Da die Sammlung statisch ist, reicht das einmalig (bzw. nach jedem Import).
 3. Environment-Variablen in Vercel setzen:
    - `DATABASE_URL` = Neon-Connection-String
    - `SESSION_SECRET` = zufälliger String (≥ 32 Zeichen)
-   - `BGG_TOKEN` = BGG-API-Token (optional; nur für Cover & Details nötig)
+   - `BGG_TOKEN` = optional (nur für Live-API; nicht nötig mit `data/bgg-enrichment.json`)
 4. Migration gegen Neon ausführen (lokal mit gesetzter `DATABASE_URL`):
    ```bash
    npx prisma migrate deploy
    ```
-5. Deployen. Danach `npm run enrich` lokal gegen die Neon-`DATABASE_URL` laufen
-   lassen, um Cover & Details zu befüllen.
+5. Deployen. `data/bgg-enrichment.json` mit committen oder nach Deploy `npm run apply-cache` gegen Neon.
 
 Der `build`-Schritt ruft automatisch `prisma generate` auf.
 
@@ -112,8 +111,10 @@ app/                 Routen (App Router) + Server Actions (actions.ts)
   games/             Sammlung + Detailseite
   meetups/           Treffen, Pick- und Tinder-Modus
 components/          UI-Komponenten (Client & Server)
-lib/                 prisma, session, auth, bgg (CSV/XML), format
+lib/                 prisma, session, auth, bgg (CSV/XML), enrichment-cache
 prisma/schema.prisma Datenmodell
-scripts/enrich.ts    Lokales Enrichment-CLI (npm run enrich)
+data/                bgg-enrichment.json (Offline-Anreicherung)
+docs/                browser-prefetch-bgg.md (Konsole ohne Token)
+scripts/             apply-cache, prefetch-bgg, enrich
 sample-data/         Beispiel-Collection-CSV
 ```
