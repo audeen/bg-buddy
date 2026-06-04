@@ -14,10 +14,13 @@ werden optional mit Cover, Beschreibung, Genre und Mechaniken angereichert.
 - **Spielebrowser** mit Suche und Filter (Spieleranzahl, Genre)
 - **Niederschwellige Anmeldung** – nur ein Name, kein Passwort
 - **Treffen** anlegen mit jederzeit änderbarer erwarteter Spieleranzahl
-- **Direkt-Pick** – Spiele nach Spieleranzahl, „beste Wahl" hervorgehoben
-- **Tinder-Modus** – Duell zweier Spiele, startet bei der erwarteten Anzahl und
-  geht dann ab 3 Spielern aufwärts
-- **Ranking pro Spieleranzahl** – Pick- und Tinder-Stimmen fließen zusammen
+- **Direkt-Pick** – bis zu 3 Spiele pro Spieler und Spieleranzahl, „beste Wahl"
+  hervorgehoben
+- **Tinder-Modus** – faire Duell-Paare (weniger Wiederholungen), max. 3 Siege pro
+  Spiel und Spieleranzahl; nach der ★-Runde optional bis zu 3 Direkt-Picks mit
+  Top-5-Vorschlägen aus deinen Tinder-Siegen
+- **Ergebnisse pro Treffen** – getrennt: Tinder-Siege, Direkt-Picks (pro Spieler
+  aufgelistet) und optionales Gesamt-Ranking
 
 ## Tech-Stack
 

@@ -10,6 +10,10 @@ import {
   loadEnrichmentCache,
   thingDetailsToDbFields,
 } from "@/lib/enrichment-cache";
+import {
+  MAX_PICKS_PER_COUNT,
+  MAX_TINDER_WINS_PER_GAME,
+} from "@/lib/vote-limits";
 
 export async function loginAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
@@ -122,6 +126,20 @@ export async function togglePickVoteAction(
     return { voted: false };
   }
 
+  const pickCount = await prisma.vote.count({
+    where: {
+      meetupId,
+      userId: user.id,
+      playerCount,
+      mode: "PICK",
+    },
+  });
+  if (pickCount >= MAX_PICKS_PER_COUNT) {
+    return {
+      error: `Maximal ${MAX_PICKS_PER_COUNT} Direkt-Picks für diese Spieleranzahl.`,
+    };
+  }
+
   await prisma.vote.create({
     data: {
       meetupId,
@@ -144,6 +162,21 @@ export async function tinderVoteAction(
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
+  const winCount = await prisma.vote.count({
+    where: {
+      meetupId,
+      userId: user.id,
+      gameId: winnerGameId,
+      playerCount,
+      mode: "TINDER",
+    },
+  });
+  if (winCount >= MAX_TINDER_WINS_PER_GAME) {
+    return {
+      error: "Dieses Spiel hat hier schon genug Siege.",
+    };
+  }
+
   await prisma.vote.create({
     data: {
       meetupId,
@@ -154,6 +187,7 @@ export async function tinderVoteAction(
       points: 1,
     },
   });
+  revalidatePath(`/meetups/${meetupId}`);
   return { ok: true };
 }
 

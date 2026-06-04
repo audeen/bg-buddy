@@ -18,17 +18,23 @@ export default async function TinderPage({
   const meetup = await prisma.meetup.findUnique({ where: { id } });
   if (!meetup) notFound();
 
-  const games = await prisma.game.findMany({
-    where: { isExpansion: false },
-    select: {
-      id: true,
-      name: true,
-      thumbnail: true,
-      image: true,
-      minPlayers: true,
-      maxPlayers: true,
-    },
-  });
+  const [games, myPickVotes] = await Promise.all([
+    prisma.game.findMany({
+      where: { isExpansion: false },
+      select: {
+        id: true,
+        name: true,
+        thumbnail: true,
+        image: true,
+        minPlayers: true,
+        maxPlayers: true,
+      },
+    }),
+    prisma.vote.findMany({
+      where: { meetupId: id, userId: user.id, mode: "PICK" },
+      select: { gameId: true, playerCount: true },
+    }),
+  ]);
 
   return (
     <div className="container-app flex flex-col gap-5">
@@ -51,6 +57,7 @@ export default async function TinderPage({
         meetupId={id}
         expected={meetup.expectedPlayerCount}
         games={games}
+        initialPicks={myPickVotes}
       />
     </div>
   );

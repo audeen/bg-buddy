@@ -146,17 +146,39 @@ async function main() {
     },
   });
 
-  const ranking = await prisma.vote.groupBy({
+  const tinderRanking = await prisma.vote.groupBy({
+    by: ["gameId"],
+    where: { meetupId: meetup.id, playerCount: 4, mode: "TINDER" },
+    _sum: { points: true },
+    orderBy: { _sum: { points: "desc" } },
+  });
+  const pickRanking = await prisma.vote.groupBy({
+    by: ["gameId"],
+    where: { meetupId: meetup.id, playerCount: 4, mode: "PICK" },
+    _sum: { points: true },
+    orderBy: { _sum: { points: "desc" } },
+  });
+  const combinedRanking = await prisma.vote.groupBy({
     by: ["gameId"],
     where: { meetupId: meetup.id, playerCount: 4 },
     _sum: { points: true },
     orderBy: { _sum: { points: "desc" } },
   });
-  console.log("Ranking @4 Spieler:");
-  for (const r of ranking) {
-    const g = games.find((x) => x.id === r.gameId);
-    console.log(`  ${g?.name}: ${r._sum.points} Punkte`);
+
+  const topTinderPts = tinderRanking.find((r) => r.gameId === top.id)?._sum
+    .points;
+  const topPickPts = pickRanking.find((r) => r.gameId === top.id)?._sum.points;
+  const topCombinedPts = combinedRanking.find((r) => r.gameId === top.id)?._sum
+    .points;
+  if (topTinderPts !== 1 || topPickPts !== 1 || topCombinedPts !== 3) {
+    throw new Error(
+      `Getrennte Aggregation fehlgeschlagen: Tinder=${topTinderPts}, Pick=${topPickPts}, Gesamt=${topCombinedPts}`,
+    );
   }
+
+  console.log("Tinder-Siege @4:", tinderRanking[0]?._sum.points, "für", top.name);
+  console.log("Direkt-Picks @4:", pickRanking[0]?._sum.points, "für", top.name);
+  console.log("Gesamt @4:", topCombinedPts, "Punkte für", top.name);
 
   console.log("\n== Cleanup Testdaten ==");
   await prisma.meetup.delete({ where: { id: meetup.id } });

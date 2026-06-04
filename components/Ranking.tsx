@@ -16,10 +16,12 @@ export function Ranking({
   expected,
   playerCounts,
   rankingByCount,
+  pointsLabel = "Punkte",
 }: {
   expected: number;
   playerCounts: number[];
   rankingByCount: Record<number, RankEntry[]>;
+  pointsLabel?: string;
 }) {
   const initial = playerCounts.includes(expected)
     ? expected
@@ -67,7 +69,12 @@ export function Ranking({
                   {e.name}
                 </span>
                 <span className="chip">
-                  {e.points} {e.points === 1 ? "Punkt" : "Punkte"}
+                  {e.points}{" "}
+                  {e.points === 1
+                    ? pointsLabel === "Siege"
+                      ? "Sieg"
+                      : "Punkt"
+                    : pointsLabel}
                 </span>
               </Link>
             </li>

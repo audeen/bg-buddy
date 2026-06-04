@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { GameCover } from "@/components/GameCover";
 import { togglePickVoteAction } from "@/app/actions";
+import { MAX_PICKS_PER_COUNT } from "@/lib/vote-limits";
 
 export interface PickGame {
   id: number;
@@ -20,6 +21,17 @@ function eligible(g: PickGame, n: number): boolean {
   return min <= n && n <= max;
 }
 
+function picksForCount(
+  picks: Set<string>,
+  playerCount: number,
+): number {
+  let n = 0;
+  for (const key of picks) {
+    if (key.endsWith(`:${playerCount}`)) n++;
+  }
+  return n;
+}
+
 export function PickClient({
   meetupId,
   expected,
@@ -35,7 +47,11 @@ export function PickClient({
   const [picks, setPicks] = useState<Set<string>>(
     () => new Set(initialPicks.map((p) => `${p.gameId}:${p.playerCount}`)),
   );
+  const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+
+  const pickCount = picksForCount(picks, selected);
+  const atLimit = pickCount >= MAX_PICKS_PER_COUNT;
 
   const availableCounts = useMemo(() => {
     const maxP = games.reduce((m, g) => Math.max(m, g.maxPlayers ?? 0), 0);
@@ -57,7 +73,13 @@ export function PickClient({
   function toggle(gameId: number) {
     const key = `${gameId}:${selected}`;
     const isOn = picks.has(key);
-    // optimistic
+    if (!isOn && atLimit) {
+      setLimitMsg(
+        `Maximal ${MAX_PICKS_PER_COUNT} Direkt-Picks für diese Spieleranzahl.`,
+      );
+      return;
+    }
+    setLimitMsg(null);
     setPicks((prev) => {
       const next = new Set(prev);
       if (isOn) next.delete(key);
@@ -66,6 +88,16 @@ export function PickClient({
     });
     startTransition(async () => {
       const res = await togglePickVoteAction(meetupId, gameId, selected);
+      if (res && "error" in res && res.error) {
+        setLimitMsg(res.error);
+        setPicks((prev) => {
+          const next = new Set(prev);
+          if (isOn) next.add(key);
+          else next.delete(key);
+          return next;
+        });
+        return;
+      }
       if (res && "voted" in res) {
         setPicks((prev) => {
           const next = new Set(prev);
@@ -86,7 +118,10 @@ export function PickClient({
             <button
               key={n}
               type="button"
-              onClick={() => setSelected(n)}
+              onClick={() => {
+                setSelected(n);
+                setLimitMsg(null);
+              }}
               className={`btn ${selected === n ? "btn-primary" : "btn-ghost"}`}
             >
               {n}
@@ -95,9 +130,17 @@ export function PickClient({
           ))}
         </div>
         <p className="text-xs text-[var(--muted)]">
-          Tippe Spiele an, für die du stimmen willst (★ = erwartete Spieleranzahl).
-          Nochmal tippen entfernt die Stimme.
+          Bis zu {MAX_PICKS_PER_COUNT} Spiele pro Spieleranzahl (★ = erwartete
+          Anzahl). Nochmal tippen entfernt die Stimme.
         </p>
+        <p className="text-sm font-medium">
+          {pickCount} / {MAX_PICKS_PER_COUNT} gewählt
+        </p>
+        {limitMsg && (
+          <p className="text-sm text-[var(--accent)]" role="alert">
+            {limitMsg}
+          </p>
+        )}
       </div>
 
       {visible.length === 0 ? (
@@ -109,15 +152,19 @@ export function PickClient({
           {visible.map((g) => {
             const on = picks.has(`${g.id}:${selected}`);
             const best = g.bestPlayerCounts.includes(selected);
+            const disabled = !on && atLimit;
             return (
               <li key={g.id}>
                 <button
                   type="button"
                   onClick={() => toggle(g.id)}
+                  disabled={disabled}
                   className={`card overflow-hidden flex flex-col h-full w-full text-left transition-all ${
                     on
                       ? "ring-2 ring-[var(--accent)] shadow-md"
-                      : "hover:shadow-md"
+                      : disabled
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:shadow-md"
                   }`}
                 >
                   <div className="relative">

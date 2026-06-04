@@ -1,9 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { GameCover } from "@/components/GameCover";
-import { tinderVoteAction } from "@/app/actions";
+import { tinderVoteAction, togglePickVoteAction } from "@/app/actions";
+import {
+  MAX_EXPOSURE_PER_GAME,
+  MAX_PICKS_PER_COUNT,
+  MIN_TINDER_ROUNDS_BEFORE_PICK,
+  maxTinderRoundsForPool,
+} from "@/lib/vote-limits";
 
 export interface TinderGame {
   id: number;
@@ -20,25 +26,63 @@ function eligible(g: TinderGame, n: number): boolean {
   return min <= n && n <= max;
 }
 
-function pickTwo(list: TinderGame[]): [TinderGame, TinderGame] | null {
-  if (list.length < 2) return null;
-  const a = Math.floor(Math.random() * list.length);
-  let b = Math.floor(Math.random() * list.length);
-  while (b === a) b = Math.floor(Math.random() * list.length);
-  return [list[a], list[b]];
+function poolForPair(
+  list: TinderGame[],
+  exposure: Map<number, number>,
+): TinderGame[] {
+  const underCap = list.filter(
+    (g) => (exposure.get(g.id) ?? 0) < MAX_EXPOSURE_PER_GAME,
+  );
+  return underCap.length >= 2 ? underCap : list;
 }
+
+function pickTwoFair(
+  list: TinderGame[],
+  exposure: Map<number, number>,
+): [TinderGame, TinderGame] | null {
+  const pool = poolForPair(list, exposure);
+  if (pool.length < 2) return null;
+
+  const pickOne = (): TinderGame => {
+    const weights = pool.map((g) => 1 / (1 + (exposure.get(g.id) ?? 0)));
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < pool.length; i++) {
+      r -= weights[i];
+      if (r <= 0) return pool[i];
+    }
+    return pool[pool.length - 1];
+  };
+
+  const first = pickOne();
+  const rest = pool.filter((g) => g.id !== first.id);
+  const weights = rest.map((g) => 1 / (1 + (exposure.get(g.id) ?? 0)));
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  let second = rest[rest.length - 1];
+  for (let i = 0; i < rest.length; i++) {
+    r -= weights[i];
+    if (r <= 0) {
+      second = rest[i];
+      break;
+    }
+  }
+  return [first, second];
+}
+
+type Phase = "tinder" | "pick";
 
 export function TinderClient({
   meetupId,
   expected,
   games,
+  initialPicks = [],
 }: {
   meetupId: string;
   expected: number;
   games: TinderGame[];
+  initialPicks?: { gameId: number; playerCount: number }[];
 }) {
-  // Sequence: expected first, then 3,4,5,... upwards (excluding expected),
-  // only counts that have at least two eligible games.
   const sequence = useMemo(() => {
     const maxP = games.reduce((m, g) => Math.max(m, g.maxPlayers ?? 0), 0);
     const raw = [expected, ...Array.from({ length: maxP }, (_, i) => i + 3)];
@@ -53,50 +97,167 @@ export function TinderClient({
   }, [games, expected]);
 
   const [seqIndex, setSeqIndex] = useState(0);
-  // bumping the seed draws a fresh pair; changing the count does so implicitly
   const [seed, setSeed] = useState(0);
   const [rounds, setRounds] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<Phase>("tinder");
+  const [exposureByCount, setExposureByCount] = useState<
+    Record<number, Record<number, number>>
+  >({});
+  const [sessionWins, setSessionWins] = useState<Record<number, number>>({});
+  const [voteError, setVoteError] = useState<string | null>(null);
+  const [picks, setPicks] = useState<Set<string>>(
+    () => new Set(initialPicks.map((p) => `${p.gameId}:${p.playerCount}`)),
+  );
+  const [pickLimitMsg, setPickLimitMsg] = useState<string | null>(null);
+  const [, startPickTransition] = useTransition();
 
   const currentCount = sequence[seqIndex];
+  const isExpectedRound = currentCount === expected;
 
   const eligibleNow = useMemo(
     () => (currentCount ? games.filter((g) => eligible(g, currentCount)) : []),
     [games, currentCount],
   );
 
-  const pair = useMemo(
-    () => pickTwo(eligibleNow),
-    // seed is an intentional dependency to re-roll the pair on demand
+  const maxRounds = maxTinderRoundsForPool(eligibleNow.length);
+  const roundsFull = rounds >= maxRounds;
+  const canOfferPick =
+    isExpectedRound &&
+    phase === "tinder" &&
+    (rounds >= MIN_TINDER_ROUNDS_BEFORE_PICK || roundsFull);
+
+  const exposure = useMemo(() => {
+    const raw = currentCount ? exposureByCount[currentCount] : undefined;
+    return new Map(Object.entries(raw ?? {}).map(([k, v]) => [Number(k), v]));
+  }, [exposureByCount, currentCount]);
+
+  const pair = useMemo(() => {
+    if (phase !== "tinder" || !currentCount) return null;
+    return pickTwoFair(eligibleNow, exposure);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [eligibleNow, seed],
+  }, [eligibleNow, exposure, seed, phase, currentCount]);
+
+  const recordExposure = useCallback(
+    (p: [TinderGame, TinderGame] | null) => {
+      if (!p || !currentCount) return;
+      setExposureByCount((prev) => {
+        const countMap = { ...(prev[currentCount] ?? {}) };
+        for (const g of p) {
+          countMap[g.id] = (countMap[g.id] ?? 0) + 1;
+        }
+        return { ...prev, [currentCount]: countMap };
+      });
+    },
+    [currentCount],
   );
+
+  useEffect(() => {
+    if (phase === "tinder" && pair) recordExposure(pair);
+  }, [pair, phase, recordExposure]);
 
   const newPair = () => setSeed((s) => s + 1);
 
   const done = sequence.length === 0 || seqIndex >= sequence.length;
 
+  const topFive = useMemo(() => {
+    return Object.entries(sessionWins)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([id]) => games.find((g) => g.id === Number(id)))
+      .filter((g): g is TinderGame => !!g);
+  }, [sessionWins, games]);
+
+  const pickCount = useMemo(() => {
+    if (!expected) return 0;
+    let n = 0;
+    for (const key of picks) {
+      if (key.endsWith(`:${expected}`)) n++;
+    }
+    return n;
+  }, [picks, expected]);
+
+  const pickAtLimit = pickCount >= MAX_PICKS_PER_COUNT;
+
   async function choose(winnerId: number) {
-    if (busy || !currentCount) return;
+    if (busy || !currentCount || phase !== "tinder") return;
+    setVoteError(null);
     setBusy(true);
     try {
-      await tinderVoteAction(meetupId, winnerId, currentCount);
+      const res = await tinderVoteAction(meetupId, winnerId, currentCount);
+      if (res && "error" in res && res.error) {
+        setVoteError(res.error);
+        return;
+      }
       setRounds((r) => r + 1);
+      if (isExpectedRound) {
+        setSessionWins((w) => ({
+          ...w,
+          [winnerId]: (w[winnerId] ?? 0) + 1,
+        }));
+      }
       newPair();
     } finally {
       setBusy(false);
     }
   }
 
-  function nextCount() {
+  function advanceAfterCount() {
     setSeqIndex((i) => i + 1);
     setRounds(0);
+    setPhase("tinder");
+    setVoteError(null);
+    setPickLimitMsg(null);
+  }
+
+  function goToPickPhase() {
+    setPhase("pick");
+    setVoteError(null);
+  }
+
+  function togglePick(gameId: number) {
+    const key = `${gameId}:${expected}`;
+    const isOn = picks.has(key);
+    if (!isOn && pickAtLimit) {
+      setPickLimitMsg(
+        `Maximal ${MAX_PICKS_PER_COUNT} Direkt-Picks für diese Spieleranzahl.`,
+      );
+      return;
+    }
+    setPickLimitMsg(null);
+    setPicks((prev) => {
+      const next = new Set(prev);
+      if (isOn) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+    startPickTransition(async () => {
+      const res = await togglePickVoteAction(meetupId, gameId, expected);
+      if (res && "error" in res && res.error) {
+        setPickLimitMsg(res.error);
+        setPicks((prev) => {
+          const next = new Set(prev);
+          if (isOn) next.add(key);
+          else next.delete(key);
+          return next;
+        });
+        return;
+      }
+      if (res && "voted" in res) {
+        setPicks((prev) => {
+          const next = new Set(prev);
+          if (res.voted) next.add(key);
+          else next.delete(key);
+          return next;
+        });
+      }
+    });
   }
 
   if (done) {
     return (
       <div className="card p-6 flex flex-col items-center gap-3 text-center">
-        <p className="text-lg font-bold">Alle Runden durchgespielt! 🎉</p>
+        <p className="text-lg font-bold">Alle Runden durchgespielt!</p>
         <p className="text-[var(--muted)]">
           Schau dir an, welche Spiele vorne liegen.
         </p>
@@ -107,21 +268,134 @@ export function TinderClient({
     );
   }
 
+  if (phase === "pick" && isExpectedRound) {
+    const eligiblePick = games.filter((g) => eligible(g, expected));
+    return (
+      <div className="flex flex-col gap-5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="chip">
+            {expected} Spieler ★ · Direktwahl
+          </span>
+          <span className="text-sm text-[var(--muted)]">
+            {pickCount} / {MAX_PICKS_PER_COUNT} Picks
+          </span>
+        </div>
+        <p className="text-sm text-[var(--muted)]">
+          Wähle bis zu {MAX_PICKS_PER_COUNT} Spiele, die du mit der erwarteten
+          Spieleranzahl spielen möchtest.
+        </p>
+        {pickLimitMsg && (
+          <p className="text-sm text-[var(--accent)]" role="alert">
+            {pickLimitMsg}
+          </p>
+        )}
+        {topFive.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-semibold">
+              Deine Tinder-Favoriten
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {topFive.map((g) => {
+                const on = picks.has(`${g.id}:${expected}`);
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => togglePick(g.id)}
+                    disabled={!on && pickAtLimit}
+                    className={`btn ${on ? "btn-primary" : "btn-ghost"} text-sm`}
+                  >
+                    {g.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        <ul className="grid gap-3 grid-cols-2 sm:grid-cols-3">
+          {eligiblePick.map((g) => {
+            const on = picks.has(`${g.id}:${expected}`);
+            return (
+              <li key={g.id}>
+                <button
+                  type="button"
+                  onClick={() => togglePick(g.id)}
+                  disabled={!on && pickAtLimit}
+                  className={`card overflow-hidden flex flex-col w-full text-left ${
+                    on ? "ring-2 ring-[var(--accent)]" : ""
+                  } ${!on && pickAtLimit ? "opacity-50" : "hover:shadow-md"}`}
+                >
+                  <GameCover
+                    src={g.thumbnail ?? g.image}
+                    alt={g.name}
+                    className="w-full aspect-square"
+                  />
+                  <span className="p-2 text-sm font-semibold leading-tight line-clamp-2">
+                    {g.name}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="flex justify-center gap-2 flex-wrap">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={advanceAfterCount}
+          >
+            Weiter zur nächsten Spieleranzahl →
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={advanceAfterCount}
+          >
+            Überspringen
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="chip">
             {currentCount} Spieler{currentCount === expected ? " ★" : ""}
           </span>
           <span className="text-sm text-[var(--muted)]">
-            Runde {seqIndex + 1} / {sequence.length} · {rounds} Wahlen
+            Runde {seqIndex + 1} / {sequence.length} · Wahl {rounds} /{" "}
+            {maxRounds}
           </span>
         </div>
-        <button type="button" className="btn btn-ghost" onClick={nextCount}>
-          Nächste Spieleranzahl →
-        </button>
+        <div className="flex gap-2 flex-wrap">
+          {canOfferPick && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={goToPickPhase}
+            >
+              Zu Direktwahl →
+            </button>
+          )}
+          <button type="button" className="btn btn-ghost" onClick={advanceAfterCount}>
+            Nächste Spieleranzahl →
+          </button>
+        </div>
       </div>
+
+      {roundsFull && (
+        <p className="text-sm text-center text-[var(--accent)]">
+          Rundenlimit erreicht — Direktwahl oder nächste Spieleranzahl.
+        </p>
+      )}
+      {voteError && (
+        <p className="text-sm text-center text-[var(--accent)]" role="alert">
+          {voteError}
+        </p>
+      )}
 
       <p className="text-center text-sm text-[var(--muted)]">
         Welches Spiel würdest du mit {currentCount} Spielern lieber spielen?
@@ -160,7 +434,7 @@ export function TinderClient({
         </p>
       )}
 
-      <div className="flex justify-center gap-2">
+      <div className="flex justify-center gap-2 flex-wrap">
         <button
           type="button"
           className="btn btn-ghost"
