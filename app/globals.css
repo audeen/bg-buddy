@@ -12,6 +12,8 @@
   --accent: #1f7a5a;
   --accent-2: #2f6db5;
   --warning: #c97a1a;
+  --header-height: 3.25rem;
+  --bottom-nav-height: 3.75rem;
 }
 
 @theme inline {
@@ -105,6 +107,86 @@ body {
   }
   .btn-ghost:hover:not(:disabled) {
     background: var(--surface-2);
+  }
+
+  .btn-lg {
+    min-height: 2.75rem;
+    padding: 0.65rem 1.15rem;
+    font-size: 0.95rem;
+    width: 100%;
+  }
+
+  @media (min-width: 640px) {
+    .btn-lg {
+      width: auto;
+    }
+  }
+
+  @media (pointer: coarse) {
+    .btn {
+      min-height: 2.75rem;
+    }
+    .btn.btn-tab {
+      min-height: 2.5rem;
+    }
+  }
+
+  .btn-block {
+    width: 100%;
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pb-nav {
+    padding-bottom: calc(
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  @media (min-width: 768px) {
+    .pb-nav {
+      padding-bottom: 0;
+    }
+  }
+
+  .tabs-scroll {
+    display: flex;
+    gap: 0.375rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-inline: -0.25rem;
+    padding-inline: 0.25rem;
+    padding-bottom: 0.125rem;
+  }
+  .tabs-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sticky-below-header {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 10;
+  }
+
+  .sticky-above-nav {
+    position: sticky;
+    z-index: 15;
+    bottom: calc(
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  @media (min-width: 768px) {
+    .sticky-above-nav {
+      position: static;
+    }
   }
 
   .input {

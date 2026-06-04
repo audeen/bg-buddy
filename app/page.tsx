@@ -34,7 +34,7 @@ export default async function Home() {
   return (
     <div className="container-app flex flex-col gap-8">
       <section className="flex flex-col gap-2">
-        <h1 className="text-3xl font-extrabold tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
           Was spielen wir heute?
         </h1>
         <p className="text-[var(--muted)] max-w-2xl">
@@ -63,10 +63,10 @@ export default async function Home() {
       )}
 
       <section className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-bold">Anstehende Treffen</h2>
           {user && (
-            <Link href="/meetups/new" className="btn btn-primary">
+            <Link href="/meetups/new" className="btn btn-primary btn-lg sm:w-auto">
               + Neues Treffen
             </Link>
           )}
@@ -80,7 +80,7 @@ export default async function Home() {
               : "Melde dich an, um ein Treffen zu erstellen."}
           </p>
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2">
+          <ul className="grid gap-3 grid-cols-1 sm:grid-cols-2">
             {meetups.map((m) => (
               <li key={m.id}>
                 <Link

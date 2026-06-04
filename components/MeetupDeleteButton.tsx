@@ -37,10 +37,10 @@ export function MeetupDeleteButton({
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex flex-col items-stretch sm:items-end gap-1 w-full sm:w-auto">
       <button
         type="button"
-        className="btn btn-ghost text-[var(--primary)]"
+        className="btn btn-ghost text-[var(--primary)] w-full sm:w-auto"
         disabled={pending}
         onClick={handleDelete}
       >

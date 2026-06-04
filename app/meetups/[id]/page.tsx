@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { ExpectedCountControl } from "@/components/ExpectedCountControl";
 import { MeetupDeleteButton } from "@/components/MeetupDeleteButton";
 import { MeetupRankings } from "@/components/MeetupRankings";
+import { MeetupSubnav } from "@/components/MeetupSubnav";
 import {
   buildCombinedByCount,
   buildPicksByCount,
@@ -73,32 +74,42 @@ export default async function MeetupDetail({
         ← alle Treffen
       </Link>
 
-      <header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-extrabold">{meetup.title}</h1>
-          <p className="text-[var(--muted)]">
-            {formatDate(meetup.scheduledAt)}
-            {meetup.location ? ` · ${meetup.location}` : ""} · von{" "}
-            {meetup.createdBy.name}
-          </p>
+      <header className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-extrabold">{meetup.title}</h1>
+            <p className="text-sm text-[var(--muted)] mt-1">
+              {formatDate(meetup.scheduledAt)}
+              {meetup.location ? ` · ${meetup.location}` : ""} · von{" "}
+              {meetup.createdBy.name}
+            </p>
+          </div>
+          {user && (
+            <MeetupDeleteButton meetupId={meetup.id} title={meetup.title} />
+          )}
         </div>
-        {user && (
-          <MeetupDeleteButton meetupId={meetup.id} title={meetup.title} />
-        )}
+        <MeetupSubnav
+          meetupId={meetup.id}
+          active="detail"
+          pickPoolSize={pickPoolSize}
+        />
       </header>
 
-      <div className="card p-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="card p-4 flex flex-col gap-4">
         <ExpectedCountControl
           meetupId={meetup.id}
           value={meetup.expectedPlayerCount}
         />
-        <div className="flex gap-2 flex-wrap">
-          <Link href={`/meetups/${meetup.id}/pick`} className="btn btn-primary">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Link
+            href={`/meetups/${meetup.id}/pick`}
+            className="btn btn-primary btn-lg sm:flex-1"
+          >
             Direkt wählen
           </Link>
           <Link
             href={`/meetups/${meetup.id}/duell`}
-            className={`btn btn-ghost ${pickPoolSize < 2 ? "opacity-60" : ""}`}
+            className={`btn btn-ghost btn-lg sm:flex-1 ${pickPoolSize < 2 ? "opacity-60" : ""}`}
             title={
               pickPoolSize < 2
                 ? "Mindestens zwei gepickte Spiele nötig"

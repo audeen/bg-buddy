@@ -129,9 +129,13 @@ export function ImportClient({
             name="file"
             accept=".csv,text/csv"
             required
-            className="input"
+            className="input min-h-[44px]"
           />
-          <button type="submit" className="btn btn-primary" disabled={importing}>
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg sm:w-auto shrink-0"
+            disabled={importing}
+          >
             {importing ? "Importiere…" : "Importieren"}
           </button>
         </form>
@@ -158,7 +162,7 @@ export function ImportClient({
 
         <button
           type="button"
-          className="btn btn-primary w-fit"
+          className="btn btn-primary btn-lg sm:w-fit"
           onClick={runApplyCache}
           disabled={applyingCache || cacheEntries === 0 || total === 0}
         >
@@ -211,7 +215,7 @@ export function ImportClient({
         <div className="flex items-center gap-3">
           <button
             type="button"
-            className="btn btn-ghost"
+            className="btn btn-ghost btn-lg sm:w-fit"
             onClick={runEnrichment}
             disabled={enriching || total === 0}
           >

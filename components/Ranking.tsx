@@ -36,13 +36,13 @@ export function Ranking({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-1.5">
+      <div className="tabs-scroll">
         {playerCounts.map((pc) => (
           <button
             key={pc}
             type="button"
             onClick={() => setSelected(pc)}
-            className={`btn ${selected === pc ? "btn-primary" : "btn-ghost"}`}
+            className={`btn btn-tab shrink-0 ${selected === pc ? "btn-primary" : "btn-ghost"}`}
           >
             {pc} Spieler{pc === expected ? " ★" : ""}
           </button>
@@ -59,9 +59,9 @@ export function Ranking({
             <li key={e.id}>
               <Link
                 href={`/games/${e.id}`}
-                className="card p-2 flex items-center gap-3 hover:shadow-md transition-shadow"
+                className="card p-2.5 flex items-center gap-3 hover:shadow-md transition-shadow min-h-[44px]"
               >
-                <span className="w-7 text-center font-bold text-[var(--muted)]">
+                <span className="w-7 text-center font-bold text-[var(--muted)] shrink-0">
                   {i + 1}
                 </span>
                 <GameCover
@@ -69,24 +69,26 @@ export function Ranking({
                   alt={e.name}
                   className="w-12 h-12 rounded-md shrink-0"
                 />
-                <span className="font-semibold flex-1 leading-tight">
-                  {e.name}
-                </span>
-                {showPickDuelBreakdown &&
-                (e.pickCount !== undefined || e.duelWins !== undefined) ? (
-                  <span className="chip text-xs">
-                    {e.pickCount ?? 0} Picks + {e.duelWins ?? 0} Siege
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-1 min-w-0">
+                  <span className="font-semibold leading-tight truncate">
+                    {e.name}
                   </span>
-                ) : (
-                  <span className="chip">
-                    {e.points}{" "}
-                    {e.points === 1
-                      ? pointsLabel === "Siege"
-                        ? "Sieg"
-                        : "Punkt"
-                      : pointsLabel}
-                  </span>
-                )}
+                  {showPickDuelBreakdown &&
+                  (e.pickCount !== undefined || e.duelWins !== undefined) ? (
+                    <span className="chip text-xs shrink-0 w-fit">
+                      {e.pickCount ?? 0} Picks + {e.duelWins ?? 0} Siege
+                    </span>
+                  ) : (
+                    <span className="chip shrink-0 w-fit sm:ml-auto">
+                      {e.points}{" "}
+                      {e.points === 1
+                        ? pointsLabel === "Siege"
+                          ? "Sieg"
+                          : "Punkt"
+                        : pointsLabel}
+                    </span>
+                  )}
+                </div>
               </Link>
             </li>
           ))}

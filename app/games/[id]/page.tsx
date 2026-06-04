@@ -37,7 +37,7 @@ export default async function GameDetail({
 
         <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold">{game.name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold">{game.name}</h1>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
               {game.year ? (
                 <p className="text-[var(--muted)]">{game.year}</p>

@@ -7,10 +7,10 @@ import type { PickListPlayer } from "@/lib/vote-aggregation";
 
 type Tab = "picks" | "duel" | "combined";
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "picks", label: "Direkt-Picks" },
-  { id: "duel", label: "Duelle" },
-  { id: "combined", label: "Gesamt" },
+const TABS: { id: Tab; label: string; short: string }[] = [
+  { id: "picks", label: "Direkt-Picks", short: "Picks" },
+  { id: "duel", label: "Duelle", short: "Duelle" },
+  { id: "combined", label: "Gesamt", short: "Gesamt" },
 ];
 
 export function MeetupRankings({
@@ -30,9 +30,9 @@ export function MeetupRankings({
 
   return (
     <section className="flex flex-col gap-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2">
         <h2 className="text-xl font-bold">Ergebnisse</h2>
-        <div className="flex flex-wrap gap-1.5" role="tablist">
+        <div className="tabs-scroll" role="tablist">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -40,9 +40,10 @@ export function MeetupRankings({
               role="tab"
               aria-selected={tab === t.id}
               onClick={() => setTab(t.id)}
-              className={`btn ${tab === t.id ? "btn-primary" : "btn-ghost"}`}
+              className={`btn btn-tab shrink-0 ${tab === t.id ? "btn-primary" : "btn-ghost"}`}
             >
-              {t.label}
+              <span className="sm:hidden">{t.short}</span>
+              <span className="hidden sm:inline">{t.label}</span>
             </button>
           ))}
         </div>

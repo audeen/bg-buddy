@@ -138,11 +138,11 @@ export function DuellClient({
           {duelsDone} von {DUEL_ROUND_COUNT} Duelle unter den gepickten Spielen
           für {expected} Spieler ★.
         </p>
-        <div className="flex flex-wrap gap-2 justify-center">
-          <Link href={`/meetups/${meetupId}`} className="btn btn-primary">
+        <div className="flex flex-col sm:flex-row gap-2 justify-center w-full max-w-sm">
+          <Link href={`/meetups/${meetupId}`} className="btn btn-primary btn-lg">
             Zum Ranking
           </Link>
-          <Link href={`/meetups/${meetupId}/pick`} className="btn btn-ghost">
+          <Link href={`/meetups/${meetupId}/pick`} className="btn btn-ghost btn-lg">
             Direkt-Picks
           </Link>
         </div>
@@ -151,20 +151,19 @@ export function DuellClient({
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <p className="text-sm text-[var(--muted)]">
-        {DUEL_ROUND_COUNT} Duelle nur unter{" "}
-        <strong>{games.length} gepickten Spielen</strong> — häufiger gepickte
-        treten öfter auf (Pick-Bonus). Max. {MAX_DUEL_WINS_PER_GAME} Sieg pro
-        Spiel.
-      </p>
-
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+    <div className="flex flex-col gap-4">
+      <div className="sticky-below-header -mx-1 px-1 py-2.5 bg-[var(--background)] border-b border-[var(--border)] flex items-center justify-between gap-3">
         <span className="chip">{expected} Spieler ★</span>
-        <span className="text-sm text-[var(--muted)]">
+        <span className="text-sm font-semibold tabular-nums">
           Duell {duelsDone + 1} / {DUEL_ROUND_COUNT}
         </span>
       </div>
+
+      <p className="text-sm text-[var(--muted)]">
+        {DUEL_ROUND_COUNT} Duelle unter{" "}
+        <strong>{games.length} gepickten Spielen</strong> — häufiger gepickte
+        treten öfter auf. Max. {MAX_DUEL_WINS_PER_GAME} Sieg pro Spiel.
+      </p>
 
       {voteError && (
         <p className="text-sm text-center text-[var(--accent)]" role="alert">
@@ -177,30 +176,35 @@ export function DuellClient({
       </p>
 
       {pair ? (
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 items-center">
+        <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:gap-4 sm:items-center">
           {[pair[0], pair[1]].map((g, idx) => (
-            <div key={g.id} className="contents">
+            <div key={g.id} className="flex flex-col gap-3 sm:contents">
               {idx === 1 && (
-                <div className="hidden sm:flex items-center justify-center font-extrabold text-[var(--muted)]">
-                  VS
-                </div>
+                <>
+                  <div className="flex items-center justify-center font-extrabold text-[var(--muted)] sm:hidden py-1">
+                    oder
+                  </div>
+                  <div className="hidden sm:flex items-center justify-center font-extrabold text-[var(--muted)]">
+                    VS
+                  </div>
+                </>
               )}
               <button
                 type="button"
                 disabled={busy || wonIds.has(g.id)}
                 onClick={() => choose(g.id)}
-                className="card overflow-hidden flex flex-col hover:shadow-lg hover:ring-2 hover:ring-[var(--primary)] transition-all disabled:opacity-60"
+                className="card overflow-hidden flex flex-col w-full hover:shadow-lg hover:ring-2 hover:ring-[var(--primary)] transition-all disabled:opacity-60 min-h-[44px]"
               >
                 <GameCover
                   src={g.thumbnail ?? g.image}
                   alt={g.name}
-                  className="w-full aspect-square"
+                  className="w-full aspect-[4/3] sm:aspect-square"
                 />
-                <span className="p-3 font-bold text-center leading-tight">
+                <span className="p-3 font-bold text-base text-center leading-tight">
                   {g.name}
                 </span>
                 {(pickCounts[g.id] ?? 0) > 0 && (
-                  <span className="pb-2 text-xs text-[var(--muted)] text-center">
+                  <span className="pb-3 text-xs text-[var(--muted)] text-center">
                     {pickCounts[g.id]} Pick
                     {(pickCounts[g.id] ?? 0) === 1 ? "" : "s"}
                   </span>
@@ -215,10 +219,10 @@ export function DuellClient({
         </p>
       )}
 
-      <div className="flex justify-center gap-2 flex-wrap">
+      <div className="sticky-above-nav -mx-4 px-4 py-3 mt-2 bg-[var(--background)] border-t border-[var(--border)] flex flex-col gap-2 sm:flex-row sm:justify-center sm:flex-wrap sm:static sm:border-0 sm:mx-0 sm:px-0 sm:mt-0">
         <button
           type="button"
-          className="btn btn-ghost"
+          className="btn btn-ghost w-full sm:w-auto"
           onClick={skipDuel}
           disabled={busy}
         >
@@ -226,13 +230,16 @@ export function DuellClient({
         </button>
         <button
           type="button"
-          className="btn btn-ghost"
+          className="btn btn-ghost w-full sm:w-auto"
           onClick={() => setFinished(true)}
           disabled={busy}
         >
           Fertig ({duelsLeft} übrig)
         </button>
-        <Link href={`/meetups/${meetupId}`} className="btn btn-ghost">
+        <Link
+          href={`/meetups/${meetupId}`}
+          className="btn btn-primary w-full sm:w-auto text-center"
+        >
           Zum Ranking
         </Link>
       </div>

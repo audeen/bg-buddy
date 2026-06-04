@@ -96,9 +96,9 @@ export function CollectionManagerClient({ games }: { games: CollectionGameRow[] 
           {filtered.map((g) => (
             <li
               key={g.id}
-              className="flex flex-wrap items-center justify-between gap-3 p-4"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4"
             >
-              <div className="flex flex-col gap-0.5 min-w-0">
+              <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                 <Link
                   href={`/games/${g.id}`}
                   className="font-semibold hover:underline truncate"
@@ -113,7 +113,7 @@ export function CollectionManagerClient({ games }: { games: CollectionGameRow[] 
               </div>
               <button
                 type="button"
-                className="btn btn-ghost text-[var(--primary)] shrink-0"
+                className="btn btn-ghost text-[var(--primary)] w-full sm:w-auto min-h-[44px]"
                 disabled={pending}
                 onClick={() => removeGame(g)}
               >

@@ -70,7 +70,7 @@ export function MeetupForm() {
         <p className="text-sm text-[var(--primary)]">{state.error}</p>
       )}
 
-      <button type="submit" className="btn btn-primary w-fit" disabled={pending}>
+      <button type="submit" className="btn btn-primary btn-lg" disabled={pending}>
         {pending ? "Erstelle…" : "Treffen erstellen"}
       </button>
     </form>

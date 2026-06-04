@@ -100,7 +100,7 @@ export default async function GamesPage({
           />
           Erweiterungen anzeigen
         </label>
-        <button type="submit" className="btn btn-primary sm:col-span-1">
+        <button type="submit" className="btn btn-primary btn-lg sm:col-span-1 sm:w-auto">
           Filtern
         </button>
       </form>
@@ -111,7 +111,7 @@ export default async function GamesPage({
           Sammlung.
         </p>
       ) : (
-        <ul className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {games.map((g) => {
             const time = playtime(g.minPlaytime, g.maxPlaytime, g.playingTime);
             return (

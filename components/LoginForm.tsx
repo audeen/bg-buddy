@@ -18,7 +18,7 @@ export function LoginForm() {
       <label className="text-sm font-semibold" htmlFor="name">
         Dein Name
       </label>
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <input
           id="name"
           name="name"
@@ -28,7 +28,11 @@ export function LoginForm() {
           maxLength={40}
           required
         />
-        <button type="submit" className="btn btn-primary" disabled={pending}>
+        <button
+          type="submit"
+          className="btn btn-primary btn-lg sm:w-auto shrink-0"
+          disabled={pending}
+        >
           {pending ? "..." : "Los"}
         </button>
       </div>

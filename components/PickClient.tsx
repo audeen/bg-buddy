@@ -111,9 +111,14 @@ export function PickClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-semibold">Für wie viele Spieler?</span>
-        <div className="flex flex-wrap gap-1.5">
+      <div className="sticky-below-header -mx-1 px-1 py-3 bg-[var(--background)] border-b border-[var(--border)] flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-semibold">Spieleranzahl</span>
+          <span className="text-sm font-bold tabular-nums">
+            {pickCount} / {MAX_PICKS_PER_COUNT} gewählt
+          </span>
+        </div>
+        <div className="tabs-scroll">
           {availableCounts.map((n) => (
             <button
               key={n}
@@ -122,7 +127,7 @@ export function PickClient({
                 setSelected(n);
                 setLimitMsg(null);
               }}
-              className={`btn ${selected === n ? "btn-primary" : "btn-ghost"}`}
+              className={`btn btn-tab shrink-0 ${selected === n ? "btn-primary" : "btn-ghost"}`}
             >
               {n}
               {n === expected ? " ★" : ""}
@@ -130,11 +135,8 @@ export function PickClient({
           ))}
         </div>
         <p className="text-xs text-[var(--muted)]">
-          Bis zu {MAX_PICKS_PER_COUNT} Spiele pro Spieleranzahl (★ = erwartete
-          Anzahl). Nochmal tippen entfernt die Stimme.
-        </p>
-        <p className="text-sm font-medium">
-          {pickCount} / {MAX_PICKS_PER_COUNT} gewählt
+          Bis zu {MAX_PICKS_PER_COUNT} pro Anzahl (★ = erwartet). Nochmal tippen
+          entfernt die Stimme.
         </p>
         {limitMsg && (
           <p className="text-sm text-[var(--accent)]" role="alert">
@@ -148,7 +150,7 @@ export function PickClient({
           Keine Spiele für {selected} Spieler in der Sammlung.
         </p>
       ) : (
-        <ul className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {visible.map((g) => {
             const on = picks.has(`${g.id}:${selected}`);
             const best = g.bestPlayerCounts.includes(selected);

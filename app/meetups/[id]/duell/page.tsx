@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { DuellClient } from "@/components/DuellClient";
+import { MeetupSubnav } from "@/components/MeetupSubnav";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 
 export const dynamic = "force-dynamic";
@@ -42,20 +43,24 @@ export default async function DuellPage({
 
   if (ids.length < 2) {
     return (
-      <div className="container-app flex flex-col gap-5">
-        <Link
-          href={`/meetups/${id}`}
-          className="text-sm text-[var(--muted)] hover:underline"
-        >
-          ← {meetup.title}
-        </Link>
+      <div className="container-app flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <Link
+            href={`/meetups/${id}`}
+            className="text-sm text-[var(--muted)] hover:underline"
+          >
+            ← {meetup.title}
+          </Link>
+          <h1 className="text-2xl font-extrabold">Duell-Modus</h1>
+          <MeetupSubnav meetupId={id} active="duell" pickPoolSize={ids.length} />
+        </div>
         <div className="card p-6 flex flex-col items-center gap-3 text-center">
           <p className="text-lg font-bold">Noch zu wenige Direkt-Picks</p>
           <p className="text-[var(--muted)] text-sm">
             Für {expected} Spieler ★ braucht es mindestens zwei verschiedene
             gepickte Spiele von der Gruppe, bevor Duelle starten können.
           </p>
-          <Link href={`/meetups/${id}/pick`} className="btn btn-primary">
+          <Link href={`/meetups/${id}/pick`} className="btn btn-primary btn-lg">
             Direkt-Picks setzen
           </Link>
         </div>
@@ -75,20 +80,16 @@ export default async function DuellPage({
   });
 
   return (
-    <div className="container-app flex flex-col gap-5">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <Link
-            href={`/meetups/${id}`}
-            className="text-sm text-[var(--muted)] hover:underline"
-          >
-            ← {meetup.title}
-          </Link>
-          <h1 className="text-2xl font-extrabold">Duell-Modus</h1>
-        </div>
-        <Link href={`/meetups/${id}/pick`} className="btn btn-ghost">
-          Direkt-Picks →
+    <div className="container-app flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
+        <Link
+          href={`/meetups/${id}`}
+          className="text-sm text-[var(--muted)] hover:underline"
+        >
+          ← {meetup.title}
         </Link>
+        <h1 className="text-2xl font-extrabold">Duell-Modus</h1>
+        <MeetupSubnav meetupId={id} active="duell" pickPoolSize={ids.length} />
       </div>
 
       <DuellClient

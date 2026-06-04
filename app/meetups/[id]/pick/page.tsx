@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { PickClient } from "@/components/PickClient";
+import { MeetupSubnav } from "@/components/MeetupSubnav";
 
 export const dynamic = "force-dynamic";
 
@@ -39,20 +40,16 @@ export default async function PickPage({
   ]);
 
   return (
-    <div className="container-app flex flex-col gap-5">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <Link
-            href={`/meetups/${id}`}
-            className="text-sm text-[var(--muted)] hover:underline"
-          >
-            ← {meetup.title}
-          </Link>
-          <h1 className="text-2xl font-extrabold">Direkt wählen</h1>
-        </div>
-        <Link href={`/meetups/${id}/duell`} className="btn btn-ghost">
-          Zum Duell-Modus →
+    <div className="container-app flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
+        <Link
+          href={`/meetups/${id}`}
+          className="text-sm text-[var(--muted)] hover:underline"
+        >
+          ← {meetup.title}
         </Link>
+        <h1 className="text-2xl font-extrabold">Direkt wählen</h1>
+        <MeetupSubnav meetupId={id} active="pick" />
       </div>
 
       <PickClient

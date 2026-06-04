@@ -23,13 +23,13 @@ export function PickListByPlayer({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-1.5">
+      <div className="tabs-scroll">
         {playerCounts.map((pc) => (
           <button
             key={pc}
             type="button"
             onClick={() => setSelected(pc)}
-            className={`btn ${selected === pc ? "btn-primary" : "btn-ghost"}`}
+            className={`btn btn-tab shrink-0 ${selected === pc ? "btn-primary" : "btn-ghost"}`}
           >
             {pc} Spieler{pc === expected ? " ★" : ""}
           </button>
@@ -45,19 +45,19 @@ export function PickListByPlayer({
           {players.map((p) => (
             <li key={p.userId} className="card p-3 flex flex-col gap-2">
               <span className="font-semibold">{p.userName}</span>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
                 {p.games.map((g) => (
                   <Link
                     key={g.id}
                     href={`/games/${g.id}`}
-                    className="flex items-center gap-2 rounded-lg border border-[var(--border)] p-1.5 pr-3 hover:shadow-md transition-shadow"
+                    className="flex items-center gap-2 rounded-lg border border-[var(--border)] p-2 pr-3 hover:shadow-md transition-shadow w-full sm:w-auto min-h-[44px]"
                   >
                     <GameCover
                       src={g.thumbnail}
                       alt={g.name}
                       className="w-10 h-10 rounded-md shrink-0"
                     />
-                    <span className="text-sm font-medium leading-tight max-w-[12rem] line-clamp-2">
+                    <span className="text-sm font-medium leading-tight line-clamp-2 min-w-0 flex-1">
                       {g.name}
                     </span>
                   </Link>
