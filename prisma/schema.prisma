@@ -46,7 +46,7 @@ model Game {
 
 enum VoteMode {
   PICK
-  TINDER
+  DUEL
 }
 
 model Meetup {

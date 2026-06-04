@@ -10,6 +10,8 @@ export interface RankEntry {
   thumbnail: string | null;
   points: number;
   voters: number;
+  pickCount?: number;
+  duelWins?: number;
 }
 
 export function Ranking({
@@ -17,11 +19,13 @@ export function Ranking({
   playerCounts,
   rankingByCount,
   pointsLabel = "Punkte",
+  showPickDuelBreakdown = false,
 }: {
   expected: number;
   playerCounts: number[];
   rankingByCount: Record<number, RankEntry[]>;
   pointsLabel?: string;
+  showPickDuelBreakdown?: boolean;
 }) {
   const initial = playerCounts.includes(expected)
     ? expected
@@ -68,14 +72,21 @@ export function Ranking({
                 <span className="font-semibold flex-1 leading-tight">
                   {e.name}
                 </span>
-                <span className="chip">
-                  {e.points}{" "}
-                  {e.points === 1
-                    ? pointsLabel === "Siege"
-                      ? "Sieg"
-                      : "Punkt"
-                    : pointsLabel}
-                </span>
+                {showPickDuelBreakdown &&
+                (e.pickCount !== undefined || e.duelWins !== undefined) ? (
+                  <span className="chip text-xs">
+                    {e.pickCount ?? 0} Picks + {e.duelWins ?? 0} Siege
+                  </span>
+                ) : (
+                  <span className="chip">
+                    {e.points}{" "}
+                    {e.points === 1
+                      ? pointsLabel === "Siege"
+                        ? "Sieg"
+                        : "Punkt"
+                      : pointsLabel}
+                  </span>
+                )}
               </Link>
             </li>
           ))}

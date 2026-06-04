@@ -55,7 +55,7 @@ export function CollectionManagerClient({ games }: { games: CollectionGameRow[] 
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-[var(--muted)]">
-        Entfernte Spiele verschwinden aus Sammlung, Pick und Tinder. Beim nächsten
+        Entfernte Spiele verschwinden aus Sammlung, Pick und Duell. Beim nächsten
         CSV-Import werden Einträge aus der Datei wieder angelegt — exportiere auf
         BGG nur Spiele, die du wirklich besitzt.
       </p>

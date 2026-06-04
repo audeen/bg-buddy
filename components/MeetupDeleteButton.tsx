@@ -18,7 +18,7 @@ export function MeetupDeleteButton({
   function handleDelete() {
     if (
       !window.confirm(
-        `Treffen „${title}" wirklich löschen?\n\nAlle Stimmen (Pick & Tinder) gehen verloren.`,
+        `Treffen „${title}" wirklich löschen?\n\nAlle Stimmen (Pick & Duell) gehen verloren.`,
       )
     ) {
       return;

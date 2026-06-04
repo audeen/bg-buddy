@@ -1,7 +1,7 @@
 # 🎲 BG Buddy
 
 Verwalte deine Brettspielsammlung und stimmt gemeinsam ab, was beim nächsten
-Treffen gespielt wird – per Direkt-Pick oder „Brettspiel-Tinder".
+Treffen gespielt wird – per Direkt-Pick und optionalem Duell-Modus unter den Picks.
 
 Die Spieledaten kommen aus deinem **BoardGameGeek (BGG) Collection-Export** und
 werden optional mit Cover, Beschreibung, Genre und Mechaniken angereichert.
@@ -16,10 +16,10 @@ werden optional mit Cover, Beschreibung, Genre und Mechaniken angereichert.
 - **Treffen** anlegen mit jederzeit änderbarer erwarteter Spieleranzahl
 - **Direkt-Pick** – bis zu 3 Spiele pro Spieler und Spieleranzahl, „beste Wahl"
   hervorgehoben
-- **Tinder-Modus (Lite)** – 8 kurze Duelle nur für die erwartete Spieleranzahl (★),
-  max. 1 Sieg pro Spiel; danach Direkt-Picks setzen
-- **Ergebnisse pro Treffen** – getrennt: Tinder-Siege, Direkt-Picks (pro Spieler
-  aufgelistet) und optionales Gesamt-Ranking
+- **Duell-Modus** – 8 Duelle nur unter von der Gruppe gepickten Spielen (★);
+  häufiger gepickte Spiele treten öfter auf und starten mit Bonus im Gesamt-Ranking
+- **Ergebnisse pro Treffen** – Direkt-Picks (pro Spieler), Duell-Siege, Gesamt
+  (Picks + Siege)
 
 ## Tech-Stack
 
@@ -60,7 +60,7 @@ App läuft auf http://localhost:3000.
 
 1. Auf BGG unter **Profile → Collection → Export Collection** die CSV
    herunterladen (eine Beispieldatei liegt unter `sample-data/collection.csv`).
-2. In der App anmelden, **Import** öffnen, CSV hochladen — Pick/Tinder/Ranking
+2. In der App anmelden, **Import** öffnen, CSV hochladen — Pick/Duell/Ranking
    funktionieren sofort (Spieleranzahl, Rating, … kommen aus der CSV).
 
 ### Anreicherung ohne API-Token (empfohlen)
@@ -116,7 +116,7 @@ Der `build`-Schritt ruft automatisch `prisma generate` auf.
 app/                 Routen (App Router) + Server Actions (actions.ts)
   api/enrich/        Batch-Enrichment-Endpoint
   games/             Sammlung + Detailseite
-  meetups/           Treffen, Pick- und Tinder-Modus
+  meetups/           Treffen, Pick- und Duell-Modus
 components/          UI-Komponenten (Client & Server)
 lib/                 prisma, session, auth, bgg (CSV/XML), enrichment-cache, bgg-taxonomy-de
 prisma/schema.prisma Datenmodell

@@ -108,7 +108,7 @@ async function main() {
     data: { title: "Testabend", expectedPlayerCount: 4, createdById: user.id },
   });
 
-  // Pick-Stimme + zwei Tinder-Siege fuer das erste Spiel bei 4 Spielern
+  // Picks fuer Duell-Pool + Duell-Siege bei 4 Spielern
   const eligible = games.filter(
     (g) =>
       !g.isExpansion &&
@@ -118,22 +118,24 @@ async function main() {
   const top = eligible[0];
   const other = eligible[1];
 
+  for (const gameId of [top.id, other.id]) {
+    await prisma.vote.create({
+      data: {
+        meetupId: meetup.id,
+        userId: user.id,
+        gameId,
+        playerCount: 4,
+        mode: "PICK",
+      },
+    });
+  }
   await prisma.vote.create({
     data: {
       meetupId: meetup.id,
       userId: user.id,
       gameId: top.id,
       playerCount: 4,
-      mode: "PICK",
-    },
-  });
-  await prisma.vote.create({
-    data: {
-      meetupId: meetup.id,
-      userId: user.id,
-      gameId: top.id,
-      playerCount: 4,
-      mode: "TINDER",
+      mode: "DUEL",
     },
   });
   await prisma.vote.create({
@@ -142,13 +144,13 @@ async function main() {
       userId: user.id,
       gameId: other.id,
       playerCount: 4,
-      mode: "TINDER",
+      mode: "DUEL",
     },
   });
 
-  const tinderRanking = await prisma.vote.groupBy({
+  const duelRanking = await prisma.vote.groupBy({
     by: ["gameId"],
-    where: { meetupId: meetup.id, playerCount: 4, mode: "TINDER" },
+    where: { meetupId: meetup.id, playerCount: 4, mode: "DUEL" },
     _sum: { points: true },
     orderBy: { _sum: { points: "desc" } },
   });
@@ -158,27 +160,19 @@ async function main() {
     _sum: { points: true },
     orderBy: { _sum: { points: "desc" } },
   });
-  const combinedRanking = await prisma.vote.groupBy({
-    by: ["gameId"],
-    where: { meetupId: meetup.id, playerCount: 4 },
-    _sum: { points: true },
-    orderBy: { _sum: { points: "desc" } },
-  });
 
-  const topTinderPts = tinderRanking.find((r) => r.gameId === top.id)?._sum
-    .points;
+  const topDuelPts = duelRanking.find((r) => r.gameId === top.id)?._sum.points;
   const topPickPts = pickRanking.find((r) => r.gameId === top.id)?._sum.points;
-  const topCombinedPts = combinedRanking.find((r) => r.gameId === top.id)?._sum
-    .points;
-  if (topTinderPts !== 1 || topPickPts !== 1 || topCombinedPts !== 3) {
+  const topCombinedScore = (topPickPts ?? 0) + (topDuelPts ?? 0);
+  if (topDuelPts !== 1 || topPickPts !== 1 || topCombinedScore !== 2) {
     throw new Error(
-      `Getrennte Aggregation fehlgeschlagen: Tinder=${topTinderPts}, Pick=${topPickPts}, Gesamt=${topCombinedPts}`,
+      `Aggregation fehlgeschlagen: Duell=${topDuelPts}, Pick=${topPickPts}, Gesamt=${topCombinedScore}`,
     );
   }
 
-  console.log("Tinder-Siege @4:", tinderRanking[0]?._sum.points, "für", top.name);
+  console.log("Duell-Siege @4:", duelRanking[0]?._sum.points, "für", top.name);
   console.log("Direkt-Picks @4:", pickRanking[0]?._sum.points, "für", top.name);
-  console.log("Gesamt @4:", topCombinedPts, "Punkte für", top.name);
+  console.log("Gesamt @4 (Pick+Duell):", topCombinedScore, "für", top.name);
 
   console.log("\n== Cleanup Testdaten ==");
   await prisma.meetup.delete({ where: { id: meetup.id } });

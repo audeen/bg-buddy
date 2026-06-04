@@ -50,8 +50,8 @@ export default async function PickPage({
           </Link>
           <h1 className="text-2xl font-extrabold">Direkt wählen</h1>
         </div>
-        <Link href={`/meetups/${id}/tinder`} className="btn btn-ghost">
-          Lieber Tinder-Modus →
+        <Link href={`/meetups/${id}/duell`} className="btn btn-ghost">
+          Zum Duell-Modus →
         </Link>
       </div>
 

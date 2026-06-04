@@ -6,10 +6,12 @@ import { ExpectedCountControl } from "@/components/ExpectedCountControl";
 import { MeetupDeleteButton } from "@/components/MeetupDeleteButton";
 import { MeetupRankings } from "@/components/MeetupRankings";
 import {
+  buildCombinedByCount,
   buildPicksByCount,
   buildRankingByCount,
   playerCountsFromVotes,
 } from "@/lib/vote-aggregation";
+import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 
 export const dynamic = "force-dynamic";
 
@@ -47,13 +49,23 @@ export default async function MeetupDetail({
     },
   });
 
-  const tinderByCount = buildRankingByCount(votes, "TINDER");
-  const combinedByCount = buildRankingByCount(votes);
+  const duelByCount = buildRankingByCount(votes, "DUEL");
+  const combinedByCount = buildCombinedByCount(votes);
   const picksByCount = buildPicksByCount(votes);
   const playerCounts = playerCountsFromVotes(
     meetup.expectedPlayerCount,
     votes,
   );
+
+  const pickPoolSize = poolGameIds(
+    buildPickCounts(
+      votes.filter(
+        (v) =>
+          v.mode === "PICK" &&
+          v.playerCount === meetup.expectedPlayerCount,
+      ),
+    ),
+  ).length;
 
   return (
     <div className="container-app flex flex-col gap-6">
@@ -80,12 +92,21 @@ export default async function MeetupDetail({
           meetupId={meetup.id}
           value={meetup.expectedPlayerCount}
         />
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Link href={`/meetups/${meetup.id}/pick`} className="btn btn-primary">
             Direkt wählen
           </Link>
-          <Link href={`/meetups/${meetup.id}/tinder`} className="btn btn-ghost">
-            Tinder-Modus
+          <Link
+            href={`/meetups/${meetup.id}/duell`}
+            className={`btn btn-ghost ${pickPoolSize < 2 ? "opacity-60" : ""}`}
+            title={
+              pickPoolSize < 2
+                ? "Mindestens zwei gepickte Spiele nötig"
+                : undefined
+            }
+          >
+            Duell-Modus
+            {pickPoolSize >= 2 ? ` (${pickPoolSize})` : ""}
           </Link>
         </div>
       </div>
@@ -93,7 +114,7 @@ export default async function MeetupDetail({
       <MeetupRankings
         expected={meetup.expectedPlayerCount}
         playerCounts={playerCounts}
-        tinderByCount={tinderByCount}
+        duelByCount={duelByCount}
         combinedByCount={combinedByCount}
         picksByCount={picksByCount}
       />

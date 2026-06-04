@@ -5,28 +5,28 @@ import { Ranking, type RankEntry } from "@/components/Ranking";
 import { PickListByPlayer } from "@/components/PickListByPlayer";
 import type { PickListPlayer } from "@/lib/vote-aggregation";
 
-type Tab = "tinder" | "picks" | "combined";
+type Tab = "picks" | "duel" | "combined";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "tinder", label: "Tinder-Siege" },
   { id: "picks", label: "Direkt-Picks" },
+  { id: "duel", label: "Duelle" },
   { id: "combined", label: "Gesamt" },
 ];
 
 export function MeetupRankings({
   expected,
   playerCounts,
-  tinderByCount,
+  duelByCount,
   combinedByCount,
   picksByCount,
 }: {
   expected: number;
   playerCounts: number[];
-  tinderByCount: Record<number, RankEntry[]>;
+  duelByCount: Record<number, RankEntry[]>;
   combinedByCount: Record<number, RankEntry[]>;
   picksByCount: Record<number, PickListPlayer[]>;
 }) {
-  const [tab, setTab] = useState<Tab>("tinder");
+  const [tab, setTab] = useState<Tab>("picks");
 
   return (
     <section className="flex flex-col gap-3">
@@ -48,14 +48,6 @@ export function MeetupRankings({
         </div>
       </div>
 
-      {tab === "tinder" && (
-        <Ranking
-          expected={expected}
-          playerCounts={playerCounts}
-          rankingByCount={tinderByCount}
-          pointsLabel="Siege"
-        />
-      )}
       {tab === "picks" && (
         <PickListByPlayer
           expected={expected}
@@ -63,12 +55,32 @@ export function MeetupRankings({
           picksByCount={picksByCount}
         />
       )}
+      {tab === "duel" && (
+        <>
+          <p className="text-sm text-[var(--muted)]">
+            Nur Duell-Siege unter gepickten Spielen (★ = erwartete Spieleranzahl).
+          </p>
+          <Ranking
+            expected={expected}
+            playerCounts={playerCounts}
+            rankingByCount={duelByCount}
+            pointsLabel="Siege"
+          />
+        </>
+      )}
       {tab === "combined" && (
-        <Ranking
-          expected={expected}
-          playerCounts={playerCounts}
-          rankingByCount={combinedByCount}
-        />
+        <>
+          <p className="text-sm text-[var(--muted)]">
+            Gesamt = Direkt-Picks der Gruppe + Duell-Siege (mehrfach gepickte
+            Spiele starten mit Bonus).
+          </p>
+          <Ranking
+            expected={expected}
+            playerCounts={playerCounts}
+            rankingByCount={combinedByCount}
+            showPickDuelBreakdown
+          />
+        </>
       )}
     </section>
   );

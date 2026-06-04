@@ -11,8 +11,8 @@ import {
   thingDetailsToDbFields,
 } from "@/lib/enrichment-cache";
 import {
+  MAX_DUEL_WINS_PER_GAME,
   MAX_PICKS_PER_COUNT,
-  MAX_TINDER_WINS_PER_GAME,
 } from "@/lib/vote-limits";
 
 export async function loginAction(formData: FormData) {
@@ -151,10 +151,11 @@ export async function togglePickVoteAction(
     },
   });
   revalidatePath(`/meetups/${meetupId}`);
+  revalidatePath(`/meetups/${meetupId}/duell`);
   return { voted: true };
 }
 
-export async function tinderVoteAction(
+export async function duelVoteAction(
   meetupId: string,
   winnerGameId: number,
   playerCount: number,
@@ -162,16 +163,37 @@ export async function tinderVoteAction(
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
+  const meetup = await prisma.meetup.findUnique({
+    where: { id: meetupId },
+    select: { expectedPlayerCount: true },
+  });
+  if (!meetup) return { error: "Treffen nicht gefunden." };
+  if (playerCount !== meetup.expectedPlayerCount) {
+    return { error: "Duelle nur für die erwartete Spieleranzahl." };
+  }
+
+  const inPool = await prisma.vote.count({
+    where: {
+      meetupId,
+      mode: "PICK",
+      playerCount,
+      gameId: winnerGameId,
+    },
+  });
+  if (!inPool) {
+    return { error: "Dieses Spiel wurde noch nicht direkt gepickt." };
+  }
+
   const winCount = await prisma.vote.count({
     where: {
       meetupId,
       userId: user.id,
       gameId: winnerGameId,
       playerCount,
-      mode: "TINDER",
+      mode: "DUEL",
     },
   });
-  if (winCount >= MAX_TINDER_WINS_PER_GAME) {
+  if (winCount >= MAX_DUEL_WINS_PER_GAME) {
     return {
       error: "Dieses Spiel hat hier schon genug Siege.",
     };
@@ -183,11 +205,12 @@ export async function tinderVoteAction(
       userId: user.id,
       gameId: winnerGameId,
       playerCount,
-      mode: "TINDER",
+      mode: "DUEL",
       points: 1,
     },
   });
   revalidatePath(`/meetups/${meetupId}`);
+  revalidatePath(`/meetups/${meetupId}/duell`);
   return { ok: true };
 }
 
