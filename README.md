@@ -56,6 +56,18 @@ npm run dev
 
 App läuft auf http://localhost:3000.
 
+## Vercel / Produktion
+
+Der Build auf Vercel führt `prisma migrate deploy` aus (`npm run vercel-build` via
+[`vercel.json`](vercel.json)). Ohne Migration schlagen Meetup-Seiten fehl, wenn die
+DB noch alte `TINDER`-Votes enthält.
+
+Nach Deploy einmalig prüfen (mit Produktions-`DATABASE_URL`):
+
+```bash
+npm run db:migrate
+```
+
 ## Daten befüllen
 
 1. Auf BGG unter **Profile → Collection → Export Collection** die CSV

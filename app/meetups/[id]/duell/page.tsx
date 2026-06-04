@@ -30,7 +30,7 @@ export default async function DuellPage({
       where: {
         meetupId: id,
         userId: user.id,
-        mode: "DUEL",
+        mode: { in: ["DUEL", "TINDER"] },
         playerCount: expected,
       },
       select: { gameId: true, playerCount: true },

@@ -1,12 +1,13 @@
 import type { RankEntry } from "@/components/Ranking";
 import { buildPickCounts } from "@/lib/pick-pool";
+import { isDuelMode, isPickMode } from "@/lib/vote-mode";
 
 type VoteRow = {
   playerCount: number;
   gameId: number;
   userId: string;
   points: number;
-  mode: "PICK" | "DUEL";
+  mode: string;
   game: {
     id: number;
     name: string;
@@ -19,7 +20,11 @@ export function buildRankingByCount(
   votes: VoteRow[],
   mode?: "PICK" | "DUEL",
 ): Record<number, RankEntry[]> {
-  const filtered = mode ? votes.filter((v) => v.mode === mode) : votes;
+  const filtered = mode
+    ? votes.filter((v) =>
+        mode === "DUEL" ? isDuelMode(v.mode) : isPickMode(v.mode),
+      )
+    : votes;
   const byCount = new Map<
     number,
     Map<number, { entry: RankEntry; voters: Set<string> }>
@@ -60,7 +65,7 @@ export function buildCombinedByCount(
 ): Record<number, RankEntry[]> {
   const picksByCount = new Map<number, Record<number, number>>();
   for (const v of votes) {
-    if (v.mode !== "PICK") continue;
+    if (!isPickMode(v.mode)) continue;
     if (!picksByCount.has(v.playerCount)) {
       picksByCount.set(v.playerCount, {});
     }
@@ -155,7 +160,7 @@ export function buildPicksByCount(
   >();
 
   for (const v of votes) {
-    if (v.mode !== "PICK") continue;
+    if (!isPickMode(v.mode)) continue;
     if (!byCount.has(v.playerCount)) byCount.set(v.playerCount, new Map());
     const users = byCount.get(v.playerCount)!;
     if (!users.has(v.userId)) {
