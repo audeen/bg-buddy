@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { GameCover } from "@/components/GameCover";
 import { tinderVoteAction, togglePickVoteAction } from "@/app/actions";
@@ -101,9 +101,7 @@ export function TinderClient({
   const [rounds, setRounds] = useState(0);
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState<Phase>("tinder");
-  const [exposureByCount, setExposureByCount] = useState<
-    Record<number, Record<number, number>>
-  >({});
+  const exposureRef = useRef<Record<number, Record<number, number>>>({});
   const [sessionWins, setSessionWins] = useState<Record<number, number>>({});
   const [voteError, setVoteError] = useState<string | null>(null);
   const [picks, setPicks] = useState<Set<string>>(
@@ -127,36 +125,28 @@ export function TinderClient({
     phase === "tinder" &&
     (rounds >= MIN_TINDER_ROUNDS_BEFORE_PICK || roundsFull);
 
-  const exposure = useMemo(() => {
-    const raw = currentCount ? exposureByCount[currentCount] : undefined;
-    return new Map(Object.entries(raw ?? {}).map(([k, v]) => [Number(k), v]));
-  }, [exposureByCount, currentCount]);
-
   const pair = useMemo(() => {
     if (phase !== "tinder" || !currentCount) return null;
+    const raw = exposureRef.current[currentCount];
+    const exposure = new Map(
+      Object.entries(raw ?? {}).map(([k, v]) => [Number(k), v]),
+    );
     return pickTwoFair(eligibleNow, exposure);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eligibleNow, exposure, seed, phase, currentCount]);
+  }, [eligibleNow, seed, phase, currentCount]);
 
-  const recordExposure = useCallback(
-    (p: [TinderGame, TinderGame] | null) => {
-      if (!p || !currentCount) return;
-      setExposureByCount((prev) => {
-        const countMap = { ...(prev[currentCount] ?? {}) };
-        for (const g of p) {
-          countMap[g.id] = (countMap[g.id] ?? 0) + 1;
-        }
-        return { ...prev, [currentCount]: countMap };
-      });
-    },
-    [currentCount],
-  );
-
-  useEffect(() => {
-    if (phase === "tinder" && pair) recordExposure(pair);
-  }, [pair, phase, recordExposure]);
-
-  const newPair = () => setSeed((s) => s + 1);
+  function advancePair(shown: [TinderGame, TinderGame] | null) {
+    if (shown && currentCount) {
+      const countMap = { ...(exposureRef.current[currentCount] ?? {}) };
+      for (const g of shown) {
+        countMap[g.id] = (countMap[g.id] ?? 0) + 1;
+      }
+      exposureRef.current = {
+        ...exposureRef.current,
+        [currentCount]: countMap,
+      };
+    }
+    setSeed((s) => s + 1);
+  }
 
   const done = sequence.length === 0 || seqIndex >= sequence.length;
 
@@ -196,7 +186,7 @@ export function TinderClient({
           [winnerId]: (w[winnerId] ?? 0) + 1,
         }));
       }
-      newPair();
+      advancePair(pair);
     } finally {
       setBusy(false);
     }
@@ -204,6 +194,7 @@ export function TinderClient({
 
   function advanceAfterCount() {
     setSeqIndex((i) => i + 1);
+    setSeed(0);
     setRounds(0);
     setPhase("tinder");
     setVoteError(null);
@@ -438,7 +429,7 @@ export function TinderClient({
         <button
           type="button"
           className="btn btn-ghost"
-          onClick={newPair}
+          onClick={() => advancePair(pair)}
           disabled={busy || !pair}
         >
           Anderes Paar zeigen
