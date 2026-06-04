@@ -47,9 +47,14 @@ export default async function ImportPage() {
       />
 
       {total > 0 && (
-        <Link href="/games" className="btn btn-ghost w-fit">
-          Zur Sammlung →
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/games" className="btn btn-ghost w-fit">
+            Zur Spielesammlung →
+          </Link>
+          <Link href="/admin/collection" className="btn btn-ghost w-fit">
+            Sammlung bearbeiten →
+          </Link>
+        </div>
       )}
     </div>
   );

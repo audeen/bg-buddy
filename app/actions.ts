@@ -201,3 +201,26 @@ export async function importCsvAction(formData: FormData) {
     cacheApplied,
   };
 }
+
+export async function removeGameFromCollectionAction(gameId: number) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  if (!Number.isFinite(gameId)) {
+    return { error: "Ungültige Spiel-ID." };
+  }
+
+  try {
+    await prisma.game.delete({ where: { id: gameId } });
+  } catch {
+    return { error: "Spiel nicht gefunden." };
+  }
+
+  revalidatePath("/games");
+  revalidatePath("/admin/import");
+  revalidatePath("/admin/collection");
+  revalidatePath(`/games/${gameId}`);
+  revalidatePath("/meetups", "layout");
+
+  return { ok: true };
+}

@@ -20,6 +20,9 @@ export async function Header() {
           <Link href="/" className="btn btn-ghost">
             Treffen
           </Link>
+          <Link href="/admin/collection" className="btn btn-ghost">
+            Sammlung
+          </Link>
           <Link href="/admin/import" className="btn btn-ghost">
             Import
           </Link>

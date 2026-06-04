@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { GameCover } from "@/components/GameCover";
 import { playerRange, playtime, weightLabel } from "@/lib/format";
+import { bggBoardgameUrl } from "@/lib/bgg-url";
 
 export const dynamic = "force-dynamic";
 
@@ -37,9 +38,19 @@ export default async function GameDetail({
         <div className="flex flex-col gap-4">
           <div>
             <h1 className="text-3xl font-extrabold">{game.name}</h1>
-            {game.year ? (
-              <p className="text-[var(--muted)]">{game.year}</p>
-            ) : null}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+              {game.year ? (
+                <p className="text-[var(--muted)]">{game.year}</p>
+              ) : null}
+              <a
+                href={bggBoardgameUrl(game.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-[var(--accent)] hover:underline"
+              >
+                Auf BoardGameGeek ansehen ↗
+              </a>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
