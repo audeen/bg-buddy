@@ -14,7 +14,9 @@
     "apply-cache": "tsx scripts/apply-cache.ts",
     "prefetch-bgg": "tsx scripts/prefetch-bgg.ts",
     "prefetch-covers": "tsx scripts/prefetch-covers-geekdo.ts",
-    "prefetch-geekdo": "tsx scripts/prefetch-geekdo.ts"
+    "prefetch-geekdo": "tsx scripts/prefetch-geekdo.ts",
+    "translate-enrichment": "tsx scripts/translate-enrichment.ts",
+    "test:enrichment-cache": "tsx scripts/test-enrichment-cache.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

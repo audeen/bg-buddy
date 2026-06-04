@@ -37,7 +37,7 @@ export function normalizeCacheEntry(
   const id = toInt(o.id) ?? fallbackId ?? null;
   if (id == null) return null;
 
-  return {
+  const entry: ThingDetails = {
     id,
     description: toStringOrNull(o.description),
     image: toStringOrNull(o.image),
@@ -45,6 +45,15 @@ export function normalizeCacheEntry(
     categories: toStringArray(o.categories),
     mechanics: toStringArray(o.mechanics),
   };
+
+  const descriptionDe = toStringOrNull(o.descriptionDe);
+  const categoriesDe = toStringArray(o.categoriesDe);
+  const mechanicsDe = toStringArray(o.mechanicsDe);
+  if (descriptionDe) entry.descriptionDe = descriptionDe;
+  if (categoriesDe.length > 0) entry.categoriesDe = categoriesDe;
+  if (mechanicsDe.length > 0) entry.mechanicsDe = mechanicsDe;
+
+  return entry;
 }
 
 /** True when the entry has anything useful for the UI (cover, text, or tags). */
@@ -53,18 +62,35 @@ export function hasEnrichmentContent(d: ThingDetails): boolean {
     d.image ||
     d.thumbnail ||
     d.description ||
+    d.descriptionDe ||
     d.categories.length > 0 ||
-    d.mechanics.length > 0
+    d.categoriesDe?.length ||
+    d.mechanics.length > 0 ||
+    d.mechanicsDe?.length
   );
 }
 
-export function thingDetailsToDbFields(d: ThingDetails) {
+/** Picks German display fields with English fallback. */
+export function localizedEnrichmentFields(d: ThingDetails) {
   return {
-    description: d.description,
+    description: d.descriptionDe ?? d.description,
+    categories:
+      d.categoriesDe && d.categoriesDe.length > 0
+        ? d.categoriesDe
+        : d.categories,
+    mechanics:
+      d.mechanicsDe && d.mechanicsDe.length > 0 ? d.mechanicsDe : d.mechanics,
+  };
+}
+
+export function thingDetailsToDbFields(d: ThingDetails) {
+  const localized = localizedEnrichmentFields(d);
+  return {
+    description: localized.description,
     image: d.image,
     thumbnail: d.thumbnail,
-    categories: d.categories,
-    mechanics: d.mechanics,
+    categories: localized.categories,
+    mechanics: localized.mechanics,
     enriched: hasEnrichmentContent(d),
   };
 }
@@ -100,13 +126,28 @@ export function enrichmentCacheEntryCount(): number {
   return loadEnrichmentCache().size;
 }
 
+function serializeCacheEntry(d: ThingDetails): Record<string, unknown> {
+  const o: Record<string, unknown> = {
+    id: d.id,
+    description: d.description,
+    image: d.image,
+    thumbnail: d.thumbnail,
+    categories: d.categories,
+    mechanics: d.mechanics,
+  };
+  if (d.descriptionDe) o.descriptionDe = d.descriptionDe;
+  if (d.categoriesDe?.length) o.categoriesDe = d.categoriesDe;
+  if (d.mechanicsDe?.length) o.mechanicsDe = d.mechanicsDe;
+  return o;
+}
+
 /** Serializes cache map to JSON file contents. */
 export function serializeEnrichmentCache(
   map: Map<number, ThingDetails>,
 ): string {
-  const out: Record<string, ThingDetails> = {};
+  const out: Record<string, Record<string, unknown>> = {};
   for (const [id, d] of map) {
-    out[String(id)] = d;
+    out[String(id)] = serializeCacheEntry(d);
   }
   return JSON.stringify(out, null, 2);
 }

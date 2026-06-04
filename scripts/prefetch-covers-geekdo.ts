@@ -60,6 +60,9 @@ async function main() {
       thumbnail: cover.thumbnail ?? prev?.thumbnail ?? null,
       categories: prev?.categories ?? [],
       mechanics: prev?.mechanics ?? [],
+      descriptionDe: prev?.descriptionDe,
+      categoriesDe: prev?.categoriesDe,
+      mechanicsDe: prev?.mechanicsDe,
     });
     if ((i + 1) % 10 === 0 || i === ids.length - 1) {
       console.log(`  ${i + 1}/${ids.length}`);

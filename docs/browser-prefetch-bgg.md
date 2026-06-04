@@ -118,7 +118,20 @@ a.download = "bgg-enrichment.json";
 a.click();
 ```
 
-→ `data/bgg-enrichment.json` im Projekt, dann Import / `npm run apply-cache` / git push.
+→ `data/bgg-enrichment.json` im Projekt (englische Felder `description`, `categories`, `mechanics`).
+
+### Schritt 4 — Deutsch ergänzen (Anzeige in BG Buddy)
+
+Die App nutzt deutsche Beschreibungen, Genre und Mechaniken. Nach dem Export:
+
+```bash
+npm run translate-enrichment
+```
+
+- `categoriesDe` / `mechanicsDe` aus `lib/bgg-taxonomy-de.ts`
+- `descriptionDe` aus `data/bgg-descriptions-de.json` (bei neuen Spielen dort ergänzen und Skript erneut ausführen)
+
+Englisch bleibt in `bgg-enrichment.json` erhalten. Danach Import / `npm run apply-cache` / git push.
 
 ---
 
@@ -128,7 +141,8 @@ a.click();
 npm run prefetch-geekdo collection.csv
 ```
 
-Schreibt dieselbe Datei (Cover + Beschreibung + Genre + Mechanik).
+Schreibt dieselbe Datei (Cover + Beschreibung + Genre + Mechanik, Englisch).
+Anschließend: `npm run translate-enrichment` für die deutschen Felder.
 
 `npm run prefetch-covers` nur Cover (älterer Weg).
 

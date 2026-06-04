@@ -89,11 +89,17 @@ export function parseCollectionCsv(csvText: string): ParsedGame[] {
 
 export interface ThingDetails {
   id: number;
+  /** English description (source language from BGG/Geekdo). */
   description: string | null;
   image: string | null;
   thumbnail: string | null;
+  /** English category labels. */
   categories: string[];
+  /** English mechanic labels. */
   mechanics: string[];
+  descriptionDe?: string | null;
+  categoriesDe?: string[];
+  mechanicsDe?: string[];
 }
 
 const xmlParser = new XMLParser({
@@ -228,6 +234,7 @@ export {
   loadEnrichmentCache,
   enrichmentCacheEntryCount,
   thingDetailsToDbFields,
+  localizedEnrichmentFields,
   hasEnrichmentContent,
   normalizeCacheEntry,
   serializeEnrichmentCache,

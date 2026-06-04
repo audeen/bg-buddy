@@ -73,7 +73,14 @@ async function main() {
   for (const [i, batch] of batches.entries()) {
     const details = await fetchThingBatch(batch);
     for (const d of details) {
-      if (d.id) cache.set(d.id, d);
+      if (!d.id) continue;
+      const prev = cache.get(d.id);
+      cache.set(d.id, {
+        ...d,
+        descriptionDe: prev?.descriptionDe,
+        categoriesDe: prev?.categoriesDe,
+        mechanicsDe: prev?.mechanicsDe,
+      });
     }
     console.log(`  Batch ${i + 1}/${batches.length}`);
     if (i < batches.length - 1) {

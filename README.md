@@ -10,7 +10,7 @@ werden optional mit Cover, Beschreibung, Genre und Mechaniken angereichert.
 
 - **CSV-Import** der BGG-Collection (Spieleranzahl, Spielzeit, Komplexität,
   Rating, „beste Spieleranzahl" u. a. kommen direkt aus dem Export)
-- **Anreicherung** per Offline-Cache (`data/bgg-enrichment.json`) oder optional BGG-XML-API
+- **Anreicherung** per Offline-Cache (`data/bgg-enrichment.json`, EN + DE) oder optional BGG-XML-API
 - **Spielebrowser** mit Suche und Filter (Spieleranzahl, Genre)
 - **Niederschwellige Anmeldung** – nur ein Name, kein Passwort
 - **Treffen** anlegen mit jederzeit änderbarer erwarteter Spieleranzahl
@@ -69,7 +69,12 @@ Cover, Beschreibung, Genre und Mechaniken einmalig im Browser holen — **kein
 1. Anleitung: [`docs/browser-prefetch-bgg.md`](docs/browser-prefetch-bgg.md) (Konsole auf boardgamegeek.com)
    oder einmalig: `npm run prefetch-geekdo collection.csv`
 2. Ergebnis als `data/bgg-enrichment.json` ins Projekt legen (oder committen für Vercel).
-3. CSV erneut importieren **oder**:
+3. Deutsche Texte ergänzen (einmalig nach Prefetch):
+   ```bash
+   npm run translate-enrichment
+   ```
+   Nutzt `lib/bgg-taxonomy-de.ts` für Genre/Mechaniken und `data/bgg-descriptions-de.json` für Beschreibungen. Die App zeigt **Deutsch** (Englisch bleibt in der JSON).
+4. CSV erneut importieren **oder**:
    ```bash
    npm run apply-cache
    ```
@@ -111,10 +116,10 @@ app/                 Routen (App Router) + Server Actions (actions.ts)
   games/             Sammlung + Detailseite
   meetups/           Treffen, Pick- und Tinder-Modus
 components/          UI-Komponenten (Client & Server)
-lib/                 prisma, session, auth, bgg (CSV/XML), enrichment-cache
+lib/                 prisma, session, auth, bgg (CSV/XML), enrichment-cache, bgg-taxonomy-de
 prisma/schema.prisma Datenmodell
-data/                bgg-enrichment.json (Offline-Anreicherung)
+data/                bgg-enrichment.json (zweisprachig), bgg-descriptions-de.json
 docs/                browser-prefetch-bgg.md (Konsole ohne Token)
-scripts/             apply-cache, prefetch-bgg, enrich
+scripts/             apply-cache, prefetch-geekdo, translate-enrichment, enrich
 sample-data/         Beispiel-Collection-CSV
 ```

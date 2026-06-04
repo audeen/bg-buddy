@@ -115,7 +115,7 @@ export function ImportClient({
           <p className="text-sm text-[var(--accent)]">
             <code className="text-xs">data/bgg-enrichment.json</code> enthält{" "}
             {cacheEntries} Einträge — beim Import werden Cover &amp; Details daraus
-            übernommen (kein API-Token nötig).
+            übernommen (Anzeige auf Deutsch, Englisch bleibt in der Datei; kein API-Token nötig).
           </p>
         ) : (
           <p className="text-sm text-[var(--muted)]">
@@ -152,7 +152,7 @@ export function ImportClient({
         <h2 className="font-bold">2. Offline-Cache anwenden</h2>
         <p className="text-sm text-[var(--muted)]">
           Wenn <code className="text-xs">bgg-enrichment.json</code> deployed ist:
-          ein Klick schreibt Cover &amp; Details in die Datenbank (ohne BGG-Token).
+          ein Klick schreibt Cover &amp; Details (deutsch) in die Datenbank (ohne BGG-Token).
           Vorher CSV importieren (Schritt 1), falls die Sammlung leer ist.
         </p>
 

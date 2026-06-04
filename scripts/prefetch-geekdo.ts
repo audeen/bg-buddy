@@ -42,8 +42,15 @@ async function main() {
 
   for (const [i, id] of ids.entries()) {
     const details = await fetchItem(id);
-    if (details) cache.set(id, details);
-    else console.warn(`  Keine Daten für ${id}`);
+    if (details) {
+      const prev = cache.get(id);
+      cache.set(id, {
+        ...details,
+        descriptionDe: prev?.descriptionDe,
+        categoriesDe: prev?.categoriesDe,
+        mechanicsDe: prev?.mechanicsDe,
+      });
+    } else console.warn(`  Keine Daten für ${id}`);
     if ((i + 1) % 10 === 0 || i === ids.length - 1) {
       console.log(`  ${i + 1}/${ids.length}`);
     }
