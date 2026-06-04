@@ -16,9 +16,8 @@ werden optional mit Cover, Beschreibung, Genre und Mechaniken angereichert.
 - **Treffen** anlegen mit jederzeit änderbarer erwarteter Spieleranzahl
 - **Direkt-Pick** – bis zu 3 Spiele pro Spieler und Spieleranzahl, „beste Wahl"
   hervorgehoben
-- **Tinder-Modus** – faire Duell-Paare (weniger Wiederholungen), max. 3 Siege pro
-  Spiel und Spieleranzahl; nach der ★-Runde optional bis zu 3 Direkt-Picks mit
-  Top-5-Vorschlägen aus deinen Tinder-Siegen
+- **Tinder-Modus (Lite)** – 8 kurze Duelle nur für die erwartete Spieleranzahl (★),
+  max. 1 Sieg pro Spiel; danach Direkt-Picks setzen
 - **Ergebnisse pro Treffen** – getrennt: Tinder-Siege, Direkt-Picks (pro Spieler
   aufgelistet) und optionales Gesamt-Ranking
 
