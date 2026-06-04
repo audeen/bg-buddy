@@ -143,7 +143,7 @@ export function TinderClient({
                 className="card overflow-hidden flex flex-col hover:shadow-lg hover:ring-2 hover:ring-[var(--primary)] transition-all disabled:opacity-60"
               >
                 <GameCover
-                  src={g.image ?? g.thumbnail}
+                  src={g.thumbnail ?? g.image}
                   alt={g.name}
                   className="w-full aspect-square"
                 />

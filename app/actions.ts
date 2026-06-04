@@ -64,6 +64,25 @@ export async function createMeetupAction(formData: FormData) {
   redirect(`/meetups/${meetup.id}`);
 }
 
+export async function deleteMeetupAction(meetupId: string) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const id = meetupId.trim();
+  if (!id) return { error: "Ungültiges Treffen." };
+
+  try {
+    await prisma.meetup.delete({ where: { id } });
+  } catch {
+    return { error: "Treffen nicht gefunden." };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/meetups", "layout");
+
+  return { ok: true };
+}
+
 export async function updateExpectedCountAction(
   meetupId: string,
   count: number,

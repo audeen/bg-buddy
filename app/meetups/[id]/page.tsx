@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 import { ExpectedCountControl } from "@/components/ExpectedCountControl";
+import { MeetupDeleteButton } from "@/components/MeetupDeleteButton";
 import { Ranking, type RankEntry } from "@/components/Ranking";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +26,7 @@ export default async function MeetupDetail({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const user = await getCurrentUser();
 
   const meetup = await prisma.meetup.findUnique({
     where: { id },
@@ -81,13 +84,18 @@ export default async function MeetupDetail({
         ← alle Treffen
       </Link>
 
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-extrabold">{meetup.title}</h1>
-        <p className="text-[var(--muted)]">
-          {formatDate(meetup.scheduledAt)}
-          {meetup.location ? ` · ${meetup.location}` : ""} · von{" "}
-          {meetup.createdBy.name}
-        </p>
+      <header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-extrabold">{meetup.title}</h1>
+          <p className="text-[var(--muted)]">
+            {formatDate(meetup.scheduledAt)}
+            {meetup.location ? ` · ${meetup.location}` : ""} · von{" "}
+            {meetup.createdBy.name}
+          </p>
+        </div>
+        {user && (
+          <MeetupDeleteButton meetupId={meetup.id} title={meetup.title} />
+        )}
       </header>
 
       <div className="card p-4 flex flex-wrap items-center justify-between gap-4">
