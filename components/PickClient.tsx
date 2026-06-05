@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
-import { GameCard, type GameCardGame } from "@/components/GameCard";
+import { GameCard } from "@/components/GameCard";
+import { GameDetailModal } from "@/components/GameDetailModal";
+import type { GameDetailData } from "@/components/GameDetailView";
 import { togglePickVoteAction } from "@/app/actions";
 import { MAX_PICKS_PER_COUNT } from "@/lib/vote-limits";
 
-export type PickGame = GameCardGame;
+export type PickGame = GameDetailData;
 
 function eligible(g: PickGame, n: number): boolean {
   const min = g.minPlayers ?? 1;
@@ -41,6 +43,7 @@ export function PickClient({
     () => new Set(initialPicks.map((p) => `${p.gameId}:${p.playerCount}`)),
   );
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
+  const [detailGame, setDetailGame] = useState<PickGame | null>(null);
   const [, startTransition] = useTransition();
 
   const pickCount = picksForCount(picks, selected);
@@ -135,7 +138,7 @@ export function PickClient({
         </div>
         <p className="text-xs text-[var(--muted)] leading-relaxed">
           Bis zu {MAX_PICKS_PER_COUNT} pro Anzahl (★ = erwartet). Nochmal tippen
-          entfernt die Stimme.
+          entfernt die Stimme. ℹ für Details.
         </p>
         {limitMsg && (
           <p className="text-sm text-[var(--accent)]" role="alert">
@@ -161,12 +164,19 @@ export function PickClient({
                   selected={on}
                   disabled={disabled}
                   onClick={() => toggle(g.id)}
+                  onDetailsClick={() => setDetailGame(g)}
                 />
               </li>
             );
           })}
         </ul>
       )}
+
+      <GameDetailModal
+        game={detailGame}
+        onClose={() => setDetailGame(null)}
+        playerCount={selected}
+      />
 
       {atLimit && (
         <div className="sticky-above-nav -mx-4 px-4 py-3 mt-2 bg-[var(--background)] border-t border-[var(--border)] flex flex-col items-center gap-2 sm:static sm:border-0 sm:mx-0 sm:px-0 sm:mt-0">

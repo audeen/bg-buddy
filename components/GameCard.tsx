@@ -25,6 +25,7 @@ type BaseProps = {
 type ButtonProps = BaseProps & {
   href?: undefined;
   onClick: () => void;
+  onDetailsClick?: () => void;
   disabled?: boolean;
 };
 
@@ -64,42 +65,73 @@ function TagRows({ game, playerCount }: { game: GameCardGame; playerCount?: numb
   );
 }
 
+function CardCover({
+  game,
+  selected,
+}: {
+  game: GameCardGame;
+  selected?: boolean;
+}) {
+  return (
+    <div className="relative shrink-0 card-game-cover overflow-hidden">
+      <GameCover
+        src={game.thumbnail ?? game.image}
+        alt={game.name}
+        className="w-full aspect-square"
+      />
+      {selected && (
+        <span
+          className="absolute top-2.5 right-2.5 bg-[var(--accent)] text-white rounded-full w-7 h-7 flex items-center justify-center text-xs font-bold"
+          style={{ boxShadow: "var(--shadow-md)" }}
+          aria-hidden
+        >
+          ✓
+        </span>
+      )}
+    </div>
+  );
+}
+
+function CardBody({
+  game,
+  playerCount,
+}: {
+  game: GameCardGame;
+  playerCount?: number;
+}) {
+  return (
+    <div
+      className="flex flex-col gap-2.5 flex-1"
+      style={{ padding: "var(--space-card)" }}
+    >
+      <span className="font-semibold text-base leading-snug line-clamp-2">
+        {game.name}
+      </span>
+      <TagRows game={game} playerCount={playerCount} />
+      {game.isExpansion && <span className="chip w-fit">Erweiterung</span>}
+    </div>
+  );
+}
+
+function DetailsButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="absolute top-2.5 left-2.5 z-10 bg-[var(--surface)] text-[var(--foreground)] rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold border border-[var(--border)] hover:bg-[var(--surface-2)]"
+      style={{ boxShadow: "var(--shadow-md)" }}
+      aria-label="Details anzeigen"
+    >
+      ℹ
+    </button>
+  );
+}
+
 export function GameCard(props: ButtonProps | LinkProps) {
   const { game, playerCount, selected, className = "" } = props;
   const disabled = "disabled" in props ? props.disabled : false;
-
-  const inner = (
-    <>
-      <div className="relative shrink-0 card-game-cover overflow-hidden">
-        <GameCover
-          src={game.thumbnail ?? game.image}
-          alt={game.name}
-          className="w-full aspect-square"
-        />
-        {selected && (
-          <span
-            className="absolute top-2.5 right-2.5 bg-[var(--accent)] text-white rounded-full w-7 h-7 flex items-center justify-center text-xs font-bold"
-            style={{ boxShadow: "var(--shadow-md)" }}
-            aria-hidden
-          >
-            ✓
-          </span>
-        )}
-      </div>
-      <div
-        className="flex flex-col gap-2.5 flex-1"
-        style={{ padding: "var(--space-card)" }}
-      >
-        <span className="font-semibold text-base leading-snug line-clamp-2">
-          {game.name}
-        </span>
-        <TagRows game={game} playerCount={playerCount} />
-        {game.isExpansion && (
-          <span className="chip w-fit">Erweiterung</span>
-        )}
-      </div>
-    </>
-  );
+  const onDetailsClick =
+    "onDetailsClick" in props ? props.onDetailsClick : undefined;
 
   const cardClass = `card card-game w-full ${selected ? "card-game-selected" : ""} ${
     disabled ? "card-game-disabled opacity-50 cursor-not-allowed" : ""
@@ -108,8 +140,26 @@ export function GameCard(props: ButtonProps | LinkProps) {
   if ("href" in props && props.href) {
     return (
       <Link href={props.href} className={`${cardClass} hover:shadow-md`}>
-        {inner}
+        <CardCover game={game} selected={selected} />
+        <CardBody game={game} playerCount={playerCount} />
       </Link>
+    );
+  }
+
+  if (onDetailsClick) {
+    return (
+      <div className={`${cardClass} relative`}>
+        <button
+          type="button"
+          onClick={props.onClick}
+          disabled={disabled}
+          className="flex flex-col w-full h-full text-left"
+        >
+          <CardCover game={game} selected={selected} />
+          <CardBody game={game} playerCount={playerCount} />
+        </button>
+        <DetailsButton onClick={onDetailsClick} />
+      </div>
     );
   }
 
@@ -120,7 +170,8 @@ export function GameCard(props: ButtonProps | LinkProps) {
       disabled={disabled}
       className={cardClass}
     >
-      {inner}
+      <CardCover game={game} selected={selected} />
+      <CardBody game={game} playerCount={playerCount} />
     </button>
   );
 }

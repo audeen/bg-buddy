@@ -25,6 +25,8 @@ export default async function PickPage({
       select: {
         id: true,
         name: true,
+        year: true,
+        description: true,
         thumbnail: true,
         image: true,
         minPlayers: true,
@@ -34,6 +36,8 @@ export default async function PickPage({
         playingTime: true,
         weight: true,
         bggRating: true,
+        ageRange: true,
+        isExpansion: true,
         categories: true,
         mechanics: true,
         bestPlayerCounts: true,
