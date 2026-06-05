@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { DuellClient } from "@/components/DuellClient";
-import { MeetupSubnav } from "@/components/MeetupSubnav";
 import { PageHeader } from "@/components/PageHeader";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 
@@ -45,9 +44,7 @@ export default async function DuellPage({
   if (ids.length < 2) {
     return (
       <div className="container-app flex flex-col gap-4">
-        <PageHeader eyebrow={meetup.title} title="Duell-Modus">
-          <MeetupSubnav meetupId={id} active="duell" pickPoolSize={ids.length} />
-        </PageHeader>
+        <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
         <div className="card flex flex-col items-center gap-3 text-center" style={{ padding: "var(--space-card)" }}>
           <p className="text-lg font-bold">Noch zu wenige Direkt-Picks</p>
           <p className="text-[var(--muted)] text-sm">
@@ -75,9 +72,7 @@ export default async function DuellPage({
 
   return (
     <div className="container-app flex flex-col gap-4">
-      <PageHeader eyebrow={meetup.title} title="Duell-Modus">
-        <MeetupSubnav meetupId={id} active="duell" pickPoolSize={ids.length} />
-      </PageHeader>
+      <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
 
       <DuellClient
         meetupId={id}

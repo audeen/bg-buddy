@@ -3,9 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { ExpectedCountControl } from "@/components/ExpectedCountControl";
-import { MeetupDeleteButton } from "@/components/MeetupDeleteButton";
+import { MeetupActionsMenu } from "@/components/MeetupActionsMenu";
 import { MeetupRankings } from "@/components/MeetupRankings";
-import { MeetupSubnav } from "@/components/MeetupSubnav";
 import { PageHeader } from "@/components/PageHeader";
 import {
   buildCombinedByCount,
@@ -79,14 +78,9 @@ export default async function MeetupDetail({
             {meetup.createdBy.name}
           </p>
           {user && (
-            <MeetupDeleteButton meetupId={meetup.id} title={meetup.title} />
+            <MeetupActionsMenu meetupId={meetup.id} title={meetup.title} />
           )}
         </div>
-        <MeetupSubnav
-          meetupId={meetup.id}
-          active="detail"
-          pickPoolSize={pickPoolSize}
-        />
       </PageHeader>
 
       <div className="card flex flex-col gap-4" style={{ padding: "var(--space-card)" }}>

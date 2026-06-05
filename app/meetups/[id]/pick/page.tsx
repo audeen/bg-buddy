@@ -2,7 +2,6 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { PickClient } from "@/components/PickClient";
-import { MeetupSubnav } from "@/components/MeetupSubnav";
 import { PageHeader } from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
@@ -57,9 +56,7 @@ export default async function PickPage({
         id="pick-page-top"
         eyebrow={meetup.title}
         title="Direkt wählen"
-      >
-        <MeetupSubnav meetupId={id} active="pick" />
-      </PageHeader>
+      />
 
       <PickClient
         meetupId={id}
