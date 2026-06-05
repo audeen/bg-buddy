@@ -55,14 +55,6 @@ export function GameDetailView({
             alt={game.name}
             className={`w-full aspect-square ${compact ? "" : "md:aspect-auto"}`}
           />
-          {compact && (
-            <Link
-              href={`/games/${game.id}`}
-              className="block border-t border-[var(--border)] py-2.5 text-center text-sm text-[var(--accent)] hover:underline"
-            >
-              Vollständige Seite öffnen
-            </Link>
-          )}
         </div>
 
         <div className="flex flex-col gap-4">
