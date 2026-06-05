@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { logoutAction } from "@/app/actions";
-import { MobileMenu } from "@/components/MobileMenu";
 import { HeaderNavLink } from "@/components/HeaderNavLink";
 
 export async function Header() {
@@ -45,10 +44,6 @@ export async function Header() {
               </Link>
             )}
           </div>
-          <MobileMenu
-            isLoggedIn={!!user}
-            userName={user?.name ?? null}
-          />
         </div>
       </div>
     </header>

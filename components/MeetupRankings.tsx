@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Ranking, type RankEntry } from "@/components/Ranking";
 import { PickListByPlayer } from "@/components/PickListByPlayer";
 import type { PickListPlayer } from "@/lib/vote-aggregation";
@@ -28,8 +28,13 @@ export function MeetupRankings({
 }) {
   const [tab, setTab] = useState<Tab>("picks");
 
+  useEffect(() => {
+    if (window.location.hash !== "#ergebnisse") return;
+    document.getElementById("ergebnisse")?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
   return (
-    <section className="flex flex-col gap-3">
+    <section id="ergebnisse" className="flex flex-col gap-3 scroll-mt-24">
       <div className="flex flex-col gap-2">
         <h2 className="section-title">Ergebnisse</h2>
         <div className="tabs-scroll" role="tablist">

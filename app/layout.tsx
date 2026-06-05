@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
+import { prisma } from "@/lib/prisma";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,11 +22,16 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const fallbackMeetup = await prisma.meetup.findFirst({
+    orderBy: [{ scheduledAt: "asc" }, { createdAt: "desc" }],
+    select: { id: true },
+  });
+
   return (
     <html lang="de" className={`h-full antialiased ${inter.variable}`}>
       <body className="min-h-full flex flex-col">
@@ -41,7 +47,7 @@ export default function RootLayout({
         <footer className="container-app py-4 md:py-6 pb-nav md:pb-6 text-sm text-[var(--muted)]">
           BG Buddy · Daten von BoardGameGeek
         </footer>
-        <BottomNav />
+        <BottomNav fallbackMeetupId={fallbackMeetup?.id ?? null} />
       </body>
     </html>
   );

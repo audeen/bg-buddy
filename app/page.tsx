@@ -34,10 +34,10 @@ export default async function Home() {
   return (
     <div className="container-app flex flex-col gap-8">
       <section className="flex flex-col gap-2">
-        <h1 className="page-title">Was spielen wir heute?</h1>
+        <h1 className="page-title">Was kommt heute auf den Tisch?</h1>
         <p className="text-[var(--muted)] max-w-2xl">
-          Eure Brettspielsammlung an einem Ort – stimmt gemeinsam ab, welches
-          Spiel beim nächsten Treffen auf den Tisch kommt.
+          Melde dich an und stimme ab, um herauszufinden über welche Regeln wir
+          heute diskutieren.
         </p>
       </section>
 
