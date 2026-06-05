@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { GameCard, type GameCardGame } from "@/components/GameCard";
 import { togglePickVoteAction } from "@/app/actions";
@@ -165,6 +166,21 @@ export function PickClient({
             );
           })}
         </ul>
+      )}
+
+      {atLimit && (
+        <div className="sticky-above-nav -mx-4 px-4 py-3 mt-2 bg-[var(--background)] border-t border-[var(--border)] flex flex-col items-center gap-2 sm:static sm:border-0 sm:mx-0 sm:px-0 sm:mt-0">
+          <p className="text-sm text-[var(--muted)]">
+            {MAX_PICKS_PER_COUNT} Picks für {selected} Spieler gewählt
+            {selected === expected ? " ★" : ""}.
+          </p>
+          <Link
+            href={`/meetups/${meetupId}`}
+            className="btn btn-primary btn-lg w-full sm:w-auto text-center"
+          >
+            Fertig
+          </Link>
+        </div>
       )}
     </div>
   );
