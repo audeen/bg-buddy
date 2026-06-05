@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useId, useRef } from "react";
 import { GameDetailView, type GameDetailData } from "@/components/GameDetailView";
 
+const DRAG_CLOSE_THRESHOLD = 100;
+
 type GameDetailModalProps = {
   game: GameDetailData | null;
   onClose: () => void;
@@ -16,10 +18,14 @@ export function GameDetailModal({
   playerCount,
 }: GameDetailModalProps) {
   const titleId = useId();
+  const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const historyPushedRef = useRef(false);
   const skipPopCloseRef = useRef(false);
+  const dragStartYRef = useRef(0);
+  const draggingRef = useRef(false);
+  const pointerIdRef = useRef<number | null>(null);
 
   const dismiss = useCallback(() => {
     if (historyPushedRef.current) {
@@ -29,6 +35,21 @@ export function GameDetailModal({
     }
     onClose();
   }, [onClose]);
+
+  const clearDragVisuals = useCallback(() => {
+    const panel = panelRef.current;
+    const overlay = overlayRef.current;
+    if (panel) {
+      panel.style.transform = "";
+      panel.classList.remove("modal-panel-dragging");
+    }
+    if (overlay) {
+      overlay.style.opacity = "";
+    }
+    draggingRef.current = false;
+    pointerIdRef.current = null;
+    dragStartYRef.current = 0;
+  }, []);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -62,6 +83,7 @@ export function GameDetailModal({
 
     window.history.pushState({ gameDetailModal: true }, "");
     historyPushedRef.current = true;
+    clearDragVisuals();
 
     const onPopState = () => {
       if (skipPopCloseRef.current) {
@@ -82,18 +104,76 @@ export function GameDetailModal({
       window.removeEventListener("popstate", onPopState);
       document.body.style.overflow = prevOverflow;
       document.removeEventListener("keydown", handleKeyDown);
+      clearDragVisuals();
       if (historyPushedRef.current) {
         historyPushedRef.current = false;
         skipPopCloseRef.current = true;
         window.history.back();
       }
     };
-  }, [game, onClose, handleKeyDown]);
+  }, [game, onClose, handleKeyDown, clearDragVisuals]);
+
+  const applyDragVisuals = useCallback((delta: number) => {
+    const panel = panelRef.current;
+    const overlay = overlayRef.current;
+    if (panel) {
+      panel.style.transform = delta > 0 ? `translateY(${delta}px)` : "";
+    }
+    if (overlay) {
+      overlay.style.opacity =
+        delta > 0 ? String(Math.max(0.35, 1 - delta / 400)) : "";
+    }
+  }, []);
+
+  const onDragPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.button !== 0) return;
+      if ((e.target as HTMLElement).closest("button, a")) return;
+      if (window.matchMedia("(min-width: 640px)").matches) return;
+
+      draggingRef.current = true;
+      pointerIdRef.current = e.pointerId;
+      dragStartYRef.current = e.clientY;
+      panelRef.current?.classList.add("modal-panel-dragging");
+      e.currentTarget.setPointerCapture(e.pointerId);
+    },
+    [],
+  );
+
+  const onDragPointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!draggingRef.current || e.pointerId !== pointerIdRef.current) return;
+
+      const delta = Math.max(0, e.clientY - dragStartYRef.current);
+      applyDragVisuals(delta);
+      if (delta > 0) e.preventDefault();
+    },
+    [applyDragVisuals],
+  );
+
+  const onDragPointerEnd = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!draggingRef.current || e.pointerId !== pointerIdRef.current) return;
+
+      const delta = Math.max(0, e.clientY - dragStartYRef.current);
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+
+      if (delta >= DRAG_CLOSE_THRESHOLD) {
+        dismiss();
+      } else {
+        clearDragVisuals();
+      }
+    },
+    [dismiss, clearDragVisuals],
+  );
 
   if (!game) return null;
 
   return (
     <div
+      ref={overlayRef}
       className="modal-overlay"
       onClick={(e) => {
         if (e.target === e.currentTarget) dismiss();
@@ -106,12 +186,19 @@ export function GameDetailModal({
         aria-labelledby={titleId}
         className="modal-panel"
       >
-        <div className="modal-handle" aria-hidden />
-
-        <div className="modal-header">
-          <span className="text-sm font-semibold text-[var(--muted)]">
-            Spielinfo
-          </span>
+        <div className="modal-top">
+          <div
+            className="modal-drag-zone"
+            onPointerDown={onDragPointerDown}
+            onPointerMove={onDragPointerMove}
+            onPointerUp={onDragPointerEnd}
+            onPointerCancel={onDragPointerEnd}
+          >
+            <div className="modal-handle" aria-hidden />
+            <span className="text-sm font-semibold text-[var(--muted)]">
+              Spielinfo
+            </span>
+          </div>
           <button
             ref={closeRef}
             type="button"
