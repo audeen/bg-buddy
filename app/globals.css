@@ -448,18 +448,10 @@ body {
     }
   }
 
-  .modal-top {
+  .modal-drag-zone {
     display: flex;
-    align-items: stretch;
-    gap: 0.5rem;
-    padding-right: var(--space-card);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-  }
-
-  .modal-drag-zone {
-    flex: 1;
-    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -500,33 +492,12 @@ body {
     }
   }
 
-  .modal-top .modal-close-btn {
-    align-self: center;
-    flex-shrink: 0;
-  }
-
-  .modal-close-btn {
-    min-height: 2.75rem;
-    min-width: 2.75rem;
-    padding-inline: 1rem;
-  }
-
   .modal-body {
     overflow-y: auto;
     padding: var(--space-card);
     -webkit-overflow-scrolling: touch;
     flex: 1;
     min-height: 0;
-  }
-
-  .modal-footer {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    padding: 0.75rem var(--space-card) 1rem;
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
-    background: var(--surface);
   }
 
   .scroll-to-top {

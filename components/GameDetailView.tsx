@@ -49,12 +49,20 @@ export function GameDetailView({
   return (
     <div className="flex flex-col gap-6">
       <div className={`grid gap-6 ${compact ? "grid-cols-1" : "md:grid-cols-[260px_1fr]"}`}>
-        <div className="card overflow-hidden" style={{ boxShadow: "var(--shadow-md)" }}>
+        <div className="card overflow-hidden flex flex-col" style={{ boxShadow: "var(--shadow-md)" }}>
           <GameCover
             src={game.image ?? game.thumbnail}
             alt={game.name}
             className={`w-full aspect-square ${compact ? "" : "md:aspect-auto"}`}
           />
+          {compact && (
+            <Link
+              href={`/games/${game.id}`}
+              className="block border-t border-[var(--border)] py-2.5 text-center text-sm text-[var(--accent)] hover:underline"
+            >
+              Vollständige Seite öffnen
+            </Link>
+          )}
         </div>
 
         <div className="flex flex-col gap-4">

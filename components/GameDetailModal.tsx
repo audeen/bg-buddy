@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useId, useRef } from "react";
 import { GameDetailView, type GameDetailData } from "@/components/GameDetailView";
 
@@ -20,7 +19,6 @@ export function GameDetailModal({
   const titleId = useId();
   const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
   const historyPushedRef = useRef(false);
   const skipPopCloseRef = useRef(false);
   const dragStartYRef = useRef(0);
@@ -96,7 +94,7 @@ export function GameDetailModal({
 
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    closeRef.current?.focus();
+    panelRef.current?.focus();
     window.addEventListener("popstate", onPopState);
     document.addEventListener("keydown", handleKeyDown);
 
@@ -185,53 +183,28 @@ export function GameDetailModal({
         aria-modal="true"
         aria-labelledby={titleId}
         className="modal-panel"
+        tabIndex={-1}
       >
-        <div className="modal-top">
-          <div
-            className="modal-drag-zone"
-            onPointerDown={onDragPointerDown}
-            onPointerMove={onDragPointerMove}
-            onPointerUp={onDragPointerEnd}
-            onPointerCancel={onDragPointerEnd}
-          >
-            <div className="modal-handle" aria-hidden />
-            <span className="text-sm font-semibold text-[var(--muted)]">
-              Spielinfo
-            </span>
-          </div>
-          <button
-            ref={closeRef}
-            type="button"
-            onClick={dismiss}
-            className="btn btn-ghost modal-close-btn"
-          >
-            Schließen
-          </button>
+        <div
+          className="modal-drag-zone"
+          onPointerDown={onDragPointerDown}
+          onPointerMove={onDragPointerMove}
+          onPointerUp={onDragPointerEnd}
+          onPointerCancel={onDragPointerEnd}
+        >
+          <div className="modal-handle" aria-hidden />
+          <span className="text-sm font-semibold text-[var(--muted)]">
+            Spielinfo
+          </span>
         </div>
 
-        <div className="modal-body">
+        <div className="modal-body safe-bottom">
           <GameDetailView
             game={game}
             titleId={titleId}
             compact
             playerCount={playerCount}
           />
-        </div>
-
-        <div className="modal-footer safe-bottom">
-          <button
-            type="button"
-            onClick={dismiss}
-            className="btn btn-primary btn-lg w-full"
-          >
-            Zurück zur Auswahl
-          </button>
-          <Link
-            href={`/games/${game.id}`}
-            className="text-sm text-center text-[var(--accent)] hover:underline"
-          >
-            Vollständige Seite öffnen
-          </Link>
         </div>
       </div>
     </div>
