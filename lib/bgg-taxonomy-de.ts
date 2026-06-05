@@ -7,7 +7,7 @@ export const BGG_TAXONOMY_DE: Record<string, string> = {
   Ancient: "Antike",
   Animals: "Tiere",
   "Aviation / Flight": "Luftfahrt",
-  Bluffing: "Bluff",
+  Bluffing: "Bluffen",
   "Card Game": "Kartenspiel",
   "City Building": "Städtebau",
   Civilization: "Zivilisation",
@@ -25,26 +25,26 @@ export const BGG_TAXONOMY_DE: Record<string, string> = {
   Humor: "Humor",
   "Industry / Manufacturing": "Industrie / Fertigung",
   Mafia: "Mafia",
-  "Mature / Adult": "Erwachsene",
+  "Mature / Adult": "Ab 18",
   Maze: "Labyrinth",
   Medieval: "Mittelalter",
-  Memory: "Memorie",
+  Memory: "Gedächtnis",
   Miniatures: "Miniaturen",
   "Modern Warfare": "Moderne Kriegsführung",
-  "Movies / TV / Radio theme": "Film- / TV- / Radiothema",
+  "Movies / TV / Radio theme": "Film, TV & Radio",
   Nautical: "Seefahrt",
   Negotiation: "Verhandlung",
   "Novel-based": "Literaturvorlage",
   "Party Game": "Partyspiel",
   Pirates: "Piraten",
   Political: "Politik",
-  "Post-Napoleonic": "Nachnapoleonisch",
+  "Post-Napoleonic": "Nach-Napoleonisch",
   Racing: "Rennen",
   "Real-time": "Echtzeit",
   Religious: "Religion",
-  "Science Fiction": "Science Fiction",
+  "Science Fiction": "Science-Fiction",
   "Space Exploration": "Weltraumforschung",
-  "Territory Building": "Gebiete erobern",
+  "Territory Building": "Gebietsaufbau",
   Trains: "Züge",
   Transportation: "Transport",
   "Video Game Theme": "Videospielthema",
@@ -64,9 +64,9 @@ export const BGG_TAXONOMY_DE: Record<string, string> = {
   "Auction: Sealed Bid": "Verdeckte Gebote",
   "Automatic Resource Growth": "Automatisches Ressourcenwachstum",
   "Betting and Bluffing": "Wetten und Bluffen",
-  Bias: "Voreingenommenheit",
-  "Campaign / Battle Card Driven": "Kampagnen- / Schlachtkartengesteuert",
-  "Card Play Conflict Resolution": "Konfliktlösung durch Kartenspiel",
+  Bias: "Startvorteil",
+  "Campaign / Battle Card Driven": "Kampagnen- & Schlachtkarten",
+  "Card Play Conflict Resolution": "Kartenkampf",
   "Catch the Leader": "Aufholjagd",
   Chaining: "Verkettung",
   "Closed Drafting": "Geschlossenes Drafting",
@@ -80,7 +80,7 @@ export const BGG_TAXONOMY_DE: Record<string, string> = {
   "Delayed Purchase": "Verzögerter Kauf",
   "Dice Rolling": "Würfeln",
   "Die Icon Resolution": "Würfelsymbol-Auflösung",
-  Enclosure: "Einfriedung",
+  Enclosure: "Umschließen",
   "End Game Bonuses": "Endspielboni",
   Events: "Ereignisse",
   "Force Commitment": "Truppenbindung",
@@ -93,8 +93,7 @@ export const BGG_TAXONOMY_DE: Record<string, string> = {
   "Hidden Victory Points": "Verdeckte Siegpunkte",
   "Hot Potato": "Heiße Kartoffel",
   Income: "Einkommen",
-  "Increase Value of Unchosen Resources":
-    "Wert ungewählter Ressourcen erhöhen",
+  "Increase Value of Unchosen Resources": "Wert ungenutzter Ressourcen",
   Interrupts: "Unterbrechungen",
   "Kill Steal": "Kill Steal",
   "King of the Hill": "König des Hügels",
@@ -112,7 +111,7 @@ export const BGG_TAXONOMY_DE: Record<string, string> = {
   "Movement Points": "Bewegungspunkte",
   "Multi-Use Cards": "Mehrfachnutzbare Karten",
   "Multiple Maps": "Mehrere Karten",
-  "Narrative Choice / Paragraph": "Narratives Entscheiden / Absatz",
+  "Narrative Choice / Paragraph": "Absatz-System",
   "Neighbor Scope": "Nachbarbereich",
   "Network and Route Building": "Netzwerk- und Routenbau",
   "Once-Per-Game Abilities": "Einmal-pro-Spiel-Fähigkeiten",
@@ -133,8 +132,9 @@ export const BGG_TAXONOMY_DE: Record<string, string> = {
   "Real-Time": "Echtzeit",
   "Relative Movement": "Relative Bewegung",
   "Role Playing": "Rollenspiel",
-  "Scenario / Mission / Campaign Game": "Szenario- / Missions- / Kampagnenspiel",
-  "Score-and-Reset Game": "Punktezählen und Zurücksetzen",
+  "Scenario / Mission / Campaign Game":
+    "Szenario-, Missions- & Kampagnenspiel",
+  "Score-and-Reset Game": "Punkte-Runden",
   "Secret Unit Deployment": "Geheime Einheitenplatzierung",
   "Semi-Cooperative Game": "Semi-kooperatives Spiel",
   "Set Collection": "Sets sammeln",
@@ -157,12 +157,12 @@ export const BGG_TAXONOMY_DE: Record<string, string> = {
   "Traitor Game": "Verräterspiel",
   "Tug of War": "Tauziehen",
   "Turn Order: Auction": "Zugreihenfolge: Auktion",
-  "Turn Order: Claim Action": "Zugreihenfolge: Aktion beanspruchen",
+  "Turn Order: Claim Action": "Zugreihenfolge: Aktion wählen",
   "Turn Order: Progressive": "Zugreihenfolge: Progressiv",
   "Turn Order: Stat-Based": "Zugreihenfolge: Attributbasiert",
   "Variable Phase Order": "Variable Phasenreihenfolge",
   "Variable Player Powers": "Variable Spielerfähigkeiten",
-  "Variable Set-up": "Variables Setup",
+  "Variable Set-up": "Variabler Aufbau",
   "Victory Points as a Resource": "Siegpunkte als Ressource",
   Voting: "Abstimmung",
   "Worker Placement": "Arbeiterplatzierung",
@@ -173,17 +173,7 @@ export const BGG_TAXONOMY_DE: Record<string, string> = {
   "Zone of Control": "Kontrollzone",
 };
 
-const warned = new Set<string>();
-
-/** Maps English BGG taxonomy labels to German; unknown labels pass through. */
+/** BGG category/mechanic labels stay English for display. */
 export function translateTaxonomy(en: string[]): string[] {
-  return en.map((label) => {
-    const de = BGG_TAXONOMY_DE[label];
-    if (de) return de;
-    if (!warned.has(label)) {
-      warned.add(label);
-      console.warn(`[bgg-taxonomy-de] Keine Übersetzung für: ${label}`);
-    }
-    return label;
-  });
+  return en;
 }

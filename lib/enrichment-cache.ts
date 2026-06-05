@@ -70,16 +70,12 @@ export function hasEnrichmentContent(d: ThingDetails): boolean {
   );
 }
 
-/** Picks German display fields with English fallback. */
+/** German description; BGG categories/mechanics stay English. */
 export function localizedEnrichmentFields(d: ThingDetails) {
   return {
     description: d.descriptionDe ?? d.description,
-    categories:
-      d.categoriesDe && d.categoriesDe.length > 0
-        ? d.categoriesDe
-        : d.categories,
-    mechanics:
-      d.mechanicsDe && d.mechanicsDe.length > 0 ? d.mechanicsDe : d.mechanics,
+    categories: d.categories,
+    mechanics: d.mechanics,
   };
 }
 

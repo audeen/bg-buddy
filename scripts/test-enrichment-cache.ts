@@ -56,8 +56,8 @@ function testDbFieldsPreferDe() {
     thumbnail: null,
   });
   assert.equal(d.description, "DE");
-  assert.deepEqual(d.categories, ["Kartenspiel"]);
-  assert.deepEqual(d.mechanics, ["Handmanagement"]);
+  assert.deepEqual(d.categories, ["Card Game"]);
+  assert.deepEqual(d.mechanics, []);
   assert.equal(d.enriched, true);
 }
 
@@ -89,9 +89,9 @@ function testHasEnrichmentContentDeOnly() {
   );
 }
 
-function testTaxonomyGlossary() {
-  const de = translateTaxonomy(["Card Game", "Hand Management"]);
-  assert.deepEqual(de, ["Kartenspiel", "Handmanagement"]);
+function testTaxonomyPassthrough() {
+  const labels = translateTaxonomy(["Card Game", "Hand Management"]);
+  assert.deepEqual(labels, ["Card Game", "Hand Management"]);
 }
 
 function testLocalizedFields() {
@@ -107,7 +107,7 @@ function testLocalizedFields() {
     thumbnail: null,
   });
   assert.equal(loc.description, "DE");
-  assert.deepEqual(loc.categories, ["Wirtschaft"]);
+  assert.deepEqual(loc.categories, ["Economic"]);
   assert.deepEqual(loc.mechanics, ["Trading"]);
 }
 
@@ -117,7 +117,7 @@ const tests = [
   testDbFieldsPreferDe,
   testDbFieldsFallbackEn,
   testHasEnrichmentContentDeOnly,
-  testTaxonomyGlossary,
+  testTaxonomyPassthrough,
   testLocalizedFields,
 ];
 
