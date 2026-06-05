@@ -104,13 +104,13 @@ export function GameDetailView({
             <p className="text-sm text-[var(--accent)]">
               {game.bestPlayerCounts.includes(playerCount!) ? (
                 <>
-                  <span className="font-semibold">Beste Spieleranzahl</span> für{" "}
-                  {playerCount} Spieler
+                  <span className="font-semibold">Best · {playerCount}P</span> — beste
+                  Spieleranzahl laut BGG-Community
                 </>
               ) : (
                 <>
-                  <span className="font-semibold">Empfohlen</span> für {playerCount}{" "}
-                  Spieler
+                  <span className="font-semibold">Empf. · {playerCount}P</span> —
+                  empfohlene Spieleranzahl laut BGG-Community
                 </>
               )}
             </p>

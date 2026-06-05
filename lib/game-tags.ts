@@ -51,12 +51,13 @@ export function buildGameTags(
     add(`★ ${game.bggRating.toFixed(1)}`, "rating");
   }
 
-  if (
+  if (playerCount != null && game.bestPlayerCounts.includes(playerCount)) {
+    add(`Best · ${playerCount}P`, "accent");
+  } else if (
     playerCount != null &&
-    game.recommendedPlayerCounts.includes(playerCount) &&
-    !game.bestPlayerCounts.includes(playerCount)
+    game.recommendedPlayerCounts.includes(playerCount)
   ) {
-    add("Empfohlen", "accent");
+    add(`Empf. · ${playerCount}P`, "meta");
   }
 
   for (const c of game.categories.slice(0, 3)) {
