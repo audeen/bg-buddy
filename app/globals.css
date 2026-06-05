@@ -427,7 +427,7 @@ body {
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-height: 92vh;
+    max-height: 85vh;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 0.9rem 0.9rem 0 0;
@@ -443,6 +443,21 @@ body {
     }
   }
 
+  .modal-handle {
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 0.25rem;
+    margin: 0.5rem auto 0;
+    border-radius: 999px;
+    background: var(--border);
+  }
+
+  @media (min-width: 640px) {
+    .modal-handle {
+      display: none;
+    }
+  }
+
   .modal-header {
     display: flex;
     align-items: center;
@@ -453,10 +468,28 @@ body {
     flex-shrink: 0;
   }
 
+  .modal-close-btn {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    padding-inline: 1rem;
+  }
+
   .modal-body {
     overflow-y: auto;
     padding: var(--space-card);
     -webkit-overflow-scrolling: touch;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .modal-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem var(--space-card) 1rem;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    background: var(--surface);
   }
 
   .scroll-to-top {
