@@ -71,24 +71,24 @@ export function MobileMenu({
           </button>
         </div>
 
-        <div className="flex flex-col gap-1 p-4 flex-1 overflow-y-auto">
+        <div className="flex flex-col gap-2 p-4 flex-1 overflow-y-auto">
           {isLoggedIn && userName && (
-            <p className="text-sm text-[var(--muted)] mb-2 px-1">
+            <p className="text-sm text-[var(--muted)] mb-1 px-1">
               Angemeldet als <span className="font-semibold text-[var(--foreground)]">{userName}</span>
             </p>
           )}
 
-          <Link href="/admin/import" className="btn btn-ghost justify-start" onClick={() => setOpen(false)}>
+          <Link href="/admin/import" className="btn btn-ghost justify-start w-full" onClick={() => setOpen(false)}>
             Import
           </Link>
 
           {isLoggedIn && (
-            <Link href="/meetups/new" className="btn btn-ghost justify-start" onClick={() => setOpen(false)}>
+            <Link href="/meetups/new" className="btn btn-ghost justify-start w-full" onClick={() => setOpen(false)}>
               Neues Treffen
             </Link>
           )}
 
-          <div className="mt-auto pt-4 border-t border-[var(--border)]">
+          <div className="mt-auto pt-4 border-t border-[var(--border)] flex flex-col gap-2">
             {isLoggedIn ? (
               <form action={logoutAction}>
                 <button type="submit" className="btn btn-ghost w-full justify-start">

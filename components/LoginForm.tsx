@@ -14,32 +14,34 @@ export function LoginForm() {
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-3" id="login">
-      <label className="text-sm font-semibold" htmlFor="name">
-        Dein Name
-      </label>
-      <div className="flex flex-col sm:flex-row gap-2">
-        <input
-          id="name"
-          name="name"
-          className="input"
-          placeholder="z. B. Anna"
-          autoComplete="off"
-          maxLength={40}
-          required
-        />
-        <button
-          type="submit"
-          className="btn btn-primary btn-lg sm:w-auto shrink-0"
-          disabled={pending}
-        >
-          {pending ? "..." : "Los"}
-        </button>
+    <form action={formAction} className="flex flex-col gap-4" id="login">
+      <div>
+        <label className="label" htmlFor="name">
+          Dein Name
+        </label>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            id="name"
+            name="name"
+            className="input"
+            placeholder="z. B. Anna"
+            autoComplete="off"
+            maxLength={40}
+            required
+          />
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg sm:w-auto shrink-0"
+            disabled={pending}
+          >
+            {pending ? "..." : "Los"}
+          </button>
+        </div>
       </div>
       {state?.error && (
         <p className="text-sm text-[var(--primary)]">{state.error}</p>
       )}
-      <p className="text-xs text-[var(--muted)]">
+      <p className="text-xs text-[var(--muted)] leading-relaxed">
         Kein Passwort nötig – einfach Name eingeben. Gibt es den Namen schon,
         wirst du als diese Person angemeldet.
       </p>

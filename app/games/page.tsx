@@ -45,29 +45,30 @@ export default async function GamesPage({
   return (
     <div className="container-app flex flex-col gap-6">
       <div className="flex items-end justify-between gap-3 flex-wrap">
-        <h1 className="text-2xl font-extrabold">Spielesammlung</h1>
+        <h1 className="page-title">Spielesammlung</h1>
         <span className="text-sm text-[var(--muted)]">
           {games.length} {games.length === 1 ? "Spiel" : "Spiele"}
         </span>
       </div>
 
-      <form className="card p-4 grid gap-3 sm:grid-cols-4 items-end">
+      <form className="filter-bar grid gap-3 sm:grid-cols-4 items-end">
         <div className="sm:col-span-2">
-          <label className="text-xs font-semibold text-[var(--muted)]">
+          <label className="label" htmlFor="games-q">
             Suche
           </label>
           <input
+            id="games-q"
             name="q"
             defaultValue={q}
-            className="input mt-1"
+            className="input"
             placeholder="Spielname…"
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-[var(--muted)]">
+          <label className="label" htmlFor="games-players">
             Spieleranzahl
           </label>
-          <select name="players" defaultValue={sp.players ?? ""} className="input mt-1">
+          <select id="games-players" name="players" defaultValue={sp.players ?? ""} className="input">
             <option value="">egal</option>
             {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
               <option key={n} value={n}>
@@ -77,10 +78,10 @@ export default async function GamesPage({
           </select>
         </div>
         <div>
-          <label className="text-xs font-semibold text-[var(--muted)]">
+          <label className="label" htmlFor="games-genre">
             Genre
           </label>
-          <select name="genre" defaultValue={genre} className="input mt-1">
+          <select id="games-genre" name="genre" defaultValue={genre} className="input">
             <option value="">alle</option>
             {genres.map((g) => (
               <option key={g} value={g}>
@@ -109,7 +110,7 @@ export default async function GamesPage({
           Sammlung.
         </p>
       ) : (
-        <ul className="grid gap-5 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {games.map((g) => (
             <li key={g.id}>
               <GameCard

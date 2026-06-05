@@ -10,7 +10,7 @@ export default async function NewMeetupPage() {
 
   return (
     <div className="container-app max-w-xl flex flex-col gap-4">
-      <h1 className="text-2xl font-extrabold">Neues Treffen</h1>
+      <h1 className="page-title">Neues Treffen</h1>
       <MeetupForm />
     </div>
   );

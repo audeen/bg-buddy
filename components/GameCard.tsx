@@ -3,6 +3,7 @@ import { GameCover } from "@/components/GameCover";
 import {
   buildGameTags,
   chipClassForVariant,
+  groupGameTags,
   type GameTagSource,
 } from "@/lib/game-tags";
 
@@ -33,13 +34,43 @@ type LinkProps = BaseProps & {
   disabled?: undefined;
 };
 
+function TagRows({ game, playerCount }: { game: GameCardGame; playerCount?: number }) {
+  const tags = buildGameTags(game, { playerCount });
+  const { meta, content } = groupGameTags(tags);
+
+  if (tags.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {meta.length > 0 && (
+        <div className="chip-row">
+          {meta.map((t) => (
+            <span key={t.label} className={chipClassForVariant(t.variant)}>
+              {t.label}
+            </span>
+          ))}
+        </div>
+      )}
+      {content.length > 0 && (
+        <div className="chip-row">
+          {content.map((t) => (
+            <span key={t.label} className={chipClassForVariant(t.variant)}>
+              {t.label}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function GameCard(props: ButtonProps | LinkProps) {
   const { game, playerCount, selected, className = "" } = props;
-  const tags = buildGameTags(game, { playerCount });
+  const disabled = "disabled" in props ? props.disabled : false;
 
   const inner = (
     <>
-      <div className="relative shrink-0">
+      <div className="relative shrink-0 card-game-cover overflow-hidden">
         <GameCover
           src={game.thumbnail ?? game.image}
           alt={game.name}
@@ -47,26 +78,22 @@ export function GameCard(props: ButtonProps | LinkProps) {
         />
         {selected && (
           <span
-            className="absolute top-3 right-3 bg-[var(--accent)] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-md"
+            className="absolute top-2.5 right-2.5 bg-[var(--accent)] text-white rounded-full w-7 h-7 flex items-center justify-center text-xs font-bold"
+            style={{ boxShadow: "var(--shadow-md)" }}
             aria-hidden
           >
             ✓
           </span>
         )}
       </div>
-      <div className="p-4 flex flex-col gap-2.5 flex-1">
-        <span className="font-semibold text-[0.95rem] leading-snug line-clamp-2">
+      <div
+        className="flex flex-col gap-2.5 flex-1"
+        style={{ padding: "var(--space-card)" }}
+      >
+        <span className="font-semibold text-base leading-snug line-clamp-2">
           {game.name}
         </span>
-        {tags.length > 0 && (
-          <div className="chip-row">
-            {tags.map((t) => (
-              <span key={t.label} className={chipClassForVariant(t.variant)}>
-                {t.label}
-              </span>
-            ))}
-          </div>
-        )}
+        <TagRows game={game} playerCount={playerCount} />
         {game.isExpansion && (
           <span className="chip w-fit">Erweiterung</span>
         )}
@@ -75,7 +102,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
   );
 
   const cardClass = `card card-game w-full ${selected ? "card-game-selected" : ""} ${
-    props.disabled ? "opacity-50 cursor-not-allowed" : ""
+    disabled ? "card-game-disabled opacity-50 cursor-not-allowed" : ""
   } ${className}`;
 
   if ("href" in props && props.href) {
@@ -90,7 +117,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
     <button
       type="button"
       onClick={props.onClick}
-      disabled={props.disabled}
+      disabled={disabled}
       className={cardClass}
     >
       {inner}

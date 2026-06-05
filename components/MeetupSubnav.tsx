@@ -24,7 +24,7 @@ export function MeetupSubnav({
   ];
 
   return (
-    <nav className="tabs-scroll" aria-label="Treffen-Navigation">
+    <nav className="segment-control tabs-scroll" aria-label="Treffen-Navigation">
       {tabs.map((t) => (
         <Link
           key={t.id}

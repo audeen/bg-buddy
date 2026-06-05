@@ -19,19 +19,19 @@ export function BottomNav() {
 
   return (
     <nav
-      className="md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-[var(--surface)] safe-bottom"
+      className="md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-[var(--surface)] safe-bottom header-shadow"
       aria-label="Hauptnavigation"
     >
-      <ul className="flex items-stretch justify-around h-[var(--bottom-nav-height)]">
+      <ul className="flex items-stretch justify-around h-[var(--bottom-nav-height)] px-2">
         {ITEMS.map((item) => {
           const active = item.match(pathname);
           return (
-            <li key={item.href} className="flex-1">
+            <li key={item.href} className="flex-1 flex items-center justify-center">
               <Link
                 href={item.href}
-                className={`flex flex-col items-center justify-center gap-0.5 h-full text-xs font-semibold transition-colors ${
+                className={`flex flex-col items-center justify-center gap-0.5 px-4 py-1.5 min-w-[4.5rem] text-xs font-semibold transition-colors ${
                   active
-                    ? "text-[var(--primary)]"
+                    ? "nav-item-active"
                     : "text-[var(--muted)] hover:text-[var(--foreground)]"
                 }`}
                 aria-current={active ? "page" : undefined}

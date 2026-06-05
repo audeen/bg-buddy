@@ -42,7 +42,9 @@ export function Ranking({
             key={pc}
             type="button"
             onClick={() => setSelected(pc)}
-            className={`btn btn-tab shrink-0 ${selected === pc ? "btn-primary" : "btn-ghost"}`}
+            className={`btn btn-tab shrink-0 ${selected === pc ? "btn-primary" : "btn-ghost"} ${
+              pc === expected ? "btn-tab-expected" : ""
+            }`}
           >
             {pc} Spieler{pc === expected ? " ★" : ""}
           </button>
@@ -59,7 +61,7 @@ export function Ranking({
             <li key={e.id}>
               <Link
                 href={`/games/${e.id}`}
-                className="card p-2.5 flex items-center gap-3 hover:shadow-md transition-shadow min-h-[44px]"
+                className="card ranking-row p-2.5 flex items-center gap-3 min-h-[44px]"
               >
                 <span className="w-7 text-center font-bold text-[var(--muted)] shrink-0">
                   {i + 1}
@@ -75,11 +77,11 @@ export function Ranking({
                   </span>
                   {showPickDuelBreakdown &&
                   (e.pickCount !== undefined || e.duelWins !== undefined) ? (
-                    <span className="chip text-xs shrink-0 w-fit">
+                    <span className="chip chip-meta text-xs shrink-0 w-fit">
                       {e.pickCount ?? 0} Picks + {e.duelWins ?? 0} Siege
                     </span>
                   ) : (
-                    <span className="chip shrink-0 w-fit sm:ml-auto">
+                    <span className="chip chip-accent shrink-0 w-fit sm:ml-auto">
                       {e.points}{" "}
                       {e.points === 1
                         ? pointsLabel === "Siege"

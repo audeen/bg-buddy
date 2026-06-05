@@ -1,6 +1,6 @@
 import { playerRange, playtime, weightChipLabel } from "@/lib/format";
 
-export type GameTagVariant = "accent" | "default" | "meta";
+export type GameTagVariant = "accent" | "default" | "meta" | "rating";
 
 export interface GameTag {
   label: string;
@@ -48,7 +48,7 @@ export function buildGameTags(
   if (weight) add(weight, "meta");
 
   if (game.bggRating != null && game.bggRating > 0) {
-    add(`★ ${game.bggRating.toFixed(1)}`, "meta");
+    add(`★ ${game.bggRating.toFixed(1)}`, "rating");
   }
 
   if (
@@ -56,7 +56,7 @@ export function buildGameTags(
     game.recommendedPlayerCounts.includes(playerCount) &&
     !game.bestPlayerCounts.includes(playerCount)
   ) {
-    add("Empfohlen", "default");
+    add("Empfohlen", "accent");
   }
 
   for (const c of game.categories.slice(0, 3)) {
@@ -76,7 +76,25 @@ export function chipClassForVariant(variant: GameTagVariant): string {
       return "chip chip-accent";
     case "meta":
       return "chip chip-meta";
+    case "rating":
+      return "chip chip-rating";
     default:
       return "chip";
   }
+}
+
+export function groupGameTags(tags: GameTag[]): {
+  meta: GameTag[];
+  content: GameTag[];
+} {
+  const meta: GameTag[] = [];
+  const content: GameTag[] = [];
+  for (const tag of tags) {
+    if (tag.variant === "meta" || tag.variant === "rating") {
+      meta.push(tag);
+    } else {
+      content.push(tag);
+    }
+  }
+  return { meta, content };
 }

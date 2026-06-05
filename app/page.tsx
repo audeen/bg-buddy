@@ -34,9 +34,7 @@ export default async function Home() {
   return (
     <div className="container-app flex flex-col gap-8">
       <section className="flex flex-col gap-2">
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-          Was spielen wir heute?
-        </h1>
+        <h1 className="page-title">Was spielen wir heute?</h1>
         <p className="text-[var(--muted)] max-w-2xl">
           Eure Brettspielsammlung an einem Ort – stimmt gemeinsam ab, welches
           Spiel beim nächsten Treffen auf den Tisch kommt.
@@ -44,14 +42,14 @@ export default async function Home() {
       </section>
 
       {!user && (
-        <section className="card p-5 max-w-md">
-          <h2 className="font-bold mb-3">Anmelden</h2>
+        <section className="card max-w-md" style={{ padding: "var(--space-card)" }}>
+          <h2 className="section-title mb-3">Anmelden</h2>
           <LoginForm />
         </section>
       )}
 
       {gameCount === 0 && (
-        <section className="card p-5 border-dashed">
+        <section className="card border-dashed" style={{ padding: "var(--space-card)" }}>
           <h2 className="font-bold mb-1">Noch keine Spiele importiert</h2>
           <p className="text-sm text-[var(--muted)] mb-3">
             Lade deine BoardGameGeek-Collection (CSV-Export) hoch, um loszulegen.
@@ -64,7 +62,7 @@ export default async function Home() {
 
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-xl font-bold">Anstehende Treffen</h2>
+          <h2 className="section-title">Anstehende Treffen</h2>
           {user && (
             <Link href="/meetups/new" className="btn btn-primary btn-lg sm:w-auto">
               + Neues Treffen
@@ -85,14 +83,17 @@ export default async function Home() {
               <li key={m.id}>
                 <Link
                   href={`/meetups/${m.id}`}
-                  className="card p-4 flex flex-col gap-2 hover:shadow-md transition-shadow h-full"
+                  className="card flex flex-col gap-2 hover:shadow-md transition-shadow h-full"
+                  style={{ padding: "var(--space-card)" }}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <span className="font-bold text-lg">{m.title}</span>
-                    <span className="chip">{m.expectedPlayerCount} Spieler</span>
+                    <span className="chip chip-accent shrink-0">
+                      {m.expectedPlayerCount} Spieler
+                    </span>
                   </div>
                   <span className="text-sm text-[var(--muted)]">
-                    {formatDate(m.scheduledAt)}
+                    📅 {formatDate(m.scheduledAt)}
                     {m.location ? ` · ${m.location}` : ""}
                   </span>
                   <span className="text-xs text-[var(--muted)]">

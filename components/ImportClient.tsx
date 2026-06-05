@@ -104,8 +104,8 @@ export function ImportClient({
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="card p-5 flex flex-col gap-3">
-        <h2 className="font-bold">1. Collection-CSV hochladen</h2>
+      <section className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
+        <h2 className="section-title">1. Collection-CSV hochladen</h2>
         <p className="text-sm text-[var(--muted)]">
           Exportiere auf BoardGameGeek unter <em>Profile → Collection → Export</em>{" "}
           deine Sammlung als CSV und lade sie hier hoch. Bestehende Spiele werden
@@ -152,8 +152,8 @@ export function ImportClient({
         )}
       </section>
 
-      <section className="card p-5 flex flex-col gap-3">
-        <h2 className="font-bold">2. Offline-Cache anwenden</h2>
+      <section className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
+        <h2 className="section-title">2. Offline-Cache anwenden</h2>
         <p className="text-sm text-[var(--muted)]">
           Wenn <code className="text-xs">bgg-enrichment.json</code> deployed ist:
           ein Klick schreibt Cover &amp; Details (deutsch) in die Datenbank (ohne BGG-Token).
@@ -195,15 +195,15 @@ export function ImportClient({
           </span>
         </div>
 
-        <div className="h-2 rounded-full bg-[var(--surface-2)] overflow-hidden">
+        <div className="progress-bar">
           <div
-            className="h-full bg-[var(--accent)] transition-all"
+            className="progress-bar-fill bg-[var(--accent)]"
             style={{ width: `${pct}%` }}
           />
         </div>
       </section>
 
-      <section className="card p-5 flex flex-col gap-3 border border-dashed border-[var(--surface-2)]">
+      <section className="card flex flex-col gap-3 border-dashed" style={{ padding: "var(--space-card)" }}>
         <h2 className="font-bold text-sm">Optional: BGG-XML-API (mit Token)</h2>
         <p className="text-sm text-[var(--muted)]">
           Wenn deine Application freigegeben ist: <code className="text-xs">BGG_TOKEN</code>{" "}

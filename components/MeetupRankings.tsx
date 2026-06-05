@@ -31,7 +31,7 @@ export function MeetupRankings({
   return (
     <section className="flex flex-col gap-3">
       <div className="flex flex-col gap-2">
-        <h2 className="text-xl font-bold">Ergebnisse</h2>
+        <h2 className="section-title">Ergebnisse</h2>
         <div className="tabs-scroll" role="tablist">
           {TABS.map((t) => (
             <button

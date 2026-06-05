@@ -77,7 +77,7 @@ export default async function MeetupDetail({
       <header className="flex flex-col gap-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-extrabold">{meetup.title}</h1>
+            <h1 className="page-title">{meetup.title}</h1>
             <p className="text-sm text-[var(--muted)] mt-1">
               {formatDate(meetup.scheduledAt)}
               {meetup.location ? ` · ${meetup.location}` : ""} · von{" "}
@@ -95,7 +95,7 @@ export default async function MeetupDetail({
         />
       </header>
 
-      <div className="card p-4 flex flex-col gap-4">
+      <div className="card flex flex-col gap-4" style={{ padding: "var(--space-card)" }}>
         <ExpectedCountControl
           meetupId={meetup.id}
           value={meetup.expectedPlayerCount}

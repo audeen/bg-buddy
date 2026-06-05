@@ -132,7 +132,7 @@ export function DuellClient({
 
   if (finished) {
     return (
-      <div className="card p-6 flex flex-col items-center gap-3 text-center">
+      <div className="card flex flex-col items-center gap-3 text-center" style={{ padding: "1.5rem" }}>
         <p className="text-lg font-bold">Duelle fertig!</p>
         <p className="text-[var(--muted)] text-sm">
           {duelsDone} von {DUEL_ROUND_COUNT} Duelle unter den gepickten Spielen
@@ -152,8 +152,8 @@ export function DuellClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="sticky-below-header -mx-1 px-1 py-2.5 bg-[var(--background)] border-b border-[var(--border)] flex items-center justify-between gap-3">
-        <span className="chip">{expected} Spieler ★</span>
+      <div className="sticky-below-header -mx-1 filter-bar flex items-center justify-between gap-3">
+        <span className="chip chip-accent">{expected} Spieler ★</span>
         <span className="text-sm font-semibold tabular-nums">
           Duell {duelsDone + 1} / {DUEL_ROUND_COUNT}
         </span>
@@ -193,12 +193,12 @@ export function DuellClient({
                 type="button"
                 disabled={busy || wonIds.has(g.id)}
                 onClick={() => choose(g.id)}
-                className="card overflow-hidden flex flex-col w-full hover:shadow-lg hover:ring-2 hover:ring-[var(--primary)] transition-all disabled:opacity-60 min-h-[44px]"
+                className="card card-game overflow-hidden flex flex-col w-full disabled:opacity-60 min-h-[44px]"
               >
                 <GameCover
                   src={g.thumbnail ?? g.image}
                   alt={g.name}
-                  className="w-full aspect-[4/3] sm:aspect-square"
+                  className="w-full aspect-[4/3] sm:aspect-square card-game-cover"
                 />
                 <span className="p-3 font-bold text-base text-center leading-tight">
                   {g.name}

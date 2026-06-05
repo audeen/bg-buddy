@@ -51,10 +51,10 @@ export default async function DuellPage({
           >
             ← {meetup.title}
           </Link>
-          <h1 className="text-2xl font-extrabold">Duell-Modus</h1>
+          <h1 className="page-title">Duell-Modus</h1>
           <MeetupSubnav meetupId={id} active="duell" pickPoolSize={ids.length} />
         </div>
-        <div className="card p-6 flex flex-col items-center gap-3 text-center">
+        <div className="card flex flex-col items-center gap-3 text-center" style={{ padding: "var(--space-card)" }}>
           <p className="text-lg font-bold">Noch zu wenige Direkt-Picks</p>
           <p className="text-[var(--muted)] text-sm">
             Für {expected} Spieler ★ braucht es mindestens zwei verschiedene
@@ -88,7 +88,7 @@ export default async function DuellPage({
         >
           ← {meetup.title}
         </Link>
-        <h1 className="text-2xl font-extrabold">Duell-Modus</h1>
+        <h1 className="page-title">Duell-Modus</h1>
         <MeetupSubnav meetupId={id} active="duell" pickPoolSize={ids.length} />
       </div>
 

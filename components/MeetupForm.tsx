@@ -12,15 +12,15 @@ export function MeetupForm() {
   );
 
   return (
-    <form action={formAction} className="card p-5 flex flex-col gap-4">
+    <form action={formAction} className="card flex flex-col gap-4" style={{ padding: "var(--space-card)" }}>
       <div>
-        <label className="text-sm font-semibold" htmlFor="title">
+        <label className="label" htmlFor="title">
           Titel
         </label>
         <input
           id="title"
           name="title"
-          className="input mt-1"
+          className="input"
           placeholder="z. B. Spieleabend bei Anna"
           required
         />
@@ -28,18 +28,18 @@ export function MeetupForm() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="text-sm font-semibold" htmlFor="scheduledAt">
+          <label className="label" htmlFor="scheduledAt">
             Datum &amp; Uhrzeit
           </label>
           <input
             id="scheduledAt"
             name="scheduledAt"
             type="datetime-local"
-            className="input mt-1"
+            className="input"
           />
         </div>
         <div>
-          <label className="text-sm font-semibold" htmlFor="expectedPlayerCount">
+          <label className="label" htmlFor="expectedPlayerCount">
             Erwartete Spieleranzahl
           </label>
           <input
@@ -49,19 +49,19 @@ export function MeetupForm() {
             min={1}
             max={20}
             defaultValue={4}
-            className="input mt-1"
+            className="input"
           />
         </div>
       </div>
 
       <div>
-        <label className="text-sm font-semibold" htmlFor="location">
+        <label className="label" htmlFor="location">
           Ort (optional)
         </label>
         <input
           id="location"
           name="location"
-          className="input mt-1"
+          className="input"
           placeholder="z. B. Annas Wohnzimmer"
         />
       </div>

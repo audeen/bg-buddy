@@ -29,15 +29,17 @@ export default async function GameDetail({
       </Link>
 
       <div className="grid gap-6 md:grid-cols-[260px_1fr]">
-        <GameCover
-          src={game.image ?? game.thumbnail}
-          alt={game.name}
-          className="w-full rounded-xl border border-[var(--border)] aspect-square md:aspect-auto"
-        />
+        <div className="card overflow-hidden" style={{ boxShadow: "var(--shadow-md)" }}>
+          <GameCover
+            src={game.image ?? game.thumbnail}
+            alt={game.name}
+            className="w-full aspect-square md:aspect-auto"
+          />
+        </div>
 
         <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold">{game.name}</h1>
+            <h1 className="page-title">{game.name}</h1>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
               {game.year ? (
                 <p className="text-[var(--muted)]">{game.year}</p>
@@ -53,14 +55,14 @@ export default async function GameDetail({
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <span className="chip">{playerRange(game.minPlayers, game.maxPlayers)}</span>
-            {time && <span className="chip">{time}</span>}
-            {weight && <span className="chip">{weight}</span>}
+          <div className="chip-row">
+            <span className="chip chip-meta">{playerRange(game.minPlayers, game.maxPlayers)}</span>
+            {time && <span className="chip chip-meta">{time}</span>}
+            {weight && <span className="chip chip-meta">{weight}</span>}
             {game.bggRating ? (
-              <span className="chip">★ {game.bggRating.toFixed(1)}</span>
+              <span className="chip chip-rating">★ {game.bggRating.toFixed(1)}</span>
             ) : null}
-            {game.ageRange && <span className="chip">ab {game.ageRange}</span>}
+            {game.ageRange && <span className="chip chip-meta">ab {game.ageRange}</span>}
             {game.isExpansion && <span className="chip">Erweiterung</span>}
           </div>
 
@@ -78,7 +80,7 @@ export default async function GameDetail({
           )}
 
           {game.categories.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="chip-row">
               {game.categories.map((c) => (
                 <span key={c} className="chip">
                   {c}
@@ -90,7 +92,7 @@ export default async function GameDetail({
       </div>
 
       {game.description ? (
-        <section className="card p-5 whitespace-pre-line leading-relaxed">
+        <section className="card whitespace-pre-line leading-relaxed" style={{ padding: "var(--space-card)" }}>
           {game.description}
         </section>
       ) : (
@@ -105,8 +107,8 @@ export default async function GameDetail({
 
       {game.mechanics.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h2 className="font-bold">Mechaniken</h2>
-          <div className="flex flex-wrap gap-1.5">
+          <h2 className="section-title">Mechaniken</h2>
+          <div className="chip-row">
             {game.mechanics.map((m) => (
               <span key={m} className="chip">
                 {m}

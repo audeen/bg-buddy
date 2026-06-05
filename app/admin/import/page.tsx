@@ -13,11 +13,11 @@ export default async function ImportPage() {
   if (!user) {
     return (
       <div className="container-app max-w-md flex flex-col gap-4">
-        <h1 className="text-2xl font-extrabold">Import</h1>
+        <h1 className="page-title">Import</h1>
         <p className="text-[var(--muted)]">
           Bitte melde dich an, um Spiele zu importieren.
         </p>
-        <div className="card p-5">
+        <div className="card" style={{ padding: "var(--space-card)" }}>
           <LoginForm />
         </div>
       </div>
@@ -33,7 +33,7 @@ export default async function ImportPage() {
   return (
     <div className="container-app max-w-2xl flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-extrabold">Sammlung importieren</h1>
+        <h1 className="page-title">Sammlung importieren</h1>
         <p className="text-[var(--muted)] text-sm">
           Aktuell {total} Spiele in der Datenbank ({expansions} Erweiterungen),
           davon {enriched} mit Cover &amp; Details.

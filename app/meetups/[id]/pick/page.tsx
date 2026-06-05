@@ -56,7 +56,7 @@ export default async function PickPage({
         >
           ← {meetup.title}
         </Link>
-        <h1 className="text-2xl font-extrabold">Direkt wählen</h1>
+        <h1 className="page-title">Direkt wählen</h1>
         <MeetupSubnav meetupId={id} active="pick" />
       </div>
 

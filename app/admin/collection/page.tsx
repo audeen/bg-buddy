@@ -12,11 +12,11 @@ export default async function CollectionAdminPage() {
   if (!user) {
     return (
       <div className="container-app max-w-md flex flex-col gap-4">
-        <h1 className="text-2xl font-extrabold">Sammlung bearbeiten</h1>
+        <h1 className="page-title">Sammlung bearbeiten</h1>
         <p className="text-[var(--muted)]">
           Bitte melde dich an, um Spiele zu verwalten.
         </p>
-        <div className="card p-5">
+        <div className="card" style={{ padding: "var(--space-card)" }}>
           <LoginForm />
         </div>
       </div>
@@ -31,7 +31,7 @@ export default async function CollectionAdminPage() {
   return (
     <div className="container-app max-w-2xl flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-extrabold">Sammlung bearbeiten</h1>
+        <h1 className="page-title">Sammlung bearbeiten</h1>
         <p className="text-[var(--muted)] text-sm">
           {games.length} {games.length === 1 ? "Spiel" : "Spiele"} in der Datenbank
         </p>

@@ -44,6 +44,7 @@ export function PickClient({
 
   const pickCount = picksForCount(picks, selected);
   const atLimit = pickCount >= MAX_PICKS_PER_COUNT;
+  const progressPct = (pickCount / MAX_PICKS_PER_COUNT) * 100;
 
   const availableCounts = useMemo(() => {
     const maxP = games.reduce((m, g) => Math.max(m, g.maxPlayers ?? 0), 0);
@@ -103,12 +104,15 @@ export function PickClient({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="sticky-below-header -mx-1 px-1 py-4 bg-[var(--background)] border-b border-[var(--border)] flex flex-col gap-3">
+      <div className="sticky-below-header -mx-1 filter-bar flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold">Spieleranzahl</span>
           <span className="text-sm font-bold tabular-nums">
             {pickCount} / {MAX_PICKS_PER_COUNT} gewählt
           </span>
+        </div>
+        <div className="progress-bar" role="progressbar" aria-valuenow={pickCount} aria-valuemin={0} aria-valuemax={MAX_PICKS_PER_COUNT} aria-label="Direkt-Picks">
+          <div className="progress-bar-fill" style={{ width: `${progressPct}%` }} />
         </div>
         <div className="tabs-scroll">
           {availableCounts.map((n) => (
@@ -119,14 +123,16 @@ export function PickClient({
                 setSelected(n);
                 setLimitMsg(null);
               }}
-              className={`btn btn-tab shrink-0 ${selected === n ? "btn-primary" : "btn-ghost"}`}
+              className={`btn btn-tab ${selected === n ? "btn-primary" : "btn-ghost"} ${
+                n === expected ? "btn-tab-expected" : ""
+              }`}
             >
               {n}
               {n === expected ? " ★" : ""}
             </button>
           ))}
         </div>
-        <p className="text-xs text-[var(--muted)] mt-0.5">
+        <p className="text-xs text-[var(--muted)] leading-relaxed">
           Bis zu {MAX_PICKS_PER_COUNT} pro Anzahl (★ = erwartet). Nochmal tippen
           entfernt die Stimme.
         </p>
@@ -142,7 +148,7 @@ export function PickClient({
           Keine Spiele für {selected} Spieler in der Sammlung.
         </p>
       ) : (
-        <ul className="grid gap-5 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {visible.map((g) => {
             const on = picks.has(`${g.id}:${selected}`);
             const disabled = !on && atLimit;

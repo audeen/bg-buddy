@@ -60,12 +60,13 @@ export function CollectionManagerClient({ games }: { games: CollectionGameRow[] 
         BGG nur Spiele, die du wirklich besitzt.
       </p>
 
-      <div className="card p-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+      <div className="filter-bar flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <label className="text-xs font-semibold text-[var(--muted)]">Suche</label>
+          <label className="label" htmlFor="collection-search">Suche</label>
           <input
+            id="collection-search"
             type="search"
-            className="input mt-1"
+            className="input"
             placeholder="Spielname…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -96,7 +97,7 @@ export function CollectionManagerClient({ games }: { games: CollectionGameRow[] 
           {filtered.map((g) => (
             <li
               key={g.id}
-              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4"
+              className="ranking-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4"
             >
               <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                 <Link
