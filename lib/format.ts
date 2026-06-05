@@ -23,3 +23,16 @@ export function weightLabel(weight: number | null): string | null {
   if (weight == null || weight <= 0) return null;
   return `Komplexität ${weight.toFixed(1)}/5`;
 }
+
+export function weightChipLabel(weight: number | null): string | null {
+  if (weight == null || weight <= 0) return null;
+  const level =
+    weight < 2
+      ? "Leicht"
+      : weight < 3
+        ? "Mittel"
+        : weight < 4
+          ? "Schwer"
+          : "Experte";
+  return `${level} · ${weight.toFixed(1)}`;
+}

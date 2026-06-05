@@ -1,4 +1,4 @@
-import { playerRange, playtime } from "@/lib/format";
+import { playerRange, playtime, weightChipLabel } from "@/lib/format";
 
 export type GameTagVariant = "accent" | "default" | "meta";
 
@@ -21,7 +21,7 @@ export interface GameTagSource {
   recommendedPlayerCounts: number[];
 }
 
-const MAX_TAGS = 5;
+const MAX_TAGS = 8;
 
 export function buildGameTags(
   game: GameTagSource,
@@ -38,34 +38,34 @@ export function buildGameTags(
     tags.push({ label, variant });
   }
 
-  if (playerCount != null) {
-    if (game.bestPlayerCounts.includes(playerCount)) {
-      add("Beste Wahl", "accent");
-    } else if (game.recommendedPlayerCounts.includes(playerCount)) {
-      add("Empfohlen", "default");
-    }
-  }
-
   const players = playerRange(game.minPlayers, game.maxPlayers);
   if (players !== "? Spieler") add(players, "meta");
 
   const time = playtime(game.minPlaytime, game.maxPlaytime, game.playingTime);
   if (time) add(time, "meta");
 
-  if (game.weight != null && game.weight > 0) {
-    add(`${game.weight.toFixed(1)}/5`, "meta");
-  }
+  const weight = weightChipLabel(game.weight);
+  if (weight) add(weight, "meta");
 
   if (game.bggRating != null && game.bggRating > 0) {
     add(`★ ${game.bggRating.toFixed(1)}`, "meta");
   }
 
-  for (const c of game.categories.slice(0, 2)) {
+  if (
+    playerCount != null &&
+    game.recommendedPlayerCounts.includes(playerCount) &&
+    !game.bestPlayerCounts.includes(playerCount)
+  ) {
+    add("Empfohlen", "default");
+  }
+
+  for (const c of game.categories.slice(0, 3)) {
     if (c.trim()) add(c.trim(), "default");
   }
 
-  const mechanic = game.mechanics[0]?.trim();
-  if (mechanic) add(mechanic, "default");
+  for (const m of game.mechanics.slice(0, 3)) {
+    if (m.trim()) add(m.trim(), "default");
+  }
 
   return tags;
 }
