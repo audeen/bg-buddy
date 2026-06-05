@@ -1,8 +1,30 @@
 import { prisma } from "@/lib/prisma";
-import { GameCard } from "@/components/GameCard";
+import { GamesClient } from "@/components/GamesClient";
 import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
+
+const gameSelect = {
+  id: true,
+  name: true,
+  year: true,
+  description: true,
+  thumbnail: true,
+  image: true,
+  minPlayers: true,
+  maxPlayers: true,
+  minPlaytime: true,
+  maxPlaytime: true,
+  playingTime: true,
+  weight: true,
+  bggRating: true,
+  ageRange: true,
+  isExpansion: true,
+  categories: true,
+  mechanics: true,
+  bestPlayerCounts: true,
+  recommendedPlayerCounts: true,
+} as const;
 
 type SearchParams = Promise<{
   q?: string;
@@ -34,13 +56,20 @@ export default async function GamesPage({
   }
 
   const [games, allForGenres] = await Promise.all([
-    prisma.game.findMany({ where, orderBy: { name: "asc" } }),
+    prisma.game.findMany({
+      where,
+      select: gameSelect,
+      orderBy: { name: "asc" },
+    }),
     prisma.game.findMany({ select: { categories: true } }),
   ]);
 
   const genres = Array.from(
     new Set(allForGenres.flatMap((g) => g.categories)),
   ).sort((a, b) => a.localeCompare(b));
+
+  const playerCount =
+    players && Number.isFinite(players) ? players : undefined;
 
   return (
     <div className="container-app flex flex-col gap-6">
@@ -104,26 +133,7 @@ export default async function GamesPage({
         </button>
       </form>
 
-      {games.length === 0 ? (
-        <p className="text-[var(--muted)]">
-          Keine Spiele gefunden. Passe die Filter an oder importiere zuerst deine
-          Sammlung.
-        </p>
-      ) : (
-        <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          {games.map((g) => (
-            <li key={g.id}>
-              <GameCard
-                game={g}
-                href={`/games/${g.id}`}
-                playerCount={
-                  players && Number.isFinite(players) ? players : undefined
-                }
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+      <GamesClient games={games} playerCount={playerCount} />
     </div>
   );
 }
