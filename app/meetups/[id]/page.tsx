@@ -6,6 +6,7 @@ import { ExpectedCountControl } from "@/components/ExpectedCountControl";
 import { MeetupDeleteButton } from "@/components/MeetupDeleteButton";
 import { MeetupRankings } from "@/components/MeetupRankings";
 import { MeetupSubnav } from "@/components/MeetupSubnav";
+import { PageHeader } from "@/components/PageHeader";
 import {
   buildCombinedByCount,
   buildPicksByCount,
@@ -70,20 +71,13 @@ export default async function MeetupDetail({
 
   return (
     <div className="container-app flex flex-col gap-6">
-      <Link href="/" className="text-sm text-[var(--muted)] hover:underline">
-        ← alle Treffen
-      </Link>
-
-      <header className="flex flex-col gap-3">
+      <PageHeader id="meetup-page-top" eyebrow="Treffen" title={meetup.title}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="page-title">{meetup.title}</h1>
-            <p className="text-sm text-[var(--muted)] mt-1">
-              {formatDate(meetup.scheduledAt)}
-              {meetup.location ? ` · ${meetup.location}` : ""} · von{" "}
-              {meetup.createdBy.name}
-            </p>
-          </div>
+          <p className="text-sm text-[var(--muted)]">
+            {formatDate(meetup.scheduledAt)}
+            {meetup.location ? ` · ${meetup.location}` : ""} · von{" "}
+            {meetup.createdBy.name}
+          </p>
           {user && (
             <MeetupDeleteButton meetupId={meetup.id} title={meetup.title} />
           )}
@@ -93,7 +87,7 @@ export default async function MeetupDetail({
           active="detail"
           pickPoolSize={pickPoolSize}
         />
-      </header>
+      </PageHeader>
 
       <div className="card flex flex-col gap-4" style={{ padding: "var(--space-card)" }}>
         <ExpectedCountControl

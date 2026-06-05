@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { GameCard } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameDetailData } from "@/components/GameDetailView";
@@ -32,11 +32,13 @@ export function PickClient({
   expected,
   games,
   initialPicks,
+  scrollTargetId,
 }: {
   meetupId: string;
   expected: number;
   games: PickGame[];
   initialPicks: { gameId: number; playerCount: number }[];
+  scrollTargetId: string;
 }) {
   const [selected, setSelected] = useState(expected);
   const [picks, setPicks] = useState<Set<string>>(
@@ -45,11 +47,10 @@ export function PickClient({
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const [detailGame, setDetailGame] = useState<PickGame | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const filterRef = useRef<HTMLDivElement>(null);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
-    const el = filterRef.current;
+    const el = document.getElementById(scrollTargetId);
     if (!el) return;
 
     const observer = new IntersectionObserver(
@@ -58,10 +59,12 @@ export function PickClient({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [scrollTargetId]);
 
-  function scrollToFilters() {
-    filterRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  function scrollToPageTop() {
+    document
+      .getElementById(scrollTargetId)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   const pickCount = picksForCount(picks, selected);
@@ -126,11 +129,7 @@ export function PickClient({
 
   return (
     <div className="flex flex-col gap-6">
-      <div
-        ref={filterRef}
-        id="pick-filters"
-        className="-mx-1 filter-bar flex flex-col gap-3 scroll-mt-[var(--header-height)]"
-      >
+      <div className="-mx-1 filter-bar flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold">Spieleranzahl</span>
           <span className="text-sm font-bold tabular-nums">
@@ -203,10 +202,10 @@ export function PickClient({
       {showScrollTop && (
         <button
           type="button"
-          onClick={scrollToFilters}
+          onClick={scrollToPageTop}
           className={`scroll-to-top btn btn-ghost ${atLimit ? "scroll-to-top-above-footer" : ""}`}
           aria-label="Nach oben"
-          title="Spieleranzahl"
+          title="Direkt wählen"
         >
           ↑
         </button>

@@ -87,6 +87,14 @@ body {
     }
   }
 
+  .page-eyebrow {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
   .page-title {
     font-size: 1.5rem;
     font-weight: 800;

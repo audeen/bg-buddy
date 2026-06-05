@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { GameDetailView } from "@/components/GameDetailView";
+import { PageHeader } from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +19,7 @@ export default async function GameDetail({
 
   return (
     <div className="container-app flex flex-col gap-6">
-      <Link href="/games" className="text-sm text-[var(--muted)] hover:underline">
-        ← zurück zur Sammlung
-      </Link>
+      <PageHeader eyebrow="Spielesammlung" />
 
       <GameDetailView game={game} />
     </div>
