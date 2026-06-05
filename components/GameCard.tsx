@@ -118,7 +118,7 @@ function DetailsButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="absolute top-2.5 left-2.5 z-10 bg-[var(--surface)] text-[var(--foreground)] rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold border border-[var(--border)] hover:bg-[var(--surface-2)]"
+      className="absolute top-2.5 left-2.5 z-[1] bg-[var(--surface)] text-[var(--foreground)] rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold border border-[var(--border)] hover:bg-[var(--surface-2)]"
       style={{ boxShadow: "var(--shadow-md)" }}
       aria-label="Details anzeigen"
     >

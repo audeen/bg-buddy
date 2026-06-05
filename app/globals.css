@@ -450,4 +450,39 @@ body {
     padding: var(--space-card);
     -webkit-overflow-scrolling: touch;
   }
+
+  .scroll-to-top {
+    position: fixed;
+    right: 1rem;
+    z-index: 20;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 999px;
+    padding: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    bottom: calc(
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 1rem
+    );
+  }
+
+  .scroll-to-top-above-footer {
+    bottom: calc(
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 5rem
+    );
+  }
+
+  @media (min-width: 768px) {
+    .scroll-to-top {
+      bottom: 1.5rem;
+    }
+
+    .scroll-to-top-above-footer {
+      bottom: 1.5rem;
+    }
+  }
 }

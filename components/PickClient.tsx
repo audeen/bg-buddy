@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { GameCard } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameDetailData } from "@/components/GameDetailView";
@@ -44,7 +44,25 @@ export function PickClient({
   );
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const [detailGame, setDetailGame] = useState<PickGame | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
   const [, startTransition] = useTransition();
+
+  useEffect(() => {
+    const el = filterRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowScrollTop(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  function scrollToFilters() {
+    filterRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   const pickCount = picksForCount(picks, selected);
   const atLimit = pickCount >= MAX_PICKS_PER_COUNT;
@@ -108,7 +126,11 @@ export function PickClient({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="sticky-below-header -mx-1 filter-bar flex flex-col gap-3">
+      <div
+        ref={filterRef}
+        id="pick-filters"
+        className="-mx-1 filter-bar flex flex-col gap-3 scroll-mt-[var(--header-height)]"
+      >
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold">Spieleranzahl</span>
           <span className="text-sm font-bold tabular-nums">
@@ -177,6 +199,18 @@ export function PickClient({
         onClose={() => setDetailGame(null)}
         playerCount={selected}
       />
+
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={scrollToFilters}
+          className={`scroll-to-top btn btn-ghost ${atLimit ? "scroll-to-top-above-footer" : ""}`}
+          aria-label="Nach oben"
+          title="Spieleranzahl"
+        >
+          ↑
+        </button>
+      )}
 
       {atLimit && (
         <div className="sticky-above-nav -mx-4 px-4 py-3 mt-2 bg-[var(--background)] border-t border-[var(--border)] flex flex-col items-center gap-2 sm:static sm:border-0 sm:mx-0 sm:px-0 sm:mt-0">
