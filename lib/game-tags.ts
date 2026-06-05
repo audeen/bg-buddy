@@ -53,11 +53,6 @@ export function buildGameTags(
 
   if (playerCount != null && game.bestPlayerCounts.includes(playerCount)) {
     add(`Best · ${playerCount}P`, "accent");
-  } else if (
-    playerCount != null &&
-    game.recommendedPlayerCounts.includes(playerCount)
-  ) {
-    add(`Empf. · ${playerCount}P`, "meta");
   }
 
   for (const c of game.categories.slice(0, 3)) {
