@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { GameCover } from "@/components/GameCover";
-import { playerRange, playtime } from "@/lib/format";
+import { GameCard } from "@/components/GameCard";
 import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -111,36 +109,18 @@ export default async function GamesPage({
           Sammlung.
         </p>
       ) : (
-        <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          {games.map((g) => {
-            const time = playtime(g.minPlaytime, g.maxPlaytime, g.playingTime);
-            return (
-              <li key={g.id}>
-                <Link
-                  href={`/games/${g.id}`}
-                  className="card overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow"
-                >
-                  <GameCover
-                    src={g.thumbnail ?? g.image}
-                    alt={g.name}
-                    className="w-full aspect-square"
-                  />
-                  <div className="p-3 flex flex-col gap-1">
-                    <span className="font-semibold leading-tight line-clamp-2">
-                      {g.name}
-                    </span>
-                    <span className="text-xs text-[var(--muted)]">
-                      {playerRange(g.minPlayers, g.maxPlayers)}
-                      {time ? ` · ${time}` : ""}
-                    </span>
-                    {g.isExpansion && (
-                      <span className="chip w-fit">Erweiterung</span>
-                    )}
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
+        <ul className="grid gap-5 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {games.map((g) => (
+            <li key={g.id}>
+              <GameCard
+                game={g}
+                href={`/games/${g.id}`}
+                playerCount={
+                  players && Number.isFinite(players) ? players : undefined
+                }
+              />
+            </li>
+          ))}
         </ul>
       )}
     </div>

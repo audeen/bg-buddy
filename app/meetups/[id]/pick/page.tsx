@@ -29,7 +29,15 @@ export default async function PickPage({
         image: true,
         minPlayers: true,
         maxPlayers: true,
+        minPlaytime: true,
+        maxPlaytime: true,
+        playingTime: true,
+        weight: true,
+        bggRating: true,
+        categories: true,
+        mechanics: true,
         bestPlayerCounts: true,
+        recommendedPlayerCounts: true,
       },
       orderBy: { name: "asc" },
     }),
@@ -40,8 +48,8 @@ export default async function PickPage({
   ]);
 
   return (
-    <div className="container-app flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
+    <div className="container-app flex flex-col gap-6">
+      <div className="flex flex-col gap-3">
         <Link
           href={`/meetups/${id}`}
           className="text-sm text-[var(--muted)] hover:underline"

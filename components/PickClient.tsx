@@ -1,19 +1,11 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { GameCover } from "@/components/GameCover";
+import { GameCard, type GameCardGame } from "@/components/GameCard";
 import { togglePickVoteAction } from "@/app/actions";
 import { MAX_PICKS_PER_COUNT } from "@/lib/vote-limits";
 
-export interface PickGame {
-  id: number;
-  name: string;
-  thumbnail: string | null;
-  image: string | null;
-  minPlayers: number | null;
-  maxPlayers: number | null;
-  bestPlayerCounts: number[];
-}
+export type PickGame = GameCardGame;
 
 function eligible(g: PickGame, n: number): boolean {
   const min = g.minPlayers ?? 1;
@@ -110,8 +102,8 @@ export function PickClient({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="sticky-below-header -mx-1 px-1 py-3 bg-[var(--background)] border-b border-[var(--border)] flex flex-col gap-2">
+    <div className="flex flex-col gap-6">
+      <div className="sticky-below-header -mx-1 px-1 py-4 bg-[var(--background)] border-b border-[var(--border)] flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold">Spieleranzahl</span>
           <span className="text-sm font-bold tabular-nums">
@@ -134,7 +126,7 @@ export function PickClient({
             </button>
           ))}
         </div>
-        <p className="text-xs text-[var(--muted)]">
+        <p className="text-xs text-[var(--muted)] mt-0.5">
           Bis zu {MAX_PICKS_PER_COUNT} pro Anzahl (★ = erwartet). Nochmal tippen
           entfernt die Stimme.
         </p>
@@ -150,46 +142,19 @@ export function PickClient({
           Keine Spiele für {selected} Spieler in der Sammlung.
         </p>
       ) : (
-        <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid gap-5 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {visible.map((g) => {
             const on = picks.has(`${g.id}:${selected}`);
-            const best = g.bestPlayerCounts.includes(selected);
             const disabled = !on && atLimit;
             return (
               <li key={g.id}>
-                <button
-                  type="button"
-                  onClick={() => toggle(g.id)}
+                <GameCard
+                  game={g}
+                  playerCount={selected}
+                  selected={on}
                   disabled={disabled}
-                  className={`card overflow-hidden flex flex-col h-full w-full text-left transition-all ${
-                    on
-                      ? "ring-2 ring-[var(--accent)] shadow-md"
-                      : disabled
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:shadow-md"
-                  }`}
-                >
-                  <div className="relative">
-                    <GameCover
-                      src={g.thumbnail ?? g.image}
-                      alt={g.name}
-                      className="w-full aspect-square"
-                    />
-                    {on && (
-                      <span className="absolute top-2 right-2 bg-[var(--accent)] text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold">
-                        ✓
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-2.5 flex flex-col gap-1">
-                    <span className="font-semibold text-sm leading-tight line-clamp-2">
-                      {g.name}
-                    </span>
-                    {best && (
-                      <span className="chip w-fit">Beste Wahl</span>
-                    )}
-                  </div>
-                </button>
+                  onClick={() => toggle(g.id)}
+                />
               </li>
             );
           })}
