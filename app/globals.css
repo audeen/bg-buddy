@@ -447,6 +447,109 @@ body {
     }
   }
 
+  .duel-vs-pulse {
+    animation: duel-vs-pulse 2.5s ease-in-out infinite;
+  }
+
+  .duel-arena .card-game:disabled:not(.duel-card-winner):not(.duel-card-loser) {
+    opacity: 0.6;
+  }
+
+  .duel-arena .card-game:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .duel-arena .card-game:not(:disabled):active {
+    transform: scale(0.98);
+  }
+
+  .duel-card-enter-left {
+    animation: duel-card-enter-left 0.3s ease-out both;
+  }
+
+  .duel-card-enter-right {
+    animation: duel-card-enter-right 0.3s ease-out 0.08s both;
+  }
+
+  .duel-card-winner {
+    animation: duel-card-winner 0.4s ease-out forwards;
+    z-index: 2;
+  }
+
+  .duel-card-loser {
+    animation: duel-card-loser 0.4s ease-out forwards;
+    pointer-events: none;
+  }
+
+  @keyframes duel-vs-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.65;
+    }
+  }
+
+  @keyframes duel-card-enter-left {
+    from {
+      opacity: 0;
+      transform: translateX(-1.25rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes duel-card-enter-right {
+    from {
+      opacity: 0;
+      transform: translateX(1.25rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes duel-card-winner {
+    to {
+      transform: scale(1.03);
+      box-shadow:
+        0 0 0 2px var(--accent),
+        var(--shadow-lg);
+    }
+  }
+
+  @keyframes duel-card-loser {
+    to {
+      transform: scale(0.95);
+      opacity: 0.35;
+      filter: grayscale(40%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .duel-card-enter-left,
+    .duel-card-enter-right,
+    .duel-card-winner,
+    .duel-card-loser,
+    .duel-vs-pulse {
+      animation: none;
+    }
+
+    .duel-arena .card-game:not(:disabled):hover {
+      transform: none;
+    }
+
+    .duel-card-winner {
+      outline: 2px solid var(--accent);
+      outline-offset: 0;
+    }
+  }
+
   .ranking-row {
     transition: background 0.15s ease;
   }

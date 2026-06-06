@@ -6,6 +6,17 @@ import { GameCover } from "@/components/GameCover";
 import { duelVoteAction } from "@/app/actions";
 import { pairKey, type DuelPair, type DuelPhase } from "@/lib/duel-pairs";
 
+const VOTE_ANIMATION_MS = 400;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 export interface DuellGame {
   id: number;
   name: string;
@@ -16,18 +27,31 @@ export interface DuellGame {
 function DuelChoiceCard({
   game,
   disabled,
+  side,
+  outcome,
   onClick,
 }: {
   game: DuellGame;
   disabled: boolean;
+  side: "left" | "right";
+  outcome?: "winner" | "loser";
   onClick: () => void;
 }) {
+  const enterClass =
+    side === "left" ? "duel-card-enter-left" : "duel-card-enter-right";
+  const outcomeClass =
+    outcome === "winner"
+      ? "duel-card-winner"
+      : outcome === "loser"
+        ? "duel-card-loser"
+        : "";
+
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="card card-game overflow-hidden flex flex-col h-full min-h-0 w-full disabled:opacity-60 min-h-[44px]"
+      className={`card card-game overflow-hidden flex flex-col h-full min-h-0 w-full min-h-[44px] ${enterClass} ${outcomeClass}`}
     >
       <div className="relative flex-1 min-h-0 w-full">
         <GameCover
@@ -72,6 +96,9 @@ export function DuellClient({
   );
   const [busy, setBusy] = useState(false);
   const [voteError, setVoteError] = useState<string | null>(null);
+  const [voteOutcome, setVoteOutcome] = useState<{ winnerId: number } | null>(
+    null,
+  );
 
   const pendingPairs = useMemo(
     () =>
@@ -86,22 +113,32 @@ export function DuellClient({
   const gameA = current ? gameMap.get(current.a) : null;
   const gameB = current ? gameMap.get(current.b) : null;
 
+  function outcomeFor(gameId: number): "winner" | "loser" | undefined {
+    if (!voteOutcome) return undefined;
+    if (voteOutcome.winnerId === gameId) return "winner";
+    return "loser";
+  }
+
   async function choose(winnerId: number, loserId: number) {
     if (busy || finished || !current) return;
     setVoteError(null);
     setBusy(true);
+    setVoteOutcome({ winnerId });
+
     const key = pairKey(current.a, current.b);
+    const animationMs = prefersReducedMotion() ? 0 : VOTE_ANIMATION_MS;
+
     try {
-      const res = await duelVoteAction(
-        meetupId,
-        winnerId,
-        loserId,
-        expected,
-      );
+      const [res] = await Promise.all([
+        duelVoteAction(meetupId, winnerId, loserId, expected),
+        sleep(animationMs),
+      ]);
       if (res && "error" in res && res.error) {
         setVoteError(res.error);
+        setVoteOutcome(null);
         return;
       }
+      setVoteOutcome(null);
       setCompleted((prev) => new Set(prev).add(key));
     } finally {
       setBusy(false);
@@ -142,6 +179,9 @@ export function DuellClient({
     );
   }
 
+  const currentKey = current ? pairKey(current.a, current.b) : null;
+  const vsPulseClass = busy ? "" : "duel-vs-pulse";
+
   return (
     <div className="flex flex-col gap-3">
       <div className="sticky-below-header -mx-1 filter-bar flex flex-col gap-1 sm:gap-2">
@@ -168,27 +208,34 @@ export function DuellClient({
         Was möchtest du lieber mit {expected} Spielern spielen?
       </p>
 
-      {current && gameA && gameB ? (
-        <div className="duel-arena -mx-1">
+      {current && gameA && gameB && currentKey ? (
+        <div key={currentKey} className="duel-arena -mx-1">
           <div className="duel-arena-grid">
             <DuelChoiceCard
               game={gameA}
+              side="left"
+              outcome={outcomeFor(gameA.id)}
               disabled={busy}
               onClick={() => choose(gameA.id, current.b)}
             />
             <div className="hidden sm:flex items-center justify-center self-center">
-              <span className="duel-vs-badge" aria-hidden>
+              <span
+                className={`duel-vs-badge ${vsPulseClass}`}
+                aria-hidden
+              >
                 VS
               </span>
             </div>
             <DuelChoiceCard
               game={gameB}
+              side="right"
+              outcome={outcomeFor(gameB.id)}
               disabled={busy}
               onClick={() => choose(gameB.id, current.a)}
             />
           </div>
           <span
-            className="duel-vs-badge duel-vs-badge-overlay"
+            className={`duel-vs-badge duel-vs-badge-overlay ${vsPulseClass}`}
             aria-hidden
           >
             VS
