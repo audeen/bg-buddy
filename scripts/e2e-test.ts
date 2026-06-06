@@ -99,16 +99,20 @@ async function main() {
   }
 
   console.log("\n== 4. Voting-Flow ==");
-  const user = await prisma.user.upsert({
-    where: { name: "Testspieler" },
-    update: {},
-    create: { name: "Testspieler" },
-  });
+  const users = await Promise.all(
+    ["Testspieler A", "Testspieler B", "Testspieler C", "Testspieler D"].map(
+      (name) =>
+        prisma.user.upsert({
+          where: { name },
+          update: {},
+          create: { name },
+        }),
+    ),
+  );
   const meetup = await prisma.meetup.create({
-    data: { title: "Testabend", expectedPlayerCount: 4, createdById: user.id },
+    data: { title: "Testabend", expectedPlayerCount: 4, createdById: users[0].id },
   });
 
-  // Picks fuer Duell-Pool + Duell-Siege bei 4 Spielern
   const eligible = games.filter(
     (g) =>
       !g.isExpansion &&
@@ -117,31 +121,46 @@ async function main() {
   );
   const top = eligible[0];
   const other = eligible[1];
+  const third = eligible[2];
+
+  for (let i = 0; i < users.length; i++) {
+    const u = users[i];
+    await prisma.vote.create({
+      data: {
+        meetupId: meetup.id,
+        userId: u.id,
+        gameId: top.id,
+        playerCount: 4,
+        mode: "PICK",
+        points: 1,
+      },
+    });
+    await prisma.vote.create({
+      data: {
+        meetupId: meetup.id,
+        userId: u.id,
+        gameId: other.id,
+        playerCount: 4,
+        mode: "PICK",
+        points: 1,
+      },
+    });
+    await prisma.vote.create({
+      data: {
+        meetupId: meetup.id,
+        userId: u.id,
+        gameId: third.id,
+        playerCount: 4,
+        mode: "PICK",
+        points: 1,
+      },
+    });
+  }
 
   await prisma.vote.create({
     data: {
       meetupId: meetup.id,
-      userId: user.id,
-      gameId: top.id,
-      playerCount: 4,
-      mode: "PICK",
-      points: 2,
-    },
-  });
-  await prisma.vote.create({
-    data: {
-      meetupId: meetup.id,
-      userId: user.id,
-      gameId: other.id,
-      playerCount: 4,
-      mode: "PICK",
-      points: 1,
-    },
-  });
-  await prisma.vote.create({
-    data: {
-      meetupId: meetup.id,
-      userId: user.id,
+      userId: users[0].id,
       gameId: top.id,
       opponentGameId: other.id,
       playerCount: 4,
@@ -165,7 +184,7 @@ async function main() {
   const topDuelPts = duelRanking.find((r) => r.gameId === top.id)?._sum.points;
   const topPickPts = pickRanking.find((r) => r.gameId === top.id)?._sum.points;
   const topCombinedScore = (topPickPts ?? 0) + (topDuelPts ?? 0);
-  if (topDuelPts !== 1 || topPickPts !== 2 || topCombinedScore !== 3) {
+  if (topDuelPts !== 1 || topPickPts !== 4 || topCombinedScore !== 5) {
     throw new Error(
       `Aggregation fehlgeschlagen: Duell=${topDuelPts}, Pick=${topPickPts}, Gesamt=${topCombinedScore}`,
     );
@@ -177,7 +196,9 @@ async function main() {
 
   console.log("\n== Cleanup Testdaten ==");
   await prisma.meetup.delete({ where: { id: meetup.id } });
-  await prisma.user.delete({ where: { id: user.id } });
+  for (const u of users) {
+    await prisma.user.delete({ where: { id: u.id } });
+  }
   console.log("OK");
 }
 

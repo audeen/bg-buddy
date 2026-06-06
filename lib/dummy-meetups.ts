@@ -6,7 +6,7 @@ import { poolGameIds, buildPickCounts } from "@/lib/pick-pool";
 
 export const DUMMY_MEETUP_PREFIX = "🧪 Dummy: ";
 
-export const DUMMY_SCENARIO_COUNT = 6;
+export const DUMMY_SCENARIO_COUNT = 7;
 
 export const DUMMY_USER_NAMES = [
   "Dummy Alice",
@@ -35,7 +35,9 @@ type Scenario = {
   label: string;
   poolSize: number;
   /** How many picks the logged-in creator still needs (1–3). */
-  creatorPicksLeft: 1 | 2 | 3;
+  creatorPicksLeft?: 1 | 2 | 3;
+  /** All four dummy users with 3/3 picks — duell-ready. */
+  allReady?: boolean;
 };
 
 const SCENARIOS: Scenario[] = [
@@ -45,6 +47,7 @@ const SCENARIOS: Scenario[] = [
   { label: "Gruppenduelle · dir 3 Picks", poolSize: POOL_GROUP, creatorPicksLeft: 3 },
   { label: "Gruppenduelle · dir 2 Picks", poolSize: POOL_GROUP, creatorPicksLeft: 2 },
   { label: "Gruppenduelle · dir 1 Pick", poolSize: POOL_GROUP, creatorPicksLeft: 1 },
+  { label: "Duell bereit · 4/4", poolSize: POOL_FULL, allReady: true },
 ];
 
 export async function ensureDummyUsers(
@@ -125,6 +128,22 @@ function dummyPicksForPool(users: DummyUsers, pool: number[]): PickRow[] {
   return picks;
 }
 
+function fullPicksForAll(users: DummyUsers, pool: number[]): PickRow[] {
+  const picks: PickRow[] = [];
+  let gameIdx = 0;
+  for (const userId of users.all) {
+    for (let i = 0; i < MAX_PICK_POINTS; i++) {
+      picks.push({
+        userId,
+        gameId: pool[gameIdx % pool.length],
+        points: 1,
+      });
+      gameIdx += 1;
+    }
+  }
+  return picks;
+}
+
 function creatorPicks(
   createdById: string,
   pool: number[],
@@ -196,10 +215,12 @@ export async function createAllDummyMeetups(
 
   for (const scenario of SCENARIOS) {
     const pool = games.slice(0, scenario.poolSize);
-    const picks = [
-      ...dummyPicksForPool(users, pool),
-      ...creatorPicks(createdById, pool, scenario.creatorPicksLeft),
-    ];
+    const picks = scenario.allReady
+      ? fullPicksForAll(users, pool)
+      : [
+          ...dummyPicksForPool(users, pool),
+          ...creatorPicks(createdById, pool, scenario.creatorPicksLeft ?? 3),
+        ];
     const id = await createMeetup(db, createdById, scenario.label);
     await insertPicks(db, id, picks);
     meetupIds.push(id);

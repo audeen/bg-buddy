@@ -9,9 +9,11 @@ import {
   buildDuellPlan,
   buildUserPointsMap,
   participantIdsFromPicks,
+  getDuelProgressForCount,
 } from "@/lib/duel-pairs";
 import { completedPairKeysForUser } from "@/lib/copeland";
-import { getDuelProgressForCount } from "@/lib/duel-pairs";
+import { loadPickPhaseSummary } from "@/lib/pick-phase";
+import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +31,8 @@ export default async function DuellPage({
 
   const expected = meetup.expectedPlayerCount;
 
-  const [groupPicks, duelVotes] = await Promise.all([
+  const [{ phase, summary }, groupPicks, duelVotes] = await Promise.all([
+    loadPickPhaseSummary(id, expected, prisma),
     prisma.vote.findMany({
       where: { meetupId: id, mode: "PICK", playerCount: expected },
       select: { userId: true, gameId: true, points: true },
@@ -56,7 +59,7 @@ export default async function DuellPage({
     .filter((p) => p.userId === user.id)
     .reduce((s, p) => s + p.points, 0);
 
-  if (ids.length < 2) {
+  if (phase.poolSize < 2) {
     return (
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
@@ -87,9 +90,70 @@ export default async function DuellPage({
         >
           <p className="text-lg font-bold">Erst Stimmen vergeben</p>
           <p className="text-[var(--muted)] text-sm">
-            Du brauchst mindestens 1 Stimme bei {expected} Spielern ★, um
-            Duelle zu spielen.
+            Du brauchst {MAX_PICK_POINTS}/{MAX_PICK_POINTS} Stimmen bei{" "}
+            {expected} Spielern ★, um Duelle zu spielen.
           </p>
+          <Link href={`/meetups/${id}/pick`} className="btn btn-primary btn-lg">
+            Stimmen setzen
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (myPickSum < MAX_PICK_POINTS) {
+    return (
+      <div className="container-app flex flex-col gap-4">
+        <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
+        <div
+          className="card flex flex-col items-center gap-3 text-center"
+          style={{ padding: "var(--space-card)" }}
+        >
+          <p className="text-lg font-bold">Noch nicht alle Stimmen vergeben</p>
+          <p className="text-[var(--muted)] text-sm">
+            Du hast {myPickSum}/{MAX_PICK_POINTS} Stimmen bei {expected}{" "}
+            Spielern ★. Setze alle {MAX_PICK_POINTS} Stimmen, bevor du
+            duellieren kannst.
+          </p>
+          <p className="text-[var(--muted)] text-sm">
+            Gruppe: {summary.fullPickCount}/{summary.expectedPlayerCount}{" "}
+            Spieler fertig.
+          </p>
+          <Link href={`/meetups/${id}/pick`} className="btn btn-primary btn-lg">
+            Stimmen setzen
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!phase.readyForDuels) {
+    return (
+      <div className="container-app flex flex-col gap-4">
+        <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
+        <div
+          className="card flex flex-col items-center gap-3 text-center"
+          style={{ padding: "var(--space-card)" }}
+        >
+          <p className="text-lg font-bold">Warten auf alle Stimmen</p>
+          <p className="text-[var(--muted)] text-sm">
+            Duell-Modus startet, wenn {expected} Spieler je {MAX_PICK_POINTS}/
+            {MAX_PICK_POINTS} Stimmen bei ★ gesetzt haben.
+          </p>
+          <p className="text-sm font-semibold tabular-nums">
+            {summary.fullPickCount}/{summary.expectedPlayerCount} Spieler fertig
+          </p>
+          {summary.partialPickerNames.length > 0 && (
+            <p className="text-[var(--muted)] text-sm">
+              Unvollständig: {summary.partialPickerNames.join(", ")}
+            </p>
+          )}
+          {summary.missingCount > 0 && summary.partialPickerNames.length === 0 && (
+            <p className="text-[var(--muted)] text-sm">
+              Es fehlen noch {summary.missingCount} Spieler mit{" "}
+              {MAX_PICK_POINTS}/{MAX_PICK_POINTS} Stimmen.
+            </p>
+          )}
           <Link href={`/meetups/${id}/pick`} className="btn btn-primary btn-lg">
             Stimmen setzen
           </Link>

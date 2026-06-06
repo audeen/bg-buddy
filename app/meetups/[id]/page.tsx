@@ -12,6 +12,8 @@ import {
 } from "@/lib/vote-aggregation";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import { getDuelProgressForCount } from "@/lib/duel-pairs";
+import { getPickPhaseState } from "@/lib/pick-phase";
+import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -56,12 +58,19 @@ export default async function MeetupDetail({
   );
 
   const expected = meetup.expectedPlayerCount;
+  const pickPhase = await getPickPhaseState(id, expected, prisma);
   const groupPicks = votes.filter(
     (v) => v.mode === "PICK" && v.playerCount === expected,
   );
   const pickCounts = buildPickCounts(groupPicks);
   const poolIds = poolGameIds(pickCounts);
   const pickPoolSize = poolIds.length;
+  const duellLinkDisabled = !pickPhase.readyForDuels;
+  const duellLinkTitle = pickPhase.readyForDuels
+    ? undefined
+    : pickPhase.poolSize < 2
+      ? "Mindestens zwei nominierte Spiele nötig"
+      : `${pickPhase.fullPickCount}/${pickPhase.expectedPlayerCount} Spieler mit ${MAX_PICK_POINTS}/${MAX_PICK_POINTS} Stimmen bei ★`;
 
   const duelRows = votes
     .filter(
@@ -111,17 +120,25 @@ export default async function MeetupDetail({
           </Link>
           <Link
             href={`/meetups/${meetup.id}/duell`}
-            className={`btn btn-ghost btn-lg sm:flex-1 ${pickPoolSize < 2 ? "opacity-60" : ""}`}
-            title={
-              pickPoolSize < 2
-                ? "Mindestens zwei gepickte Spiele nötig"
-                : undefined
-            }
+            className={`btn btn-ghost btn-lg sm:flex-1 ${duellLinkDisabled ? "opacity-60" : ""}`}
+            title={duellLinkTitle}
           >
             Duell-Modus
             {pickPoolSize >= 2 ? ` (${pickPoolSize})` : ""}
           </Link>
         </div>
+        {!pickPhase.readyForDuels && pickPhase.poolSize >= 2 && (
+          <p className="text-xs text-[var(--muted)]">
+            Duell-Modus ab {pickPhase.expectedPlayerCount} Spielern mit{" "}
+            {MAX_PICK_POINTS}/{MAX_PICK_POINTS} Stimmen bei ★ — aktuell{" "}
+            {pickPhase.fullPickCount}/{pickPhase.expectedPlayerCount}.
+          </p>
+        )}
+        {pickPhase.picksLocked && (
+          <p className="text-xs text-[var(--muted)]">
+            Stimmen bei ★ sind gesperrt — Duelle laufen.
+          </p>
+        )}
       </div>
 
       <MeetupRankings

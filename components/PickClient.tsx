@@ -6,6 +6,7 @@ import { GameCard } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameDetailData } from "@/components/GameDetailView";
 import { setPickPointsAction } from "@/app/actions";
+import type { PickPhaseSummary } from "@/lib/pick-phase";
 import { MAX_PICK_POINTS, MAX_POINTS_PER_GAME } from "@/lib/vote-limits";
 
 export type PickGame = GameDetailData;
@@ -37,12 +38,18 @@ export function PickClient({
   games,
   initialPicks,
   scrollTargetId,
+  picksLocked,
+  readyForDuels,
+  pickPhaseSummary,
 }: {
   meetupId: string;
   expected: number;
   games: PickGame[];
   initialPicks: { gameId: number; playerCount: number; points: number }[];
   scrollTargetId: string;
+  picksLocked: boolean;
+  readyForDuels: boolean;
+  pickPhaseSummary: PickPhaseSummary;
 }) {
   const [selected, setSelected] = useState(expected);
   const [points, setPoints] = useState<Record<string, number>>(() => {
@@ -97,13 +104,17 @@ export function PickClient({
     [games, selected],
   );
 
+  const expectedLocked = picksLocked && selected === expected;
+
   function cycleGamePoints(gameId: number) {
+    if (expectedLocked) return;
     const key = pointsKey(gameId, selected);
     const current = points[key] ?? 0;
     setGamePoints(gameId, (current + 1) % 4);
   }
 
   function setGamePoints(gameId: number, next: number) {
+    if (expectedLocked) return;
     const key = pointsKey(gameId, selected);
     const prev = points[key] ?? 0;
     const clamped = Math.max(0, Math.min(MAX_POINTS_PER_GAME, next));
@@ -140,8 +151,32 @@ export function PickClient({
     });
   }
 
+  const phaseBanner = (() => {
+    if (picksLocked) {
+      return "Stimmen bei ★ gesperrt — Duelle laufen.";
+    }
+    if (readyForDuels) {
+      return "Alle bereit — Duell-Modus ist frei. Picks bleiben änderbar bis zum ersten Duell.";
+    }
+    const { fullPickCount, expectedPlayerCount, partialPickerNames, missingCount } =
+      pickPhaseSummary;
+    let msg = `Duell-Modus ab ${expectedPlayerCount}/${expectedPlayerCount} Spielern mit ${MAX_PICK_POINTS}/${MAX_PICK_POINTS} Stimmen bei ★ (aktuell ${fullPickCount}/${expectedPlayerCount}).`;
+    if (partialPickerNames.length > 0) {
+      msg += ` Unvollständig: ${partialPickerNames.join(", ")}.`;
+    } else if (missingCount > 0) {
+      msg += ` Es fehlen noch ${missingCount} Spieler.`;
+    }
+    return msg;
+  })();
+
   return (
     <div className="flex flex-col gap-6">
+      <p
+        className="text-sm text-[var(--muted)] leading-relaxed rounded-lg border border-[var(--border)] px-3 py-2"
+        role="status"
+      >
+        {phaseBanner}
+      </p>
       <div className="-mx-1 filter-bar flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold">Spieleranzahl</span>
@@ -207,6 +242,7 @@ export function PickClient({
                   playerCount={selected}
                   selected={gamePoints > 0}
                   selectedPoints={gamePoints}
+                  disabled={expectedLocked}
                   onClick={() => cycleGamePoints(g.id)}
                   onDetailsClick={() => setDetailGame(g)}
                 />
@@ -239,6 +275,9 @@ export function PickClient({
           <p className="text-sm text-[var(--muted)]">
             {MAX_PICK_POINTS} Stimmen für {selected} Spieler vergeben
             {selected === expected ? " ★" : ""}.
+            {selected === expected && readyForDuels && !picksLocked
+              ? " Duell-Modus ist frei."
+              : null}
           </p>
           <Link
             href={`/meetups/${meetupId}`}

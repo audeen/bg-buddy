@@ -10,6 +10,7 @@ import {
   purgeDummyMeetups,
 } from "../lib/dummy-meetups";
 import { pairCount } from "../lib/duel-pairs";
+import { assessPickPhase } from "../lib/pick-phase";
 import { FULL_THRESHOLD } from "../lib/vote-limits";
 
 function assert(cond: boolean, msg: string) {
@@ -80,6 +81,14 @@ async function main() {
 
     const picks = meetup!.votes;
     const poolSize = poolSizeFromPicks(picks);
+
+    if (label === "Duell bereit · 4/4") {
+      const phase = assessPickPhase(picks, 4, 0);
+      assert(phase.readyForDuels, `${label}: should be duell-ready`);
+      assert(poolSize === 6, `${label}: pool 6, got ${poolSize}`);
+      continue;
+    }
+
     const creatorSum = creatorPickSum(picks, user.id);
     const wantsLeft = label.includes("dir 3")
       ? 3

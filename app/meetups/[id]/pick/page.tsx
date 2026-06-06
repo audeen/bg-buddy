@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { PickClient } from "@/components/PickClient";
 import { PageHeader } from "@/components/PageHeader";
+import { loadPickPhaseSummary } from "@/lib/pick-phase";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export default async function PickPage({
   const meetup = await prisma.meetup.findUnique({ where: { id } });
   if (!meetup) notFound();
 
-  const [games, myVotes] = await Promise.all([
+  const [games, myVotes, { phase, summary }] = await Promise.all([
     prisma.game.findMany({
       where: { isExpansion: false },
       select: {
@@ -48,6 +49,7 @@ export default async function PickPage({
       where: { meetupId: id, userId: user.id, mode: "PICK" },
       select: { gameId: true, playerCount: true, points: true },
     }),
+    loadPickPhaseSummary(id, meetup.expectedPlayerCount, prisma),
   ]);
 
   return (
@@ -64,6 +66,9 @@ export default async function PickPage({
         games={games}
         initialPicks={myVotes}
         scrollTargetId="pick-page-top"
+        picksLocked={phase.picksLocked}
+        readyForDuels={phase.readyForDuels}
+        pickPhaseSummary={summary}
       />
     </div>
   );

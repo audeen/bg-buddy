@@ -19,6 +19,11 @@ import {
 } from "@/lib/duel-pairs";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import {
+  assessPickPhase,
+  formatDuellNotReadyMessage,
+  getPickPhaseState,
+} from "@/lib/pick-phase";
+import {
   MAX_PICK_POINTS,
   MAX_POINTS_PER_GAME,
 } from "@/lib/vote-limits";
@@ -108,6 +113,23 @@ export async function updateExpectedCountAction(
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
+  const meetup = await prisma.meetup.findUnique({
+    where: { id: meetupId },
+    select: { expectedPlayerCount: true },
+  });
+  if (!meetup) return { error: "Treffen nicht gefunden." };
+
+  const phase = await getPickPhaseState(
+    meetupId,
+    meetup.expectedPlayerCount,
+    prisma,
+  );
+  if (phase.picksLocked) {
+    return {
+      error: "Erwartete Spieleranzahl kann während laufender Duelle nicht geändert werden.",
+    };
+  }
+
   await prisma.meetup.update({
     where: { id: meetupId },
     data: { expectedPlayerCount: Math.max(1, Math.round(count)) },
@@ -125,9 +147,26 @@ export async function setPickPointsAction(
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
+  const meetup = await prisma.meetup.findUnique({
+    where: { id: meetupId },
+    select: { expectedPlayerCount: true },
+  });
+  if (!meetup) return { error: "Treffen nicht gefunden." };
+
   const next = Math.round(points);
   if (next < 0 || next > MAX_POINTS_PER_GAME) {
     return { error: `Maximal ${MAX_POINTS_PER_GAME} Stimmen pro Spiel.` };
+  }
+
+  if (playerCount === meetup.expectedPlayerCount) {
+    const phase = await getPickPhaseState(
+      meetupId,
+      meetup.expectedPlayerCount,
+      prisma,
+    );
+    if (phase.picksLocked) {
+      return { error: "Stimmen sind gesperrt — Duelle laufen bereits." };
+    }
   }
 
   const existing = await prisma.vote.findFirst({
@@ -207,10 +246,24 @@ export async function duelVoteAction(
     return { error: "Duelle nur für die erwartete Spieleranzahl." };
   }
 
-  const groupPicks = await prisma.vote.findMany({
-    where: { meetupId, mode: "PICK", playerCount },
-    select: { userId: true, gameId: true, points: true },
-  });
+  const [groupPicks, duelVoteCount] = await Promise.all([
+    prisma.vote.findMany({
+      where: { meetupId, mode: "PICK", playerCount },
+      select: { userId: true, gameId: true, points: true },
+    }),
+    prisma.vote.count({
+      where: {
+        meetupId,
+        mode: { in: ["DUEL", "TINDER"] },
+        playerCount,
+      },
+    }),
+  ]);
+
+  const phase = assessPickPhase(groupPicks, playerCount, duelVoteCount);
+  if (!phase.readyForDuels) {
+    return { error: formatDuellNotReadyMessage(phase) };
+  }
 
   const pickCounts = buildPickCounts(groupPicks);
   const pool = poolGameIds(pickCounts);
@@ -222,8 +275,10 @@ export async function duelVoteAction(
   const myPickSum = groupPicks
     .filter((p) => p.userId === user.id)
     .reduce((s, p) => s + p.points, 0);
-  if (myPickSum <= 0) {
-    return { error: "Bitte zuerst Stimmen setzen." };
+  if (myPickSum < MAX_PICK_POINTS) {
+    return {
+      error: `Du brauchst ${MAX_PICK_POINTS}/${MAX_PICK_POINTS} Stimmen bei ★, bevor du duellieren kannst.`,
+    };
   }
 
   const plan = buildDuellPlan({
