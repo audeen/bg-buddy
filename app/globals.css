@@ -550,6 +550,99 @@ body {
     }
   }
 
+  .ranking-unlock-exit {
+    animation: ranking-unlock-exit 0.25s ease-out forwards;
+  }
+
+  .ranking-podium-enter {
+    animation: ranking-podium-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .ranking-podium-gold-pop {
+    animation:
+      ranking-podium-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both,
+      ranking-podium-gold-pop 0.6s ease-out 0.5s both;
+  }
+
+  .ranking-row-reveal {
+    animation: ranking-row-reveal 0.35s ease-out both;
+  }
+
+  .ranking-podium-gold {
+    box-shadow:
+      0 0 0 2px var(--warning),
+      var(--shadow-lg);
+  }
+
+  .ranking-podium-silver {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--muted) 40%, transparent),
+      var(--shadow-md);
+  }
+
+  .ranking-podium-bronze {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--primary) 25%, transparent),
+      var(--shadow-sm);
+  }
+
+  @keyframes ranking-unlock-exit {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.98);
+    }
+  }
+
+  @keyframes ranking-podium-enter {
+    from {
+      opacity: 0;
+      transform: translateY(1rem) scale(0.92);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes ranking-podium-gold-pop {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.02);
+    }
+  }
+
+  @keyframes ranking-row-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ranking-unlock-exit,
+    .ranking-podium-enter,
+    .ranking-podium-gold-pop,
+    .ranking-row-reveal {
+      animation: none;
+    }
+
+    .ranking-podium-gold {
+      outline: 2px solid var(--warning);
+      outline-offset: 0;
+    }
+  }
+
   .ranking-row {
     transition: background 0.15s ease;
   }

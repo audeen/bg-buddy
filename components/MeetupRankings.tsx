@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Ranking, type RankEntry } from "@/components/Ranking";
+import { sleep } from "@/lib/motion";
+
+const UNLOCK_FADE_MS = 250;
 
 export function MeetupRankings({
   expected,
@@ -18,15 +21,21 @@ export function MeetupRankings({
   groupDecidedPairs: number;
   totalPairs: number;
 }) {
-  const [revealed, setRevealed] = useState(duelComplete);
+  const [userRevealed, setUserRevealed] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
 
-  useEffect(() => {
-    if (duelComplete) setRevealed(true);
-  }, [duelComplete]);
+  const revealed = duelComplete || userRevealed;
 
   useEffect(() => {
     if (window.location.hash !== "#ergebnisse") return;
     document.getElementById("ergebnisse")?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  const handleReveal = useCallback(async () => {
+    setUnlocking(true);
+    await sleep(UNLOCK_FADE_MS);
+    setUserRevealed(true);
+    setUnlocking(false);
   }, []);
 
   const openPairs = Math.max(0, totalPairs - groupDecidedPairs);
@@ -36,7 +45,12 @@ export function MeetupRankings({
       <h2 className="section-title">Ergebnisse</h2>
 
       {!revealed ? (
-        <div className="card flex flex-col items-center gap-3 text-center" style={{ padding: "var(--space-card)" }}>
+        <div
+          className={`card flex flex-col items-center gap-3 text-center ${
+            unlocking ? "ranking-unlock-exit" : ""
+          }`}
+          style={{ padding: "var(--space-card)" }}
+        >
           {totalPairs > 0 && (
             <p className="text-sm text-[var(--muted)]">
               Noch {openPairs} von {totalPairs} Vergleichen offen.
@@ -44,7 +58,8 @@ export function MeetupRankings({
           )}
           <button
             type="button"
-            onClick={() => setRevealed(true)}
+            onClick={() => void handleReveal()}
+            disabled={unlocking}
             className="btn btn-ghost btn-lg"
           >
             Ergebnisse anzeigen
@@ -56,6 +71,7 @@ export function MeetupRankings({
           playerCounts={playerCounts}
           rankingByCount={combinedByCount}
           showPickDuelBreakdown
+          animateReveal
         />
       )}
     </section>

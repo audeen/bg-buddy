@@ -5,17 +5,9 @@ import Link from "next/link";
 import { GameCover } from "@/components/GameCover";
 import { duelVoteAction } from "@/app/actions";
 import { pairKey, type DuelPair, type DuelPhase } from "@/lib/duel-pairs";
+import { prefersReducedMotion, sleep } from "@/lib/motion";
 
 const VOTE_ANIMATION_MS = 400;
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
 
 export interface DuellGame {
   id: number;
