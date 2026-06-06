@@ -86,7 +86,9 @@ export default async function MeetupDetail({
     duelComplete,
   } = getDuelProgressForCount(poolIds, duelRows, expected);
 
-  const duellLinkTitle = duelComplete
+  const duelRoundComplete = duelComplete && totalPairs > 0;
+
+  const duellLinkTitle = duelRoundComplete
     ? "Duelle abgeschlossen — Host kann ★ ändern für eine neue Runde"
     : pickPhase.readyForDuels
       ? undefined
@@ -97,7 +99,7 @@ export default async function MeetupDetail({
   const isHost = user?.id === meetup.createdBy.id;
 
   const completedCounts = playerCounts.filter((pc) => {
-    if (pc === expected && !duelComplete) return false;
+    if (pc === expected && !duelRoundComplete) return false;
     const countPicks = votes.filter(
       (v) => v.mode === "PICK" && v.playerCount === pc,
     );
@@ -146,7 +148,7 @@ export default async function MeetupDetail({
           meetupId={meetup.id}
           readyForDuels={pickPhase.readyForDuels}
           picksLocked={pickPhase.picksLocked}
-          duelComplete={duelComplete}
+          duelComplete={duelRoundComplete}
           pickPoolSize={pickPoolSize}
           fullPickCount={pickPhase.fullPickCount}
           expectedPlayerCount={pickPhase.expectedPlayerCount}
@@ -156,6 +158,7 @@ export default async function MeetupDetail({
       </div>
 
       <MeetupRankings
+        key={expected}
         expected={expected}
         playerCounts={playerCounts}
         combinedByCount={combinedByCount}

@@ -26,7 +26,8 @@ export function MeetupRankings({
   const [userRevealed, setUserRevealed] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
 
-  const revealed = duelComplete || userRevealed || totalPairs === 0;
+  // duelComplete is true when pool < 2 — only auto-reveal after real duels finished
+  const revealed = userRevealed || (duelComplete && totalPairs > 0);
 
   useEffect(() => {
     if (window.location.hash !== "#ergebnisse") return;
@@ -53,9 +54,14 @@ export function MeetupRankings({
           }`}
           style={{ padding: "var(--space-card)" }}
         >
-          {totalPairs > 0 && (
+          {totalPairs > 0 ? (
             <p className="text-sm text-[var(--muted)]">
               Noch {openPairs} von {totalPairs} Vergleichen offen.
+            </p>
+          ) : (
+            <p className="text-sm text-[var(--muted)]">
+              Ergebnisse für {expected} Spieler ★ werden nach den Duellen
+              freigegeben.
             </p>
           )}
           <button
