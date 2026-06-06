@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { logoutAction } from "@/app/actions";
+import { HeaderMenu } from "@/components/HeaderMenu";
 import { HeaderNavLink } from "@/components/HeaderNavLink";
 
 export async function Header() {
@@ -27,9 +28,10 @@ export async function Header() {
         </nav>
 
         <div className="flex items-center gap-1 shrink-0">
-          <div className="hidden md:flex items-center gap-2 text-sm">
-            {user ? (
-              <>
+          {user ? (
+            <>
+              <HeaderMenu userName={user.name} />
+              <div className="hidden md:flex items-center gap-2 text-sm">
                 <span className="text-[var(--muted)]">Angemeldet als</span>
                 <span className="font-semibold">{user.name}</span>
                 <form action={logoutAction}>
@@ -37,13 +39,13 @@ export async function Header() {
                     Abmelden
                   </button>
                 </form>
-              </>
-            ) : (
-              <Link href="/#login" className="btn btn-primary">
-                Anmelden
-              </Link>
-            )}
-          </div>
+              </div>
+            </>
+          ) : (
+            <Link href="/#login" className="btn btn-primary">
+              Anmelden
+            </Link>
+          )}
         </div>
       </div>
     </header>

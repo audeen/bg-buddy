@@ -22,6 +22,11 @@ import {
   MAX_PICK_POINTS,
   MAX_POINTS_PER_GAME,
 } from "@/lib/vote-limits";
+import {
+  countDummyMeetups,
+  createAllDummyMeetups,
+  DUMMY_MEETUP_PREFIX,
+} from "@/lib/dummy-meetups";
 
 export async function loginAction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
@@ -358,4 +363,42 @@ export async function removeGameFromCollectionAction(gameId: number) {
   revalidatePath("/meetups", "layout");
 
   return { ok: true };
+}
+
+export async function countDummyMeetupsAction() {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const count = await countDummyMeetups();
+  return { ok: true, count };
+}
+
+export async function createDummyMeetupsAction() {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  try {
+    const { count } = await createAllDummyMeetups(user.id);
+    revalidatePath("/");
+    revalidatePath("/meetups", "layout");
+    return { ok: true, count };
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Dummy-Treffen konnten nicht erstellt werden.";
+    return { error: message };
+  }
+}
+
+export async function purgeDummyMeetupsAction() {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const result = await prisma.meetup.deleteMany({
+    where: { title: { startsWith: DUMMY_MEETUP_PREFIX } },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/meetups", "layout");
+
+  return { ok: true, deleted: result.count };
 }
