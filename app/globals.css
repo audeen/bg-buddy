@@ -396,6 +396,73 @@ body {
     border-radius: 0.9rem 0.9rem 0 0;
   }
 
+  .duel-arena {
+    position: relative;
+  }
+
+  .duel-arena-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    min-height: min(50dvh, 22rem);
+    align-items: stretch;
+  }
+
+  @media (min-width: 640px) {
+    .duel-arena-grid {
+      grid-template-columns: 1fr auto 1fr;
+      gap: 1rem;
+    }
+  }
+
+  .duel-vs-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    box-shadow: var(--shadow-sm);
+    pointer-events: none;
+  }
+
+  .duel-vs-badge-overlay {
+    position: absolute;
+    left: 50%;
+    top: 40%;
+    z-index: 10;
+    transform: translate(-50%, -50%);
+  }
+
+  @media (min-width: 640px) {
+    .duel-vs-badge-overlay {
+      display: none;
+    }
+  }
+
+  .duel-pick-chip {
+    position: absolute;
+    left: 0.5rem;
+    bottom: 0.5rem;
+    z-index: 1;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 85%, transparent);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
   .ranking-row {
     transition: background 0.15s ease;
   }

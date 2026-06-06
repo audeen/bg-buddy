@@ -135,13 +135,14 @@ export default async function DuellPage({
   ];
 
   return (
-    <div className="container-app flex flex-col gap-4">
+    <div className="container-app flex flex-col gap-3 sm:gap-4">
       <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
 
       <DuellClient
         meetupId={id}
         expected={expected}
         games={games}
+        pickCounts={pickCounts}
         myPairs={plan.myPairs}
         phase={plan.phase}
         totalPairs={plan.totalPairs}

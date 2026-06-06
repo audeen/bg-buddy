@@ -13,10 +13,48 @@ export interface DuellGame {
   image: string | null;
 }
 
+function DuelChoiceCard({
+  game,
+  pickCount,
+  disabled,
+  onClick,
+}: {
+  game: DuellGame;
+  pickCount: number;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="card card-game overflow-hidden flex flex-col h-full min-h-0 w-full disabled:opacity-60 min-h-[44px]"
+    >
+      <div className="relative flex-1 min-h-0 w-full">
+        <GameCover
+          src={game.thumbnail ?? game.image}
+          alt={game.name}
+          className="h-full w-full min-h-[8rem] object-cover card-game-cover sm:aspect-square sm:min-h-0"
+        />
+        {pickCount > 0 && (
+          <span className="duel-pick-chip">
+            {pickCount} Stimme{pickCount === 1 ? "" : "n"}
+          </span>
+        )}
+      </div>
+      <span className="p-2 sm:p-3 font-bold text-sm sm:text-base text-center leading-tight line-clamp-2 shrink-0">
+        {game.name}
+      </span>
+    </button>
+  );
+}
+
 export function DuellClient({
   meetupId,
   expected,
   games,
+  pickCounts,
   myPairs,
   phase,
   totalPairs,
@@ -26,6 +64,7 @@ export function DuellClient({
   meetupId: string;
   expected: number;
   games: DuellGame[];
+  pickCounts: Record<number, number>;
   myPairs: DuelPair[];
   phase: DuelPhase;
   totalPairs: number;
@@ -113,14 +152,17 @@ export function DuellClient({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="sticky-below-header -mx-1 filter-bar flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
+      <div className="sticky-below-header -mx-1 filter-bar flex flex-col gap-1 sm:gap-2">
         <div className="flex items-center justify-between gap-3">
           <span className="chip chip-accent">{expected} Spieler ★</span>
           <span className="text-sm font-semibold tabular-nums">
             Duell {myDone + 1} / {myPairs.length}
           </span>
         </div>
+        <p className="text-xs text-[var(--muted)] sm:hidden">
+          Lieber mit {expected} Spielern spielen?
+        </p>
         {phase === "GROUP" && (
           <p className="text-xs text-[var(--muted)] tabular-nums">
             {groupDecidedPairs} / {totalPairs} entschieden
@@ -134,46 +176,37 @@ export function DuellClient({
         </p>
       )}
 
-      <p className="text-center text-sm text-[var(--muted)]">
+      <p className="hidden sm:block text-center text-sm text-[var(--muted)]">
         Welches würdest du mit {expected} Spielern lieber spielen?
       </p>
 
       {current && gameA && gameB ? (
-        <div className="flex flex-col gap-3 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:gap-4 sm:items-center">
-          {[gameA, gameB].map((g, idx) => (
-            <div key={g.id} className="flex flex-col gap-3 sm:contents">
-              {idx === 1 && (
-                <>
-                  <div className="flex items-center justify-center font-extrabold text-[var(--muted)] sm:hidden py-1">
-                    oder
-                  </div>
-                  <div className="hidden sm:flex items-center justify-center font-extrabold text-[var(--muted)]">
-                    VS
-                  </div>
-                </>
-              )}
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() =>
-                  choose(
-                    g.id,
-                    g.id === current.a ? current.b : current.a,
-                  )
-                }
-                className="card card-game overflow-hidden flex flex-col w-full disabled:opacity-60 min-h-[44px]"
-              >
-                <GameCover
-                  src={g.thumbnail ?? g.image}
-                  alt={g.name}
-                  className="w-full aspect-[4/3] sm:aspect-square card-game-cover"
-                />
-                <span className="p-3 font-bold text-base text-center leading-tight">
-                  {g.name}
-                </span>
-              </button>
+        <div className="duel-arena -mx-1">
+          <div className="duel-arena-grid">
+            <DuelChoiceCard
+              game={gameA}
+              pickCount={pickCounts[gameA.id] ?? 0}
+              disabled={busy}
+              onClick={() => choose(gameA.id, current.b)}
+            />
+            <div className="hidden sm:flex items-center justify-center self-center">
+              <span className="duel-vs-badge" aria-hidden>
+                VS
+              </span>
             </div>
-          ))}
+            <DuelChoiceCard
+              game={gameB}
+              pickCount={pickCounts[gameB.id] ?? 0}
+              disabled={busy}
+              onClick={() => choose(gameB.id, current.a)}
+            />
+          </div>
+          <span
+            className="duel-vs-badge duel-vs-badge-overlay"
+            aria-hidden
+          >
+            VS
+          </span>
         </div>
       ) : (
         <p className="text-center text-[var(--muted)]">
