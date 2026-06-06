@@ -165,20 +165,12 @@ export function DuellClient({
             entschieden.
           </p>
         )}
-        <div className="flex flex-col sm:flex-row gap-2 justify-center w-full max-w-sm">
-          <Link
-            href={`/meetups/${meetupId}`}
-            className="btn btn-primary btn-lg"
-          >
-            Zum Ranking
-          </Link>
-          <Link
-            href={`/meetups/${meetupId}/pick`}
-            className="btn btn-ghost btn-lg"
-          >
-            Stimmen
-          </Link>
-        </div>
+        <Link
+          href={`/meetups/${meetupId}`}
+          className="btn btn-primary btn-lg w-full max-w-sm"
+        >
+          Zum Ranking
+        </Link>
       </div>
     );
   }
