@@ -142,7 +142,6 @@ export default async function DuellPage({
         meetupId={id}
         expected={expected}
         games={games}
-        pickCounts={pickCounts}
         myPairs={plan.myPairs}
         phase={plan.phase}
         totalPairs={plan.totalPairs}

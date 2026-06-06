@@ -15,12 +15,10 @@ export interface DuellGame {
 
 function DuelChoiceCard({
   game,
-  pickCount,
   disabled,
   onClick,
 }: {
   game: DuellGame;
-  pickCount: number;
   disabled: boolean;
   onClick: () => void;
 }) {
@@ -37,11 +35,6 @@ function DuelChoiceCard({
           alt={game.name}
           className="h-full w-full min-h-[8rem] object-cover card-game-cover sm:aspect-square sm:min-h-0"
         />
-        {pickCount > 0 && (
-          <span className="duel-pick-chip">
-            {pickCount} Stimme{pickCount === 1 ? "" : "n"}
-          </span>
-        )}
       </div>
       <span className="p-2 sm:p-3 font-bold text-sm sm:text-base text-center leading-tight line-clamp-2 shrink-0">
         {game.name}
@@ -54,7 +47,6 @@ export function DuellClient({
   meetupId,
   expected,
   games,
-  pickCounts,
   myPairs,
   phase,
   totalPairs,
@@ -64,7 +56,6 @@ export function DuellClient({
   meetupId: string;
   expected: number;
   games: DuellGame[];
-  pickCounts: Record<number, number>;
   myPairs: DuelPair[];
   phase: DuelPhase;
   totalPairs: number;
@@ -160,9 +151,6 @@ export function DuellClient({
             Duell {myDone + 1} / {myPairs.length}
           </span>
         </div>
-        <p className="text-xs text-[var(--muted)] sm:hidden">
-          Lieber mit {expected} Spielern spielen?
-        </p>
         {phase === "GROUP" && (
           <p className="text-xs text-[var(--muted)] tabular-nums">
             {groupDecidedPairs} / {totalPairs} entschieden
@@ -176,8 +164,8 @@ export function DuellClient({
         </p>
       )}
 
-      <p className="hidden sm:block text-center text-sm text-[var(--muted)]">
-        Welches würdest du mit {expected} Spielern lieber spielen?
+      <p className="text-center text-sm text-[var(--muted)]">
+        Was möchtest du lieber mit {expected} Spielern spielen?
       </p>
 
       {current && gameA && gameB ? (
@@ -185,7 +173,6 @@ export function DuellClient({
           <div className="duel-arena-grid">
             <DuelChoiceCard
               game={gameA}
-              pickCount={pickCounts[gameA.id] ?? 0}
               disabled={busy}
               onClick={() => choose(gameA.id, current.b)}
             />
@@ -196,7 +183,6 @@ export function DuellClient({
             </div>
             <DuelChoiceCard
               game={gameB}
-              pickCount={pickCounts[gameB.id] ?? 0}
               disabled={busy}
               onClick={() => choose(gameB.id, current.a)}
             />
