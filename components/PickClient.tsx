@@ -97,6 +97,12 @@ export function PickClient({
     [games, selected],
   );
 
+  function cycleGamePoints(gameId: number) {
+    const key = pointsKey(gameId, selected);
+    const current = points[key] ?? 0;
+    setGamePoints(gameId, (current + 1) % 4);
+  }
+
   function setGamePoints(gameId: number, next: number) {
     const key = pointsKey(gameId, selected);
     const prev = points[key] ?? 0;
@@ -175,8 +181,8 @@ export function PickClient({
           ))}
         </div>
         <p className="text-xs text-[var(--muted)] leading-relaxed">
-          {MAX_PICK_POINTS} Stimmen pro Anzahl (★ = erwartet), auch alle auf ein
-          Spiel. ℹ für Details.
+          Karte antippen für 1–3 Sterne (★ = erwartete Spieleranzahl). ℹ für
+          Details.
         </p>
         {limitMsg && (
           <p className="text-sm text-[var(--accent)]" role="alert">
@@ -194,41 +200,16 @@ export function PickClient({
           {visible.map((g) => {
             const key = pointsKey(g.id, selected);
             const gamePoints = points[key] ?? 0;
-            const canAdd =
-              gamePoints < MAX_POINTS_PER_GAME && budgetLeft > 0;
             return (
-              <li key={g.id} className="flex flex-col gap-2">
+              <li key={g.id}>
                 <GameCard
                   game={g}
                   playerCount={selected}
                   selected={gamePoints > 0}
                   selectedPoints={gamePoints}
-                  onClick={() => {}}
+                  onClick={() => cycleGamePoints(g.id)}
                   onDetailsClick={() => setDetailGame(g)}
                 />
-                <div className="flex items-center justify-center gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm min-w-[44px] min-h-[44px]"
-                    aria-label="Stimme entfernen"
-                    disabled={gamePoints === 0}
-                    onClick={() => setGamePoints(g.id, gamePoints - 1)}
-                  >
-                    −
-                  </button>
-                  <span className="text-sm font-bold tabular-nums w-8 text-center">
-                    {gamePoints}
-                  </span>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm min-w-[44px] min-h-[44px]"
-                    aria-label="Stimme hinzufügen"
-                    disabled={!canAdd}
-                    onClick={() => setGamePoints(g.id, gamePoints + 1)}
-                  >
-                    +
-                  </button>
-                </div>
               </li>
             );
           })}

@@ -8,11 +8,10 @@ import { MeetupRankings } from "@/components/MeetupRankings";
 import { PageHeader } from "@/components/PageHeader";
 import {
   buildCombinedByCount,
-  buildDuelCopelandByCount,
-  buildPicksByCount,
   playerCountsFromVotes,
 } from "@/lib/vote-aggregation";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
+import { getDuelProgressForCount } from "@/lib/duel-pairs";
 
 export const dynamic = "force-dynamic";
 
@@ -50,23 +49,38 @@ export default async function MeetupDetail({
     },
   });
 
-  const duelByCount = buildDuelCopelandByCount(votes);
   const combinedByCount = buildCombinedByCount(votes);
-  const picksByCount = buildPicksByCount(votes);
   const playerCounts = playerCountsFromVotes(
     meetup.expectedPlayerCount,
     votes,
   );
 
-  const pickPoolSize = poolGameIds(
-    buildPickCounts(
-      votes.filter(
-        (v) =>
-          v.mode === "PICK" &&
-          v.playerCount === meetup.expectedPlayerCount,
-      ),
-    ),
-  ).length;
+  const expected = meetup.expectedPlayerCount;
+  const groupPicks = votes.filter(
+    (v) => v.mode === "PICK" && v.playerCount === expected,
+  );
+  const pickCounts = buildPickCounts(groupPicks);
+  const poolIds = poolGameIds(pickCounts);
+  const pickPoolSize = poolIds.length;
+
+  const duelRows = votes
+    .filter(
+      (v) =>
+        (v.mode === "DUEL" || v.mode === "TINDER") &&
+        v.playerCount === expected,
+    )
+    .map((v) => ({
+      gameId: v.gameId,
+      opponentGameId: v.opponentGameId,
+      userId: v.userId,
+      playerCount: v.playerCount,
+    }));
+
+  const {
+    totalPairs,
+    decidedPairs: groupDecidedPairs,
+    duelComplete,
+  } = getDuelProgressForCount(poolIds, duelRows, expected);
 
   return (
     <div className="container-app flex flex-col gap-6">
@@ -111,11 +125,12 @@ export default async function MeetupDetail({
       </div>
 
       <MeetupRankings
-        expected={meetup.expectedPlayerCount}
+        expected={expected}
         playerCounts={playerCounts}
-        duelByCount={duelByCount}
         combinedByCount={combinedByCount}
-        picksByCount={picksByCount}
+        duelComplete={duelComplete}
+        groupDecidedPairs={groupDecidedPairs}
+        totalPairs={totalPairs}
       />
     </div>
   );

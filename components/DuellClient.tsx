@@ -20,8 +20,6 @@ export function DuellClient({
   pickCounts,
   myPairs,
   phase,
-  phaseLabel,
-  helpText,
   totalPairs,
   groupDecidedPairs,
   initialCompletedKeys,
@@ -32,8 +30,6 @@ export function DuellClient({
   pickCounts: Record<number, number>;
   myPairs: DuelPair[];
   phase: DuelPhase;
-  phaseLabel: string;
-  helpText: string;
   totalPairs: number;
   groupDecidedPairs: number;
   initialCompletedKeys: string[];
@@ -90,17 +86,16 @@ export function DuellClient({
         className="card flex flex-col items-center gap-3 text-center"
         style={{ padding: "1.5rem" }}
       >
-        <p className="text-lg font-bold">Deine Duelle fertig!</p>
+        <p className="text-lg font-bold">Deine Duelle sind erledigt!</p>
         <p className="text-[var(--muted)] text-sm">
-          {myDone} von {myPairs.length} deine Vergleiche für {expected} Spieler
-          ★.
-          {phase === "GROUP" && (
-            <>
-              {" "}
-              Gruppe: {groupDecidedPairs}/{totalPairs} entschieden.
-            </>
-          )}
+          Du hast alle {myDone} Vergleiche für {expected} Spieler ★ abgeschlossen.
         </p>
+        {phase === "GROUP" && (
+          <p className="text-[var(--muted)] text-sm">
+            In der Gruppe sind {groupDecidedPairs} von {totalPairs} Vergleichen
+            entschieden.
+          </p>
+        )}
         <div className="flex flex-col sm:flex-row gap-2 justify-center w-full max-w-sm">
           <Link
             href={`/meetups/${meetupId}`}
@@ -128,16 +123,12 @@ export function DuellClient({
             Duell {myDone + 1} / {myPairs.length}
           </span>
         </div>
-        <p className="text-sm font-medium">{phaseLabel}</p>
-        <p className="text-xs text-[var(--muted)]">
-          {games.length} Spiele · {totalPairs} Vergleiche gesamt
-          {phase === "GROUP" && (
-            <> · {groupDecidedPairs}/{totalPairs} entschieden</>
-          )}
-        </p>
+        {phase === "GROUP" && (
+          <p className="text-xs text-[var(--muted)] tabular-nums">
+            {groupDecidedPairs} / {totalPairs} entschieden
+          </p>
+        )}
       </div>
-
-      <p className="text-sm text-[var(--muted)]">{helpText}</p>
 
       {voteError && (
         <p className="text-sm text-center text-[var(--accent)]" role="alert">

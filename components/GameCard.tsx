@@ -66,15 +66,7 @@ function TagRows({ game, playerCount }: { game: GameCardGame; playerCount?: numb
   );
 }
 
-function CardCover({
-  game,
-  selected,
-  selectedPoints,
-}: {
-  game: GameCardGame;
-  selected?: boolean;
-  selectedPoints?: number;
-}) {
+function CardCover({ game }: { game: GameCardGame }) {
   return (
     <div className="relative shrink-0 card-game-cover overflow-hidden">
       <GameCover
@@ -82,15 +74,6 @@ function CardCover({
         alt={game.name}
         className="w-full aspect-square"
       />
-      {selected && (
-        <span
-          className="absolute top-2.5 right-2.5 bg-[var(--accent)] text-white rounded-full min-w-7 h-7 px-1.5 flex items-center justify-center text-xs font-bold"
-          style={{ boxShadow: "var(--shadow-md)" }}
-          aria-hidden
-        >
-          {selectedPoints && selectedPoints > 1 ? selectedPoints : "✓"}
-        </span>
-      )}
     </div>
   );
 }
@@ -116,11 +99,27 @@ function CardBody({
   );
 }
 
+function StarsBadge({ points }: { points: number }) {
+  if (points <= 0) return null;
+  return (
+    <span
+      className="absolute top-2.5 right-2.5 z-[1] bg-[var(--accent)] text-white rounded-full min-w-7 h-7 px-1.5 flex items-center justify-center text-xs font-bold tracking-tight"
+      style={{ boxShadow: "var(--shadow-md)" }}
+      aria-label={`${points} ${points === 1 ? "Stern" : "Sterne"}`}
+    >
+      {"★".repeat(points)}
+    </span>
+  );
+}
+
 function DetailsButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
       className="absolute top-2.5 left-2.5 z-[1] bg-[var(--surface)] text-[var(--foreground)] rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold border border-[var(--border)] hover:bg-[var(--surface-2)]"
       style={{ boxShadow: "var(--shadow-md)" }}
       aria-label="Details anzeigen"
@@ -135,6 +134,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
   const disabled = "disabled" in props ? props.disabled : false;
   const onDetailsClick =
     "onDetailsClick" in props ? props.onDetailsClick : undefined;
+  const points = selectedPoints ?? 0;
 
   const cardClass = `card card-game w-full ${selected ? "card-game-selected" : ""} ${
     disabled ? "card-game-disabled opacity-50 cursor-not-allowed" : ""
@@ -142,13 +142,10 @@ export function GameCard(props: ButtonProps | LinkProps) {
 
   if ("href" in props && props.href) {
     return (
-      <Link href={props.href} className={`${cardClass} hover:shadow-md`}>
-        <CardCover
-          game={game}
-          selected={selected}
-          selectedPoints={selectedPoints}
-        />
+      <Link href={props.href} className={`${cardClass} hover:shadow-md relative`}>
+        <CardCover game={game} />
         <CardBody game={game} playerCount={playerCount} />
+        {points > 0 && <StarsBadge points={points} />}
       </Link>
     );
   }
@@ -162,14 +159,11 @@ export function GameCard(props: ButtonProps | LinkProps) {
           disabled={disabled}
           className="flex flex-col w-full h-full text-left"
         >
-          <CardCover
-            game={game}
-            selected={selected}
-            selectedPoints={selectedPoints}
-          />
+          <CardCover game={game} />
           <CardBody game={game} playerCount={playerCount} />
         </button>
         <DetailsButton onClick={onDetailsClick} />
+        {points > 0 && <StarsBadge points={points} />}
       </div>
     );
   }
@@ -179,14 +173,11 @@ export function GameCard(props: ButtonProps | LinkProps) {
       type="button"
       onClick={props.onClick}
       disabled={disabled}
-      className={cardClass}
+      className={`${cardClass} relative`}
     >
-      <CardCover
-        game={game}
-        selected={selected}
-        selectedPoints={selectedPoints}
-      />
+      <CardCover game={game} />
       <CardBody game={game} playerCount={playerCount} />
+      {points > 0 && <StarsBadge points={points} />}
     </button>
   );
 }

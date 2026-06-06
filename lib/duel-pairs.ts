@@ -1,3 +1,7 @@
+import {
+  buildCopelandForCount,
+  type DuelVoteRow,
+} from "@/lib/copeland";
 import { FULL_THRESHOLD } from "@/lib/vote-limits";
 
 export type DuelPair = { a: number; b: number };
@@ -110,9 +114,48 @@ export type DuellPlan = {
   totalPairs: number;
   myPairs: DuelPair[];
   myTotal: number;
-  phaseLabel: string;
-  helpText: string;
 };
+
+export type DuelProgress = {
+  phase: DuelPhase;
+  totalPairs: number;
+  decidedPairs: number;
+  duelComplete: boolean;
+};
+
+export function duelPhaseForPairCount(totalPairs: number): DuelPhase {
+  return totalPairs <= FULL_THRESHOLD ? "FULL" : "GROUP";
+}
+
+export function getDuelProgressForCount(
+  poolGameIds: number[],
+  duelVotes: DuelVoteRow[],
+  playerCount: number,
+): DuelProgress {
+  const poolSize = poolGameIds.length;
+  const totalPairs = pairCount(poolSize);
+  if (poolSize < 2) {
+    return {
+      phase: "FULL",
+      totalPairs: 0,
+      decidedPairs: 0,
+      duelComplete: true,
+    };
+  }
+  const phase = duelPhaseForPairCount(totalPairs);
+  const { decidedPairs } = buildCopelandForCount(
+    duelVotes,
+    playerCount,
+    phase,
+    totalPairs,
+  );
+  return {
+    phase,
+    totalPairs,
+    decidedPairs,
+    duelComplete: decidedPairs >= totalPairs,
+  };
+}
 
 export function buildUserPointsMap(
   picks: { userId: string; gameId: number; points: number }[],
@@ -159,9 +202,6 @@ export function buildDuellPlan(opts: {
       totalPairs,
       myPairs,
       myTotal: myPairs.length,
-      phaseLabel: `Vollständig: alle ${totalPairs} Paare`,
-      helpText:
-        "Jeder vergleicht jedes Spiel mit jedem anderen. Mehrheit pro Paar zählt.",
     };
   }
 
@@ -181,9 +221,6 @@ export function buildDuellPlan(opts: {
     totalPairs,
     myPairs,
     myTotal,
-    phaseLabel: `Gruppe: ${myTotal} deine von ${totalPairs}`,
-    helpText:
-      "Du entscheidest vor allem fremde Paare. Deine stark nominierten Spiele vergleichen die anderen.",
   };
 }
 

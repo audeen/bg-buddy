@@ -10,7 +10,8 @@ import {
   buildUserPointsMap,
   participantIdsFromPicks,
 } from "@/lib/duel-pairs";
-import { countDecidedPairs, completedPairKeysForUser } from "@/lib/copeland";
+import { completedPairKeysForUser } from "@/lib/copeland";
+import { getDuelProgressForCount } from "@/lib/duel-pairs";
 
 export const dynamic = "force-dynamic";
 
@@ -124,7 +125,11 @@ export default async function DuellPage({
     playerCount: v.playerCount,
   }));
 
-  const groupDecidedPairs = countDecidedPairs(duelRows, expected);
+  const { decidedPairs: groupDecidedPairs } = getDuelProgressForCount(
+    ids,
+    duelRows,
+    expected,
+  );
   const completedKeys = [
     ...completedPairKeysForUser(duelRows, user.id, expected),
   ];
@@ -140,8 +145,6 @@ export default async function DuellPage({
         pickCounts={pickCounts}
         myPairs={plan.myPairs}
         phase={plan.phase}
-        phaseLabel={plan.phaseLabel}
-        helpText={plan.helpText}
         totalPairs={plan.totalPairs}
         groupDecidedPairs={groupDecidedPairs}
         initialCompletedKeys={completedKeys}
