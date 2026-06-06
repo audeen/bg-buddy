@@ -11,8 +11,16 @@ import {
   thingDetailsToDbFields,
 } from "@/lib/enrichment-cache";
 import {
-  MAX_DUEL_WINS_PER_GAME,
-  MAX_PICKS_PER_COUNT,
+  buildDuellPlan,
+  buildUserPointsMap,
+  isPairInList,
+  pairKey,
+  participantIdsFromPicks,
+} from "@/lib/duel-pairs";
+import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
+import {
+  MAX_PICK_POINTS,
+  MAX_POINTS_PER_GAME,
 } from "@/lib/vote-limits";
 
 export async function loginAction(formData: FormData) {
@@ -102,13 +110,19 @@ export async function updateExpectedCountAction(
   return { ok: true };
 }
 
-export async function togglePickVoteAction(
+export async function setPickPointsAction(
   meetupId: string,
   gameId: number,
   playerCount: number,
+  points: number,
 ) {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const next = Math.round(points);
+  if (next < 0 || next > MAX_POINTS_PER_GAME) {
+    return { error: `Maximal ${MAX_POINTS_PER_GAME} Stimmen pro Spiel.` };
+  }
 
   const existing = await prisma.vote.findFirst({
     where: {
@@ -120,48 +134,63 @@ export async function togglePickVoteAction(
     },
   });
 
-  if (existing) {
-    await prisma.vote.delete({ where: { id: existing.id } });
-    revalidatePath(`/meetups/${meetupId}`);
-    return { voted: false };
-  }
-
-  const pickCount = await prisma.vote.count({
+  const others = await prisma.vote.aggregate({
     where: {
       meetupId,
       userId: user.id,
       playerCount,
       mode: "PICK",
+      ...(existing ? { NOT: { id: existing.id } } : {}),
     },
+    _sum: { points: true },
   });
-  if (pickCount >= MAX_PICKS_PER_COUNT) {
+  const otherSum = others._sum.points ?? 0;
+  if (otherSum + next > MAX_PICK_POINTS) {
     return {
-      error: `Maximal ${MAX_PICKS_PER_COUNT} Direkt-Picks für diese Spieleranzahl.`,
+      error: `Maximal ${MAX_PICK_POINTS} Stimmen für diese Spieleranzahl.`,
     };
   }
 
-  await prisma.vote.create({
-    data: {
-      meetupId,
-      userId: user.id,
-      gameId,
-      playerCount,
-      mode: "PICK",
-      points: 1,
-    },
-  });
+  if (next === 0) {
+    if (existing) {
+      await prisma.vote.delete({ where: { id: existing.id } });
+    }
+  } else if (existing) {
+    await prisma.vote.update({
+      where: { id: existing.id },
+      data: { points: next },
+    });
+  } else {
+    await prisma.vote.create({
+      data: {
+        meetupId,
+        userId: user.id,
+        gameId,
+        playerCount,
+        mode: "PICK",
+        points: next,
+      },
+    });
+  }
+
   revalidatePath(`/meetups/${meetupId}`);
+  revalidatePath(`/meetups/${meetupId}/pick`);
   revalidatePath(`/meetups/${meetupId}/duell`);
-  return { voted: true };
+  return { ok: true, points: next };
 }
 
 export async function duelVoteAction(
   meetupId: string,
   winnerGameId: number,
+  opponentGameId: number,
   playerCount: number,
 ) {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
+
+  if (winnerGameId === opponentGameId) {
+    return { error: "Gewinner und Gegner müssen verschieden sein." };
+  }
 
   const meetup = await prisma.meetup.findUnique({
     where: { id: meetupId },
@@ -172,31 +201,60 @@ export async function duelVoteAction(
     return { error: "Duelle nur für die erwartete Spieleranzahl." };
   }
 
-  const inPool = await prisma.vote.count({
-    where: {
-      meetupId,
-      mode: "PICK",
-      playerCount,
-      gameId: winnerGameId,
-    },
+  const groupPicks = await prisma.vote.findMany({
+    where: { meetupId, mode: "PICK", playerCount },
+    select: { userId: true, gameId: true, points: true },
   });
-  if (!inPool) {
-    return { error: "Dieses Spiel wurde noch nicht direkt gepickt." };
+
+  const pickCounts = buildPickCounts(groupPicks);
+  const pool = poolGameIds(pickCounts);
+
+  if (!pool.includes(winnerGameId) || !pool.includes(opponentGameId)) {
+    return { error: "Beide Spiele müssen im Pick-Pool sein." };
   }
 
-  const winCount = await prisma.vote.count({
+  const myPickSum = groupPicks
+    .filter((p) => p.userId === user.id)
+    .reduce((s, p) => s + p.points, 0);
+  if (myPickSum <= 0) {
+    return { error: "Bitte zuerst Stimmen setzen." };
+  }
+
+  const plan = buildDuellPlan({
+    poolGameIds: pool,
+    pickCounts,
+    userPoints: buildUserPointsMap(groupPicks),
+    userId: user.id,
+    participantIds: participantIdsFromPicks(groupPicks),
+    meetupId,
+  });
+
+  const pair = { a: winnerGameId, b: opponentGameId };
+  if (!isPairInList(pair, plan.myPairs)) {
+    return { error: "Dieses Paar ist dir nicht zugewiesen." };
+  }
+
+  const key = pairKey(winnerGameId, opponentGameId);
+  const existing = await prisma.vote.findFirst({
     where: {
       meetupId,
       userId: user.id,
-      gameId: winnerGameId,
       playerCount,
-      mode: "DUEL",
+      mode: { in: ["DUEL", "TINDER"] },
+      OR: [
+        {
+          gameId: winnerGameId,
+          opponentGameId,
+        },
+        {
+          gameId: opponentGameId,
+          opponentGameId: winnerGameId,
+        },
+      ],
     },
   });
-  if (winCount >= MAX_DUEL_WINS_PER_GAME) {
-    return {
-      error: "Dieses Spiel hat hier schon genug Siege.",
-    };
+  if (existing) {
+    return { error: "Du hast für dieses Paar schon abgestimmt." };
   }
 
   await prisma.vote.create({
@@ -204,6 +262,7 @@ export async function duelVoteAction(
       meetupId,
       userId: user.id,
       gameId: winnerGameId,
+      opponentGameId,
       playerCount,
       mode: "DUEL",
       points: 1,

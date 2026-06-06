@@ -8,8 +8,8 @@ import { MeetupRankings } from "@/components/MeetupRankings";
 import { PageHeader } from "@/components/PageHeader";
 import {
   buildCombinedByCount,
+  buildDuelCopelandByCount,
   buildPicksByCount,
-  buildRankingByCount,
   playerCountsFromVotes,
 } from "@/lib/vote-aggregation";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
@@ -50,7 +50,7 @@ export default async function MeetupDetail({
     },
   });
 
-  const duelByCount = buildRankingByCount(votes, "DUEL");
+  const duelByCount = buildDuelCopelandByCount(votes);
   const combinedByCount = buildCombinedByCount(votes);
   const picksByCount = buildPicksByCount(votes);
   const playerCounts = playerCountsFromVotes(
@@ -93,7 +93,7 @@ export default async function MeetupDetail({
             href={`/meetups/${meetup.id}/pick`}
             className="btn btn-primary btn-lg sm:flex-1"
           >
-            Direkt wählen
+            Stimmen vergeben
           </Link>
           <Link
             href={`/meetups/${meetup.id}/duell`}

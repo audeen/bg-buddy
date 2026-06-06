@@ -78,7 +78,7 @@ export function Ranking({
                   {showPickDuelBreakdown &&
                   (e.pickCount !== undefined || e.duelWins !== undefined) ? (
                     <span className="chip chip-meta text-xs shrink-0 w-fit">
-                      {e.pickCount ?? 0} Picks + {e.duelWins ?? 0} Siege
+                      {e.pickCount ?? 0} Stimmen + {e.duelWins ?? 0} Siege
                     </span>
                   ) : (
                     <span className="chip chip-accent shrink-0 w-fit sm:ml-auto">

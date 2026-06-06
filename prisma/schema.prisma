@@ -41,7 +41,8 @@ model Game {
   enriched                Boolean  @default(false)
   updatedAt               DateTime @updatedAt
 
-  votes Vote[]
+  votesAsWinner   Vote[] @relation("VoteWinner")
+  votesAsOpponent Vote[] @relation("VoteOpponent")
 }
 
 enum VoteMode {
@@ -69,9 +70,11 @@ model Vote {
   meetup      Meetup   @relation(fields: [meetupId], references: [id], onDelete: Cascade)
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gameId      Int
-  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  playerCount Int
+  gameId           Int
+  game             Game     @relation("VoteWinner", fields: [gameId], references: [id], onDelete: Cascade)
+  opponentGameId   Int?
+  opponentGame     Game?    @relation("VoteOpponent", fields: [opponentGameId], references: [id], onDelete: Cascade)
+  playerCount      Int
   points      Int      @default(1)
   mode        VoteMode
   createdAt   DateTime @default(now())

@@ -1,9 +1,9 @@
 export function buildPickCounts(
-  picks: { gameId: number }[],
+  picks: { gameId: number; points?: number }[],
 ): Record<number, number> {
   const counts: Record<number, number> = {};
   for (const p of picks) {
-    counts[p.gameId] = (counts[p.gameId] ?? 0) + 1;
+    counts[p.gameId] = (counts[p.gameId] ?? 0) + (p.points ?? 1);
   }
   return counts;
 }

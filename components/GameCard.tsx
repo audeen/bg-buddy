@@ -19,6 +19,7 @@ type BaseProps = {
   game: GameCardGame;
   playerCount?: number;
   selected?: boolean;
+  selectedPoints?: number;
   className?: string;
 };
 
@@ -68,9 +69,11 @@ function TagRows({ game, playerCount }: { game: GameCardGame; playerCount?: numb
 function CardCover({
   game,
   selected,
+  selectedPoints,
 }: {
   game: GameCardGame;
   selected?: boolean;
+  selectedPoints?: number;
 }) {
   return (
     <div className="relative shrink-0 card-game-cover overflow-hidden">
@@ -81,11 +84,11 @@ function CardCover({
       />
       {selected && (
         <span
-          className="absolute top-2.5 right-2.5 bg-[var(--accent)] text-white rounded-full w-7 h-7 flex items-center justify-center text-xs font-bold"
+          className="absolute top-2.5 right-2.5 bg-[var(--accent)] text-white rounded-full min-w-7 h-7 px-1.5 flex items-center justify-center text-xs font-bold"
           style={{ boxShadow: "var(--shadow-md)" }}
           aria-hidden
         >
-          ✓
+          {selectedPoints && selectedPoints > 1 ? selectedPoints : "✓"}
         </span>
       )}
     </div>
@@ -128,7 +131,7 @@ function DetailsButton({ onClick }: { onClick: () => void }) {
 }
 
 export function GameCard(props: ButtonProps | LinkProps) {
-  const { game, playerCount, selected, className = "" } = props;
+  const { game, playerCount, selected, selectedPoints, className = "" } = props;
   const disabled = "disabled" in props ? props.disabled : false;
   const onDetailsClick =
     "onDetailsClick" in props ? props.onDetailsClick : undefined;
@@ -140,7 +143,11 @@ export function GameCard(props: ButtonProps | LinkProps) {
   if ("href" in props && props.href) {
     return (
       <Link href={props.href} className={`${cardClass} hover:shadow-md`}>
-        <CardCover game={game} selected={selected} />
+        <CardCover
+          game={game}
+          selected={selected}
+          selectedPoints={selectedPoints}
+        />
         <CardBody game={game} playerCount={playerCount} />
       </Link>
     );
@@ -155,7 +162,11 @@ export function GameCard(props: ButtonProps | LinkProps) {
           disabled={disabled}
           className="flex flex-col w-full h-full text-left"
         >
-          <CardCover game={game} selected={selected} />
+          <CardCover
+            game={game}
+            selected={selected}
+            selectedPoints={selectedPoints}
+          />
           <CardBody game={game} playerCount={playerCount} />
         </button>
         <DetailsButton onClick={onDetailsClick} />
@@ -170,7 +181,11 @@ export function GameCard(props: ButtonProps | LinkProps) {
       disabled={disabled}
       className={cardClass}
     >
-      <CardCover game={game} selected={selected} />
+      <CardCover
+        game={game}
+        selected={selected}
+        selectedPoints={selectedPoints}
+      />
       <CardBody game={game} playerCount={playerCount} />
     </button>
   );

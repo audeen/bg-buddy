@@ -1,10 +1,14 @@
 import type { RankEntry } from "@/components/Ranking";
-import { buildPickCounts } from "@/lib/pick-pool";
+import { buildCopelandForCount } from "@/lib/copeland";
+import { pairCount } from "@/lib/duel-pairs";
+import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
+import { FULL_THRESHOLD } from "@/lib/vote-limits";
 import { isDuelMode, isPickMode } from "@/lib/vote-mode";
 
 type VoteRow = {
   playerCount: number;
   gameId: number;
+  opponentGameId?: number | null;
   userId: string;
   points: number;
   mode: string;
@@ -59,7 +63,82 @@ export function buildRankingByCount(
   return rankingByCount;
 }
 
-/** pickCount (group) + duel wins per game */
+export function buildDuelCopelandByCount(
+  votes: VoteRow[],
+): Record<number, RankEntry[]> {
+  const picksByCount = new Map<number, { gameId: number; points: number }[]>();
+  for (const v of votes) {
+    if (!isPickMode(v.mode)) continue;
+    if (!picksByCount.has(v.playerCount)) picksByCount.set(v.playerCount, []);
+    picksByCount.get(v.playerCount)!.push({
+      gameId: v.gameId,
+      points: v.points,
+    });
+  }
+
+  const duelVotes = votes
+    .filter((v) => isDuelMode(v.mode))
+    .map((v) => ({
+      gameId: v.gameId,
+      opponentGameId: v.opponentGameId ?? null,
+      userId: v.userId,
+      playerCount: v.playerCount,
+    }));
+
+  const gameMeta = new Map<
+    number,
+    { name: string; thumbnail: string | null }
+  >();
+  for (const v of votes) {
+    gameMeta.set(v.gameId, {
+      name: v.game.name,
+      thumbnail: v.game.thumbnail ?? v.game.image,
+    });
+  }
+
+  const playerCounts = new Set([
+    ...picksByCount.keys(),
+    ...duelVotes.map((v) => v.playerCount),
+  ]);
+
+  const out: Record<number, RankEntry[]> = {};
+
+  for (const pc of playerCounts) {
+    const pool = poolGameIds(
+      buildPickCounts(picksByCount.get(pc) ?? []),
+    );
+    const totalPairs = pairCount(pool.length);
+    const phase = totalPairs <= FULL_THRESHOLD ? "FULL" : "GROUP";
+    const { winsByGame } = buildCopelandForCount(
+      duelVotes,
+      pc,
+      phase,
+      totalPairs,
+    );
+
+    const entries: RankEntry[] = [];
+    for (const [gameId, wins] of Object.entries(winsByGame)) {
+      const id = Number(gameId);
+      const meta = gameMeta.get(id);
+      if (!meta || wins <= 0) continue;
+      entries.push({
+        id,
+        name: meta.name,
+        thumbnail: meta.thumbnail,
+        points: wins,
+        voters: 0,
+        duelWins: wins,
+      });
+    }
+    out[pc] = entries.sort(
+      (a, b) => b.points - a.points || a.name.localeCompare(b.name),
+    );
+  }
+
+  return out;
+}
+
+/** pickCount (Stimmen-Summe) + Copeland-Siege */
 export function buildCombinedByCount(
   votes: VoteRow[],
 ): Record<number, RankEntry[]> {
@@ -70,10 +149,10 @@ export function buildCombinedByCount(
       picksByCount.set(v.playerCount, {});
     }
     const c = picksByCount.get(v.playerCount)!;
-    c[v.gameId] = (c[v.gameId] ?? 0) + 1;
+    c[v.gameId] = (c[v.gameId] ?? 0) + v.points;
   }
 
-  const duelByCount = buildRankingByCount(votes, "DUEL");
+  const duelByCount = buildDuelCopelandByCount(votes);
 
   const playerCounts = new Set([
     ...picksByCount.keys(),
@@ -143,6 +222,7 @@ export type PickListGame = {
   id: number;
   name: string;
   thumbnail: string | null;
+  points: number;
 };
 
 export type PickListPlayer = {
@@ -167,11 +247,16 @@ export function buildPicksByCount(
       users.set(v.userId, { userName: v.user.name, games: [] });
     }
     const u = users.get(v.userId)!;
-    if (u.games.some((g) => g.id === v.gameId)) continue;
+    const existing = u.games.find((g) => g.id === v.gameId);
+    if (existing) {
+      existing.points = v.points;
+      continue;
+    }
     u.games.push({
       id: v.game.id,
       name: v.game.name,
       thumbnail: v.game.thumbnail ?? v.game.image,
+      points: v.points,
     });
   }
 
@@ -181,7 +266,9 @@ export function buildPicksByCount(
       .map(([userId, { userName, games }]) => ({
         userId,
         userName,
-        games: games.sort((a, b) => a.name.localeCompare(b.name)),
+        games: games.sort(
+          (a, b) => b.points - a.points || a.name.localeCompare(b.name),
+        ),
       }))
       .sort((a, b) => a.userName.localeCompare(b.userName));
   }

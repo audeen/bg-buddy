@@ -46,7 +46,7 @@ export default async function PickPage({
     }),
     prisma.vote.findMany({
       where: { meetupId: id, userId: user.id, mode: "PICK" },
-      select: { gameId: true, playerCount: true },
+      select: { gameId: true, playerCount: true, points: true },
     }),
   ]);
 
@@ -55,7 +55,7 @@ export default async function PickPage({
       <PageHeader
         id="pick-page-top"
         eyebrow={meetup.title}
-        title="Direkt wählen"
+        title="Stimmen vergeben"
       />
 
       <PickClient

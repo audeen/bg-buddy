@@ -38,7 +38,7 @@ export function PickListByPlayer({
 
       {players.length === 0 ? (
         <p className="text-[var(--muted)] text-sm">
-          Für {selected} Spieler gibt es noch keine Direkt-Picks.
+          Für {selected} Spieler gibt es noch keine Stimmen.
         </p>
       ) : (
         <ul className="flex flex-col gap-3">
@@ -60,6 +60,11 @@ export function PickListByPlayer({
                     <span className="text-sm font-medium leading-tight line-clamp-2 min-w-0 flex-1">
                       {g.name}
                     </span>
+                    {g.points > 1 && (
+                      <span className="chip chip-accent text-xs shrink-0">
+                        {g.points}×
+                      </span>
+                    )}
                   </Link>
                 ))}
               </div>

@@ -5,8 +5,8 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { GameCard } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameDetailData } from "@/components/GameDetailView";
-import { togglePickVoteAction } from "@/app/actions";
-import { MAX_PICKS_PER_COUNT } from "@/lib/vote-limits";
+import { setPickPointsAction } from "@/app/actions";
+import { MAX_PICK_POINTS, MAX_POINTS_PER_GAME } from "@/lib/vote-limits";
 
 export type PickGame = GameDetailData;
 
@@ -16,15 +16,19 @@ function eligible(g: PickGame, n: number): boolean {
   return min <= n && n <= max;
 }
 
-function picksForCount(
-  picks: Set<string>,
+function pointsKey(gameId: number, playerCount: number): string {
+  return `${gameId}:${playerCount}`;
+}
+
+function pointsForCount(
+  points: Record<string, number>,
   playerCount: number,
 ): number {
-  let n = 0;
-  for (const key of picks) {
-    if (key.endsWith(`:${playerCount}`)) n++;
+  let sum = 0;
+  for (const [key, val] of Object.entries(points)) {
+    if (key.endsWith(`:${playerCount}`)) sum += val;
   }
-  return n;
+  return sum;
 }
 
 export function PickClient({
@@ -37,13 +41,17 @@ export function PickClient({
   meetupId: string;
   expected: number;
   games: PickGame[];
-  initialPicks: { gameId: number; playerCount: number }[];
+  initialPicks: { gameId: number; playerCount: number; points: number }[];
   scrollTargetId: string;
 }) {
   const [selected, setSelected] = useState(expected);
-  const [picks, setPicks] = useState<Set<string>>(
-    () => new Set(initialPicks.map((p) => `${p.gameId}:${p.playerCount}`)),
-  );
+  const [points, setPoints] = useState<Record<string, number>>(() => {
+    const m: Record<string, number> = {};
+    for (const p of initialPicks) {
+      m[pointsKey(p.gameId, p.playerCount)] = p.points;
+    }
+    return m;
+  });
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const [detailGame, setDetailGame] = useState<PickGame | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -67,9 +75,10 @@ export function PickClient({
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  const pickCount = picksForCount(picks, selected);
-  const atLimit = pickCount >= MAX_PICKS_PER_COUNT;
-  const progressPct = (pickCount / MAX_PICKS_PER_COUNT) * 100;
+  const usedPoints = pointsForCount(points, selected);
+  const budgetLeft = MAX_PICK_POINTS - usedPoints;
+  const atLimit = budgetLeft <= 0;
+  const progressPct = (usedPoints / MAX_PICK_POINTS) * 100;
 
   const availableCounts = useMemo(() => {
     const maxP = games.reduce((m, g) => Math.max(m, g.maxPlayers ?? 0), 0);
@@ -88,40 +97,38 @@ export function PickClient({
     [games, selected],
   );
 
-  function toggle(gameId: number) {
-    const key = `${gameId}:${selected}`;
-    const isOn = picks.has(key);
-    if (!isOn && atLimit) {
+  function setGamePoints(gameId: number, next: number) {
+    const key = pointsKey(gameId, selected);
+    const prev = points[key] ?? 0;
+    const clamped = Math.max(0, Math.min(MAX_POINTS_PER_GAME, next));
+    const newUsed = usedPoints - prev + clamped;
+    if (newUsed > MAX_PICK_POINTS) {
       setLimitMsg(
-        `Maximal ${MAX_PICKS_PER_COUNT} Direkt-Picks für diese Spieleranzahl.`,
+        `Maximal ${MAX_PICK_POINTS} Stimmen für diese Spieleranzahl.`,
       );
       return;
     }
     setLimitMsg(null);
-    setPicks((prev) => {
-      const next = new Set(prev);
-      if (isOn) next.delete(key);
-      else next.add(key);
-      return next;
+    setPoints((p) => {
+      const copy = { ...p };
+      if (clamped === 0) delete copy[key];
+      else copy[key] = clamped;
+      return copy;
     });
     startTransition(async () => {
-      const res = await togglePickVoteAction(meetupId, gameId, selected);
+      const res = await setPickPointsAction(
+        meetupId,
+        gameId,
+        selected,
+        clamped,
+      );
       if (res && "error" in res && res.error) {
         setLimitMsg(res.error);
-        setPicks((prev) => {
-          const next = new Set(prev);
-          if (isOn) next.add(key);
-          else next.delete(key);
-          return next;
-        });
-        return;
-      }
-      if (res && "voted" in res) {
-        setPicks((prev) => {
-          const next = new Set(prev);
-          if (res.voted) next.add(key);
-          else next.delete(key);
-          return next;
+        setPoints((p) => {
+          const copy = { ...p };
+          if (prev === 0) delete copy[key];
+          else copy[key] = prev;
+          return copy;
         });
       }
     });
@@ -133,11 +140,21 @@ export function PickClient({
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold">Spieleranzahl</span>
           <span className="text-sm font-bold tabular-nums">
-            {pickCount} / {MAX_PICKS_PER_COUNT} gewählt
+            {usedPoints} / {MAX_PICK_POINTS} Stimmen
           </span>
         </div>
-        <div className="progress-bar" role="progressbar" aria-valuenow={pickCount} aria-valuemin={0} aria-valuemax={MAX_PICKS_PER_COUNT} aria-label="Direkt-Picks">
-          <div className="progress-bar-fill" style={{ width: `${progressPct}%` }} />
+        <div
+          className="progress-bar"
+          role="progressbar"
+          aria-valuenow={usedPoints}
+          aria-valuemin={0}
+          aria-valuemax={MAX_PICK_POINTS}
+          aria-label="Stimmen vergeben"
+        >
+          <div
+            className="progress-bar-fill"
+            style={{ width: `${progressPct}%` }}
+          />
         </div>
         <div className="tabs-scroll">
           {availableCounts.map((n) => (
@@ -158,8 +175,8 @@ export function PickClient({
           ))}
         </div>
         <p className="text-xs text-[var(--muted)] leading-relaxed">
-          Bis zu {MAX_PICKS_PER_COUNT} pro Anzahl (★ = erwartet). Nochmal tippen
-          entfernt die Stimme. ℹ für Details.
+          {MAX_PICK_POINTS} Stimmen pro Anzahl (★ = erwartet), auch alle auf ein
+          Spiel. ℹ für Details.
         </p>
         {limitMsg && (
           <p className="text-sm text-[var(--accent)]" role="alert">
@@ -175,18 +192,43 @@ export function PickClient({
       ) : (
         <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {visible.map((g) => {
-            const on = picks.has(`${g.id}:${selected}`);
-            const disabled = !on && atLimit;
+            const key = pointsKey(g.id, selected);
+            const gamePoints = points[key] ?? 0;
+            const canAdd =
+              gamePoints < MAX_POINTS_PER_GAME && budgetLeft > 0;
             return (
-              <li key={g.id}>
+              <li key={g.id} className="flex flex-col gap-2">
                 <GameCard
                   game={g}
                   playerCount={selected}
-                  selected={on}
-                  disabled={disabled}
-                  onClick={() => toggle(g.id)}
+                  selected={gamePoints > 0}
+                  selectedPoints={gamePoints}
+                  onClick={() => {}}
                   onDetailsClick={() => setDetailGame(g)}
                 />
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm min-w-[44px] min-h-[44px]"
+                    aria-label="Stimme entfernen"
+                    disabled={gamePoints === 0}
+                    onClick={() => setGamePoints(g.id, gamePoints - 1)}
+                  >
+                    −
+                  </button>
+                  <span className="text-sm font-bold tabular-nums w-8 text-center">
+                    {gamePoints}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm min-w-[44px] min-h-[44px]"
+                    aria-label="Stimme hinzufügen"
+                    disabled={!canAdd}
+                    onClick={() => setGamePoints(g.id, gamePoints + 1)}
+                  >
+                    +
+                  </button>
+                </div>
               </li>
             );
           })}
@@ -205,7 +247,7 @@ export function PickClient({
           onClick={scrollToPageTop}
           className={`scroll-to-top btn btn-ghost ${atLimit ? "scroll-to-top-above-footer" : ""}`}
           aria-label="Nach oben"
-          title="Direkt wählen"
+          title="Stimmen vergeben"
         >
           ↑
         </button>
@@ -214,7 +256,7 @@ export function PickClient({
       {atLimit && (
         <div className="sticky-above-nav -mx-4 px-4 py-3 mt-2 bg-[var(--background)] border-t border-[var(--border)] flex flex-col items-center gap-2 sm:static sm:border-0 sm:mx-0 sm:px-0 sm:mt-0">
           <p className="text-sm text-[var(--muted)]">
-            {MAX_PICKS_PER_COUNT} Picks für {selected} Spieler gewählt
+            {MAX_PICK_POINTS} Stimmen für {selected} Spieler vergeben
             {selected === expected ? " ★" : ""}.
           </p>
           <Link

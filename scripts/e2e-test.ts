@@ -118,24 +118,14 @@ async function main() {
   const top = eligible[0];
   const other = eligible[1];
 
-  for (const gameId of [top.id, other.id]) {
-    await prisma.vote.create({
-      data: {
-        meetupId: meetup.id,
-        userId: user.id,
-        gameId,
-        playerCount: 4,
-        mode: "PICK",
-      },
-    });
-  }
   await prisma.vote.create({
     data: {
       meetupId: meetup.id,
       userId: user.id,
       gameId: top.id,
       playerCount: 4,
-      mode: "DUEL",
+      mode: "PICK",
+      points: 2,
     },
   });
   await prisma.vote.create({
@@ -143,6 +133,17 @@ async function main() {
       meetupId: meetup.id,
       userId: user.id,
       gameId: other.id,
+      playerCount: 4,
+      mode: "PICK",
+      points: 1,
+    },
+  });
+  await prisma.vote.create({
+    data: {
+      meetupId: meetup.id,
+      userId: user.id,
+      gameId: top.id,
+      opponentGameId: other.id,
       playerCount: 4,
       mode: "DUEL",
     },
@@ -164,7 +165,7 @@ async function main() {
   const topDuelPts = duelRanking.find((r) => r.gameId === top.id)?._sum.points;
   const topPickPts = pickRanking.find((r) => r.gameId === top.id)?._sum.points;
   const topCombinedScore = (topPickPts ?? 0) + (topDuelPts ?? 0);
-  if (topDuelPts !== 1 || topPickPts !== 1 || topCombinedScore !== 2) {
+  if (topDuelPts !== 1 || topPickPts !== 2 || topCombinedScore !== 3) {
     throw new Error(
       `Aggregation fehlgeschlagen: Duell=${topDuelPts}, Pick=${topPickPts}, Gesamt=${topCombinedScore}`,
     );

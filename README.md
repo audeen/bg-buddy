@@ -1,7 +1,7 @@
 # 🎲 BG Buddy
 
 Verwalte deine Brettspielsammlung und stimmt gemeinsam ab, was beim nächsten
-Treffen gespielt wird – per Direkt-Pick und optionalem Duell-Modus unter den Picks.
+Treffen gespielt wird – per gewichteten Stimmen und optionalem Duell-Modus unter den Nominierungen.
 
 Die Spieledaten kommen aus deinem **BoardGameGeek (BGG) Collection-Export** und
 werden optional mit Cover, Beschreibung, Genre und Mechaniken angereichert.
@@ -14,12 +14,13 @@ werden optional mit Cover, Beschreibung, Genre und Mechaniken angereichert.
 - **Spielebrowser** mit Suche und Filter (Spieleranzahl, Genre)
 - **Niederschwellige Anmeldung** – nur ein Name, kein Passwort
 - **Treffen** anlegen mit jederzeit änderbarer erwarteter Spieleranzahl
-- **Direkt-Pick** – bis zu 3 Spiele pro Spieler und Spieleranzahl, „beste Wahl"
-  hervorgehoben
-- **Duell-Modus** – 8 Duelle nur unter von der Gruppe gepickten Spielen (★);
-  häufiger gepickte Spiele treten öfter auf und starten mit Bonus im Gesamt-Ranking
-- **Ergebnisse pro Treffen** – Direkt-Picks (pro Spieler), Duell-Siege, Gesamt
-  (Picks + Siege)
+- **Stimmen** – 3 Stimmen pro Spieler und Spieleranzahl (★), frei verteilbar (auch
+  alle auf ein Spiel)
+- **Duell-Modus** – Paarvergleiche unter nominierten Spielen (★): bei ≤6 Spielen
+  vollständig (jedes gegen jedes), bei mehr Spielen Gruppen-Matrix mit fairer
+  Verteilung
+- **Ergebnisse pro Treffen** – Stimmen (pro Spieler), Copeland-Siege, Gesamt
+  (Stimmen + Siege)
 
 ## Tech-Stack
 

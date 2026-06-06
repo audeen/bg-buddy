@@ -8,7 +8,7 @@ import type { PickListPlayer } from "@/lib/vote-aggregation";
 type Tab = "picks" | "duel" | "combined";
 
 const TABS: { id: Tab; label: string; short: string }[] = [
-  { id: "picks", label: "Direkt-Picks", short: "Picks" },
+  { id: "picks", label: "Stimmen", short: "Stimmen" },
   { id: "duel", label: "Duelle", short: "Duelle" },
   { id: "combined", label: "Gesamt", short: "Gesamt" },
 ];
@@ -64,7 +64,7 @@ export function MeetupRankings({
       {tab === "duel" && (
         <>
           <p className="text-sm text-[var(--muted)]">
-            Nur Duell-Siege unter gepickten Spielen (★ = erwartete Spieleranzahl).
+            Copeland-Siege aus Paarvergleichen (★ = erwartete Spieleranzahl).
           </p>
           <Ranking
             expected={expected}
@@ -77,8 +77,8 @@ export function MeetupRankings({
       {tab === "combined" && (
         <>
           <p className="text-sm text-[var(--muted)]">
-            Gesamt = Direkt-Picks der Gruppe + Duell-Siege (mehrfach gepickte
-            Spiele starten mit Bonus).
+            Gesamt = Stimmen der Gruppe + Copeland-Siege (stärker gewichtete
+            Nominierungen starten mit Bonus).
           </p>
           <Ranking
             expected={expected}

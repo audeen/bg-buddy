@@ -17,7 +17,8 @@
     "prefetch-covers": "tsx scripts/prefetch-covers-geekdo.ts",
     "prefetch-geekdo": "tsx scripts/prefetch-geekdo.ts",
     "translate-enrichment": "tsx scripts/translate-enrichment.ts",
-    "test:enrichment-cache": "tsx scripts/test-enrichment-cache.ts"
+    "test:enrichment-cache": "tsx scripts/test-enrichment-cache.ts",
+    "test:duel-pairs": "tsx scripts/test-duel-pairs.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
