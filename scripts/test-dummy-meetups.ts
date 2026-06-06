@@ -1,12 +1,16 @@
 import { PrismaClient } from "@prisma/client";
 import {
   createAllDummyMeetups,
+  creatorPickSum,
   DUMMY_MEETUP_PREFIX,
-  ensureDummyUsers,
+  DUMMY_SCENARIO_COUNT,
+  expectedDuelPhase,
   isDummyMeetupTitle,
-  verifyDummyDuelComplete,
+  poolSizeFromPicks,
+  purgeDummyMeetups,
 } from "../lib/dummy-meetups";
-import { getDuelProgressForCount } from "../lib/duel-pairs";
+import { pairCount } from "../lib/duel-pairs";
+import { FULL_THRESHOLD } from "../lib/vote-limits";
 
 function assert(cond: boolean, msg: string) {
   if (!cond) throw new Error(msg);
@@ -16,17 +20,21 @@ const prisma = new PrismaClient();
 
 async function main() {
   assert(
-    isDummyMeetupTitle(`${DUMMY_MEETUP_PREFIX}GROUP · fertig`),
+    isDummyMeetupTitle(`${DUMMY_MEETUP_PREFIX}Direktduelle · dir 1 Pick`),
     "prefix matcher",
   );
   assert(!isDummyMeetupTitle("Echtes Treffen"), "real meetup not dummy");
 
+  assert(pairCount(6) === FULL_THRESHOLD, "6 games at FULL threshold");
+  assert(expectedDuelPhase(6) === "FULL", "6 -> FULL");
+  assert(expectedDuelPhase(8) === "GROUP", "8 -> GROUP");
+
   const gameCount = await prisma.game.count({
     where: { isExpansion: false },
   });
-  if (gameCount < 12) {
+  if (gameCount < 8) {
     console.log(
-      `test-dummy-meetups: SKIP (need 12+ games, have ${gameCount})`,
+      `test-dummy-meetups: SKIP (need 8+ games, have ${gameCount})`,
     );
     return;
   }
@@ -37,101 +45,58 @@ async function main() {
     create: { name: "Dummy-Test-Runner" },
   });
 
-  await prisma.meetup.deleteMany({
-    where: { title: { startsWith: DUMMY_MEETUP_PREFIX } },
-  });
+  await purgeDummyMeetups(prisma);
 
   const { meetupIds, count } = await createAllDummyMeetups(user.id, prisma);
-  assert(count === 8, `expected 8 meetups, got ${count}`);
-  assert(meetupIds.length === 8, "meetup ids length");
+  assert(count === DUMMY_SCENARIO_COUNT, `expected ${DUMMY_SCENARIO_COUNT} meetups`);
+  assert(meetupIds.length === DUMMY_SCENARIO_COUNT, "meetup ids length");
 
-  await ensureDummyUsers(prisma);
-
-  const titles = await prisma.meetup.findMany({
-    where: { id: { in: meetupIds } },
-    select: { title: true },
+  const duelVoteCount = await prisma.vote.count({
+    where: {
+      meetupId: { in: meetupIds },
+      mode: "DUEL",
+    },
   });
-  for (const m of titles) {
-    assert(isDummyMeetupTitle(m.title), `title must have prefix: ${m.title}`);
+  assert(duelVoteCount === 0, "dummy meetups must have no duel votes");
+
+  for (const label of [
+    "Direktduelle · dir 3 Picks",
+    "Direktduelle · dir 2 Picks",
+    "Direktduelle · dir 1 Pick",
+    "Gruppenduelle · dir 3 Picks",
+    "Gruppenduelle · dir 2 Picks",
+    "Gruppenduelle · dir 1 Pick",
+  ]) {
+    const meetup = await prisma.meetup.findFirst({
+      where: { title: `${DUMMY_MEETUP_PREFIX}${label}` },
+      include: {
+        votes: {
+          where: { mode: "PICK", playerCount: 4 },
+          select: { userId: true, gameId: true, points: true },
+        },
+      },
+    });
+    assert(!!meetup, `missing ${label}`);
+
+    const picks = meetup!.votes;
+    const poolSize = poolSizeFromPicks(picks);
+    const creatorSum = creatorPickSum(picks, user.id);
+    const wantsLeft = label.includes("dir 3")
+      ? 3
+      : label.includes("dir 2")
+        ? 2
+        : 1;
+    assert(
+      creatorSum === 3 - wantsLeft,
+      `${label}: creator has ${creatorSum}, expected ${3 - wantsLeft}`,
+    );
+
+    if (label.startsWith("Direktduelle")) {
+      assert(poolSize === 6, `${label}: pool 6, got ${poolSize}`);
+    } else {
+      assert(poolSize === 8, `${label}: pool 8, got ${poolSize}`);
+    }
   }
-
-  const groupDone = await prisma.meetup.findFirst({
-    where: { title: `${DUMMY_MEETUP_PREFIX}GROUP · fertig` },
-    include: {
-      votes: {
-        select: {
-          gameId: true,
-          opponentGameId: true,
-          userId: true,
-          playerCount: true,
-          mode: true,
-          points: true,
-        },
-      },
-    },
-  });
-  assert(!!groupDone, "GROUP · fertig meetup exists");
-
-  const pickVotes = groupDone!.votes.filter((v) => v.mode === "PICK");
-  const pickSum = pickVotes.reduce((s, v) => s + v.points, 0);
-  assert(pickSum >= 12, `GROUP picks sum >= 12, got ${pickSum}`);
-
-  const poolIds = [
-    ...new Set(pickVotes.map((v) => v.gameId)),
-  ].sort((a, b) => a - b);
-  assert(poolIds.length === 12, `pool should be 12 games, got ${poolIds.length}`);
-
-  const duelVotes = groupDone!.votes
-    .filter((v) => v.mode === "DUEL")
-    .map((v) => ({
-      gameId: v.gameId,
-      opponentGameId: v.opponentGameId,
-      userId: v.userId,
-      playerCount: v.playerCount,
-    }));
-  assert(
-    verifyDummyDuelComplete(poolIds, duelVotes, 4),
-    "GROUP · fertig should be duelComplete",
-  );
-  const progress = getDuelProgressForCount(poolIds, duelVotes, 4);
-  assert(progress.duelComplete, "getDuelProgressForCount duelComplete");
-  assert(progress.decidedPairs === 66, `expected 66 pairs, got ${progress.decidedPairs}`);
-
-  const fullDone = await prisma.meetup.findFirst({
-    where: { title: `${DUMMY_MEETUP_PREFIX}FULL · fertig` },
-    include: {
-      votes: {
-        where: { mode: "DUEL" },
-        select: {
-          gameId: true,
-          opponentGameId: true,
-          userId: true,
-          playerCount: true,
-        },
-      },
-    },
-  });
-  assert(!!fullDone, "FULL · fertig meetup exists");
-
-  const fullPool = [
-    ...new Set(
-      (
-        await prisma.vote.findMany({
-          where: { meetupId: fullDone!.id, mode: "PICK" },
-          select: { gameId: true },
-        })
-      ).map((v) => v.gameId),
-    ),
-  ];
-  assert(fullPool.length === 6, "FULL pool has 6 games");
-
-  const fullProgress = getDuelProgressForCount(
-    fullPool,
-    fullDone!.votes,
-    4,
-  );
-  assert(fullProgress.decidedPairs === 15, "FULL decided 15 pairs");
-  assert(fullProgress.duelComplete, "FULL duelComplete");
 
   const realMeetup = await prisma.meetup.create({
     data: {
@@ -141,10 +106,11 @@ async function main() {
     },
   });
 
-  const purge = await prisma.meetup.deleteMany({
-    where: { title: { startsWith: DUMMY_MEETUP_PREFIX } },
-  });
-  assert(purge.count === 8, `purge should delete 8, deleted ${purge.count}`);
+  const deleted = await purgeDummyMeetups(prisma);
+  assert(
+    deleted === DUMMY_SCENARIO_COUNT,
+    `purge should delete ${DUMMY_SCENARIO_COUNT}, deleted ${deleted}`,
+  );
 
   const realStill = await prisma.meetup.findUnique({
     where: { id: realMeetup.id },

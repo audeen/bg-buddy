@@ -1,15 +1,12 @@
 import type { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import {
-  allPairs,
-  assignGroupPairs,
-  buildUserPointsMap,
-  getDuelProgressForCount,
-  participantIdsFromPicks,
-  type DuelPair,
-} from "@/lib/duel-pairs";
+import { pairCount } from "@/lib/duel-pairs";
+import { MAX_PICK_POINTS } from "@/lib/vote-limits";
+import { poolGameIds, buildPickCounts } from "@/lib/pick-pool";
 
 export const DUMMY_MEETUP_PREFIX = "🧪 Dummy: ";
+
+export const DUMMY_SCENARIO_COUNT = 6;
 
 export const DUMMY_USER_NAMES = [
   "Dummy Alice",
@@ -20,6 +17,10 @@ export const DUMMY_USER_NAMES = [
 
 const EXPECTED = 4;
 
+/** 6 games = 15 pairs → Direktduelle (FULL). 8 games = 28 pairs → Gruppenduelle. */
+const POOL_FULL = 6;
+const POOL_GROUP = 8;
+
 type PickRow = { userId: string; gameId: number; points: number };
 
 type DummyUsers = {
@@ -28,8 +29,23 @@ type DummyUsers = {
   carol: string;
   dave: string;
   all: string[];
-  trio: string[];
 };
+
+type Scenario = {
+  label: string;
+  poolSize: number;
+  /** How many picks the logged-in creator still needs (1–3). */
+  creatorPicksLeft: 1 | 2 | 3;
+};
+
+const SCENARIOS: Scenario[] = [
+  { label: "Direktduelle · dir 3 Picks", poolSize: POOL_FULL, creatorPicksLeft: 3 },
+  { label: "Direktduelle · dir 2 Picks", poolSize: POOL_FULL, creatorPicksLeft: 2 },
+  { label: "Direktduelle · dir 1 Pick", poolSize: POOL_FULL, creatorPicksLeft: 1 },
+  { label: "Gruppenduelle · dir 3 Picks", poolSize: POOL_GROUP, creatorPicksLeft: 3 },
+  { label: "Gruppenduelle · dir 2 Picks", poolSize: POOL_GROUP, creatorPicksLeft: 2 },
+  { label: "Gruppenduelle · dir 1 Pick", poolSize: POOL_GROUP, creatorPicksLeft: 1 },
+];
 
 export async function ensureDummyUsers(
   db: PrismaClient = prisma,
@@ -44,7 +60,7 @@ export async function ensureDummyUsers(
     ids.push(user.id);
   }
   const [alice, bob, carol, dave] = ids;
-  return { alice, bob, carol, dave, all: ids, trio: ids.slice(0, 3) };
+  return { alice, bob, carol, dave, all: ids };
 }
 
 export async function eligibleGameIds(
@@ -77,6 +93,55 @@ export async function countDummyMeetups(
   return db.meetup.count({
     where: { title: { startsWith: DUMMY_MEETUP_PREFIX } },
   });
+}
+
+export async function purgeDummyMeetups(
+  db: PrismaClient = prisma,
+): Promise<number> {
+  const result = await db.meetup.deleteMany({
+    where: { title: { startsWith: DUMMY_MEETUP_PREFIX } },
+  });
+  return result.count;
+}
+
+function dummyPicksForPool(users: DummyUsers, pool: number[]): PickRow[] {
+  const pickers = [users.alice, users.bob, users.carol];
+  const picks: PickRow[] = [];
+  const usedByUser = new Map<string, number>();
+
+  for (let i = 0; i < pool.length; i++) {
+    const gameId = pool[i];
+    let userId = pickers[i % pickers.length];
+    let attempts = 0;
+    while ((usedByUser.get(userId) ?? 0) >= MAX_PICK_POINTS && attempts < pickers.length) {
+      userId = pickers[(i + attempts) % pickers.length];
+      attempts++;
+    }
+    if ((usedByUser.get(userId) ?? 0) >= MAX_PICK_POINTS) continue;
+
+    picks.push({ userId, gameId, points: 1 });
+    usedByUser.set(userId, (usedByUser.get(userId) ?? 0) + 1);
+  }
+  return picks;
+}
+
+function creatorPicks(
+  createdById: string,
+  pool: number[],
+  picksLeft: 1 | 2 | 3,
+): PickRow[] {
+  const alreadySet = MAX_PICK_POINTS - picksLeft;
+  if (alreadySet <= 0) return [];
+
+  const picks: PickRow[] = [];
+  let remaining = alreadySet;
+  for (const gameId of pool) {
+    if (remaining <= 0) break;
+    const points = Math.min(remaining, MAX_PICK_POINTS);
+    picks.push({ userId: createdById, gameId, points });
+    remaining -= points;
+  }
+  return picks;
 }
 
 async function createMeetup(
@@ -113,280 +178,51 @@ async function insertPicks(
   });
 }
 
-function flattenAssignments(
-  assignments: Record<string, DuelPair[]>,
-): { userId: string; pair: DuelPair }[] {
-  const out: { userId: string; pair: DuelPair }[] = [];
-  for (const [userId, list] of Object.entries(assignments)) {
-    for (const pair of list) {
-      out.push({ userId, pair });
-    }
-  }
-  return out;
-}
-
-async function insertGroupDuels(
-  db: PrismaClient,
-  meetupId: string,
-  pool: number[],
-  picks: PickRow[],
-  fraction = 1,
-  playerCount = EXPECTED,
-): Promise<void> {
-  const participants = participantIdsFromPicks(picks);
-  const userPoints = buildUserPointsMap(picks);
-  const assignments = assignGroupPairs(
-    allPairs(pool),
-    participants,
-    userPoints,
-  );
-  const assigned = flattenAssignments(assignments);
-  const count = Math.max(0, Math.floor(assigned.length * fraction));
-  const slice = assigned.slice(0, count);
-  if (slice.length === 0) return;
-
-  await db.vote.createMany({
-    data: slice.map(({ userId, pair }) => ({
-      meetupId,
-      userId,
-      gameId: pair.a,
-      opponentGameId: pair.b,
-      playerCount,
-      points: 1,
-      mode: "DUEL" as const,
-    })),
-  });
-}
-
-async function insertFullDuels(
-  db: PrismaClient,
-  meetupId: string,
-  pool: number[],
-  voterIds: string[],
-  fraction = 1,
-  playerCount = EXPECTED,
-): Promise<void> {
-  const pairs = allPairs(pool);
-  const count = Math.max(0, Math.floor(pairs.length * fraction));
-  if (count === 0 || voterIds.length < 2) return;
-
-  const majority = voterIds.slice(0, 2);
-  const minority = voterIds[2] ?? voterIds[0];
-  const data: {
-    meetupId: string;
-    userId: string;
-    gameId: number;
-    opponentGameId: number;
-    playerCount: number;
-    points: number;
-    mode: "DUEL";
-  }[] = [];
-
-  for (let i = 0; i < count; i++) {
-    const pair = pairs[i];
-    const winner = pair.a;
-    const loser = pair.b;
-    for (const userId of majority) {
-      data.push({
-        meetupId,
-        userId,
-        gameId: winner,
-        opponentGameId: loser,
-        playerCount,
-        points: 1,
-        mode: "DUEL",
-      });
-    }
-    data.push({
-      meetupId,
-      userId: minority,
-      gameId: loser,
-      opponentGameId: winner,
-      playerCount,
-      points: 1,
-      mode: "DUEL",
-    });
-  }
-
-  await db.vote.createMany({ data });
-}
-
-async function insertSingleDuels(
-  db: PrismaClient,
-  meetupId: string,
-  userId: string,
-  winnerId: number,
-  loserId: number,
-  playerCount = EXPECTED,
-): Promise<void> {
-  await db.vote.create({
-    data: {
-      meetupId,
-      userId,
-      gameId: winnerId,
-      opponentGameId: loserId,
-      playerCount,
-      points: 1,
-      mode: "DUEL",
-    },
-  });
-}
-
-function groupPicksEven(
-  users: DummyUsers,
-  pool: number[],
-): PickRow[] {
-  const picks: PickRow[] = [];
-  for (let i = 0; i < pool.length; i++) {
-    picks.push({
-      userId: users.all[i % 4],
-      gameId: pool[i],
-      points: 1,
-    });
-  }
-  return picks;
-}
-
 export async function createAllDummyMeetups(
   createdById: string,
   db: PrismaClient = prisma,
 ): Promise<{ meetupIds: string[]; count: number }> {
+  await purgeDummyMeetups(db);
+
   const users = await ensureDummyUsers(db);
-  const games = await eligibleGameIds(12, EXPECTED, db);
-  if (games.length < 12) {
+  const games = await eligibleGameIds(POOL_GROUP, EXPECTED, db);
+  if (games.length < POOL_GROUP) {
     throw new Error(
-      `Mindestens 12 spielbare Spiele nötig (gefunden: ${games.length}). Bitte zuerst eine Sammlung importieren.`,
+      `Mindestens ${POOL_GROUP} spielbare Spiele nötig (gefunden: ${games.length}). Bitte zuerst eine Sammlung importieren.`,
     );
   }
-
-  const pool12 = games.slice(0, 12);
-  const pool8 = games.slice(0, 8);
-  const pool6 = games.slice(0, 6);
-  const pool2 = games.slice(0, 2);
 
   const meetupIds: string[] = [];
 
-  // GROUP · nur Picks
-  {
-    const id = await createMeetup(db, createdById, "GROUP · nur Picks");
-    await insertPicks(db, id, groupPicksEven(users, pool12));
-    meetupIds.push(id);
-  }
-
-  // GROUP · Duell läuft (~17/66)
-  {
-    const picks = groupPicksEven(users, pool12);
-    const id = await createMeetup(db, createdById, "GROUP · Duell läuft");
-    await insertPicks(db, id, picks);
-    await insertGroupDuels(db, id, pool12, picks, 17 / 66);
-    meetupIds.push(id);
-  }
-
-  // GROUP · fertig
-  {
-    const picks = groupPicksEven(users, pool12);
-    const id = await createMeetup(db, createdById, "GROUP · fertig");
-    await insertPicks(db, id, picks);
-    await insertGroupDuels(db, id, pool12, picks, 1);
-    meetupIds.push(id);
-  }
-
-  // FULL · nur Picks
-  {
-    const id = await createMeetup(db, createdById, "FULL · nur Picks");
-    await insertPicks(
-      db,
-      id,
-      [
-        { userId: users.alice, gameId: pool6[0], points: 1 },
-        { userId: users.alice, gameId: pool6[1], points: 1 },
-        { userId: users.alice, gameId: pool6[2], points: 1 },
-        { userId: users.bob, gameId: pool6[3], points: 1 },
-        { userId: users.bob, gameId: pool6[4], points: 1 },
-        { userId: users.bob, gameId: pool6[5], points: 1 },
-        { userId: users.carol, gameId: pool6[0], points: 1 },
-        { userId: users.carol, gameId: pool6[2], points: 1 },
-        { userId: users.carol, gameId: pool6[4], points: 1 },
-      ],
-    );
-    meetupIds.push(id);
-  }
-
-  // FULL · fertig
-  {
-    const id = await createMeetup(db, createdById, "FULL · fertig");
+  for (const scenario of SCENARIOS) {
+    const pool = games.slice(0, scenario.poolSize);
     const picks = [
-      { userId: users.alice, gameId: pool6[0], points: 1 },
-      { userId: users.alice, gameId: pool6[1], points: 1 },
-      { userId: users.alice, gameId: pool6[2], points: 1 },
-      { userId: users.bob, gameId: pool6[3], points: 1 },
-      { userId: users.bob, gameId: pool6[4], points: 1 },
-      { userId: users.bob, gameId: pool6[5], points: 1 },
-      { userId: users.carol, gameId: pool6[0], points: 1 },
-      { userId: users.carol, gameId: pool6[2], points: 1 },
-      { userId: users.carol, gameId: pool6[4], points: 1 },
+      ...dummyPicksForPool(users, pool),
+      ...creatorPicks(createdById, pool, scenario.creatorPicksLeft),
     ];
+    const id = await createMeetup(db, createdById, scenario.label);
     await insertPicks(db, id, picks);
-    await insertFullDuels(db, id, pool6, users.trio, 1);
-    meetupIds.push(id);
-  }
-
-  // Min · 2 Spiele
-  {
-    const id = await createMeetup(db, createdById, "Min · 2 Spiele");
-    await insertPicks(db, id, [
-      { userId: users.alice, gameId: pool2[0], points: 2 },
-      { userId: users.alice, gameId: pool2[1], points: 1 },
-      { userId: users.bob, gameId: pool2[0], points: 1 },
-      { userId: users.bob, gameId: pool2[1], points: 2 },
-    ]);
-    await insertSingleDuels(db, id, users.alice, pool2[0], pool2[1]);
-    meetupIds.push(id);
-  }
-
-  // Einzel · 3 Sterne
-  {
-    const id = await createMeetup(db, createdById, "Einzel · 3 Sterne");
-    await insertPicks(db, id, [
-      { userId: users.alice, gameId: pool6[0], points: 3 },
-    ]);
-    meetupIds.push(id);
-  }
-
-  // Gewichtet · läuft
-  {
-    const picks: PickRow[] = [
-      { userId: users.alice, gameId: pool8[0], points: 3 },
-      { userId: users.bob, gameId: pool8[1], points: 2 },
-      { userId: users.bob, gameId: pool8[2], points: 1 },
-      { userId: users.carol, gameId: pool8[3], points: 1 },
-      { userId: users.carol, gameId: pool8[4], points: 1 },
-      { userId: users.carol, gameId: pool8[5], points: 1 },
-      { userId: users.dave, gameId: pool8[6], points: 1 },
-      { userId: users.dave, gameId: pool8[7], points: 1 },
-      { userId: users.dave, gameId: pool8[1], points: 1 },
-    ];
-    const id = await createMeetup(db, createdById, "Gewichtet · läuft");
-    await insertPicks(db, id, picks);
-    await insertGroupDuels(db, id, pool8, picks, 0.3);
     meetupIds.push(id);
   }
 
   return { meetupIds, count: meetupIds.length };
 }
 
-/** Validates GROUP-fertig and FULL-fertig duel progress (for tests). */
-export function verifyDummyDuelComplete(
-  pool: number[],
-  duelVotes: {
-    gameId: number;
-    opponentGameId: number | null;
-    userId: string;
-    playerCount: number;
-  }[],
-  playerCount: number,
-): boolean {
-  return getDuelProgressForCount(pool, duelVotes, playerCount).duelComplete;
+export function expectedDuelPhase(poolSize: number): "FULL" | "GROUP" {
+  return pairCount(poolSize) <= 15 ? "FULL" : "GROUP";
+}
+
+export function creatorPickSum(
+  picks: PickRow[],
+  creatorId: string,
+): number {
+  return picks
+    .filter((p) => p.userId === creatorId)
+    .reduce((s, p) => s + p.points, 0);
+}
+
+export function poolSizeFromPicks(picks: PickRow[]): number {
+  return poolGameIds(buildPickCounts(picks)).length;
 }
 
 export function isDummyMeetupTitle(title: string): boolean {

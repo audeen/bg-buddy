@@ -45,7 +45,7 @@ export function HeaderMenu({ userName }: { userName: string }) {
         setError(res.error);
         return;
       }
-      const count = res && "count" in res ? res.count : 8;
+      const count = res && "count" in res ? res.count : 6;
       setMessage(`${count} Dummy-Treffen erstellt.`);
       router.refresh();
     });

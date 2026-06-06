@@ -26,6 +26,7 @@ import {
   countDummyMeetups,
   createAllDummyMeetups,
   DUMMY_MEETUP_PREFIX,
+  purgeDummyMeetups,
 } from "@/lib/dummy-meetups";
 
 export async function loginAction(formData: FormData) {
@@ -393,12 +394,10 @@ export async function purgeDummyMeetupsAction() {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
-  const result = await prisma.meetup.deleteMany({
-    where: { title: { startsWith: DUMMY_MEETUP_PREFIX } },
-  });
+  const deleted = await purgeDummyMeetups();
 
   revalidatePath("/");
   revalidatePath("/meetups", "layout");
 
-  return { ok: true, deleted: result.count };
+  return { ok: true, deleted };
 }

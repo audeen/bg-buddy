@@ -17,7 +17,6 @@ export function DuellClient({
   meetupId,
   expected,
   games,
-  pickCounts,
   myPairs,
   phase,
   totalPairs,
@@ -27,7 +26,6 @@ export function DuellClient({
   meetupId: string;
   expected: number;
   games: DuellGame[];
-  pickCounts: Record<number, number>;
   myPairs: DuelPair[];
   phase: DuelPhase;
   totalPairs: number;
@@ -173,12 +171,6 @@ export function DuellClient({
                 <span className="p-3 font-bold text-base text-center leading-tight">
                   {g.name}
                 </span>
-                {(pickCounts[g.id] ?? 0) > 0 && (
-                  <span className="pb-3 text-xs text-[var(--muted)] text-center">
-                    {pickCounts[g.id]} Stimme
-                    {(pickCounts[g.id] ?? 0) === 1 ? "" : "n"}
-                  </span>
-                )}
               </button>
             </div>
           ))}
