@@ -2,7 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
-export type PickRow = { userId: string; gameId?: number; points: number };
+export type PickRow = { userId: string; gameId: number; points: number };
 
 export type PickPhaseState = {
   poolSize: number;

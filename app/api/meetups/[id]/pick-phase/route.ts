@@ -29,7 +29,7 @@ export async function GET(
     getPickPhaseState(id, expected, prisma),
     prisma.vote.findMany({
       where: { meetupId: id, mode: "PICK", playerCount: expected },
-      select: { userId: true, points: true },
+      select: { userId: true, gameId: true, points: true },
     }),
   ]);
 
