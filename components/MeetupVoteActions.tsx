@@ -25,17 +25,31 @@ export function MeetupVoteActions({
 }) {
   useMeetupPhaseRefresh(!picksLocked);
 
+  const pickLinkDisabled = picksLocked;
+  const pickLinkTitle = picksLocked
+    ? `Stimmen bei ★ gesperrt — Duelle laufen.`
+    : undefined;
   const duellLinkDisabled = !readyForDuels;
 
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-2">
-        <Link
-          href={`/meetups/${meetupId}/pick`}
-          className="btn btn-primary btn-lg sm:flex-1"
-        >
-          Stimmen vergeben
-        </Link>
+        {pickLinkDisabled ? (
+          <span
+            className="btn btn-primary btn-lg sm:flex-1 opacity-60 cursor-not-allowed text-center"
+            title={pickLinkTitle}
+            aria-disabled
+          >
+            Stimmen vergeben · gesperrt
+          </span>
+        ) : (
+          <Link
+            href={`/meetups/${meetupId}/pick`}
+            className="btn btn-primary btn-lg sm:flex-1"
+          >
+            Stimmen vergeben
+          </Link>
+        )}
         {duellLinkDisabled ? (
           <span
             className="btn btn-ghost btn-lg sm:flex-1 opacity-60 cursor-not-allowed text-center"
@@ -57,16 +71,11 @@ export function MeetupVoteActions({
           </Link>
         )}
       </div>
-      {!readyForDuels && poolSize >= 2 && (
+      {!readyForDuels && !picksLocked && poolSize >= 2 && (
         <p className="text-xs text-[var(--muted)]">
           Duell-Modus ab {expectedPlayerCount} Spielern mit {MAX_PICK_POINTS}/
           {MAX_PICK_POINTS} Stimmen bei ★ — aktuell {fullPickCount}/
           {expectedPlayerCount}.
-        </p>
-      )}
-      {picksLocked && (
-        <p className="text-xs text-[var(--muted)]">
-          Stimmen bei ★ sind gesperrt — Duelle laufen.
         </p>
       )}
     </>
