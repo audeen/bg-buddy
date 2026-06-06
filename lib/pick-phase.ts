@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { getDuelProgressForCount } from "@/lib/duel-pairs";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
@@ -10,6 +11,7 @@ export type PickPhaseState = {
   expectedPlayerCount: number;
   readyForDuels: boolean;
   picksLocked: boolean;
+  duelComplete: boolean;
   partialPickers: { userId: string; sum: number }[];
   missingCount: number;
 };
@@ -28,6 +30,7 @@ export function assessPickPhase(
   groupPicks: PickRow[],
   expectedPlayerCount: number,
   duelVoteCount: number,
+  duelComplete = false,
 ): PickPhaseState {
   const sums = summarizePickSums(groupPicks);
   const poolSize = poolGameIds(buildPickCounts(groupPicks)).length;
@@ -46,7 +49,7 @@ export function assessPickPhase(
   partialPickers.sort((a, b) => a.userId.localeCompare(b.userId));
 
   const missingCount = Math.max(0, expectedPlayerCount - fullPickCount);
-  const picksLocked = duelVoteCount > 0;
+  const picksLocked = duelVoteCount > 0 && !duelComplete;
   const readyForDuels =
     poolSize >= 2 &&
     fullPickCount >= expectedPlayerCount &&
@@ -58,6 +61,7 @@ export function assessPickPhase(
     expectedPlayerCount,
     readyForDuels,
     picksLocked,
+    duelComplete,
     partialPickers,
     missingCount,
   };
@@ -78,7 +82,7 @@ export async function getPickPhaseState(
   expectedPlayerCount: number,
   db: PrismaClient,
 ): Promise<PickPhaseState> {
-  const [groupPicks, duelVoteCount] = await Promise.all([
+  const [groupPicks, duelVotes] = await Promise.all([
     db.vote.findMany({
       where: {
         meetupId,
@@ -87,16 +91,34 @@ export async function getPickPhaseState(
       },
       select: { userId: true, gameId: true, points: true },
     }),
-    db.vote.count({
+    db.vote.findMany({
       where: {
         meetupId,
         mode: { in: ["DUEL", "TINDER"] },
         playerCount: expectedPlayerCount,
       },
+      select: {
+        gameId: true,
+        opponentGameId: true,
+        userId: true,
+        playerCount: true,
+      },
     }),
   ]);
 
-  return assessPickPhase(groupPicks, expectedPlayerCount, duelVoteCount);
+  const poolIds = poolGameIds(buildPickCounts(groupPicks));
+  const { duelComplete } = getDuelProgressForCount(
+    poolIds,
+    duelVotes,
+    expectedPlayerCount,
+  );
+
+  return assessPickPhase(
+    groupPicks,
+    expectedPlayerCount,
+    duelVotes.length,
+    duelComplete,
+  );
 }
 
 export type PickPhaseSummary = {

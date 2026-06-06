@@ -13,14 +13,16 @@ werden optional mit Cover, Beschreibung, Genre und Mechaniken angereichert.
 - **Anreicherung** per Offline-Cache (`data/bgg-enrichment.json`, EN + DE) oder optional BGG-XML-API
 - **Spielebrowser** mit Suche und Filter (Spieleranzahl, Genre)
 - **Niederschwellige Anmeldung** – nur ein Name, kein Passwort
-- **Treffen** anlegen mit jederzeit änderbarer erwarteter Spieleranzahl
-- **Stimmen** – 3 Stimmen pro Spieler und Spieleranzahl (★), frei verteilbar (auch
-  alle auf ein Spiel)
-- **Duell-Modus** – Paarvergleiche unter nominierten Spielen (★): bei ≤6 Spielen
+- **Treffen** anlegen; der **Host** legt die erwartete Spieleranzahl (★) fest
+- **Stimmen** – 3 Stimmen pro Spieler und Spieleranzahl, frei verteilbar (auch
+  alle auf ein Spiel). Beim Öffnen startet die ★-Auswahl; andere Spielerzahlen
+  sind als Vorbereitung wählbar (z. B. falls jemand dazukommt)
+- **Duell-Modus** – Paarvergleiche nur für ★: bei ≤6 nominierten Spielen
   vollständig (jedes gegen jedes), bei mehr Spielen Gruppen-Matrix mit fairer
-  Verteilung
+  Verteilung. Nach abgeschlossenen Duellen kann der Host ★ erhöhen (z. B. 4→5)
+  und eine neue Duell-Runde starten — Voraus-Stimmen bleiben erhalten
 - **Ergebnisse pro Treffen** – Stimmen (pro Spieler), Copeland-Siege, Gesamt
-  (Stimmen + Siege)
+  (Stimmen + Siege); abgeschlossene Runden pro Spieleranzahl archiviert
 
 ## Tech-Stack
 

@@ -65,7 +65,7 @@ export function PickClient({
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [, startTransition] = useTransition();
 
-  useMeetupPhaseRefresh(!picksLocked);
+  useMeetupPhaseRefresh(true);
 
   useEffect(() => {
     const el = document.getElementById(scrollTargetId);
@@ -154,12 +154,22 @@ export function PickClient({
     });
   }
 
+  const maxAvailableCount = availableCounts[availableCounts.length - 1] ?? expected;
+  const suggestFallbackCount =
+    expected < maxAvailableCount ? expected + 1 : null;
+
   const phaseBanner = (() => {
-    if (picksLocked) {
-      return "Stimmen bei ★ gesperrt — Duelle laufen.";
+    if (picksLocked && selected === expected) {
+      return `★-Stimmen gesperrt — Duelle laufen. Andere Spielerzahlen weiter bearbeitbar.`;
+    }
+    if (picksLocked && selected !== expected) {
+      return `Vorbereitung für ${selected} Spieler — Duelle laufen nur bei ★ (${expected}).`;
+    }
+    if (selected !== expected) {
+      return `Vorbereitung für ${selected} Spieler — Duelle laufen nur bei ★ (${expected}).`;
     }
     if (readyForDuels) {
-      return "Alle bereit — Duell-Modus ist frei. Picks bleiben änderbar bis zum ersten Duell.";
+      return "Alle bereit — Duell-Modus ist frei. ★-Stimmen änderbar bis die Duelle abgeschlossen sind.";
     }
     const { fullPickCount, expectedPlayerCount, partialPickerNames, missingCount } =
       pickPhaseSummary;
@@ -219,8 +229,14 @@ export function PickClient({
           ))}
         </div>
         <p className="text-xs text-[var(--muted)] leading-relaxed">
-          Karte antippen für 1–3 Sterne (★ = erwartete Spieleranzahl). ℹ für
-          Details.
+          Karte antippen für 1–3 Sterne (★ = vom Host festgelegte Spieleranzahl).
+          ℹ für Details.
+          {suggestFallbackCount !== null && selected === expected && (
+            <>
+              {" "}
+              Stimme auch für {suggestFallbackCount} ab, falls jemand dazukommt.
+            </>
+          )}
         </p>
         {limitMsg && (
           <p className="text-sm text-[var(--accent)]" role="alert">

@@ -114,10 +114,23 @@ function isEntryVisible(
   return false;
 }
 
+function scenarioLabel(
+  count: number,
+  expected: number,
+  completedCounts: number[],
+): string | null {
+  if (count === expected) return null;
+  if (completedCounts.includes(count)) {
+    return `Abgeschlossene Duell-Runde @ ${count} Spielern`;
+  }
+  return `Vorbereitung @ ${count} Spielern (nur Stimmen)`;
+}
+
 export function Ranking({
   expected,
   playerCounts,
   rankingByCount,
+  completedCounts = [],
   pointsLabel = "Punkte",
   showPickDuelBreakdown = false,
   animateReveal = false,
@@ -125,6 +138,7 @@ export function Ranking({
   expected: number;
   playerCounts: number[];
   rankingByCount: Record<number, RankEntry[]>;
+  completedCounts?: number[];
   pointsLabel?: string;
   showPickDuelBreakdown?: boolean;
   animateReveal?: boolean;
@@ -203,22 +217,30 @@ export function Ranking({
     }
   }
 
+  const showPlayerCountTabs = playerCounts.length > 1;
+  const label = scenarioLabel(selected, expected, completedCounts);
+
   return (
     <div className="flex flex-col gap-3">
-      <div className="tabs-scroll">
-        {playerCounts.map((pc) => (
-          <button
-            key={pc}
-            type="button"
-            onClick={() => handleTabChange(pc)}
-            className={`btn btn-tab shrink-0 ${selected === pc ? "btn-primary" : "btn-ghost"} ${
-              pc === expected ? "btn-tab-expected" : ""
-            }`}
-          >
-            {pc} Spieler{pc === expected ? " ★" : ""}
-          </button>
-        ))}
-      </div>
+      {label && (
+        <p className="text-sm text-[var(--muted)]">{label}</p>
+      )}
+      {showPlayerCountTabs && (
+        <div className="tabs-scroll">
+          {playerCounts.map((pc) => (
+            <button
+              key={pc}
+              type="button"
+              onClick={() => handleTabChange(pc)}
+              className={`btn btn-tab shrink-0 ${selected === pc ? "btn-primary" : "btn-ghost"} ${
+                pc === expected ? "btn-tab-expected" : ""
+              }`}
+            >
+              {pc} Spieler{pc === expected ? " ★" : ""}
+            </button>
+          ))}
+        </div>
+      )}
 
       {entries.length === 0 ? (
         <p className="text-[var(--muted)] text-sm">

@@ -35,6 +35,7 @@ const ready = assessPickPhase(
 );
 assert(ready.readyForDuels, "4/4 full pickers should be ready");
 assert(!ready.picksLocked, "no duel votes yet");
+assert(!ready.duelComplete, "no duels yet");
 assert(ready.fullPickCount === 4, "fullPickCount 4");
 assert(ready.missingCount === 0, "missingCount 0");
 
@@ -60,10 +61,16 @@ assert(!partial.readyForDuels, "partial picker blocks ready");
 assert(partial.partialPickers.length === 1, "one partial picker");
 assert(partial.partialPickers[0]?.sum === 2, "partial sum 2");
 
-// duel votes lock picks
-const locked = assessPickPhase(picksForUsers(fourUsers, twoGames), 4, 1);
-assert(locked.picksLocked, "duelVoteCount > 0 locks picks");
+// duel votes lock picks while duels run
+const locked = assessPickPhase(picksForUsers(fourUsers, twoGames), 4, 1, false);
+assert(locked.picksLocked, "in-progress duels lock ★ picks");
+assert(!locked.duelComplete, "duels not complete");
 assert(locked.readyForDuels, "still ready when picks complete");
+
+// completed duels unlock ★ picks
+const unlocked = assessPickPhase(picksForUsers(fourUsers, twoGames), 4, 10, true);
+assert(!unlocked.picksLocked, "completed duels unlock ★ picks");
+assert(unlocked.duelComplete, "duels complete");
 
 // pool too small
 const oneGame = assessPickPhase(

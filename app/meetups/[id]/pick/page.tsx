@@ -61,6 +61,7 @@ export default async function PickPage({
       />
 
       <PickClient
+        key={meetup.expectedPlayerCount}
         meetupId={id}
         expected={meetup.expectedPlayerCount}
         games={games}

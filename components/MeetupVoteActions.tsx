@@ -8,6 +8,7 @@ export function MeetupVoteActions({
   meetupId,
   readyForDuels,
   picksLocked,
+  duelComplete,
   pickPoolSize,
   fullPickCount,
   expectedPlayerCount,
@@ -17,39 +18,26 @@ export function MeetupVoteActions({
   meetupId: string;
   readyForDuels: boolean;
   picksLocked: boolean;
+  duelComplete: boolean;
   pickPoolSize: number;
   fullPickCount: number;
   expectedPlayerCount: number;
   poolSize: number;
   duellLinkTitle?: string;
 }) {
-  useMeetupPhaseRefresh(!picksLocked);
+  useMeetupPhaseRefresh(true);
 
-  const pickLinkDisabled = picksLocked;
-  const pickLinkTitle = picksLocked
-    ? `Stimmen bei ★ gesperrt — Duelle laufen.`
-    : undefined;
-  const duellLinkDisabled = !readyForDuels;
+  const duellLinkDisabled = !readyForDuels || duelComplete;
 
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-2">
-        {pickLinkDisabled ? (
-          <span
-            className="btn btn-primary btn-lg sm:flex-1 opacity-60 cursor-not-allowed text-center"
-            title={pickLinkTitle}
-            aria-disabled
-          >
-            Stimmen vergeben · gesperrt
-          </span>
-        ) : (
-          <Link
-            href={`/meetups/${meetupId}/pick`}
-            className="btn btn-primary btn-lg sm:flex-1"
-          >
-            Stimmen vergeben
-          </Link>
-        )}
+        <Link
+          href={`/meetups/${meetupId}/pick`}
+          className="btn btn-primary btn-lg sm:flex-1"
+        >
+          Stimmen vergeben
+        </Link>
         {duellLinkDisabled ? (
           <span
             className="btn btn-ghost btn-lg sm:flex-1 opacity-60 cursor-not-allowed text-center"
@@ -71,6 +59,12 @@ export function MeetupVoteActions({
           </Link>
         )}
       </div>
+      {picksLocked && (
+        <p className="text-xs text-[var(--muted)]">
+          ★-Stimmen gesperrt — Duelle laufen. Andere Spielerzahlen weiter über
+          Stimmen vergeben bearbeitbar.
+        </p>
+      )}
       {!readyForDuels && !picksLocked && poolSize >= 2 && (
         <p className="text-xs text-[var(--muted)]">
           Duell-Modus ab {expectedPlayerCount} Spielern mit {MAX_PICK_POINTS}/

@@ -11,6 +11,7 @@ export function MeetupRankings({
   playerCounts,
   combinedByCount,
   duelComplete,
+  completedCounts = [],
   groupDecidedPairs,
   totalPairs,
 }: {
@@ -18,13 +19,14 @@ export function MeetupRankings({
   playerCounts: number[];
   combinedByCount: Record<number, RankEntry[]>;
   duelComplete: boolean;
+  completedCounts?: number[];
   groupDecidedPairs: number;
   totalPairs: number;
 }) {
   const [userRevealed, setUserRevealed] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
 
-  const revealed = duelComplete || userRevealed;
+  const revealed = duelComplete || userRevealed || totalPairs === 0;
 
   useEffect(() => {
     if (window.location.hash !== "#ergebnisse") return;
@@ -67,11 +69,13 @@ export function MeetupRankings({
         </div>
       ) : (
         <Ranking
+          key={expected}
           expected={expected}
           playerCounts={playerCounts}
           rankingByCount={combinedByCount}
+          completedCounts={completedCounts}
           showPickDuelBreakdown
-          animateReveal
+          animateReveal={totalPairs > 0 && (duelComplete || userRevealed)}
         />
       )}
     </section>

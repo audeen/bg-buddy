@@ -19,7 +19,6 @@ import {
 } from "@/lib/duel-pairs";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import {
-  assessPickPhase,
   formatDuellNotReadyMessage,
   getPickPhaseState,
 } from "@/lib/pick-phase";
@@ -115,9 +114,12 @@ export async function updateExpectedCountAction(
 
   const meetup = await prisma.meetup.findUnique({
     where: { id: meetupId },
-    select: { expectedPlayerCount: true },
+    select: { expectedPlayerCount: true, createdById: true },
   });
   if (!meetup) return { error: "Treffen nicht gefunden." };
+  if (meetup.createdById !== user.id) {
+    return { error: "Nur der Host kann die erwartete Spieleranzahl ändern." };
+  }
 
   const phase = await getPickPhaseState(
     meetupId,
@@ -126,7 +128,8 @@ export async function updateExpectedCountAction(
   );
   if (phase.picksLocked) {
     return {
-      error: "Erwartete Spieleranzahl kann während laufender Duelle nicht geändert werden.",
+      error:
+        "Erwartete Spieleranzahl kann erst geändert werden, wenn die laufenden Duelle abgeschlossen sind.",
     };
   }
 
@@ -246,24 +249,21 @@ export async function duelVoteAction(
     return { error: "Duelle nur für die erwartete Spieleranzahl." };
   }
 
-  const [groupPicks, duelVoteCount] = await Promise.all([
-    prisma.vote.findMany({
-      where: { meetupId, mode: "PICK", playerCount },
-      select: { userId: true, gameId: true, points: true },
-    }),
-    prisma.vote.count({
-      where: {
-        meetupId,
-        mode: { in: ["DUEL", "TINDER"] },
-        playerCount,
-      },
-    }),
-  ]);
-
-  const phase = assessPickPhase(groupPicks, playerCount, duelVoteCount);
+  const phase = await getPickPhaseState(meetupId, playerCount, prisma);
+  if (phase.duelComplete) {
+    return {
+      error:
+        "Duelle bei dieser Spieleranzahl sind abgeschlossen. Der Host kann ★ ändern, um eine neue Runde zu starten.",
+    };
+  }
   if (!phase.readyForDuels) {
     return { error: formatDuellNotReadyMessage(phase) };
   }
+
+  const groupPicks = await prisma.vote.findMany({
+    where: { meetupId, mode: "PICK", playerCount },
+    select: { userId: true, gameId: true, points: true },
+  });
 
   const pickCounts = buildPickCounts(groupPicks);
   const pool = poolGameIds(pickCounts);
