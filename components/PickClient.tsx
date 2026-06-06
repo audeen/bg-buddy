@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
 import { GameCard } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameDetailData } from "@/components/GameDetailView";
@@ -63,6 +64,8 @@ export function PickClient({
   const [detailGame, setDetailGame] = useState<PickGame | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [, startTransition] = useTransition();
+
+  useMeetupPhaseRefresh(!picksLocked);
 
   useEffect(() => {
     const el = document.getElementById(scrollTargetId);

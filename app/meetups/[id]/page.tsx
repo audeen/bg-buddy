@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { ExpectedCountControl } from "@/components/ExpectedCountControl";
 import { MeetupActionsMenu } from "@/components/MeetupActionsMenu";
+import { MeetupVoteActions } from "@/components/MeetupVoteActions";
 import { MeetupRankings } from "@/components/MeetupRankings";
 import { PageHeader } from "@/components/PageHeader";
 import {
@@ -65,7 +65,6 @@ export default async function MeetupDetail({
   const pickCounts = buildPickCounts(groupPicks);
   const poolIds = poolGameIds(pickCounts);
   const pickPoolSize = poolIds.length;
-  const duellLinkDisabled = !pickPhase.readyForDuels;
   const duellLinkTitle = pickPhase.readyForDuels
     ? undefined
     : pickPhase.poolSize < 2
@@ -111,34 +110,16 @@ export default async function MeetupDetail({
           meetupId={meetup.id}
           value={meetup.expectedPlayerCount}
         />
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Link
-            href={`/meetups/${meetup.id}/pick`}
-            className="btn btn-primary btn-lg sm:flex-1"
-          >
-            Stimmen vergeben
-          </Link>
-          <Link
-            href={`/meetups/${meetup.id}/duell`}
-            className={`btn btn-ghost btn-lg sm:flex-1 ${duellLinkDisabled ? "opacity-60" : ""}`}
-            title={duellLinkTitle}
-          >
-            Duell-Modus
-            {pickPoolSize >= 2 ? ` (${pickPoolSize})` : ""}
-          </Link>
-        </div>
-        {!pickPhase.readyForDuels && pickPhase.poolSize >= 2 && (
-          <p className="text-xs text-[var(--muted)]">
-            Duell-Modus ab {pickPhase.expectedPlayerCount} Spielern mit{" "}
-            {MAX_PICK_POINTS}/{MAX_PICK_POINTS} Stimmen bei ★ — aktuell{" "}
-            {pickPhase.fullPickCount}/{pickPhase.expectedPlayerCount}.
-          </p>
-        )}
-        {pickPhase.picksLocked && (
-          <p className="text-xs text-[var(--muted)]">
-            Stimmen bei ★ sind gesperrt — Duelle laufen.
-          </p>
-        )}
+        <MeetupVoteActions
+          meetupId={meetup.id}
+          readyForDuels={pickPhase.readyForDuels}
+          picksLocked={pickPhase.picksLocked}
+          pickPoolSize={pickPoolSize}
+          fullPickCount={pickPhase.fullPickCount}
+          expectedPlayerCount={pickPhase.expectedPlayerCount}
+          poolSize={pickPhase.poolSize}
+          duellLinkTitle={duellLinkTitle}
+        />
       </div>
 
       <MeetupRankings

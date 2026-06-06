@@ -133,8 +133,12 @@ export function DuellClient({
         duelVoteAction(meetupId, winnerId, loserId, expected),
         sleep(animationMs),
       ]);
-      if (res && "error" in res && res.error) {
-        setVoteError(res.error);
+      if (!res || !("ok" in res) || !res.ok) {
+        setVoteError(
+          res && "error" in res && res.error
+            ? res.error
+            : "Abstimmung fehlgeschlagen. Bitte erneut versuchen.",
+        );
         setVoteOutcome(null);
         return;
       }

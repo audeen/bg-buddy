@@ -330,6 +330,7 @@ export async function duelVoteAction(
     },
   });
   revalidatePath(`/meetups/${meetupId}`);
+  revalidatePath(`/meetups/${meetupId}/pick`);
   revalidatePath(`/meetups/${meetupId}/duell`);
   return { ok: true };
 }
