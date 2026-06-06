@@ -36,8 +36,8 @@ export default async function Home() {
       <section className="flex flex-col gap-2">
         <h1 className="page-title">Was kommt heute auf den Tisch?</h1>
         <p className="text-[var(--muted)] max-w-2xl">
-          Melde dich an und stimme ab, um herauszufinden über welche Regeln wir
-          heute diskutieren.
+          Gib deine Stimmen ab und lass deine Spiele gegen die Picks der anderen
+          antreten. Finde heraus, über welche Regeln wir heute diskutieren!
         </p>
       </section>
 
