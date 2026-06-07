@@ -219,6 +219,21 @@ body {
     }
   }
 
+  .pb-sticky-picker {
+    padding-bottom: 11rem;
+  }
+
+  .pb-sticky-picker-at-limit {
+    padding-bottom: 15rem;
+  }
+
+  @media (min-width: 768px) {
+    .pb-sticky-picker,
+    .pb-sticky-picker-at-limit {
+      padding-bottom: 0;
+    }
+  }
+
   .tabs-scroll {
     display: flex;
     gap: 0.375rem;
@@ -910,12 +925,26 @@ body {
     );
   }
 
+  .scroll-to-top-above-picker {
+    bottom: calc(
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 10rem
+    );
+  }
+
+  .scroll-to-top-above-picker-at-limit {
+    bottom: calc(
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 14rem
+    );
+  }
+
   @media (min-width: 768px) {
     .scroll-to-top {
       bottom: 1.5rem;
     }
 
-    .scroll-to-top-above-footer {
+    .scroll-to-top-above-footer,
+    .scroll-to-top-above-picker,
+    .scroll-to-top-above-picker-at-limit {
       bottom: 1.5rem;
     }
   }

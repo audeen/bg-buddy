@@ -188,10 +188,6 @@ export function PickClient({
     });
   }
 
-  const maxAvailableCount = availableCounts[availableCounts.length - 1] ?? expected;
-  const suggestFallbackCount =
-    expected < maxAvailableCount ? expected + 1 : null;
-
   const phaseBanner = (() => {
     if (picksLocked && selected === expected) {
       return `★-Stimmen gesperrt — Duelle laufen. Andere Spielerzahlen weiter bearbeitbar.`;
@@ -216,6 +212,10 @@ export function PickClient({
     return msg;
   })();
 
+  const scrollTopClass = atLimit
+    ? "scroll-to-top-above-picker-at-limit"
+    : "scroll-to-top-above-picker";
+
   return (
     <div className="flex flex-col gap-6">
       <p
@@ -224,68 +224,17 @@ export function PickClient({
       >
         {phaseBanner}
       </p>
-      <div className="-mx-1 filter-bar flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-semibold">Spieleranzahl</span>
-          <span className="text-sm font-bold tabular-nums">
-            {usedPoints} / {MAX_PICK_POINTS} Stimmen
-          </span>
-        </div>
-        <div
-          className="progress-bar"
-          role="progressbar"
-          aria-valuenow={usedPoints}
-          aria-valuemin={0}
-          aria-valuemax={MAX_PICK_POINTS}
-          aria-label="Stimmen vergeben"
-        >
-          <div
-            className="progress-bar-fill"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
-        <div className="tabs-scroll">
-          {availableCounts.map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => {
-                setSelected(n);
-                setLimitMsg(null);
-              }}
-              className={`btn btn-tab ${selected === n ? "btn-primary" : "btn-ghost"} ${
-                n === expected ? "btn-tab-expected" : ""
-              }`}
-            >
-              {n}
-              {n === expected ? " ★" : ""}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-[var(--muted)] leading-relaxed">
-          Karte antippen: Stimmen vergeben (1–3). Bei vollem Budget entfernt ein
-          Klick auf ein bewertetes Spiel alle Stimmen dort. ★ = vom Host
-          festgelegte Spieleranzahl. ℹ für Details.
-          {suggestFallbackCount !== null && selected === expected && (
-            <>
-              {" "}
-              Stimme auch für {suggestFallbackCount} ab, falls jemand dazukommt.
-            </>
-          )}
-        </p>
-        {limitMsg && (
-          <p className="text-sm text-[var(--accent)]" role="alert">
-            {limitMsg}
-          </p>
-        )}
-      </div>
 
       {visible.length === 0 ? (
-        <p className="text-[var(--muted)]">
+        <p
+          className={`text-[var(--muted)] ${atLimit ? "pb-sticky-picker-at-limit" : "pb-sticky-picker"}`}
+        >
           Keine Spiele für {selected} Spieler in der Sammlung.
         </p>
       ) : (
-        <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <ul
+          className={`grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 ${atLimit ? "pb-sticky-picker-at-limit" : "pb-sticky-picker"}`}
+        >
           {visible.map((g) => {
             const key = pointsKey(g.id, selected);
             const gamePoints = points[key] ?? 0;
@@ -335,7 +284,7 @@ export function PickClient({
         <button
           type="button"
           onClick={scrollToPageTop}
-          className={`scroll-to-top btn btn-ghost ${atLimit ? "scroll-to-top-above-footer" : ""}`}
+          className={`scroll-to-top btn btn-ghost ${scrollTopClass}`}
           aria-label="Nach oben"
           title="Stimmen vergeben"
         >
@@ -343,23 +292,69 @@ export function PickClient({
         </button>
       )}
 
-      {atLimit && (
-        <div className="sticky-above-nav -mx-4 px-4 py-3 mt-2 bg-[var(--background)] border-t border-[var(--border)] flex flex-col items-center gap-2 sm:static sm:border-0 sm:mx-0 sm:px-0 sm:mt-0">
-          <p className="text-sm text-[var(--muted)]">
-            {MAX_PICK_POINTS} Stimmen für {selected} Spieler vergeben
-            {selected === expected ? " ★" : ""}.
-            {selected === expected && readyForDuels && !picksLocked
-              ? " Duell-Modus ist frei."
-              : null}
-          </p>
-          <Link
-            href={`/meetups/${meetupId}`}
-            className="btn btn-primary btn-lg w-full sm:w-auto text-center"
+      <div className="sticky-above-nav -mx-4 px-4 py-3 bg-[var(--background)] border-t border-[var(--border)] sm:static sm:border-0 sm:mx-0 sm:px-0">
+        <div className="-mx-1 filter-bar flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-semibold">Spieleranzahl</span>
+            <span className="text-sm font-bold tabular-nums">
+              {usedPoints} / {MAX_PICK_POINTS} Stimmen
+            </span>
+          </div>
+          <div
+            className="progress-bar"
+            role="progressbar"
+            aria-valuenow={usedPoints}
+            aria-valuemin={0}
+            aria-valuemax={MAX_PICK_POINTS}
+            aria-label="Stimmen vergeben"
           >
-            Fertig
-          </Link>
+            <div
+              className="progress-bar-fill"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+          <div className="tabs-scroll">
+            {availableCounts.map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => {
+                  setSelected(n);
+                  setLimitMsg(null);
+                }}
+                className={`btn btn-tab ${selected === n ? "btn-primary" : "btn-ghost"} ${
+                  n === expected ? "btn-tab-expected" : ""
+                }`}
+              >
+                {n}
+                {n === expected ? " ★" : ""}
+              </button>
+            ))}
+          </div>
+          {limitMsg && (
+            <p className="text-sm text-[var(--accent)]" role="alert">
+              {limitMsg}
+            </p>
+          )}
+          {atLimit && (
+            <div className="flex flex-col items-center gap-2 pt-1">
+              <p className="text-sm text-[var(--muted)] text-center">
+                {MAX_PICK_POINTS} Stimmen für {selected} Spieler vergeben
+                {selected === expected ? " ★" : ""}.
+                {selected === expected && readyForDuels && !picksLocked
+                  ? " Duell-Modus ist frei."
+                  : null}
+              </p>
+              <Link
+                href={`/meetups/${meetupId}`}
+                className="btn btn-primary btn-lg w-full sm:w-auto text-center"
+              >
+                Fertig
+              </Link>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
