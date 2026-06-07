@@ -35,10 +35,12 @@ export default async function DuellPage({
       title: true,
       expectedPlayerCount: true,
       duelFrozenData: true,
+      createdBy: { select: { id: true } },
     },
   });
   if (!meetup) notFound();
 
+  const isHost = user.id === meetup.createdBy.id;
   const expected = meetup.expectedPlayerCount;
 
   const [{ phase, summary }, groupPicks, duelVotes] = await Promise.all([
@@ -255,6 +257,7 @@ export default async function DuellPage({
         finishedParticipants={finishedParticipants}
         totalParticipants={totalParticipants}
         initialCompletedKeys={completedKeys}
+        isHost={isHost}
       />
     </div>,
   );

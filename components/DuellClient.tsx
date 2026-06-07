@@ -83,6 +83,7 @@ export function DuellClient({
   finishedParticipants,
   totalParticipants,
   initialCompletedKeys,
+  isHost,
 }: {
   meetupId: string;
   expected: number;
@@ -94,6 +95,7 @@ export function DuellClient({
   finishedParticipants: number;
   totalParticipants: number;
   initialCompletedKeys: string[];
+  isHost: boolean;
 }) {
   const gameMap = useMemo(
     () => new Map(games.map((g) => [g.id, g])),
@@ -176,7 +178,9 @@ export function DuellClient({
         <p className="text-[var(--muted)] text-sm">
           Deine Queue: {myDone}/{myPairs.length} für {expected} Spieler ★.
         </p>
-        <p className="text-[var(--muted)] text-sm">{progressLabel}</p>
+        {isHost && (
+          <p className="text-[var(--muted)] text-sm">{progressLabel}</p>
+        )}
         <Link
           href={`/meetups/${meetupId}`}
           className="btn btn-primary btn-lg w-full max-w-sm"
@@ -199,7 +203,11 @@ export function DuellClient({
             Duell {myDone + 1} / {myPairs.length}
           </span>
         </div>
-        <p className="text-xs text-[var(--muted)] tabular-nums">{progressLabel}</p>
+        {isHost && (
+          <p className="text-xs text-[var(--muted)] tabular-nums">
+            {progressLabel}
+          </p>
+        )}
       </div>
 
       {voteError && (
