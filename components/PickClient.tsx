@@ -18,6 +18,7 @@ import {
   pointsForCount,
   pointsKey,
 } from "@/lib/pick-points";
+import { enqueuePickTap } from "@/lib/pick-tap-queue";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
 export type PickGame = GameDetailData;
@@ -56,19 +57,21 @@ export function PickClient({
 }) {
   const guestIdSet = useMemo(() => new Set(guestGameIds), [guestGameIds]);
   const [selected, setSelected] = useState(expected);
+  const pointsRef = useRef<Record<string, number>>({});
   const [points, setPoints] = useState<Record<string, number>>(() => {
     const m: Record<string, number> = {};
     for (const p of initialPicks) {
       m[pointsKey(p.gameId, p.playerCount)] = p.points;
     }
+    pointsRef.current = m;
     return m;
   });
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const [detail, setDetail] = useState<DetailState | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const pointsRef = useRef(points);
-  pointsRef.current = points;
   const persistChainRef = useRef(Promise.resolve());
+  const tapQueueRef = useRef<Array<() => void>>([]);
+  const tapFlushScheduledRef = useRef(false);
 
   useMeetupPhaseRefresh(true);
 
@@ -161,12 +164,11 @@ export function PickClient({
       .catch(() => {});
   }
 
-  function cycleGamePoints(gameId: number) {
-    if (expectedLocked) return;
+  function applyPickTapForGame(gameId: number, playerCount: number) {
     const snapshotBefore = pointsRef.current;
-    const key = pointsKey(gameId, selected);
+    const key = pointsKey(gameId, playerCount);
     const before = snapshotBefore[key] ?? 0;
-    const result = applyPickTap(snapshotBefore, gameId, selected);
+    const result = applyPickTap(snapshotBefore, gameId, playerCount);
     if ("error" in result) {
       setLimitMsg(result.error);
       return;
@@ -175,7 +177,15 @@ export function PickClient({
     setLimitMsg(null);
     pointsRef.current = result.nextPoints;
     setPoints(result.nextPoints);
-    persistPick(gameId, selected, result.gamePoints, snapshotBefore);
+    persistPick(gameId, playerCount, result.gamePoints, snapshotBefore);
+  }
+
+  function cycleGamePoints(gameId: number) {
+    if (expectedLocked) return;
+    const playerCount = selected;
+    enqueuePickTap(tapQueueRef, tapFlushScheduledRef, () => {
+      applyPickTapForGame(gameId, playerCount);
+    });
   }
 
   const maxAvailableCount = availableCounts[availableCounts.length - 1] ?? expected;
@@ -294,7 +304,7 @@ export function PickClient({
                   selectedPoints={gamePoints}
                   ownedExpansions={expansionsByBaseId[String(g.id)] ?? []}
                   disabled={expectedLocked}
-                  onClick={() => cycleGamePoints(g.id)}
+                  onActivate={() => cycleGamePoints(g.id)}
                   onDetailsClick={(displayed) => {
                     const expansions = expansionsByBaseId[String(g.id)] ?? [];
                     setDetail({

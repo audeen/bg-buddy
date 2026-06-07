@@ -68,4 +68,34 @@ assert(
   `free budget: expected 2, got ${freeBudget.gamePoints}`,
 );
 
+function tapTwice(
+  start: Record<string, number>,
+  gid: number,
+  pc: number,
+): number {
+  let state = start;
+  for (let i = 0; i < 2; i++) {
+    const result = applyPickTap(state, gid, pc);
+    if ("error" in result) {
+      throw new Error(`two-tap chain failed on tap ${i + 1}: ${result.error}`);
+    }
+    state = result.nextPoints;
+  }
+  return state[pointsKey(gid, pc)] ?? 0;
+}
+
+assert(
+  tapTwice({}, gameId, playerCount) === 2,
+  "two taps from 0 should land at 2, not 3",
+);
+
+const oneTapFrom1 = applyPickTap({ [key]: 1 }, gameId, playerCount);
+if ("error" in oneTapFrom1) {
+  throw new Error(`one tap from 1 should succeed: ${oneTapFrom1.error}`);
+}
+assert(
+  oneTapFrom1.gamePoints === 2,
+  `one tap from 1 should land at 2, got ${oneTapFrom1.gamePoints}`,
+);
+
 console.log("test-pick-points: ok");

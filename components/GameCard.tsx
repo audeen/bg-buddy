@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent, type PointerEvent } from "react";
 import { GameCover } from "@/components/GameCover";
 import { ExpansionFamilyNav } from "@/components/ExpansionFamilyNav";
 import {
@@ -41,7 +41,9 @@ type BaseProps = {
 
 type ButtonProps = BaseProps & {
   href?: undefined;
-  onClick: (displayedGame: GameCardGame) => void;
+  onClick?: (displayedGame: GameCardGame) => void;
+  /** One activation per pointer gesture; suppresses duplicate synthetic clicks. */
+  onActivate?: () => void;
   onDetailsClick?: (displayedGame: GameCardGame) => void;
   disabled?: boolean;
 };
@@ -355,14 +357,29 @@ export function GameCard(props: ButtonProps | LinkProps) {
     );
   }
 
-  const { onClick: cardOnClick } = props as ButtonProps;
+  const { onClick: cardOnClick, onActivate } = props as ButtonProps;
+
+  const activateProps = onActivate
+    ? {
+        onPointerUp: (e: PointerEvent<HTMLButtonElement>) => {
+          if (disabled || e.button !== 0) return;
+          e.preventDefault();
+          onActivate();
+        },
+        onClick: (e: MouseEvent) => {
+          e.preventDefault();
+        },
+      }
+    : {
+        onClick: () => cardOnClick?.(displayedGame),
+      };
 
   if (onDetailsClick) {
     return (
       <div className={`${cardClass} relative`}>
         <button
           type="button"
-          onClick={() => cardOnClick(displayedGame)}
+          {...activateProps}
           disabled={disabled}
           className="flex flex-col w-full h-full text-left"
         >
@@ -379,7 +396,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
   return (
     <button
       type="button"
-      onClick={() => cardOnClick(displayedGame)}
+      {...activateProps}
       disabled={disabled}
       className={`${cardClass} relative`}
     >
