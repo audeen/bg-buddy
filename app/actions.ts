@@ -7,10 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { getCurrentUser } from "@/lib/auth";
 import { parseCollectionCsv } from "@/lib/bgg";
-import {
-  loadEnrichmentCache,
-  thingDetailsToDbFields,
-} from "@/lib/enrichment-cache";
+import { applyCsvImport, previewCsvImport } from "@/lib/csv-import";
+import type { ConflictResolution } from "@/lib/game-sync";
 import {
   buildDuelFrozenSnapshot,
   buildDuellPlan,
@@ -458,7 +456,11 @@ export async function duelVoteAction(
   return { ok: true };
 }
 
-export async function importCsvAction(formData: FormData) {
+function parseConflictResolution(value: string | null): ConflictResolution {
+  return value === "overwriteAll" ? "overwriteAll" : "keepManual";
+}
+
+export async function importCsvPreviewAction(formData: FormData) {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
@@ -473,46 +475,43 @@ export async function importCsvAction(formData: FormData) {
     return { error: "Keine Spiele in der CSV gefunden. Ist es ein BGG-Export?" };
   }
 
-  const cache = loadEnrichmentCache();
-  let cacheApplied = 0;
+  const preview = await previewCsvImport(games);
+  const expansions = games.filter((g) => g.isExpansion).length;
 
-  for (const g of games) {
-    const base = {
-      name: g.name,
-      year: g.year,
-      minPlayers: g.minPlayers,
-      maxPlayers: g.maxPlayers,
-      playingTime: g.playingTime,
-      minPlaytime: g.minPlaytime,
-      maxPlaytime: g.maxPlaytime,
-      weight: g.weight,
-      bggRating: g.bggRating,
-      rank: g.rank,
-      ageRange: g.ageRange,
-      languageDependence: g.languageDependence,
-      isExpansion: g.isExpansion,
-      bestPlayerCounts: g.bestPlayerCounts,
-      recommendedPlayerCounts: g.recommendedPlayerCounts,
-    };
-    const cached = cache.get(g.id);
-    const extra = cached ? thingDetailsToDbFields(cached) : {};
-    if (cached) cacheApplied += 1;
+  return {
+    ok: true,
+    total: games.length,
+    standalone: games.length - expansions,
+    expansions,
+    ...preview,
+  };
+}
 
-    await prisma.game.upsert({
-      where: { id: g.id },
-      update: cached ? { ...base, ...extra } : base,
-      create: {
-        id: g.id,
-        enriched: false,
-        ...base,
-        ...extra,
-      },
-    });
+export async function importCsvAction(formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Keine Datei ausgewählt." };
   }
+
+  const resolution = parseConflictResolution(
+    String(formData.get("conflictResolution") ?? ""),
+  );
+
+  const text = await file.text();
+  const games = parseCollectionCsv(text);
+  if (games.length === 0) {
+    return { error: "Keine Spiele in der CSV gefunden. Ist es ein BGG-Export?" };
+  }
+
+  const { cacheApplied } = await applyCsvImport(games, resolution);
 
   const expansions = games.filter((g) => g.isExpansion).length;
   revalidatePath("/games");
   revalidatePath("/admin/import");
+  revalidatePath("/admin/collection");
   return {
     ok: true,
     total: games.length,
@@ -520,6 +519,197 @@ export async function importCsvAction(formData: FormData) {
     expansions,
     cacheApplied,
   };
+}
+
+export type GameMetadataInput = {
+  name: string;
+  year: number | null;
+  minPlayers: number | null;
+  maxPlayers: number | null;
+  playingTime: number | null;
+  minPlaytime: number | null;
+  maxPlaytime: number | null;
+  weight: number | null;
+  bggRating: number | null;
+  rank: number | null;
+  ageRange: string | null;
+  languageDependence: string | null;
+  isExpansion: boolean;
+  bestPlayerCounts: number[];
+  recommendedPlayerCounts: number[];
+  description: string | null;
+  image: string | null;
+  thumbnail: string | null;
+  categories: string[];
+  mechanics: string[];
+  expandsGameIds: number[];
+};
+
+function parseOptionalInt(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const n = parseInt(String(value).trim(), 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+function parseOptionalFloat(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const n = parseFloat(String(value).trim());
+  return Number.isFinite(n) ? n : null;
+}
+
+function parseIntList(value: unknown): number[] {
+  if (!value) return [];
+  const raw = String(value)
+    .split(/[,;\s]+/)
+    .map((t) => parseInt(t.trim(), 10))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  return [...new Set(raw)].sort((a, b) => a - b);
+}
+
+function parseStringList(value: unknown): string[] {
+  if (!value) return [];
+  return String(value)
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function parseGameMetadataForm(formData: FormData): GameMetadataInput | { error: string } {
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return { error: "Name ist erforderlich." };
+
+  const isExpansion = formData.get("isExpansion") === "on";
+
+  return {
+    name,
+    year: parseOptionalInt(formData.get("year")),
+    minPlayers: parseOptionalInt(formData.get("minPlayers")),
+    maxPlayers: parseOptionalInt(formData.get("maxPlayers")),
+    playingTime: parseOptionalInt(formData.get("playingTime")),
+    minPlaytime: parseOptionalInt(formData.get("minPlaytime")),
+    maxPlaytime: parseOptionalInt(formData.get("maxPlaytime")),
+    weight: parseOptionalFloat(formData.get("weight")),
+    bggRating: parseOptionalFloat(formData.get("bggRating")),
+    rank: parseOptionalInt(formData.get("rank")),
+    ageRange: String(formData.get("ageRange") ?? "").trim() || null,
+    languageDependence:
+      String(formData.get("languageDependence") ?? "").trim() || null,
+    isExpansion,
+    bestPlayerCounts: parseIntList(formData.get("bestPlayerCounts")),
+    recommendedPlayerCounts: parseIntList(formData.get("recommendedPlayerCounts")),
+    description: String(formData.get("description") ?? "").trim() || null,
+    image: String(formData.get("image") ?? "").trim() || null,
+    thumbnail: String(formData.get("thumbnail") ?? "").trim() || null,
+    categories: parseStringList(formData.get("categories")),
+    mechanics: parseStringList(formData.get("mechanics")),
+    expandsGameIds: isExpansion
+      ? parseIntList(formData.get("expandsGameIds"))
+      : [],
+  };
+}
+
+const EDITABLE_FIELDS = [
+  "name",
+  "year",
+  "minPlayers",
+  "maxPlayers",
+  "playingTime",
+  "minPlaytime",
+  "maxPlaytime",
+  "weight",
+  "bggRating",
+  "rank",
+  "ageRange",
+  "languageDependence",
+  "isExpansion",
+  "bestPlayerCounts",
+  "recommendedPlayerCounts",
+  "description",
+  "image",
+  "thumbnail",
+  "categories",
+  "mechanics",
+  "expandsGameIds",
+] as const;
+
+export async function updateGameMetadataAction(gameId: number, formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  if (!Number.isFinite(gameId)) {
+    return { error: "Ungültige Spiel-ID." };
+  }
+
+  const parsed = parseGameMetadataForm(formData);
+  if ("error" in parsed) return parsed;
+
+  const existing = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: {
+      id: true,
+      name: true,
+      year: true,
+      minPlayers: true,
+      maxPlayers: true,
+      playingTime: true,
+      minPlaytime: true,
+      maxPlaytime: true,
+      weight: true,
+      bggRating: true,
+      rank: true,
+      ageRange: true,
+      languageDependence: true,
+      isExpansion: true,
+      bestPlayerCounts: true,
+      recommendedPlayerCounts: true,
+      description: true,
+      image: true,
+      thumbnail: true,
+      categories: true,
+      mechanics: true,
+      expandsGameIds: true,
+      manuallyEditedFields: true,
+    },
+  });
+
+  if (!existing) return { error: "Spiel nicht gefunden." };
+
+  const changedFields: string[] = [];
+  for (const field of EDITABLE_FIELDS) {
+    const next = parsed[field];
+    const prev = existing[field];
+    if (JSON.stringify(next) !== JSON.stringify(prev)) {
+      changedFields.push(field);
+    }
+  }
+
+  const manuallyEditedFields = [
+    ...new Set([...existing.manuallyEditedFields, ...changedFields]),
+  ];
+
+  await prisma.game.update({
+    where: { id: gameId },
+    data: {
+      ...parsed,
+      manuallyEditedFields,
+      enriched:
+        !!(
+          parsed.description ||
+          parsed.image ||
+          parsed.thumbnail ||
+          parsed.categories.length > 0 ||
+          parsed.mechanics.length > 0
+        ),
+    },
+  });
+
+  revalidatePath("/games");
+  revalidatePath("/admin/collection");
+  revalidatePath(`/admin/collection/${gameId}`);
+  revalidatePath(`/games/${gameId}`);
+  revalidatePath("/admin/import");
+
+  return { ok: true, changedFields };
 }
 
 export async function removeGameFromCollectionAction(gameId: number) {

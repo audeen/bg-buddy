@@ -10,6 +10,7 @@ export type CollectionGameRow = {
   name: string;
   year: number | null;
   isExpansion: boolean;
+  manuallyEditedFields: string[];
 };
 
 export function CollectionManagerClient({ games }: { games: CollectionGameRow[] }) {
@@ -19,6 +20,11 @@ export function CollectionManagerClient({ games }: { games: CollectionGameRow[] 
   const [onlyBase, setOnlyBase] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const manualCount = useMemo(
+    () => games.filter((g) => g.manuallyEditedFields.length > 0).length,
+    [games],
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -55,10 +61,16 @@ export function CollectionManagerClient({ games }: { games: CollectionGameRow[] 
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-[var(--muted)]">
-        Entfernte Spiele verschwinden aus Sammlung, Pick und Duell. Beim nächsten
-        CSV-Import werden Einträge aus der Datei wieder angelegt — exportiere auf
-        BGG nur Spiele, die du wirklich besitzt.
+        Bearbeite Metadaten und Erweiterungszuordnungen pro Spiel. Gespeicherte
+        Änderungen werden beim CSV-Import und Offline-Cache als Konflikt erkannt —
+        du kannst sie behalten oder überschreiben.
       </p>
+      {manualCount > 0 && (
+        <p className="text-sm text-[var(--accent)]">
+          {manualCount} {manualCount === 1 ? "Spiel hat" : "Spiele haben"} manuell
+          bearbeitete Felder.
+        </p>
+      )}
 
       <div className="filter-bar flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="flex-1">
@@ -110,16 +122,26 @@ export function CollectionManagerClient({ games }: { games: CollectionGameRow[] 
                   BGG #{g.id}
                   {g.year ? ` · ${g.year}` : ""}
                   {g.isExpansion ? " · Erweiterung" : ""}
+                  {g.manuallyEditedFields.length > 0 &&
+                    ` · ${g.manuallyEditedFields.length} manuell`}
                 </span>
               </div>
-              <button
-                type="button"
-                className="btn btn-ghost text-[var(--primary)] w-full sm:w-auto min-h-[44px]"
-                disabled={pending}
-                onClick={() => removeGame(g)}
-              >
-                {pending ? "…" : "Entfernen"}
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Link
+                  href={`/admin/collection/${g.id}`}
+                  className="btn btn-ghost w-full sm:w-auto min-h-[44px] text-center"
+                >
+                  Bearbeiten
+                </Link>
+                <button
+                  type="button"
+                  className="btn btn-ghost text-[var(--primary)] w-full sm:w-auto min-h-[44px]"
+                  disabled={pending}
+                  onClick={() => removeGame(g)}
+                >
+                  {pending ? "…" : "Entfernen"}
+                </button>
+              </div>
             </li>
           ))}
         </ul>

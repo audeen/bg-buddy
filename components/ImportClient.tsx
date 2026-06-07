@@ -1,10 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import type { FormEvent } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { importCsvAction } from "@/app/actions";
+import { importCsvAction, importCsvPreviewAction } from "@/app/actions";
+import { SyncConflictDialog } from "@/components/SyncConflictDialog";
+import type { GameSyncConflict } from "@/lib/game-sync";
 
-type ImportState =
+type ImportResult =
   | {
       ok: true;
       total: number;
@@ -12,8 +15,9 @@ type ImportState =
       expansions: number;
       cacheApplied: number;
     }
-  | { error: string }
-  | null;
+  | { error: string };
+
+type ConflictMode = "csv" | "cache" | null;
 
 export function ImportClient({
   total,
@@ -25,15 +29,10 @@ export function ImportClient({
   cacheEntries: number;
 }) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [importState, importFormAction, importing] = useActionState<
-    ImportState,
-    FormData
-  >(async (_prev, formData) => {
-    const res = (await importCsvAction(formData)) ?? null;
-    router.refresh();
-    return res as ImportState;
-  }, null);
+  const [importing, setImporting] = useState(false);
+  const [importState, setImportState] = useState<ImportResult | null>(null);
 
   const [enriching, setEnriching] = useState(false);
   const [progress, setProgress] = useState<{
@@ -42,32 +41,126 @@ export function ImportClient({
   } | null>(null);
   const [enrichError, setEnrichError] = useState<string | null>(null);
   const [enrichDone, setEnrichDone] = useState(false);
+
   const [applyingCache, setApplyingCache] = useState(false);
   const [cacheApplyMsg, setCacheApplyMsg] = useState<string | null>(null);
   const [cacheApplyOk, setCacheApplyOk] = useState(false);
 
-  async function runApplyCache() {
+  const [conflictMode, setConflictMode] = useState<ConflictMode>(null);
+  const [conflicts, setConflicts] = useState<GameSyncConflict[]>([]);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  async function runCsvImport(file: File, conflictResolution: "keepManual" | "overwriteAll") {
+    setImporting(true);
+    setImportState(null);
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      formData.set("conflictResolution", conflictResolution);
+      const res = (await importCsvAction(formData)) ?? { error: "Unbekannter Fehler." };
+      setImportState(res as ImportResult);
+      if (res && "ok" in res) {
+        router.refresh();
+      }
+    } finally {
+      setImporting(false);
+      setConflictMode(null);
+      setConflicts([]);
+      setPendingFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function handleCsvPreview(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const file = fileInputRef.current?.files?.[0];
+    if (!file || file.size === 0) {
+      setImportState({ error: "Keine Datei ausgewählt." });
+      return;
+    }
+
+    setImporting(true);
+    setImportState(null);
+    let awaitingConflictChoice = false;
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      const preview = await importCsvPreviewAction(formData);
+      if (preview && "error" in preview) {
+        setImportState({ error: preview.error ?? "Vorschau fehlgeschlagen." });
+        return;
+      }
+      if (preview && "ok" in preview && preview.conflicts.length > 0) {
+        awaitingConflictChoice = true;
+        setPendingFile(file);
+        setConflicts(preview.conflicts);
+        setConflictMode("csv");
+        return;
+      }
+      await runCsvImport(file, "keepManual");
+    } finally {
+      if (!awaitingConflictChoice) setImporting(false);
+    }
+  }
+
+  async function runApplyCache(conflictResolution: "keepManual" | "overwriteAll") {
     setApplyingCache(true);
     setCacheApplyMsg(null);
     setCacheApplyOk(false);
     setEnrichError(null);
     try {
-      const res = await fetch("/api/apply-cache", { method: "POST" });
+      const res = await fetch("/api/apply-cache", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conflictResolution }),
+      });
       const data = await res.json();
       if (!res.ok) {
         setCacheApplyMsg(data.error ?? "Cache konnte nicht angewendet werden.");
         return;
       }
       setCacheApplyOk(true);
+      const skipped =
+        data.conflictsSkipped > 0
+          ? ` (${data.conflictsSkipped} manuelle Felder beibehalten)`
+          : "";
       setCacheApplyMsg(
-        `${data.updated} Spiele aus dem Offline-Cache aktualisiert (${data.enriched}/${data.total} angereichert).`,
+        `${data.updated} Spiele aus dem Offline-Cache aktualisiert (${data.enriched}/${data.total} angereichert)${skipped}.`,
       );
       setProgress({ enriched: data.enriched, total: data.total });
+      router.refresh();
     } catch {
       setCacheApplyMsg("Netzwerkfehler beim Anwenden des Caches.");
     } finally {
       setApplyingCache(false);
-      router.refresh();
+      setConflictMode(null);
+      setConflicts([]);
+    }
+  }
+
+  async function handleApplyCacheClick() {
+    setApplyingCache(true);
+    setCacheApplyMsg(null);
+    setCacheApplyOk(false);
+    let awaitingConflictChoice = false;
+    try {
+      const res = await fetch("/api/apply-cache?preview=1");
+      const data = await res.json();
+      if (!res.ok) {
+        setCacheApplyMsg(data.error ?? "Cache-Vorschau fehlgeschlagen.");
+        return;
+      }
+      if (data.conflicts?.length > 0) {
+        awaitingConflictChoice = true;
+        setConflicts(data.conflicts);
+        setConflictMode("cache");
+        return;
+      }
+      await runApplyCache("overwriteAll");
+    } catch {
+      setCacheApplyMsg("Netzwerkfehler bei der Cache-Vorschau.");
+    } finally {
+      if (!awaitingConflictChoice) setApplyingCache(false);
     }
   }
 
@@ -102,14 +195,54 @@ export function ImportClient({
   const shownTotal = progress?.total ?? total;
   const pct = shownTotal > 0 ? Math.round((shownEnriched / shownTotal) * 100) : 0;
 
+  const conflictPending = importing || applyingCache;
+
   return (
     <div className="flex flex-col gap-6">
+      {conflictMode && conflicts.length > 0 && (
+        <SyncConflictDialog
+          title={
+            conflictMode === "csv"
+              ? "Konflikte beim CSV-Import"
+              : "Konflikte beim Offline-Cache"
+          }
+          description={
+            conflictMode === "csv"
+              ? "Die CSV-Datei würde manuell bearbeitete Felder ändern."
+              : "Der Offline-Cache würde manuell bearbeitete Felder ändern."
+          }
+          conflicts={conflicts}
+          pending={conflictPending}
+          onKeepManual={() => {
+            if (conflictMode === "csv" && pendingFile) {
+              void runCsvImport(pendingFile, "keepManual");
+            } else if (conflictMode === "cache") {
+              void runApplyCache("keepManual");
+            }
+          }}
+          onOverwrite={() => {
+            if (conflictMode === "csv" && pendingFile) {
+              void runCsvImport(pendingFile, "overwriteAll");
+            } else if (conflictMode === "cache") {
+              void runApplyCache("overwriteAll");
+            }
+          }}
+          onCancel={() => {
+            setConflictMode(null);
+            setConflicts([]);
+            setPendingFile(null);
+            setImporting(false);
+            setApplyingCache(false);
+          }}
+        />
+      )}
+
       <section className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
         <h2 className="section-title">1. Collection-CSV hochladen</h2>
         <p className="text-sm text-[var(--muted)]">
           Exportiere auf BoardGameGeek unter <em>Profile → Collection → Export</em>{" "}
           deine Sammlung als CSV und lade sie hier hoch. Bestehende Spiele werden
-          aktualisiert.
+          aktualisiert. Manuell bearbeitete Felder werden vor dem Import geprüft.
         </p>
         {cacheEntries > 0 ? (
           <p className="text-sm text-[var(--accent)]">
@@ -123,8 +256,9 @@ export function ImportClient({
             <code className="text-xs">docs/browser-prefetch-bgg.md</code>.
           </p>
         )}
-        <form action={importFormAction} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <form onSubmit={handleCsvPreview} className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <input
+            ref={fileInputRef}
             type="file"
             name="file"
             accept=".csv,text/csv"
@@ -157,13 +291,13 @@ export function ImportClient({
         <p className="text-sm text-[var(--muted)]">
           Wenn <code className="text-xs">bgg-enrichment.json</code> deployed ist:
           ein Klick schreibt Cover &amp; Details (deutsch) in die Datenbank (ohne BGG-Token).
-          Vorher CSV importieren (Schritt 1), falls die Sammlung leer ist.
+          Manuell bearbeitete Felder werden vorher geprüft.
         </p>
 
         <button
           type="button"
           className="btn btn-primary btn-lg sm:w-fit"
-          onClick={runApplyCache}
+          onClick={handleApplyCacheClick}
           disabled={applyingCache || cacheEntries === 0 || total === 0}
         >
           {applyingCache ? "Wird angewendet…" : "Offline-Cache jetzt anwenden"}

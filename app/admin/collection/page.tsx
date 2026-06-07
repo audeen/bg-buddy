@@ -25,7 +25,13 @@ export default async function CollectionAdminPage() {
 
   const games = await prisma.game.findMany({
     orderBy: { name: "asc" },
-    select: { id: true, name: true, year: true, isExpansion: true },
+    select: {
+      id: true,
+      name: true,
+      year: true,
+      isExpansion: true,
+      manuallyEditedFields: true,
+    },
   });
 
   return (
