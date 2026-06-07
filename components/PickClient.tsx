@@ -296,7 +296,7 @@ export function PickClient({
         </button>
       )}
 
-      <div className="sticky-above-nav picker-sticky-bar">
+      <div className="sticky-above-nav picker-sticky-bar safe-bottom">
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold">Spieleranzahl</span>
           <span

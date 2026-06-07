@@ -304,12 +304,6 @@ body {
     transition: bottom 0.25s ease;
   }
 
-  @media (max-width: 767px) {
-    html.scroll-chrome-hidden.pick-page .sticky-above-nav {
-      bottom: env(safe-area-inset-bottom, 0px);
-    }
-  }
-
   @media (min-width: 768px) {
     .sticky-above-nav {
       position: static;
@@ -327,10 +321,19 @@ body {
 
   @media (max-width: 767px) {
     .picker-sticky-bar {
-      margin-inline: -1.25rem;
-      width: calc(100% + 2.5rem);
+      position: fixed;
+      inset-inline: 0;
+      z-index: 15;
+      bottom: calc(
+        var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)
+      );
+      transition: bottom 0.25s ease;
       border-radius: 0;
       box-shadow: none;
+    }
+
+    html.scroll-chrome-hidden.pick-page .picker-sticky-bar {
+      bottom: 0;
     }
   }
 
@@ -985,6 +988,7 @@ body {
     .header-chrome,
     .bottom-nav-chrome,
     .sticky-above-nav,
+    .picker-sticky-bar,
     .sticky-below-header,
     .pb-nav,
     .pb-sticky-picker,
