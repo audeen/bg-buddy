@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { removeGameFromCollectionAction } from "@/app/actions";
+import {
+  purgeCollectionAction,
+  removeGameFromCollectionAction,
+} from "@/app/actions";
 import { CameraIcon } from "@/components/BarcodeScanClient";
 
 export type CollectionGameRow = {
@@ -41,6 +44,35 @@ export function CollectionManagerClient({
       return g.name.toLowerCase().includes(q);
     });
   }, [games, query, onlyBase]);
+
+  function purgeCollection() {
+    if (games.length === 0) return;
+
+    if (
+      !window.confirm(
+        `Wirklich alle ${games.length} Spiele aus der Sammlung löschen?\n\nStimmen in Treffen werden ebenfalls gelöscht. Meetups bleiben bestehen.`,
+      )
+    ) {
+      return;
+    }
+
+    setMessage(null);
+    setError(null);
+    startTransition(async () => {
+      const res = await purgeCollectionAction();
+      if (res && "error" in res && res.error) {
+        setError(res.error);
+        return;
+      }
+      const deleted = res && "deleted" in res ? res.deleted : games.length;
+      setMessage(
+        deleted === 0
+          ? "Sammlung ist bereits leer."
+          : `${deleted} ${deleted === 1 ? "Spiel" : "Spiele"} aus der Sammlung entfernt.`,
+      );
+      router.refresh();
+    });
+  }
 
   function removeGame(game: CollectionGameRow) {
     const label = game.name;
@@ -167,6 +199,26 @@ export function CollectionManagerClient({
           ))}
         </ul>
       )}
+
+      <section
+        className="card flex flex-col gap-3 border-dashed"
+        style={{ padding: "var(--space-card)" }}
+      >
+        <h2 className="font-bold text-sm text-[var(--primary)]">Danger Zone</h2>
+        <p className="text-sm text-[var(--muted)]">
+          Löscht <strong>alle</strong> Spiele aus der Datenbank. Stimmen in Treffen
+          werden mitgelöscht, Duell-Snapshots in Meetups zurückgesetzt. Danach kannst
+          du auf der Import-Seite mit einer frischen CSV neu starten.
+        </p>
+        <button
+          type="button"
+          className="btn btn-ghost text-[var(--primary)] w-full sm:w-fit min-h-[44px]"
+          disabled={pending || games.length === 0}
+          onClick={purgeCollection}
+        >
+          {pending ? "…" : "Sammlung leeren"}
+        </button>
+      </section>
     </div>
   );
 }

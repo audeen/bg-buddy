@@ -851,6 +851,29 @@ export async function removeGameFromCollectionAction(gameId: number) {
   return { ok: true };
 }
 
+export async function purgeCollectionAction() {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const deleted = await prisma.$transaction(async (tx) => {
+    const count = await tx.game.count();
+    if (count === 0) return 0;
+
+    await tx.game.deleteMany({});
+    await tx.meetup.updateMany({
+      data: { duelFrozenAt: null, duelFrozenData: Prisma.DbNull },
+    });
+    return count;
+  });
+
+  revalidatePath("/games");
+  revalidatePath("/admin/import");
+  revalidatePath("/admin/collection");
+  revalidatePath("/meetups", "layout");
+
+  return { ok: true, deleted };
+}
+
 export async function countDummyMeetupsAction() {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
