@@ -8,6 +8,7 @@ import { getSession } from "@/lib/session";
 import { getCurrentUser } from "@/lib/auth";
 import { parseCollectionCsv } from "@/lib/bgg";
 import { applyCsvImport, previewCsvImport } from "@/lib/csv-import";
+import { loadGameMetadata, upsertGameRecord } from "@/lib/upsert-game";
 import {
   parseFieldResolutionMap,
   type ConflictResolution,
@@ -765,6 +766,66 @@ export async function updateGameMetadataAction(gameId: number, formData: FormDat
   revalidatePath("/admin/import");
 
   return { ok: true, changedFields };
+}
+
+export async function addGameByBggIdAction(
+  bggId: number,
+  options?: { barcode?: string | null; name?: string | null },
+) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  if (!Number.isFinite(bggId) || bggId <= 0) {
+    return { error: "Ungültige BGG-ID." };
+  }
+
+  const normalizedBarcode = options?.barcode?.trim()
+    ? options.barcode.replace(/\D/g, "") || null
+    : null;
+
+  const existing = await prisma.game.findUnique({
+    where: { id: bggId },
+    select: { id: true, name: true },
+  });
+  if (existing) {
+    return {
+      ok: true,
+      alreadyExists: true,
+      name: existing.name,
+      bggId: existing.id,
+    };
+  }
+
+  if (normalizedBarcode) {
+    const barcodeTaken = await prisma.game.findUnique({
+      where: { barcode: normalizedBarcode },
+      select: { id: true, name: true },
+    });
+    if (barcodeTaken) {
+      return {
+        error: `Barcode ist bereits „${barcodeTaken.name}" zugeordnet (BGG ${barcodeTaken.id}).`,
+      };
+    }
+  }
+
+  const { base, enrichment } = await loadGameMetadata(bggId);
+
+  const { created, name } = await upsertGameRecord(
+    {
+      ...base,
+      bggId,
+      name: options?.name?.trim() || base.name,
+      barcode: normalizedBarcode,
+    },
+    enrichment,
+  );
+
+  revalidatePath("/games");
+  revalidatePath("/admin/import");
+  revalidatePath("/admin/collection");
+  revalidatePath(`/games/${bggId}`);
+
+  return { ok: true, created, name, bggId };
 }
 
 export async function removeGameFromCollectionAction(gameId: number) {

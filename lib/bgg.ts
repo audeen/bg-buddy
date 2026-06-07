@@ -19,6 +19,7 @@ export interface ParsedGame {
   isExpansion: boolean;
   bestPlayerCounts: number[];
   recommendedPlayerCounts: number[];
+  barcode: string | null;
 }
 
 function toInt(value: string | undefined | null): number | null {
@@ -82,6 +83,7 @@ export function parseCollectionCsv(csvText: string): ParsedGame[] {
       isExpansion: itemType === "expansion",
       bestPlayerCounts: parsePlayerCounts(row.bggbestplayers),
       recommendedPlayerCounts: parsePlayerCounts(row.bggrecplayers),
+      barcode: (row.barcode || "").trim() || null,
     });
   }
 
@@ -103,6 +105,18 @@ export interface ThingDetails {
   descriptionDe?: string | null;
   categoriesDe?: string[];
   mechanicsDe?: string[];
+  /** Parsed from thing XML when available (single-game add / enrichment). */
+  name?: string | null;
+  year?: number | null;
+  minPlayers?: number | null;
+  maxPlayers?: number | null;
+  playingTime?: number | null;
+  minPlaytime?: number | null;
+  maxPlaytime?: number | null;
+  weight?: number | null;
+  bggRating?: number | null;
+  rank?: number | null;
+  isExpansion?: boolean;
 }
 
 const xmlParser = new XMLParser({
@@ -136,6 +150,22 @@ function cleanDescription(raw: unknown): string | null {
   return text || null;
 }
 
+function attrValue(node: unknown): string | null {
+  if (node == null) return null;
+  if (typeof node === "object" && node !== null && "value" in node) {
+    const v = (node as { value?: string }).value;
+    return v != null ? String(v).trim() : null;
+  }
+  const s = String(node).trim();
+  return s || null;
+}
+
+function primaryName(item: Record<string, unknown>): string | null {
+  const names = asArray(item.name as Record<string, string>[] | undefined);
+  const primary = names.find((n) => n.type === "primary") ?? names[0];
+  return primary?.value?.trim() || null;
+}
+
 /** Parses the XML returned by the BGG "thing" endpoint into ThingDetails. */
 export function parseThingXml(xml: string): ThingDetails[] {
   const parsed = xmlParser.parse(xml);
@@ -153,9 +183,29 @@ export function parseThingXml(xml: string): ThingDetails[] {
       .filter(Boolean);
 
     const expandsGameIds = parseExpandsGameIdsFromBggXmlLinks(links);
+    const itemType = String(item.type ?? "").toLowerCase();
+
+    const ratings = (item.statistics as Record<string, unknown> | undefined)
+      ?.ratings as Record<string, unknown> | undefined;
+    const rankEntries = asArray(
+      ratings?.rank as Record<string, string>[] | undefined,
+    );
+    const boardgameRank =
+      rankEntries.find((r) => r.name === "boardgame") ?? rankEntries[0];
 
     return {
       id: toInt(item.id as string) ?? 0,
+      name: primaryName(item),
+      year: toInt(attrValue(item.yearpublished)),
+      minPlayers: toInt(attrValue(item.minplayers)),
+      maxPlayers: toInt(attrValue(item.maxplayers)),
+      playingTime: toInt(attrValue(item.playingtime)),
+      minPlaytime: toInt(attrValue(item.minplaytime)),
+      maxPlaytime: toInt(attrValue(item.maxplaytime)),
+      weight: toFloat(attrValue(ratings?.averageweight)),
+      bggRating: toFloat(attrValue(ratings?.average)),
+      rank: toInt(boardgameRank?.value),
+      isExpansion: itemType.includes("expansion"),
       description: cleanDescription(item.description),
       image: (item.image as string) ?? null,
       thumbnail: (item.thumbnail as string) ?? null,

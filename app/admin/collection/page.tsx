@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { LoginForm } from "@/components/LoginForm";
 import { CollectionManagerClient } from "@/components/CollectionManagerClient";
+import { BarcodeScanClient } from "@/components/BarcodeScanClient";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,8 @@ export default async function CollectionAdminPage() {
           {games.length} {games.length === 1 ? "Spiel" : "Spiele"} in der Datenbank
         </p>
       </div>
+
+      <BarcodeScanClient />
 
       <CollectionManagerClient games={games} />
 

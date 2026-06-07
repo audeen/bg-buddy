@@ -41,6 +41,7 @@ model Game {
   bestPlayerCounts        Int[]
   recommendedPlayerCounts Int[]
   enriched                Boolean  @default(false)
+  barcode                String?  @unique
   manuallyEditedFields    String[] @default([])
   updatedAt               DateTime @updatedAt
 

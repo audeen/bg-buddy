@@ -130,6 +130,7 @@ export async function applyCsvImport(
           isExpansion: g.isExpansion,
           bestPlayerCounts: g.bestPlayerCounts,
           recommendedPlayerCounts: g.recommendedPlayerCounts,
+          barcode: g.barcode,
           enriched: enrichment?.enriched ?? false,
           description: enrichment?.description ?? null,
           image: enrichment?.image ?? null,

@@ -24,10 +24,13 @@
     "test:duel-pairs": "tsx scripts/test-duel-pairs.ts",
     "test:pick-phase": "tsx scripts/test-pick-phase.ts",
     "test:dummy-meetups": "tsx scripts/test-dummy-meetups.ts",
-    "test:game-filters": "tsx scripts/test-game-filters.ts"
+    "test:game-filters": "tsx scripts/test-game-filters.ts",
+    "test:barcode-lookup": "tsx scripts/test-barcode-lookup.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "@zxing/browser": "^0.2.0",
+    "@zxing/library": "^0.22.0",
     "fast-xml-parser": "^5.8.0",
     "iron-session": "^8.0.4",
     "next": "16.2.7",
