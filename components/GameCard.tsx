@@ -20,6 +20,7 @@ type BaseProps = {
   playerCount?: number;
   selected?: boolean;
   selectedPoints?: number;
+  hasOwnedExpansion?: boolean;
   className?: string;
 };
 
@@ -112,6 +113,18 @@ function StarsBadge({ points }: { points: number }) {
   );
 }
 
+function ExpansionBadge() {
+  return (
+    <span
+      className="absolute top-2.5 left-1/2 -translate-x-1/2 z-[1] bg-[var(--surface)] text-[var(--foreground)] rounded-full h-7 px-2 flex items-center justify-center text-[10px] font-bold border border-[var(--border)] tracking-tight"
+      style={{ boxShadow: "var(--shadow-md)" }}
+      aria-label="Erweiterung verfügbar"
+    >
+      Erw.
+    </span>
+  );
+}
+
 function DetailsButton({ onClick }: { onClick: () => void }) {
   return (
     <button
@@ -130,11 +143,19 @@ function DetailsButton({ onClick }: { onClick: () => void }) {
 }
 
 export function GameCard(props: ButtonProps | LinkProps) {
-  const { game, playerCount, selected, selectedPoints, className = "" } = props;
+  const {
+    game,
+    playerCount,
+    selected,
+    selectedPoints,
+    hasOwnedExpansion = false,
+    className = "",
+  } = props;
   const disabled = "disabled" in props ? props.disabled : false;
   const onDetailsClick =
     "onDetailsClick" in props ? props.onDetailsClick : undefined;
   const points = selectedPoints ?? 0;
+  const showExpansionBadge = hasOwnedExpansion && !game.isExpansion;
 
   const cardClass = `card card-game w-full ${selected ? "card-game-selected" : ""} ${
     disabled ? "card-game-disabled opacity-50 cursor-not-allowed" : ""
@@ -145,6 +166,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
       <Link href={props.href} className={`${cardClass} hover:shadow-md relative`}>
         <CardCover game={game} />
         <CardBody game={game} playerCount={playerCount} />
+        {showExpansionBadge && <ExpansionBadge />}
         {points > 0 && <StarsBadge points={points} />}
       </Link>
     );
@@ -163,6 +185,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
           <CardBody game={game} playerCount={playerCount} />
         </button>
         <DetailsButton onClick={onDetailsClick} />
+        {showExpansionBadge && <ExpansionBadge />}
         {points > 0 && <StarsBadge points={points} />}
       </div>
     );
@@ -177,6 +200,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
     >
       <CardCover game={game} />
       <CardBody game={game} playerCount={playerCount} />
+      {showExpansionBadge && <ExpansionBadge />}
       {points > 0 && <StarsBadge points={points} />}
     </button>
   );

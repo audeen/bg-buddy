@@ -34,6 +34,7 @@ model Game {
   ageRange                String?
   languageDependence      String?
   isExpansion             Boolean  @default(false)
+  expandsGameIds          Int[]    @default([])
   categories              String[]
   mechanics               String[]
   bestPlayerCounts        Int[]

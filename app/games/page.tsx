@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { GamesClient } from "@/components/GamesClient";
+import { loadBaseGameIdsWithOwnedExpansions } from "@/lib/owned-expansions";
 import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -55,13 +56,14 @@ export default async function GamesPage({
     ];
   }
 
-  const [games, allForGenres] = await Promise.all([
+  const [games, allForGenres, expansionBaseIds] = await Promise.all([
     prisma.game.findMany({
       where,
       select: gameSelect,
       orderBy: { name: "asc" },
     }),
     prisma.game.findMany({ select: { categories: true } }),
+    loadBaseGameIdsWithOwnedExpansions(),
   ]);
 
   const genres = Array.from(
@@ -133,7 +135,11 @@ export default async function GamesPage({
         </button>
       </form>
 
-      <GamesClient games={games} playerCount={playerCount} />
+      <GamesClient
+        games={games}
+        playerCount={playerCount}
+        expansionBaseIds={[...expansionBaseIds]}
+      />
     </div>
   );
 }

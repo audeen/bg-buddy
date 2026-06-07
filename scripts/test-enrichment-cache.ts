@@ -89,9 +89,9 @@ function testHasEnrichmentContentDeOnly() {
   );
 }
 
-function testTaxonomyPassthrough() {
+function testTaxonomyTranslation() {
   const labels = translateTaxonomy(["Card Game", "Hand Management"]);
-  assert.deepEqual(labels, ["Card Game", "Hand Management"]);
+  assert.deepEqual(labels, ["Kartenspiel", "Handmanagement"]);
 }
 
 function testLocalizedFields() {
@@ -117,7 +117,7 @@ const tests = [
   testDbFieldsPreferDe,
   testDbFieldsFallbackEn,
   testHasEnrichmentContentDeOnly,
-  testTaxonomyPassthrough,
+  testTaxonomyTranslation,
   testLocalizedFields,
 ];
 

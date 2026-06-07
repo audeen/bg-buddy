@@ -16,6 +16,7 @@ export const BGG_TAXONOMY_DE: Record<string, string> = {
   Deduction: "Deduktion",
   Dice: "Würfel",
   Economic: "Wirtschaft",
+  Environmental: "Umwelt",
   "Expansion for Base-game": "Erweiterung zum Basisspiel",
   Exploration: "Erkundung",
   Fantasy: "Fantasy",
@@ -29,6 +30,8 @@ export const BGG_TAXONOMY_DE: Record<string, string> = {
   Maze: "Labyrinth",
   Medieval: "Mittelalter",
   Memory: "Gedächtnis",
+  "Murder / Mystery": "Krimi / Mystery",
+  Music: "Musik",
   Miniatures: "Miniaturen",
   "Modern Warfare": "Moderne Kriegsführung",
   "Movies / TV / Radio theme": "Film, TV & Radio",
@@ -47,6 +50,7 @@ export const BGG_TAXONOMY_DE: Record<string, string> = {
   "Territory Building": "Gebietsaufbau",
   Trains: "Züge",
   Transportation: "Transport",
+  Trivia: "Wissensspiel",
   "Video Game Theme": "Videospielthema",
   Wargame: "Kriegsspiel",
   Zombies: "Zombies",
@@ -62,6 +66,7 @@ export const BGG_TAXONOMY_DE: Record<string, string> = {
   "Area-Impulse": "Gebietsimpuls",
   "Auction / Bidding": "Auktion / Bieten",
   "Auction: Sealed Bid": "Verdeckte Gebote",
+  "Auction: Turn Order Until Pass": "Auktion: Zugreihenfolge bis Pass",
   "Automatic Resource Growth": "Automatisches Ressourcenwachstum",
   "Betting and Bluffing": "Wetten und Bluffen",
   Bias: "Startvorteil",
@@ -173,7 +178,7 @@ export const BGG_TAXONOMY_DE: Record<string, string> = {
   "Zone of Control": "Kontrollzone",
 };
 
-/** BGG category/mechanic labels stay English for display. */
+/** BGG category/mechanic labels (EN) → German for categoriesDe/mechanicsDe. */
 export function translateTaxonomy(en: string[]): string[] {
-  return en;
+  return en.map((label) => BGG_TAXONOMY_DE[label] ?? label);
 }

@@ -27,6 +27,14 @@ function toStringArray(value: unknown): string[] {
     .filter(Boolean);
 }
 
+function toIntArray(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  const ids = value
+    .map((v) => toInt(v))
+    .filter((n): n is number => n != null);
+  return [...new Set(ids)].sort((a, b) => a - b);
+}
+
 /** Normalizes one cache entry from browser export or API prefetch. */
 export function normalizeCacheEntry(
   raw: unknown,
@@ -45,6 +53,9 @@ export function normalizeCacheEntry(
     categories: toStringArray(o.categories),
     mechanics: toStringArray(o.mechanics),
   };
+
+  const expandsGameIds = toIntArray(o.expandsGameIds);
+  if (expandsGameIds.length > 0) entry.expandsGameIds = expandsGameIds;
 
   const descriptionDe = toStringOrNull(o.descriptionDe);
   const categoriesDe = toStringArray(o.categoriesDe);
@@ -87,6 +98,7 @@ export function thingDetailsToDbFields(d: ThingDetails) {
     thumbnail: d.thumbnail,
     categories: localized.categories,
     mechanics: localized.mechanics,
+    expandsGameIds: d.expandsGameIds ?? [],
     enriched: hasEnrichmentContent(d),
   };
 }
@@ -134,6 +146,7 @@ function serializeCacheEntry(d: ThingDetails): Record<string, unknown> {
   if (d.descriptionDe) o.descriptionDe = d.descriptionDe;
   if (d.categoriesDe?.length) o.categoriesDe = d.categoriesDe;
   if (d.mechanicsDe?.length) o.mechanicsDe = d.mechanicsDe;
+  if (d.expandsGameIds?.length) o.expandsGameIds = d.expandsGameIds;
   return o;
 }
 

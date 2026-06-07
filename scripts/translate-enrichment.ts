@@ -1,6 +1,6 @@
 /**
  * Ergänzt data/bgg-enrichment.json um deutsche Felder:
- * - categoriesDe / mechanicsDe (EN, 1:1-Kopie der BGG-Labels)
+ * - categoriesDe / mechanicsDe aus lib/bgg-taxonomy-de.ts
  * - descriptionDe aus data/bgg-descriptions-de.json (falls vorhanden)
  *
  * Nutzung: npm run translate-enrichment [collection.csv]

@@ -1,4 +1,5 @@
 import type { ThingDetails } from "@/lib/bgg";
+import { parseExpandsGameIdsFromGeekdoLinks } from "@/lib/expansion-links";
 
 function stripHtml(html: string | null | undefined): string | null {
   if (html == null || html === "") return null;
@@ -50,7 +51,9 @@ export function parseGeekitemJson(
     null;
   if (id == null || !Number.isFinite(id)) return null;
 
-  const links = item.links as Record<string, { name?: string }[]> | undefined;
+  const links = item.links as
+    | Record<string, { name?: string; objectid?: string | number }[] | undefined>
+    | undefined;
   const desc =
     stripHtml(item.description as string) ??
     stripHtml(item.short_description as string);
@@ -61,6 +64,8 @@ export function parseGeekitemJson(
     null;
   const thumbnail = (item.imageurl as string) || image;
 
+  const expandsGameIds = parseExpandsGameIdsFromGeekdoLinks(links);
+
   return {
     id,
     description: desc,
@@ -68,5 +73,6 @@ export function parseGeekitemJson(
     thumbnail,
     categories: linkNames(links, "boardgamecategory"),
     mechanics: linkNames(links, "boardgamemechanic"),
+    ...(expandsGameIds.length > 0 ? { expandsGameIds } : {}),
   };
 }

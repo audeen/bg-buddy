@@ -21,28 +21,48 @@ ohne CORS-Probleme).
 
 ### Schritt 1 — IDs
 
+Funktioniert mit **BGG-CSV** (Komma + Anführungszeichen) und **Tab-getrennt** (Excel/LibreOffice).
+
+Seite neu laden, wenn du es erneut ausführst (sonst `redeclaration of const CSV`).
+
 ```javascript
-const CSV = `
-…CSV hier…
+(function () {
+  const CSV = `
+…CSV hier einfügen (komplett, inkl. Kopfzeile)…
 `;
-const IDS = [
-  ...new Set(
-    CSV.trim()
-      .split("\n")
-      .slice(1)
-      .map((line) => {
-        const m = line.match(/^"[^"]*","(\d+)"/);
-        return m ? Number(m[1]) : null;
-      })
-      .filter(Boolean),
-  ),
-];
-console.log(IDS.length, "Spiele", IDS);
+
+  const lines = CSV.trim().split(/\r?\n/).filter(Boolean);
+  const delim = lines[0].includes("\t") ? "\t" : ",";
+  const header = lines[0].split(delim).map((h) =>
+    h.trim().replace(/^"|"$/g, "").toLowerCase(),
+  );
+  const idIdx = header.indexOf("objectid");
+  const fallbackIdx = idIdx >= 0 ? idIdx : 1;
+
+  const IDS = [
+    ...new Set(
+      lines.slice(1).map((line) => {
+        if (delim === "\t") {
+          const id = Number(line.split("\t")[fallbackIdx]?.trim());
+          return Number.isFinite(id) ? id : null;
+        }
+        const quoted = line.match(/^"[^"]*","(\d+)"/);
+        if (quoted) return Number(quoted[1]);
+        const cols = line.split(",");
+        const id = Number(cols[fallbackIdx]?.trim().replace(/^"|"$/g, ""));
+        return Number.isFinite(id) ? id : null;
+      }).filter(Boolean),
+    ),
+  ];
+
+  window.IDS = IDS;
+  console.log(IDS.length, "Spiele", IDS);
+})();
 ```
 
-### Schritt 2 — Alles (Cover + Text + Genre + Mechanik)
+### Schritt 2 — Alles (Cover + Text + Tags + Erweiterungs-Verknüpfung)
 
-Ein Block, Enter (~30–60 s):
+Ein Block, Enter (~30–60 s). Nutzt `window.IDS` aus Schritt 1:
 
 ```javascript
 (async () => {
@@ -65,9 +85,15 @@ Ein Block, Enter (~30–60 s):
     return [...new Set(arr.map((x) => x.name?.trim()).filter(Boolean))];
   }
 
+  function expandIds(links) {
+    const arr = links?.expandsboardgame;
+    if (!Array.isArray(arr)) return [];
+    return [...new Set(arr.map((x) => Number(x.objectid)).filter(Number.isFinite))];
+  }
+
   const cache = {};
 
-  for (const id of IDS) {
+  for (const id of window.IDS) {
     const url =
       `https://api.geekdo.com/api/geekitems?ajax=1&action=thing` +
       `&objectid=${id}&objecttype=thing&nosession=1`;
@@ -88,12 +114,13 @@ Ein Block, Enter (~30–60 s):
       thumbnail: item.imageurl || item.topimageurl || null,
       categories: linkNames(links, "boardgamecategory"),
       mechanics: linkNames(links, "boardgamemechanic"),
+      expandsGameIds: expandIds(links),
     };
     console.log(
       id,
       cache[id].categories.length,
       cache[id].mechanics.length,
-      cache[id].description?.slice(0, 40),
+      cache[id].expandsGameIds.length ? `→ Basis ${cache[id].expandsGameIds}` : "",
     );
     await sleep(450);
   }

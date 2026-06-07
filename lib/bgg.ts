@@ -1,5 +1,6 @@
 import Papa from "papaparse";
 import { XMLParser } from "fast-xml-parser";
+import { parseExpandsGameIdsFromBggXmlLinks } from "@/lib/expansion-links";
 
 export interface ParsedGame {
   id: number;
@@ -97,6 +98,8 @@ export interface ThingDetails {
   categories: string[];
   /** English mechanic labels. */
   mechanics: string[];
+  /** Base game BGG ids (expansion items only). */
+  expandsGameIds?: number[];
   descriptionDe?: string | null;
   categoriesDe?: string[];
   mechanicsDe?: string[];
@@ -149,6 +152,8 @@ export function parseThingXml(xml: string): ThingDetails[] {
       .map((l) => l.value)
       .filter(Boolean);
 
+    const expandsGameIds = parseExpandsGameIdsFromBggXmlLinks(links);
+
     return {
       id: toInt(item.id as string) ?? 0,
       description: cleanDescription(item.description),
@@ -156,6 +161,7 @@ export function parseThingXml(xml: string): ThingDetails[] {
       thumbnail: (item.thumbnail as string) ?? null,
       categories,
       mechanics,
+      ...(expandsGameIds.length > 0 ? { expandsGameIds } : {}),
     };
   });
 }

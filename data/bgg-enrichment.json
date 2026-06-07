@@ -16,18 +16,18 @@
       "Set Collection",
       "Trading"
     ],
-    "descriptionDe": "Bohnanza ist das erste Spiel der Bohnanza-Familie und wurde in mehreren Editionen veröffentlicht, darunter eine Version von 2023 mit Blumen.\n\nDieser Eintrag listet einige verschiedene große Kartensets für Bohnanza: das Basisspiel für 3–5 Spieler, die erweiterte Ausgabe mit demselben Namen für 2–7 Spieler (also inklusive der ersten Erweiterung) und Bohnanza Pocket.\n\nIm Spiel pflanzt und erntet ihr Bohnenkarten, um Münzen zu verdienen. Jeder Spieler beginnt mit einer Hand zufälliger Bohnenkarten; jede Karte trägt eine Zahl, die der Anzahl dieser Bohnensorte im Deck entspricht. Anders als in den meisten Kartenspielen dürft ihr die Reihenfolge der Handkarten nicht sortieren — ihr müsst sie in der Reihenfolge spielen, in der ihr sie vom Stapel gezogen habt, es sei denn, ihr tauscht sie mit anderen Spielern — das Herzstück des Spiels.\n\nIn eurem Zug müsst ihr die erste oder die ersten beiden Karten eurer Hand in die „Felder“ vor euch pflanzen. Jedes Feld kann nur eine Bohnensorte aufnehmen; müsst ihr eine Sorte pflanzen, die in keinem Feld steht, müsst ihr ein Feld ernten, um Platz für die Neuankömmlinge zu schaffen — meist kein gutes Zeichen! Danach deckt ihr zwei Karten vom Stapel auf; diese sowie jede Handkarte könnt ihr gegen Karten anderer Spieler tauschen. Ihr dürft sogar Zukunftsversprechen für sofort erhaltene Karten geben! Wenn alle Tausche abgeschlossen sind — und jeder Tausch in einem Zug muss den aktiven Spieler einbeziehen — endet ihr euren Zug, indem ihr vom Stapel zieht und die Karten ans Ende eurer Hand legt.\n\nBeim Ernten erhaltet ihr Münzen je nach Anzahl der Bohnenkarten auf dem Feld und der „Bohnometer“-Skala dieser Sorte. Legt 1–4 Karten des Feldes um, um sie in Münzen zu verwandeln; den Rest legt ihr auf den Ablagestapel. Ist der Stapel leer, mischt ihr die Ablage und spielt das Deck noch zweimal durch. Am Ende dürfen alle ernten; wer die meisten Münzen hat, gewinnt.\n\nDie ursprüngliche deutsche Ausgabe ist für 3–5 Spieler. Die englische Version von Rio Grande Games enthält die erste Edition der ersten deutschen Erweiterung in einer etwas größeren Schachtel. Eine inhaltliche Abweichung: Bohnen Nr. 22, die Weinbrandbohne, wurde durch die Wachsbohne ersetzt. Diese Ausgabe enthält Regeln für bis zu sieben Spieler wie das Erweiterungs-Set, übernimmt aber auch die Zwei-Spieler-Regeln von Al Cabohne, sodass zu zweit gespielt werden kann.",
+    "descriptionDe": "Bohnanza ist das erste Spiel der Bohnanza-Familie und wurde in mehreren Editionen veröffentlicht, darunter eine Version von 2023 mit Blumen.\n\nDieser Eintrag listet einige verschiedene große Kartensets: das Basisspiel für 3–5 Spieler, die erweiterte Ausgabe mit demselben Namen für 2–7 Spieler (inklusive der ersten Erweiterung) und Bohnanza Pocket.\n\nIm Spiel pflanzt und erntet ihr Bohnenkarten, um Münzen zu verdienen. Jeder beginnt mit einer Hand zufälliger Bohnenkarten; jede Karte trägt eine Zahl, die der Anzahl dieser Sorte im Deck entspricht. Anders als in den meisten Kartenspielen dürft ihr die Handkarten nicht umsortieren — ihr müsst sie in der Reihenfolge spielen, in der ihr sie gezogen habt, es sei denn, ihr tauscht sie mit anderen Spielern. Das Tauschen ist das Herzstück des Spiels.\n\nIn eurem Zug pflanzt ihr die erste oder die ersten beiden Karten eurer Hand in die „Felder“ vor euch. Jedes Feld nimmt nur eine Bohnensorte auf. Steht die Sorte in keinem Feld, müsst ihr ein Feld ernten, um Platz zu schaffen — meist kein gutes Zeichen! Danach deckt ihr zwei Karten vom Stapel auf und könnt diese sowie jede Handkarte gegen Karten anderer Spieler tauschen. Zukunftsversprechen für sofort erhaltene Karten sind erlaubt! Wenn alle Tausche abgeschlossen sind — jeder Tausch muss den aktiven Spieler einbeziehen — zieht ihr vom Stapel und legt die Karten ans Ende eurer Hand.\n\nBeim Ernten erhaltet ihr Münzen je nach Anzahl der Bohnenkarten auf dem Feld und der Bohnometer-Skala dieser Sorte. Legt 1–4 Karten des Feldes um, um sie in Münzen zu verwandeln; den Rest legt ihr auf den Ablagestapel. Ist der Stapel leer, mischt ihr die Ablage und spielt das Deck noch zweimal durch. Am Ende dürfen alle ernten; wer die meisten Münzen hat, gewinnt.\n\nDie ursprüngliche deutsche Ausgabe ist für 3–5 Spieler. Die englische Version von Rio Grande Games enthält die erste Edition der ersten deutschen Erweiterung in einer etwas größeren Schachtel. Eine Abweichung: Bohnen Nr. 22, die Weinbrandbohne, wurde durch die Wachsbohne ersetzt. Diese Ausgabe enthält Regeln für bis zu sieben Spieler wie das Erweiterungs-Set und übernimmt die Zwei-Spieler-Regeln von Al Cabohne.",
     "categoriesDe": [
-      "Card Game",
-      "Farming",
-      "Negotiation"
+      "Kartenspiel",
+      "Landwirtschaft",
+      "Verhandlung"
     ],
     "mechanicsDe": [
-      "Hand Management",
-      "Multi-Use Cards",
-      "Negotiation",
-      "Set Collection",
-      "Trading"
+      "Handmanagement",
+      "Mehrfachnutzbare Karten",
+      "Verhandlung",
+      "Sets sammeln",
+      "Tauschhandel"
     ]
   },
   "13": {
@@ -55,26 +55,26 @@
       "Trading",
       "Variable Set-up"
     ],
-    "descriptionDe": "In CATAN (früher Die Siedler von Catan) versuchen die Spieler, die dominierende Kraft auf der Insel Catan zu werden, indem sie Siedlungen, Städte und Straßen bauen. In jedem Zug bestimmen Würfel, welche Rohstoffe die Insel liefert. Strukturen entstehen, indem Spieler Rohstoffe (Schafe, Weizen, Holz, Lehm und Erz) „ausgeben“, die als entsprechende Karten vorliegen; jedes Gelände außer der unfruchtbaren Wüste liefert einen bestimmten Rohstoff: Hügel Lehm, Wälder Holz, Berge Erz, Felder Weizen, Weiden Schafe.\n\nBeim Aufbau werden große sechseckige Plättchen (jedes zeigt einen der fünf ertragbringenden Geländetypen oder die Wüste) zufällig im Wabenmuster gelegt und mit Wasserplättchen umgeben, teils mit Häfen. Auf jedes Gelände kommt eine Zahlenscheibe, deren Wert den Wurf zweier sechsseitiger Würfel entspricht. Jeder Spieler erhält zwei Siedlungen und Straßen, die auf Kreuzungen und Grenzen der Plättchen platziert werden. Rohstoffkarten sammelt man je nach Gelände, an das die zuletzt gesetzte Siedlung angrenzt. Ein Räuberfigur steht auf der Wüste.\n\nEin Zug besteht aus Würfeln, Rohstoffkarten nach Wurf und Lage der Siedlungen (oder aufgewerteten Städten), optional Umtausch von Rohstoffen gegen Verbesserungen, Handel am Hafen, eventuell einer Entwicklungskarte oder Rohstofftausch mit Mitspielern. Würfelt jemand eine 7, setzt der aktive Spieler den Räuber auf ein neues Gelände und stiehlt eine Rohstoffkarte von einem Spieler mit Siedlung an diesem Feld.\n\nPunkte gibt es für Siedlungen und Städte, die längste Handelsstraße oder die größte Ritterarmee (aus Entwicklungskarten) sowie bestimmte Karten mit Siegpunkten. Hat ein Spieler 10 Punkte (teils verdeckt), meldet er das und gewinnt.",
+    "descriptionDe": "In CATAN (früher Die Siedler von Catan) versucht ihr, die dominierende Kraft auf der Insel Catan zu werden, indem ihr Siedlungen, Städte und Straßen baut. In jedem Zug bestimmen Würfel, welche Rohstoffe die Insel liefert. Strukturen entstehen, indem ihr Rohstoffe (Schafe, Weizen, Holz, Lehm und Erz) einsetzt, die als Karten vorliegen. Jedes Gelände außer der Wüste liefert einen bestimmten Rohstoff: Hügel Lehm, Wälder Holz, Berge Erz, Felder Weizen, Weiden Schafe.\n\nBeim Aufbau werden sechseckige Plättchen zufällig im Wabenmuster gelegt und mit Wasserplättchen umgeben, teils mit Häfen. Auf jedes Gelände kommt eine Zahlenscheibe, deren Wert dem Wurf zweier sechsseitiger Würfel entspricht. Jeder erhält zwei Siedlungen und Straßen auf Kreuzungen und Grenzen der Plättchen. Rohstoffkarten sammelt ihr je nach Gelände, an das die zuletzt gesetzte Siedlung angrenzt. Eine Räuberfigur steht auf der Wüste.\n\nEin Zug besteht aus Würfeln, Rohstoffkarten nach Wurf und Lage der Siedlungen (oder aufgewerteten Städten), optional Umtausch von Rohstoffen gegen Verbesserungen, Handel am Hafen, eventuell einer Entwicklungskarte oder Rohstofftausch mit Mitspielern. Würfelt jemand eine 7, setzt der aktive Spieler den Räuber auf ein neues Gelände und stiehlt eine Rohstoffkarte von einem Spieler mit Siedlung an diesem Feld.\n\nPunkte gibt es für Siedlungen und Städte, die längste Handelsstraße oder die größte Ritterarmee (aus Entwicklungskarten) sowie bestimmte Karten mit Siegpunkten. Hat jemand 10 Punkte (teils verdeckt), meldet er das und gewinnt.",
     "categoriesDe": [
-      "Economic",
-      "Negotiation"
+      "Wirtschaft",
+      "Verhandlung"
     ],
     "mechanicsDe": [
-      "Chaining",
-      "Dice Rolling",
-      "Hand Management",
-      "Hexagon Grid",
-      "Hidden Victory Points",
-      "Income",
-      "Market",
-      "Modular Board",
-      "Network and Route Building",
-      "Race",
-      "Random Production",
+      "Verkettung",
+      "Würfeln",
+      "Handmanagement",
+      "Sechseckraster",
+      "Verdeckte Siegpunkte",
+      "Einkommen",
+      "Markt",
+      "Modulares Spielbrett",
+      "Netzwerk- und Routenbau",
+      "Wettlauf",
+      "Zufällige Produktion",
       "Take That",
-      "Trading",
-      "Variable Set-up"
+      "Tauschhandel",
+      "Variabler Aufbau"
     ]
   },
   "28": {
@@ -96,20 +96,20 @@
       "Tile Placement",
       "Variable Player Powers"
     ],
-    "descriptionDe": "In diesem klassischen Steve-Jackson-(I)-Spiel der Weltherrschaft ist jeder Spieler eine Geheimgesellschaft, die ihre Fäden in Interessengruppen weltweit zieht. Diese Ausgabe bringt zusätzliche Karten und überarbeitete Grafik.\n\nNeuauflage von:\n\n    Illuminati (kleine Plastikbox mit 54 schwarz-weißen Karten und Spielgeld)\n\nErweiterungen:\n\n    Illuminati: Y2K\n    Illuminati: Brainwash (Neufassung von Illuminati Expansion Set 3)\n    Illuminati: Bavarian Fire Drill\n    Illuminati: Mutual Assured Distraction\n\nSpin-off:\n\n    Illuminati: Crime Lords",
+    "descriptionDe": "In diesem klassischen Steve Jackson-Spiel der Weltherrschaft ist jeder von euch eine Geheimgesellschaft, die ihre Fäden in Interessengruppen weltweit zieht. Diese Ausgabe bringt zusätzliche Karten und überarbeitete Grafik.\n\nNeuauflage von:\n\n Illuminati (kleine Plastikbox mit 54 schwarz-weißen Karten und Spielgeld)\n\nErweiterungen:\n\n Illuminati: Y2K\n Illuminati: Brainwash (Neufassung von Illuminati Expansion Set 3)\n Illuminati: Bavarian Fire Drill\n Illuminati: Mutual Assured Distraction\n\nSpin-off:\n\n Illuminati: Crime Lords",
     "categoriesDe": [
-      "Card Game",
+      "Kartenspiel",
       "Humor",
-      "Negotiation",
-      "Political",
-      "Science Fiction"
+      "Verhandlung",
+      "Politik",
+      "Science-Fiction"
     ],
     "mechanicsDe": [
-      "Dice Rolling",
-      "Network and Route Building",
-      "Open Drafting",
-      "Tile Placement",
-      "Variable Player Powers"
+      "Würfeln",
+      "Netzwerk- und Routenbau",
+      "Offenes Drafting",
+      "Legespiel",
+      "Variable Spielerfähigkeiten"
     ]
   },
   "242": {
@@ -134,23 +134,23 @@
       "Variable Player Powers",
       "Voting"
     ],
-    "descriptionDe": "Die Spieler verkörpern verschiedene Familien in der República de los Bananas. Jede Spielrunde hat 7 bis 9 Phasen: Karten ziehen, der Präsident vergibt Rollen, Auslandshilfe wird gezogen, der Präsident schlägt ein Budget vor, das abgestimmt wird, Orte werden gewählt, es gibt Attentatsversuche, dann öffnet sich die Bank oder nicht, möglicherweise ein Putsch mit Nachspiel — danach die nächste Runde. Gewonnen hat, wer am Ende die meisten Pesos auf dem Schweizer Bankkonto hat, wenn das Geld ausgeht.\n\nDas Spiel ist für 4 bis 7 Spieler (Varianten für 2 und 3 existieren). Ein Präsident auf Lebenszeit (El Presidente) wird gewählt und verteilt Rollen an alle anderen. Je nach Amt und Karten hat jeder eine bestimmte Stimmenzahl — wichtig bei der Wahl von El Presidente und bei jeder Budgetabstimmung. Der Präsident zieht 8 verdeckte Geldkarten (1–3 $) und schlägt Zuteilungen vor; nicht jeder ist im Budget, die Beträge liegen beim Präsidenten. Verdeckte Auslandshilfe darf er behalten.\n\nSpieler können andere — auch den Präsidenten — durch Raten ihres Aufenthaltsorts unter fünf Orten ermorden. Erfolgreiche Attentäter nehmen das nicht eingezahlte Geld des Opfers; sicher ist nur Geld auf dem Schweizer Konto, erreichbar nur, wenn man die Attentatsrunde überlebt. Getötete Spieler werden Familienmitglieder mit neuen Karten, behalten aber Familienguthaben auf dem Konto.\n\nBei „Putschgrund“ kann ein Putsch starten: Streitkräfte um fünf Machtzentren. Rebellen nutzen ihre vor dem Putsch zugewiesenen Streitkräfte (Armee, Marine, Luftwaffe), Loyalisten des Präsidenten dasselbe. Am Ende stimmen die, die Machtzentren kontrollieren, für Präsident oder Junta; jemand geht vor das Erschießungskommando.",
+    "descriptionDe": "Ihr verkörpert verschiedene Familien in der República de los Bananas. Jede Spielrunde hat 7 bis 9 Phasen: Karten ziehen, der Präsident vergibt Rollen, Auslandshilfe wird gezogen, der Präsident schlägt ein Budget vor, das abgestimmt wird, Orte werden gewählt, es gibt Attentatsversuche, dann öffnet sich die Bank oder nicht, möglicherweise ein Putsch mit Nachspiel — danach die nächste Runde. Gewonnen hat, wer am Ende die meisten Pesos auf dem Schweizer Bankkonto hat, wenn das Geld ausgeht.\n\nDas Spiel ist für 4 bis 7 Spieler (Varianten für 2 und 3 existieren). Ein Präsident auf Lebenszeit (El Presidente) wird gewählt und verteilt Rollen an alle anderen. Je nach Amt und Karten hat jeder eine bestimmte Stimmenzahl — wichtig bei der Wahl von El Presidente und bei jeder Budgetabstimmung. Der Präsident zieht 8 verdeckte Geldkarten (1–3 $) und schlägt Zuteilungen vor; nicht jeder ist im Budget, die Beträge liegen beim Präsidenten. Verdeckte Auslandshilfe darf er behalten.\n\nIhr könnt andere — auch den Präsidenten — durch Raten ihres Aufenthaltsorts unter fünf Orten ermorden. Erfolgreiche Attentäter nehmen das nicht eingezahlte Geld des Opfers; sicher ist nur Geld auf dem Schweizer Konto, erreichbar nur, wenn ihr die Attentatsrunde überlebt. Getötete Spieler werden Familienmitglieder mit neuen Karten, behalten aber Familienguthaben auf dem Konto.\n\nBei „Putschgrund“ kann ein Putsch starten: Streitkräfte um fünf Machtzentren. Rebellen nutzen ihre vor dem Putsch zugewiesenen Streitkräfte (Armee, Marine, Luftwaffe), Loyalisten des Präsidenten dasselbe. Am Ende stimmen die, die Machtzentren kontrollieren, für Präsident oder Junta; jemand geht vor das Erschießungskommando.",
     "categoriesDe": [
-      "Economic",
+      "Wirtschaft",
       "Humor",
-      "Negotiation",
-      "Political"
+      "Verhandlung",
+      "Politik"
     ],
     "mechanicsDe": [
-      "Area Movement",
-      "Betting and Bluffing",
-      "Dice Rolling",
-      "Events",
-      "Hand Management",
-      "Simultaneous Action Selection",
-      "Trading",
-      "Variable Player Powers",
-      "Voting"
+      "Gebietbewegung",
+      "Wetten und Bluffen",
+      "Würfeln",
+      "Ereignisse",
+      "Handmanagement",
+      "Gleichzeitige Aktionswahl",
+      "Tauschhandel",
+      "Variable Spielerfähigkeiten",
+      "Abstimmung"
     ]
   },
   "278": {
@@ -172,20 +172,20 @@
       "Random Production",
       "Trading"
     ],
-    "descriptionDe": "Das Catan Card Game ähnelt Die Siedler von Catan nur entfernt. Sechs Rohstoffe: Wolle, Holz, Ziegel, Getreide, Erz und Gold. Vor dem Spiel erhalten die Spieler sechs quadratische Rohstoffkarten mit unterschiedlichen Würfelzahlen. Zusätzlich zwei Dorfkarten und eine Straßenkarte, die sie verbindet. Stapel für weitere Straßen, Dörfer und Städte können gekauft werden; jede neue Siedlung oder Stadt bringt zwei neue Rohstoffkarten. Dörfer und Städte geben Siegpunkte.\n\nBeim Würfeln der Zahlendie dreht man die passende Karte um 90° statt Karten zu ziehen — am Rand stehen 0 bis 3 Einheiten des Rohstoffs. Eine Ereigniswürfel mit fünf Ergebnissen:\n\n     Belohnung für den Spieler mit mehr Ritter- oder „Windmühlen“-Punkten (Windmühle auf manchen Karten),\n     Bonusrohstoff,\n     Angriff bei zu vielen Rohstoffen,\n     eines von sechs Spezialereignissen — Bürgerkrieg, Konflikt, Baumeister, Pest, fruchtbares Jahr oder Fortschritt.\n\nIn der Mitte liegen 62 Erweiterungskarten in sechs Stapeln. Vor dem Spiel wählt jeder einen Stapel, geht ihn durch und nimmt drei Karten auf die Hand. 42 Karten kosten Rohstoffe und bringen bürgerliche Verbesserungen oder Ritter; jede Verbesserung hat Nutzen und/oder Siegpunkte. 20 sind Aktionen zum Vorteil oder Nachteil des Gegners. Nach dem Auslegen oder Nutzen einer Aktionskarte zieht man blind nach. Unerwünschte Karten können später getauscht werden. Manche Karten tragen Flaggen für Siegpunkte.\n\nWer zuerst zwölf Siegpunkte hat, gewinnt!\n\nDie Jubiläumsausgabe (Jubiläumsausgabe, Blechdose) hat einen eigenen Spieleintrag wegen inhaltlicher Unterschiede: Die Siedler von Catan: Das Kartenspiel – 10th Anniversary Special Edition Tin Box.\n\nGehört zur Catan-Serie.",
+    "descriptionDe": "Das Catan Card Game ähnelt Die Siedler von Catan nur entfernt. Sechs Rohstoffe: Wolle, Holz, Ziegel, Getreide, Erz und Gold. Vor dem Spiel erhaltet ihr je sechs quadratische Rohstoffkarten mit unterschiedlichen Würfelzahlen, zwei Dorfkarten und eine Straßenkarte, die sie verbinden. Stapel für weitere Straßen, Dörfer und Städte könnt ihr kaufen; jede neue Siedlung oder Stadt bringt zwei neue Rohstoffkarten. Dörfer und Städte geben Siegpunkte.\n\nBeim Würfeln der Zahlendie dreht ihr die passende Karte um 90° statt Karten zu ziehen — am Rand stehen 0 bis 3 Einheiten des Rohstoffs. Ein Ereigniswürfel mit fünf Ergebnissen:\n\n Belohnung für den Spieler mit mehr Ritter- oder Windmühlenpunkten (Windmühle auf manchen Karten),\n Bonusrohstoff,\n Angriff bei zu vielen Rohstoffen,\n eines von sechs Spezialereignissen — Bürgerkrieg, Konflikt, Baumeister, Pest, fruchtbares Jahr oder Fortschritt.\n\nIn der Mitte liegen 62 Erweiterungskarten in sechs Stapeln. Vor dem Spiel wählt jeder einen Stapel, geht ihn durch und nimmt drei Karten auf die Hand. 42 Karten kosten Rohstoffe und bringen bürgerliche Verbesserungen oder Ritter; jede Verbesserung hat Nutzen und/oder Siegpunkte. 20 sind Aktionen zum Vorteil oder Nachteil des Gegners. Nach dem Auslegen oder Nutzen einer Aktionskarte zieht ihr blind nach. Unerwünschte Karten könnt ihr später tauschen. Manche Karten tragen Flaggen für Siegpunkte.\n\nWer zuerst zwölf Siegpunkte hat, gewinnt!\n\nDie Jubiläumsausgabe in der Blechdose hat einen eigenen Spieleintrag wegen inhaltlicher Unterschiede: Die Siedler von Catan: Das Kartenspiel – 10th Anniversary Special Edition Tin Box.\n\nGehört zur Catan-Serie.",
     "categoriesDe": [
-      "Card Game",
-      "City Building",
-      "Territory Building"
+      "Kartenspiel",
+      "Städtebau",
+      "Gebietsaufbau"
     ],
     "mechanicsDe": [
-      "Dice Rolling",
-      "Hand Management",
-      "Map Addition",
-      "Open Drafting",
-      "Race",
-      "Random Production",
-      "Trading"
+      "Würfeln",
+      "Handmanagement",
+      "Kartenerweiterung",
+      "Offenes Drafting",
+      "Wettlauf",
+      "Zufällige Produktion",
+      "Tauschhandel"
     ]
   },
   "325": {
@@ -207,20 +207,23 @@
       "Network and Route Building",
       "Trading"
     ],
-    "descriptionDe": "Dies ist eine Erweiterung für CATAN. Spieler können Schifffahrtsrouten bauen, die Straßen sehr ähneln. Zusätzlich gibt es viele Varianten-Aufbauten mit vielen Wasserfeldern. Die englische Version (CATAN Studio) passt nur zur englischen Basis (Kosmos-Deutsch nicht wegen der Komponenten). Die Kosmos-Version nur zur deutschen Basis. Mehrere Editionen existieren; die 5. ist die neueste. Editionen sollten nur untereinander kombiniert werden, sonst braucht man ein Adapter-Set.\n\nTeil der Catan-Serie.\n\nBenötigt CATAN, idealerweise gleicher Verlag und Edition.",
+    "descriptionDe": "Dies ist eine Erweiterung für CATAN. Ihr könnt Schifffahrtsrouten bauen, die Straßen sehr ähneln. Zusätzlich gibt es viele Varianten-Aufbauten mit vielen Wasserfeldern. Die englische Version (CATAN Studio) passt nur zur englischen Basis (Kosmos-Deutsch nicht wegen der Komponenten). Die Kosmos-Version nur zur deutschen Basis. Mehrere Editionen existieren; die 5. ist die neueste. Editionen sollten nur untereinander kombiniert werden, sonst braucht ihr ein Adapter-Set.\n\nTeil der Catan-Serie.\n\nBenötigt CATAN, idealerweise gleicher Verlag und Edition.",
     "categoriesDe": [
-      "Expansion for Base-game",
-      "Exploration",
-      "Nautical",
-      "Negotiation"
+      "Erweiterung zum Basisspiel",
+      "Erkundung",
+      "Seefahrt",
+      "Verhandlung"
     ],
     "mechanicsDe": [
-      "Dice Rolling",
-      "Hand Management",
-      "Memory",
-      "Modular Board",
-      "Network and Route Building",
-      "Trading"
+      "Würfeln",
+      "Handmanagement",
+      "Gedächtnis",
+      "Modulares Spielbrett",
+      "Netzwerk- und Routenbau",
+      "Tauschhandel"
+    ],
+    "expandsGameIds": [
+      13
     ]
   },
   "822": {
@@ -241,19 +244,52 @@
       "Square Grid",
       "Tile Placement"
     ],
-    "descriptionDe": "Carcassonne ist ein Legespiel: Spieler ziehen und legen Plättchen mit südfranzösischer Landschaft. Ein Plättchen kann Stadt, Straße, Kloster, Wiese oder Kombinationen zeigen und muss an bereits gelegte Kacheln angrenzen, sodass Städte an Städte, Straßen an Straßen usw. anschließen. Nach dem Legen kann ein Meeple in einen Bereich: in der Stadt als Ritter, auf der Straße als Straßenräuber, im Kloster als Mönch, auf der Wiese als Bauer. Ist der Bereich vollendet, bringt der Meeple Punkte.\n\nWährend des Spiels stellt sich die Frage: „Lohnt sich mein letzter Meeple dort?“ oder „Erweitere ich meine Stadt oder lege ich beim Gegner, damit er sie schwerer vollendet?“ Pro Zug nur ein Plättchen und optional ein Meeple — trotz vieler Optionen geht es zügig.\n\nErstes Spiel der Carcassonne-Serie.",
+    "descriptionDe": "Carcassonne ist ein Legespiel: Ihr zieht und legt Plättchen mit südfranzösischer Landschaft. Ein Plättchen kann Stadt, Straße, Kloster, Wiese oder Kombinationen zeigen und muss an bereits gelegte Kacheln angrenzen, sodass Städte an Städte, Straßen an Straßen usw. anschließen. Nach dem Legen könnt ihr einen Meeple in einen Bereich setzen: in der Stadt als Ritter, auf der Straße als Straßenräuber, im Kloster als Mönch, auf der Wiese als Bauer. Ist der Bereich vollendet, bringt der Meeple Punkte.\n\nWährend des Spiels stellt sich die Frage: „Lohnt sich mein letzter Meeple dort?“ oder „Erweitere ich meine Stadt oder lege ich beim Gegner, damit er sie schwerer vollendet?“ Pro Zug nur ein Plättchen und optional ein Meeple — trotz vieler Optionen geht es zügig.\n\nErstes Spiel der Carcassonne-Serie.",
     "categoriesDe": [
-      "Medieval",
-      "Territory Building"
+      "Mittelalter",
+      "Gebietsaufbau"
     ],
     "mechanicsDe": [
-      "Area Majority / Influence",
-      "Enclosure",
+      "Gebietsherrschaft / Einfluss",
+      "Umschließen",
       "Kill Steal",
-      "Map Addition",
-      "Pattern Building",
-      "Square Grid",
-      "Tile Placement"
+      "Kartenerweiterung",
+      "Musterlegen",
+      "Quadratraster",
+      "Legespiel"
+    ]
+  },
+  "823": {
+    "id": 823,
+    "description": "The Lord of the Rings is a co-operative game in which the object is to destroy the Ring while surviving the corrupting influence of Sauron. Each player plays one of the Hobbits in the fellowship, each of which has a unique power.\n\nOver the course of the game, you make your way across four conflict game boards, representing some of the most memorable conflicts from the entire trilogy: Moria, Helm's Deep, Shelob's Lair, and Mordor. Each conflict board tests your small Fellowship to the utmost as you must play your quest cards to advance along multiple tracks. These tracks represent fighting, hiding, traveling, and friendship, and by playing quest cards from your hand with matching symbols, you can keep moving forward and push closer to victory.\n\nThe master game board indicates both the physical progress of the fellowship across Middle Earth and the corrupting influence of Sauron on the hobbits. If you're able to slip past your foes, you can hope to escape with minimal corruption, healing your hurts at safe havens along your path, such as the forest kingdom of Lothl&oacute;rien. By playing your cards right and advancing quickly, you can collect powerful runes, unlock legendary cards to aid your journey, or find life tokens to help stave off corruption &mdash; not to mention advancing quickly through the conflicts. As you travel, the One Ring can be a crucial tool in your journey, allowing you to hide from sight, but repeated use will draw the attention of Sauron and corrupt the heart of the Ring-bearer.\n\nYour journey leads you deeper into the darkness with each passing conflict, and safe havens become few and far between. You must carefully watch the corruption track because if the Sauron miniature ever meets a Hobbit, that player is eliminated &mdash; and if the Ring-bearer is eliminated, all players lose as Sauron reclaims the power of the One Ring. To win, throw the One Ring into the volcanic fires of Mount Doom.\n\nThis game should not be confused with Reiner Knizia's children's game (Lord of the Rings) with the same title, or with his very different two-player Lord of the Rings: The Confrontation.\n\nLord of the Rings - Limited Edition\n\nA special edition limited to 500 copies in the English language and 250 in German published by Sophisticated Games and Kosmos in November 2001. The Limited Edition has a silver 22 carat gold plated ring, pewter Hobbit playing pieces, and a signed and numbered John Howe print. Box signed by Reiner Knizia.",
+    "image": "https://cf.geekdo-images.com/cbR8wLM7Silq14BtNe_-Xg__itemheader/img/1zNy94y7tPHKQocj7lyfGzORPxQ=/800x450/filters:quality(30):strip_icc()/pic346452.jpg",
+    "thumbnail": "https://cf.geekdo-images.com/oWttjfs235Zh7jLGWO7_Hg__itemrep/img/-ZcX-4tc2w3JnK9rMdUaCwnZHLM=/fit-in/246x300/filters:strip_icc()/pic479124.jpg",
+    "categories": [
+      "Adventure",
+      "Fantasy",
+      "Novel-based"
+    ],
+    "mechanics": [
+      "Cooperative Game",
+      "Dice Rolling",
+      "Hand Management",
+      "Player Elimination",
+      "Set Collection",
+      "Variable Player Powers"
+    ],
+    "descriptionDe": "Der Herr der Ringe ist ein kooperatives Spiel: Ziel ist es, den Ring zu vernichten und gleichzeitig dem verderblichen Einfluss Saurons zu widerstehen. Jeder von euch spielt einen der Hobbits der Gemeinschaft, jeder mit einer eigenen Fähigkeit.\n\nIm Verlauf des Spiels durchquert ihr vier Konflikt-Spielbretter mit den prägendsten Schlachten der Trilogie: Moria, Helms Klamm, Shelobs Höhle und Mordor. Jedes Brett stellt eure kleine Gemeinschaft auf die Probe: Mit Quest-Karten bewegt ihr euch auf mehreren Spuren voran — Kampf, Verstecken, Reisen und Freundschaft. Passende Symbole auf den Karten bringen euch dem Sieg näher.\n\nDas Hauptbrett zeigt den Weg der Gemeinschaft durch Mittelerde und Saurons Verderbnis der Hobbits. Schleicht ihr an Gegnern vorbei, heilt ihr an sicheren Orten wie dem Waldreich Lothlórien. Mit klugem Kartenspiel und Tempo sammelt ihr mächtige Runen, legendäre Karten oder Lebensmarken gegen die Verderbnis. Der Eine Ring kann euch verbergen, zieht aber bei häufigem Gebrauch Saurons Aufmerksamkeit auf den Ringträger.\n\nMit jedem Konflikt wird es dunkler; sichere Häfen werden seltener. Beobachtet die Verderbnis-Leiste: Trifft Saurons Figur auf einen Hobbit, scheidet er aus — fällt der Ringträger, verliert ihr alle. Gewinnt, indem ihr den Einen Ring in die Feuer des Schicksalsberges werft.\n\nNicht verwechseln mit Reiner Knizias gleichnamigem Kinderspiel oder dem Zweispieler-Spiel Lord of the Rings: The Confrontation.",
+    "categoriesDe": [
+      "Abenteuer",
+      "Fantasy",
+      "Literaturvorlage"
+    ],
+    "mechanicsDe": [
+      "Kooperatives Spiel",
+      "Würfeln",
+      "Handmanagement",
+      "Spielerausschluss",
+      "Sets sammeln",
+      "Variable Spielerfähigkeiten"
     ]
   },
   "926": {
@@ -274,19 +310,22 @@
       "Network and Route Building",
       "Trading"
     ],
-    "descriptionDe": "Erweitert Die Siedler von Catan um mehrere Aspekte; die beiden wichtigsten sind Ritter zum Schutz vor Barbaren und Stadtverbesserungen mit Vorteilen für den Besitzer. Mehr taktische Tiefe und längere Spielzeit.\n\nGehört zur Catan-Serie.\n\nDas Spiel verändert die Basis auf drei Wegen:\n\nZuerst drei neue Waren neben Rohstoffen — Papier, Stoff und Münzen von Wald, Weide und Berg. Städte, die sonst zwei Rohstoffe einer Art liefern würden, liefern 1 Rohstoff und 1 Ware. (Jeder startet mit 1 Stadt und 1 Siedlung.) Waren ermöglichen Stadtverbesserungen mit Vorteilen und später Punkten.\n\nZweitens ersetzt das Entwicklungskartendeck drei Stapel je Ware. Verbesserungen geben bei jedem Wurf die Chance, diese Karten zu ziehen — mehr Verbesserungen erhöhen die Chance, Karten sind nicht kaufbar. Ähnlich den Entwicklungskarten der Basis, aber breiter (z. B. Monopol nur noch 2 Rohstoffe pro Spieler).\n\nDrittens können Spieler Ritter entlang ihrer Straßen bauen. Sie beanspruchen Kreuzungen, bewegen den Räuber (statt Soldatenkarten) und wehren periodische Barbarenangriffe ab. Gelingt die Verteidigung, belohnen die meisten Ritter; scheitert sie, verlieren die wenigsten Ritter je eine Stadt (wird Siedlung).",
+    "descriptionDe": "Erweitert Die Siedler von Catan um mehrere Aspekte; die beiden wichtigsten sind Ritter zum Schutz vor Barbaren und Stadtverbesserungen mit Vorteilen für den Besitzer. Mehr taktische Tiefe und längere Spielzeit.\n\nGehört zur Catan-Serie.\n\nDas Spiel verändert die Basis auf drei Wegen:\n\nZuerst drei neue Waren neben Rohstoffen — Papier, Stoff und Münzen von Wald, Weide und Berg. Städte, die sonst zwei Rohstoffe einer Art liefern würden, liefern 1 Rohstoff und 1 Ware. (Jeder startet mit 1 Stadt und 1 Siedlung.) Waren ermöglichen Stadtverbesserungen mit Vorteilen und später Punkten.\n\nZweitens ersetzt das Entwicklungskartendeck drei Stapel je Ware. Verbesserungen geben bei jedem Wurf die Chance, diese Karten zu ziehen — mehr Verbesserungen erhöhen die Chance, Karten sind nicht kaufbar. Ähnlich den Entwicklungskarten der Basis, aber breiter (z. B. Monopol nur noch 2 Rohstoffe pro Spieler).\n\nDrittens könnt ihr Ritter entlang eurer Straßen bauen. Die Ritter beanspruchen Kreuzungen, bewegen den Räuber (statt Soldatenkarten) und wehren periodische Barbarenangriffe ab. Gelingt die Verteidigung, belohnen die meisten Ritter; scheitert sie, verlieren die wenigsten Ritter je eine Stadt (wird Siedlung).",
     "categoriesDe": [
-      "Expansion for Base-game",
-      "Medieval",
-      "Negotiation"
+      "Erweiterung zum Basisspiel",
+      "Mittelalter",
+      "Verhandlung"
     ],
     "mechanicsDe": [
-      "Dice Rolling",
-      "Hand Management",
-      "Memory",
-      "Modular Board",
-      "Network and Route Building",
-      "Trading"
+      "Würfeln",
+      "Handmanagement",
+      "Gedächtnis",
+      "Modulares Spielbrett",
+      "Netzwerk- und Routenbau",
+      "Tauschhandel"
+    ],
+    "expandsGameIds": [
+      13
     ]
   },
   "1552": {
@@ -310,22 +349,22 @@
       "Tile Placement",
       "Variable Player Powers"
     ],
-    "descriptionDe": "Sammelkartenspiel basierend auf dem beliebten Illuminati-Spiel.\n\nGeheime Verschwörungen wollen die Welt erobern. Jeder Spieler ist eine Verschwörung (oder Fraktion derselben), die gewinnt, indem sie genug „Gruppen“ wie die Republikanische Partei oder Frankreich kontrolliert oder ihre Spezialziele erfüllt.\n\nAuch als nicht-sammelbares „One With Everything“-Komplettset mit eigenen Regeln für je eine Karte jeder Art.\n\nZusätzliche Karten erschienen in Boosterpacks als INWO Assassins und später Church of the Subgenius.",
+    "descriptionDe": "Sammelkartenspiel basierend auf dem beliebten Illuminati-Spiel.\n\nGeheime Verschwörungen wollen die Welt erobern. Jeder von euch ist eine Verschwörung (oder Fraktion derselben), die gewinnt, indem sie genug „Gruppen“ wie die Republikanische Partei oder Frankreich kontrolliert oder ihre Spezialziele erfüllt.\n\nAuch als nicht-sammelbares „One With Everything“-Komplettset mit eigenen Regeln für je eine Karte jeder Art.\n\nZusätzliche Karten erschienen in Boosterpacks als INWO Assassins und später Church of the Subgenius.",
     "categoriesDe": [
-      "Card Game",
-      "Collectible Components",
+      "Kartenspiel",
+      "Sammelkomponenten",
       "Humor",
-      "Negotiation",
-      "Political",
-      "Science Fiction"
+      "Verhandlung",
+      "Politik",
+      "Science-Fiction"
     ],
     "mechanicsDe": [
-      "Action Points",
-      "Deck Construction",
-      "Dice Rolling",
-      "Hand Management",
-      "Tile Placement",
-      "Variable Player Powers"
+      "Aktionspunkte",
+      "Deckbau",
+      "Würfeln",
+      "Handmanagement",
+      "Legespiel",
+      "Variable Spielerfähigkeiten"
     ]
   },
   "1897": {
@@ -343,16 +382,16 @@
       "Hexagon Grid",
       "Trading"
     ],
-    "descriptionDe": "Der Ausflug ins All, irgendwann um 2700 n. Chr. Ihr wettstrebt um das prestigeträchtige Amt des Botschafters beim Galaktischen Rat. Dazu verlasst ihr Terra und die bekannten Planeten, erkundet und kolonisiert die Galaxie, schließt Handel mit Aliens, trefft Außerirdische und besiegt Piraten. Ruhm und Sieg gehören dem mutigen Entdecker, dem das Glück hold ist.\n\nDie bekannten Welten liegen an einem Ende des Bretts; jeder der 3–4 Spieler beginnt in bekannten Sonnensystemen mit je drei Rohstoffplaneten.\n\nJeder startet mit 2 Kolonien und einem Raumhafen (alles aus Plastik). Der Hafen baut Raumschiffe für Kolonien und Handelsposten in der Ferne. Kolonien und Häfen produzieren bei passenden Würfelwürfen Rohstoffe. Rohstoffe tauscht man gegen Kolonie- und Handelsschiffe sowie Upgrades: Frachtringe, Booster, Kanonen. Beim Erkunden lauern Eisplaneten und Piraten.\n\nGehört zur Catan-Serie.",
+    "descriptionDe": "Der Ausflug ins All, irgendwann um 2700 n. Chr. Ihr wettstrebt um das prestigeträchtige Amt des Botschafters beim Galaktischen Rat. Dazu verlasst ihr Terra und die bekannten Planeten, erkundet und kolonisiert die Galaxie, schließt Handel mit Aliens, trefft Außerirdische und besiegt Piraten. Ruhm und Sieg gehören dem mutigen Entdecker, dem das Glück hold ist.\n\nDie bekannten Welten liegen an einem Ende des Bretts; jeder der 3–4 Spieler beginnt in bekannten Sonnensystemen mit je drei Rohstoffplaneten.\n\nJeder startet mit 2 Kolonien und einem Raumhafen (alles aus Plastik). Der Hafen baut Raumschiffe für Kolonien und Handelsposten in der Ferne. Kolonien und Häfen produzieren bei passenden Würfelwürfen Rohstoffe. Rohstoffe tauscht ihr gegen Kolonie- und Handelsschiffe sowie Upgrades: Frachtringe, Booster, Kanonen. Beim Erkunden lauern Eisplaneten und Piraten.\n\nGehört zur Catan-Serie.",
     "categoriesDe": [
-      "Exploration",
-      "Negotiation",
-      "Science Fiction",
-      "Space Exploration"
+      "Erkundung",
+      "Verhandlung",
+      "Science-Fiction",
+      "Weltraumforschung"
     ],
     "mechanicsDe": [
-      "Hexagon Grid",
-      "Trading"
+      "Sechseckraster",
+      "Tauschhandel"
     ]
   },
   "1927": {
@@ -372,18 +411,53 @@
       "Take That",
       "Variable Player Powers"
     ],
-    "descriptionDe": "Verlagsbeschreibung: Runter in den Dungeon. Alles töten, was euch begegnet. Freunde hinterrücks erledigen und ihre Sachen klauen. Schatz greifen und rennen.\n\nGibt’s zu — ihr liebt es.\n\nDieses preisgekrönte Kartenspiel von Steve Jackson fängt den Dungeon-Erlebnis ein — ohne dieses blöde Rollenspielzeug. Ihr und eure Freunde konkurriert um Monster und magische Items. Und welche Items! Horny Helmet und Boots of Butt-Kicking. Staff of Napalm … oder Chainsaw of Bloody Dismemberment. Vom Topfpflanzen- und Sabberschleim-Monster bis zum Plutonium Dragon …\n\nIllustriert von John Kovalic! Schnell und albern; Munchkin kann jede Rollenspielrunde in Hysterie verwandeln. Und während alle lachen, klaut ihr ihre Sachen.\n\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\tSonstigesTeil der Munchkin-Serie.\n\nMunchkin ist ein satirisches Kartenspiel nach Klischees von Dungeons & Dragons und anderen Rollenspielen. Jeder startet auf Stufe 1; gewonnen hat, wer zuerst Stufe 10 erreicht. Unterwegs könnt ihr vertraute D&D-Klassen erhalten, die bestimmen, welche Karten ihr spielen dürft.\n\nZwei Kartentypen — Schatz und Begegnung. Jeder Zug „tritt die Tür ein“ und zieht eine Begegnung — meist ein Monster mit Stufe, das ihr mit Stufe, Waffen und Kräften besiegt oder flieht. Andere helfen oder legen Extra-Monster drauf. Sieg bringt meist Schatz und Stufen; Niederlage „Bad Stuff“ — oft Stufen- und Schatzverlust.\n\nMai 2010 kündigte Steve Jackson Games die „große Ankündigung“ an. Viele Regeln und Karten änderten sich — siehe The Great 2010 Munchkin Changeover. Die Kneepads of Allure kamen in der 14. Auflage weg und kehrten abgeschwächt zurück.\n\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\tFortsetzungen:\n    The Good, the Bad, and the Munchkin\n    Munchkin Apocalypse\n    Munchkin Axe Cop\n    Munchkin Bites!\n    Munchkin Booty\n    Munchkin Conan\n    Munchkin Cthulhu\n    Munchkin Fu\n    Munchkin Impossible\n    Munchkin Legends\n    Munchkin Pathfinder\n    Munchkin Zombies\n    Star Munchkin\n    Super Munchkin\n\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\tVerwandte Brettspiele\n    Munchkin Quest\n\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\tOnline-Spiel\n     Vassal unterstützt Munchkin nicht mehr. Früherer Link: Vassal Module\n\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\tPegasus-Erweiterungen\n    Munchkin Sammlerbox\n    Munchkin Sammlerkoffer\n    Munchkin Promotional Bookmarks\n    Munchkin Weihnachtsedition — wie Munchkin, mit Promotional-Button für Extra-Schatz (wenn im Dezember getragen).\n\n\t\t\t\t\n\t\t\t\t\n\t\t\t\t\tOnline-PlaythroughGroßartiges YouTube-Playthrough mit Will Wheaton und Steve Jackson (ja, dem Steve Jackson) hier LINK",
+    "descriptionDe": "Verlagsbeschreibung: Runter in den Dungeon. Alles töten, was euch begegnet. Freunde hinterrücks erledigen und ihre Sachen klauen. Beute schnappen und abhauen.\n\nGibt’s zu — ihr liebt es.\n\nDieses preisgekrönte Kartenspiel von Steve Jackson fängt das Dungeon-Erlebnis ein — ohne dieses blöde Rollenspielzeug. Ihr und eure Freunde konkurrieren um Monster und magische Items. Und welche Items! Horny Helmet und Boots of Butt-Kicking. Staff of Napalm … oder Chainsaw of Bloody Dismemberment. Vom Topfpflanzen- und Sabberschleim-Monster bis zum Plutonium Dragon …\n\nIllustriert von John Kovalic! Schnell und albern; Munchkin kann jede Rollenspielrunde in Hysterie verwandeln. Und während alle lachen, klaut ihr ihre Sachen.\n\nTeil der Munchkin-Serie.\n\nMunchkin ist ein satirisches Kartenspiel nach Klischees von Dungeons & Dragons und anderen Rollenspielen. Jeder startet auf Stufe 1; gewonnen hat, wer zuerst Stufe 10 erreicht. Unterwegs könnt ihr vertraute D&D-Klassen erhalten, die bestimmen, welche Karten ihr spielen dürft.\n\nZwei Kartentypen — Schatz und Begegnung. Jeder Zug „tritt die Tür ein“ und zieht eine Begegnung — meist ein Monster mit Stufe, das ihr mit Stufe, Waffen und Kräften besiegt oder vor dem ihr flieht. Andere helfen oder legen Extra-Monster drauf. Sieg bringt meist Schatz und Stufen; Niederlage „Übles“ — oft Stufen- und Schatzverlust.\n\nMai 2010 kündigte Steve Jackson Games die „große Ankündigung“ an. Viele Regeln und Karten änderten sich — siehe The Great 2010 Munchkin Changeover. Die Kneepads of Allure kamen in der 14. Auflage weg und kehrten abgeschwächt zurück.\n\nFortsetzungen u. a.: The Good, the Bad, and the Munchkin, Munchkin Apocalypse, Munchkin Zombies, Star Munchkin, Super Munchkin und weitere.\n\nVerwandtes Brettspiel: Munchkin Quest.",
     "categoriesDe": [
-      "Card Game",
+      "Kartenspiel",
       "Fantasy",
-      "Fighting",
+      "Kampf",
       "Humor"
     ],
     "mechanicsDe": [
-      "Hand Management",
-      "Race",
+      "Handmanagement",
+      "Wettlauf",
       "Take That",
-      "Variable Player Powers"
+      "Variable Spielerfähigkeiten"
+    ]
+  },
+  "2651": {
+    "id": 2651,
+    "description": "Power Grid is the updated release of the Friedemann Friese crayon game Funkenschlag. It removes the crayon aspect from network building in the original edition, while retaining the fluctuating commodities market like Crude: The Oil Game and an auction round intensity reminiscent of The Princes of Florence.\n\nThe objective of Power Grid is to supply the most cities with power when someone's network gains a predetermined size.  In this new edition, players mark pre-existing routes between cities for connection, and then bid against each other to purchase the power plants that they use to power their cities.\n\nHowever, as plants are purchased, newer, more efficient plants become available, so by merely purchasing, you're potentially allowing others access to superior equipment.\n\nAdditionally, players must acquire the raw materials (coal, oil, garbage, and uranium) needed to power said plants (except for the 'renewable' windfarm/ solar plants, which require no fuel), making it a constant struggle to upgrade your plants for maximum efficiency while still retaining enough wealth to quickly expand your network to get the cheapest routes.\n\n☛ Power Grid FAQ - Please read this before posting a rules question!  Many questions are asked over and over in the forums... If you have a question about a specific expansion, please check the rules forum or FAQ for that particular expansion.",
+    "image": "https://cf.geekdo-images.com/031KGSuNFbQYjuOzB0aqWw__itemheader/img/qe8J5XYtUleqw3s80sbOOEsDFIs=/800x450/filters:quality(30):strip_icc()/pic147429.jpg",
+    "thumbnail": "https://cf.geekdo-images.com/yd6LuatytHRhcFCxCf-EEg__itemrep/img/LsqKzcnoaVUlSUmLxFE8dwxFndk=/fit-in/246x300/filters:strip_icc()/pic4459753.jpg",
+    "categories": [
+      "Economic",
+      "Industry / Manufacturing"
+    ],
+    "mechanics": [
+      "Auction / Bidding",
+      "Auction: Turn Order Until Pass",
+      "Catch the Leader",
+      "Income",
+      "Market",
+      "Network and Route Building",
+      "Turn Order: Stat-Based",
+      "Variable Set-up"
+    ],
+    "descriptionDe": "Power Grid ist die überarbeitete Neuauflage von Friedemann Frieses Buntstift-Spiel Funkenschlag. Das Buntstift-Netzwerk-Bauen entfällt; dafür bleiben ein schwankender Rohstoffmarkt und intensive Auktionsrunden.\n\nZiel: Wenn ein Netzwerk die festgelegte Größe erreicht, versorgt ihr die meisten Städte mit Strom. Ihr markiert vorgegebene Verbindungen zwischen Städten und bietet gegeneinander um Kraftwerke, mit denen ihr Städte versorgt.\n\nKauft ihr Kraftwerke, werden effizientere Modelle verfügbar — ihr helft damit möglicherweise den Mitspielern an bessere Anlagen.\n\nZusätzlich braucht ihr Rohstoffe (Kohle, Öl, Müll, Uran) für die meisten Kraftwerke; Wind- und Solaranlagen brauchen keinen Brennstoff. Ständig gilt es, Anlagen zu modernisieren und gleichzeitig genug Geld für günstige Netzausbauten zu haben.\n\nGehört zur Power Grid / Funkenschlag-Serie.",
+    "categoriesDe": [
+      "Wirtschaft",
+      "Industrie / Fertigung"
+    ],
+    "mechanicsDe": [
+      "Auktion / Bieten",
+      "Auktion: Zugreihenfolge bis Pass",
+      "Aufholjagd",
+      "Einkommen",
+      "Markt",
+      "Netzwerk- und Routenbau",
+      "Zugreihenfolge: Attributbasiert",
+      "Variabler Aufbau"
     ]
   },
   "2807": {
@@ -402,17 +476,20 @@
       "Network and Route Building",
       "Trading"
     ],
-    "descriptionDe": "Ermöglicht bis zu zwei weitere Gegner in Die Siedler von Catan. Die einzige Regeländerung: nach jedem Zug eine Bauphase, in der jeder bauen darf.\n\nGehört zur Catan-Serie.\n\nErweitert:\n\n    Catan\n\nErweitert von:\n\n    Catan: Seafarers – 5-6 Player Extension\n    Catan: Cities & Knights – 5-6 Player Extension",
+    "descriptionDe": "Ermöglicht bis zu zwei weitere Gegner in Die Siedler von Catan. Die einzige Regeländerung: nach jedem Zug eine Bauphase, in der jeder bauen darf.\n\nGehört zur Catan-Serie.\n\nErweitert:\n\n Catan\n\nErweitert von:\n\n Catan: Seafarers – 5-6 Player Extension\n Catan: Cities & Knights – 5-6 Player Extension",
     "categoriesDe": [
-      "Expansion for Base-game",
-      "Negotiation"
+      "Erweiterung zum Basisspiel",
+      "Verhandlung"
     ],
     "mechanicsDe": [
-      "Dice Rolling",
-      "Hand Management",
-      "Modular Board",
-      "Network and Route Building",
-      "Trading"
+      "Würfeln",
+      "Handmanagement",
+      "Modulares Spielbrett",
+      "Netzwerk- und Routenbau",
+      "Tauschhandel"
+    ],
+    "expandsGameIds": [
+      13
     ]
   },
   "4100": {
@@ -430,16 +507,48 @@
     "mechanics": [
       "Trading"
     ],
-    "descriptionDe": "Diese Erweiterung enthält alles für zwei zusätzliche Spieler in The Starfarers of Catan. Zwei Mutterschiffe, zwei Spielersätze, zusätzliche Karten, zwei wiederverwendbare Brett-Overlays und eine neue Alienrasse.\n\nJetzt könnt ihr als einer von fünf oder sechs Starfarers die Galaxie erkunden, Kolonien gründen und Handelsbeziehungen zum Galaktischen Rat knüpfen. Diplomatie, kluger Handel, Stand gegen Piraten und mutige Kolonisation fremder Systeme — so gewinnt ihr die Gunst der Menschheit und anderer Rassen und werdet Galaktischer Botschafter!\n\nErweitert:\n\n     The Starfarers of Catan\n\nGehört zur Catan-Serie.",
+    "descriptionDe": "Diese Erweiterung enthält alles für zwei zusätzliche Spieler in The Starfarers of Catan. Zwei Mutterschiffe, zwei Spielersätze, zusätzliche Karten, zwei wiederverwendbare Brett-Overlays und eine neue Alienrasse.\n\nJetzt könnt ihr als einer von fünf oder sechs Starfarers die Galaxie erkunden, Kolonien gründen und Handelsbeziehungen zum Galaktischen Rat knüpfen. Diplomatie, kluger Handel, Stand gegen Piraten und mutige Kolonisation fremder Systeme — so gewinnt ihr die Gunst der Menschheit und anderer Rassen und werdet Galaktischer Botschafter!\n\nErweitert:\n\n The Starfarers of Catan\n\nGehört zur Catan-Serie.",
     "categoriesDe": [
-      "Civilization",
-      "Expansion for Base-game",
-      "Exploration",
-      "Negotiation",
-      "Science Fiction"
+      "Zivilisation",
+      "Erweiterung zum Basisspiel",
+      "Erkundung",
+      "Verhandlung",
+      "Science-Fiction"
     ],
     "mechanicsDe": [
-      "Trading"
+      "Tauschhandel"
+    ],
+    "expandsGameIds": [
+      1897
+    ]
+  },
+  "6249": {
+    "id": 6249,
+    "description": "Granada, 1278. At the foot of the Sierra Nevada mountains, one of the most exciting and interesting project of the Spanish Middle Ages begins: the construction of the ALHAMBRA.  The best master builders in the whole of Europe and Arabia want to demonstrate their skill.  Employ the most suitable teams of builders and make sure that you always have enough of the right currency.  Because no matter whether they are stonemasons from the north or horticulturalists from the south, they all want a proper wage and insist on their &quot;native&quot; currency.  With their help towers can be constructed, gardens laid out, pavilions and arcades erected and seraglios and chambers built.\n\nIn Alhambra, players are acquiring buildings to be placed within their Alhambra complex.\n\nThe money in Alhambra comes in four different currencies and is available in the open money market.  The 54 buildings of six types become available for purchase in the building market four at a time; one building is available in each of the four different currencies.  On a player's turn, a player may 1) take money from the open money market, 2) purchase a building from the building market and either place it in his Alhambra or reserve, or 3) engage in construction and re-construction projects with buildings that have been placed in the player's Alhambra or reserve. The game rewards efficiency, as when a player purchases a building from the market for the exact amount of money, the player may take another turn.\n\nPlayers with the most buildings in each of the six building types in his Alhambra score in each of the scoring phases, and points are awarded for players' longest external &quot;wall&quot; section within their complex. The game ends when the building market can no longer be replenished from the building tile supply, and there is a final scoring, whereupon the player with the highest score wins.",
+    "image": "https://cf.geekdo-images.com/Dfp9H_yUzt0xlnlLU37tGw__itemheader/img/NP9zY3oTplCfcrfSEI-LUZizACU=/800x450/filters:quality(30):strip_icc()/pic389723.jpg",
+    "thumbnail": "https://cf.geekdo-images.com/OiqKsYDh7pqeRYKG__kMSw__itemrep/img/7RUFLxeNec7dSbH0d_t77bFj3mo=/fit-in/246x300/filters:strip_icc()/pic4893652.jpg",
+    "categories": [
+      "City Building",
+      "Medieval"
+    ],
+    "mechanics": [
+      "Area Majority / Influence",
+      "Hand Management",
+      "Open Drafting",
+      "Set Collection",
+      "Tile Placement"
+    ],
+    "descriptionDe": "Granada, 1278. Am Fuß der Sierra Nevada beginnt eines der spannendsten Bauprojekte des spanischen Mittelalters: die Alhambra. Die besten Baumeister aus Europa und Arabien wollen ihr Können zeigen. Engagiert die passenden Teams und sorgt für genug der richtigen Währung — Steinmetze aus dem Norden und Gärtner aus dem Süden verlangen ihr „heimisches“ Geld. Mit ihrer Hilfe entstehen Türme, Gärten, Pavillons, Arkaden, Serails und Gemächer.\n\nIn Alhambra erwirbt ihr Gebäude für eure Anlage. Das Geld gibt es in vier Währungen auf dem offenen Markt. 54 Gebäude in sechs Typen erscheinen vier gleichzeitig im Markt, jeweils in einer Währung. Im Zug könnt ihr: 1) Geld vom Markt nehmen, 2) ein Gebäude kaufen und in der Alhambra oder der Reserve ablegen, oder 3) Bau- und Umbauarbeiten durchführen. Kauft ihr exakt zum Preis, dürft ihr noch einmal agieren.\n\nIn Wertungsphasen gibt es Punkte für die meisten Gebäude je Typ und für die längste äußere „Mauer“. Endet das Spiel, wenn der Gebäudevorrat erschöpft ist; wer die meisten Punkte hat, gewinnt.",
+    "categoriesDe": [
+      "Städtebau",
+      "Mittelalter"
+    ],
+    "mechanicsDe": [
+      "Gebietsherrschaft / Einfluss",
+      "Handmanagement",
+      "Offenes Drafting",
+      "Sets sammeln",
+      "Legespiel"
     ]
   },
   "21790": {
@@ -457,16 +566,56 @@
       "Open Drafting",
       "Set Collection"
     ],
-    "descriptionDe": "In Thurn & Taxis baut ihr Postrouten durch Bayern und die umliegenden Regionen und sammelt Bonuspunkte. Das Brett zeigt Städte und Verbindungsstraßen. Farbige Regionen umfassen meist zwei oder drei Städte; in der Mitte liegt eine große Region mit allen bayerischen Städten.\n\nPostrouten verbinden mindestens drei aufeinanderfolgende Städte mit Straßen. Pro Spieler nur eine Route gleichzeitig; Routen sind als Kartenfolge abgelegt.\n\nJeder startet mit 20 Postämtern, einer Kutschkarten-Karte und einer Hilfskarte. Bonusplättchen, Kutschkarten und Stadtkarten liegen auf dem Brett. Pro Zug zieht man eine von sechs offenen Stadtkarten (oder vom verdeckten Stapel) und legt eine Karte an — neue Route oder Erweiterung. Hat die Route mindestens drei Städte, darf man sie abschließen und werten: Postämter setzen, Bonustafeln, höhere Kutsche. Optional hilft ein Postbeamter (zweite Karte ziehen/legen, Display erneuern, höhere Kutsche als die Route erlaubt). Nach der Wertung beginnt die nächste Route.\n\nEndet das Spiel, wenn Postämter leer sind oder Kutsche Stufe 7 erreicht ist; der letzte Spieler in der Reihenfolge beendet seine Runde. Punkte für höchste Kutsche und Bonustafeln, Abzug für unplatzierte Postämter — meiste Punkte gewinnen.\n\nMan muss jede Runde mindestens eine Stadt hinzufügen, sonst verliert man die ganze Route — das gibt Planungsspannung.",
+    "descriptionDe": "In Thurn & Taxis baut ihr Postrouten durch Bayern und die umliegenden Regionen und sammelt Bonuspunkte. Das Brett zeigt Städte und Verbindungsstraßen. Farbige Regionen umfassen meist zwei oder drei Städte; in der Mitte liegt eine große Region mit allen bayerischen Städten.\n\nPostrouten verbinden mindestens drei aufeinanderfolgende Städte mit Straßen. Pro Spieler nur eine Route gleichzeitig; Routen sind als Kartenfolge abgelegt.\n\nJeder startet mit 20 Postämtern, einer Kutschkarten-Karte und einer Hilfskarte. Bonusplättchen, Kutschkarten und Stadtkarten liegen auf dem Brett. Pro Zug zieht ihr eine von sechs offenen Stadtkarten (oder vom verdeckten Stapel) und legt eine Karte an — neue Route oder Erweiterung. Hat die Route mindestens drei Städte, dürft ihr sie abschließen und werten: Postämter setzen, Bonustafeln, höhere Kutsche. Optional hilft ein Postbeamter (zweite Karte ziehen/legen, Kartenauslage erneuern, höhere Kutsche als die Route erlaubt). Nach der Wertung beginnt die nächste Route.\n\nEndet das Spiel, wenn Postämter leer sind oder Kutsche Stufe 7 erreicht ist; der letzte Spieler in der Reihenfolge beendet seine Runde. Punkte für höchste Kutsche und Bonustafeln, Abzug für unplatzierte Postämter — meiste Punkte gewinnen.\n\nIhr müsst jede Runde mindestens eine Stadt hinzufügen, sonst verliert ihr die ganze Route — das gibt Planungsspannung.",
     "categoriesDe": [
-      "Post-Napoleonic",
-      "Transportation"
+      "Nach-Napoleonisch",
+      "Transport"
     ],
     "mechanicsDe": [
-      "Hand Management",
+      "Handmanagement",
+      "Netzwerk- und Routenbau",
+      "Offenes Drafting",
+      "Sets sammeln"
+    ]
+  },
+  "22049": {
+    "id": 22049,
+    "description": "(From the Warehouse 23 website)\n\nBavarian Fire Drill is the long-awaited expansion for Illuminati. It adds 110 new cards illustrated (mostly) by the redoubtable Dan Smith.\n\nControl new and terrifying groups like Bloggers, Reality Shows, and Intelligent Design. Will you use Embedded Reporters and FEMA to destroy the Webcams, or will you be defeated by Bird Flu and Bobbleheads? Fans of the mega-hit INWO will recall the Deprogrammers and Science Alarmists, as well as more of the best groups from the best-selling conspiracy CCG.\n\nBFD also introduces a new kind of card: Artifacts! Some are magical, some are technological, some are just . . . strange. But all of them give their owners an unfair advantage in the struggle for world domination. Hitler's Brain, the Spear of Longinus, the Screaming Meme &ndash; and these are just the beginning.\n\nBavarian Fire Drill. You know what it means, but your cover demands you pretend not to . . .\n\nThe German Pegasus edition contains 120 cards: 108 translated English cards, 10 additional group cards and two blanks.\n\nExpands:\n\n    Illuminati",
+    "image": "https://cf.geekdo-images.com/jK3bqMxFVhBCXs58guz8OQ__itemheader/img/OLHf9nNvBuO4xWh7g6IkfEO6HTY=/800x450/filters:quality(30):strip_icc()/pic257791.jpg",
+    "thumbnail": "https://cf.geekdo-images.com/am3dRR5NYPIaeo2vsfcowQ__itemrep/img/B8_Vzm1gyo64JcWf2HKwOc4lOtg=/fit-in/246x300/filters:strip_icc()/pic208109.jpg",
+    "categories": [
+      "Card Game",
+      "Expansion for Base-game",
+      "Humor",
+      "Negotiation",
+      "Political",
+      "Science Fiction"
+    ],
+    "mechanics": [
+      "Dice Rolling",
       "Network and Route Building",
       "Open Drafting",
-      "Set Collection"
+      "Tile Placement",
+      "Variable Player Powers"
+    ],
+    "descriptionDe": "Bavarian Fire Drill ist die lang erwartete Erweiterung für Illuminati mit 110 neuen Karten, (meist) illustriert von Dan Smith.\n\nKontrolliert neue und furchterregende Gruppen wie Bloggers, Reality Shows und Intelligent Design. Nutzt ihr Embedded Reporters und FEMA gegen die Webcams — oder besiegen euch Bird Flu und Bobbleheads? INWO-Fans kennen Deprogrammers und Science Alarmists sowie weitere Gruppen aus dem erfolgreichen Verschwörungs-CCG.\n\nBFD führt einen neuen Kartentyp ein: Artefakte! Manche sind magisch, manche technologisch, manche einfach … seltsam. Alle verschaffen ihren Besitzern einen unfairen Vorteil im Kampf um die Weltherrschaft. Hitlers Brain, Spear of Longinus, Screaming Meme — und das ist erst der Anfang.\n\nDie deutsche Pegasus-Ausgabe enthält 120 Karten: 108 übersetzte englische Karten, 10 zusätzliche Gruppenkarten und zwei Blankos.\n\nErweitert:\n\n Illuminati",
+    "categoriesDe": [
+      "Kartenspiel",
+      "Erweiterung zum Basisspiel",
+      "Humor",
+      "Verhandlung",
+      "Politik",
+      "Science-Fiction"
+    ],
+    "mechanicsDe": [
+      "Würfeln",
+      "Netzwerk- und Routenbau",
+      "Offenes Drafting",
+      "Legespiel",
+      "Variable Spielerfähigkeiten"
+    ],
+    "expandsGameIds": [
+      28
     ]
   },
   "27690": {
@@ -487,15 +636,18 @@
     ],
     "descriptionDe": "Die Postkutschen rollen weiter. Nachdem die Routen im Süden gemeistert sind, wendet sich der Blick nach Norden — neue Routen, mehr Postnetz. Neue Strecken zwischen Holland und Sachsen, Preußen und den Freien Städten. Neue Poststationen liefern schneller wichtige Briefe.\n\nFleißige Postboten rüsten Kutschen mit Pferden aus — weiter und sicherer, damit die getrennten preußischen Provinzen an Macht gewinnen.\n\nDiese Erweiterung bietet neue Wege, Thurn and Taxis zu spielen: neues Brett, neue Bonustafeln und Stadtkarten (mit Pferden auf dem Rücken für die neuen Regeln).\n\nQuelle: http://riograndegames.com/games.html?id=189",
     "categoriesDe": [
-      "Expansion for Base-game",
-      "Post-Napoleonic",
-      "Transportation"
+      "Erweiterung zum Basisspiel",
+      "Nach-Napoleonisch",
+      "Transport"
     ],
     "mechanicsDe": [
-      "Hand Management",
-      "Network and Route Building",
-      "Open Drafting",
-      "Set Collection"
+      "Handmanagement",
+      "Netzwerk- und Routenbau",
+      "Offenes Drafting",
+      "Sets sammeln"
+    ],
+    "expandsGameIds": [
+      21790
     ]
   },
   "31260": {
@@ -517,20 +669,20 @@
       "Turn Order: Claim Action",
       "Worker Placement"
     ],
-    "descriptionDe": "In Agricola seid ihr Bauern in einer Holzhütte mit Ehepartner und wenig Besitz. Anfangs nur zwei Aktionen pro Runde — eine für euch, eine für den Partner: pflügen, Material sammeln, Zäune bauen usw. Jede Runde kommt eine neue Aktionskarte ins Spiel. Kinder bringen mehr Arbeit — aber erst braucht ihr Platz im Haus und Essen für die Kleinen.\n\nDas Spiel skaliert über Karten (Nebenerwerb und Berufe). In der Familienvariante (USA) fehlen diese. Die US-Version hat drei Stufen je Typ (E-, I-, K-Stapel); experimentiert mit Mischungen. Zusatzstapel wie Z-Deck und L-Deck existieren. Start: je 7 Berufs- (160+) und 7 Nebenerwerbskarten (140+).\n\nAgricola ist rundenbasiert; jede Aktion nur einmal pro Runde — wählt weise. Unzählige Strategien, oft abhängig von der Starthand.\n\nGewinner: meiste Siegpunkte durch Verbesserungen auf dem Hof.\n\n— Beschreibung ursprünglich von BoardgameNews",
+    "descriptionDe": "In Agricola seid ihr Bauern in einer Holzhütte mit Ehepartner und wenig Besitz. Anfangs habt ihr pro Runde nur zwei Aktionen — eine für euch, eine für den Partner —: Felder pflügen, Material sammeln, Zäune bauen und mehr. Jede Runde kommt eine neue Aktionskarte dazu. Kinder bringen mehr Arbeitskräfte, aber zuerst braucht ihr Platz im Haus — und was füttert ihr alle?\n\nDas Spiel bietet viele Komplexitätsstufen über Berufe- und Kleinverbesserungskarten. In der Familienvariante fehlen diese; fortgeschritten spielt ihr mit E-, I- und K-Stapeln. Jeder startet mit sieben Berufs- und sieben Kleinverbesserungskarten.\n\nAgricola ist rundenbasiert: jede Aktion nur einmal pro Runde — wählt gut. Unzählige Strategien, oft abhängig von der Starthand.\n\nGewonnen hat, wer am Ende die meisten Siegpunkte aus Hofverbesserungen hat.",
     "categoriesDe": [
-      "Animals",
-      "Economic",
-      "Farming"
+      "Tiere",
+      "Wirtschaft",
+      "Landwirtschaft"
     ],
     "mechanicsDe": [
-      "Automatic Resource Growth",
-      "Closed Drafting",
-      "Enclosure",
-      "Increase Value of Unchosen Resources",
-      "Solo / Solitaire Game",
-      "Turn Order: Claim Action",
-      "Worker Placement"
+      "Automatisches Ressourcenwachstum",
+      "Geschlossenes Drafting",
+      "Umschließen",
+      "Wert ungenutzter Ressourcen",
+      "Solo / Solitär",
+      "Zugreihenfolge: Aktion wählen",
+      "Arbeiterplatzierung"
     ]
   },
   "31481": {
@@ -559,27 +711,27 @@
       "Track Movement",
       "Variable Set-up"
     ],
-    "descriptionDe": "In einer weit, weit entfernten Galaxie … brauchen auch sie Kanalisation. Corporation Incorporated baut sie. Ihre Fahrer — mutige Menschen, die für gutes Geld sogar durch die Hölle fliegen würden.\n\nJetzt könnt ihr mitmachen. Ihr baut Raumschiffe aus vorgefertigten Rohrsegmenten. Hält euer Schiff Meteorstürmen stand? Stark genug gegen Piraten? Groß genug für Crew und Fracht? Schnell genug, um zuerst anzukommen?\n\nWerdet Galaxy Trucker. Es macht Spaß.\n\nGalaxy Trucker ist ein Legespiel in zwei Phasen: Bauen und Fliegen. Ziel: meiste Credits. Credits durch Lieferungen, Piraten, effizientes Schiff und Vorsprung auf der Strecke.\n\nBauen in Echtzeit: Kacheln vom Tisch greifen, bevor die Zeit abläuft. Kacheln starten verdeckt; ungewollte legt man offen zurück. Legen nach Regeln (Anschlüsse, Waffen, Motoren). Kacheln: Waffen, Motoren, Lager, Kabinen, Schilde, Batterien. Karten der Flugphase darf man gegen Bauzeit ansehen. „Fertig“-Marker beendet den Bau.\n\nNach Prüfung der Schiffe beginnt die Flugphase: Karten nacheinander, Spieler reagieren — Piraten, Wracks, Seuchen, Meteore, Welten mit Ware, Kampfzonen. Oft Rückwärtsbewegung auf der Strecke — lohnt sich der Aufwand? Am Ende Ware verkaufen, Platzierungsprämien, Schaden abziehen. Schiffe zerfallen, Fracht geht verloren — zu viel Schaden schmeißt euch raus.\n\nDrei Runden mit größeren Brettern; danach gewinnt, wer die meisten Credits hat.",
+    "descriptionDe": "In einer weit, weit entfernten Galaxie … brauchen auch sie Kanalisation. Corporation Incorporated baut sie. Ihre Fahrer — mutige Menschen, die für gutes Geld sogar durch die Hölle fliegen würden.\n\nJetzt könnt ihr mitmachen. Ihr baut Raumschiffe aus vorgefertigten Rohrsegmenten. Hält euer Schiff Meteorstürmen stand? Stark genug gegen Piraten? Groß genug für Crew und Fracht? Schnell genug, um zuerst anzukommen?\n\nWerdet Galaxy Trucker. Es macht Spaß.\n\nGalaxy Trucker ist ein Legespiel in zwei Phasen: Bauen und Fliegen. Ziel: am Ende die meisten Geldmünzen. Geldmünzen verdient ihr durch Lieferungen, Piraten, ein effizientes Schiff und Vorsprung auf der Strecke.\n\nBauen in Echtzeit: Kacheln vom Tisch greifen, bevor die Zeit abläuft. Kacheln starten verdeckt; ungewollte legt ihr offen zurück. Legen nach Regeln (Anschlüsse, Waffen, Motoren). Kacheln: Waffen, Motoren, Lager, Kabinen, Schilde, Batterien. Karten der Flugphase dürft ihr gegen Bauzeit ansehen. Mit einem „Fertig“-Marker beendet ihr den Bau.\n\nNach Prüfung der Schiffe beginnt die Flugphase: Karten nacheinander, ihr reagiert — Piraten, Wracks, Seuchen, Meteore, Welten mit Ware, Kampfzonen. Oft müsst ihr auf der Strecke zurück — lohnt sich der Aufwand? Am Ende verkauft ihr Ware, kassiert Platzierungsprämien und zieht Schaden ab. Schiffe zerfallen, Fracht geht verloren — zu viel Schaden schmeißt euch aus dem Rennen.\n\nDrei Runden mit größeren Brettern; danach gewinnt, wer die meisten Geldmünzen hat.",
     "categoriesDe": [
-      "Real-time",
-      "Science Fiction",
-      "Space Exploration",
-      "Transportation"
+      "Echtzeit",
+      "Science-Fiction",
+      "Weltraumforschung",
+      "Transport"
     ],
     "mechanicsDe": [
-      "Dice Rolling",
-      "Events",
-      "Grid Coverage",
-      "Open Drafting",
-      "Pattern Building",
-      "Push Your Luck",
-      "Real-Time",
-      "Relative Movement",
-      "Square Grid",
-      "Team-Based Game",
-      "Tile Placement",
-      "Track Movement",
-      "Variable Set-up"
+      "Würfeln",
+      "Ereignisse",
+      "Rasterabdeckung",
+      "Offenes Drafting",
+      "Musterlegen",
+      "Push-your-Luck",
+      "Echtzeit",
+      "Relative Bewegung",
+      "Quadratraster",
+      "Teams",
+      "Legespiel",
+      "Streckenbewegung",
+      "Variabler Aufbau"
     ]
   },
   "33261": {
@@ -599,18 +751,21 @@
       "Open Drafting",
       "Set Collection"
     ],
-    "descriptionDe": "Zweite Erweiterung für Thurn and Taxis — eigentlich zwei in einer.\n\n„All roads lead to Rome“\n\n1. Erweiterung „Audience“: Die Spieler (Kleriker) versuchen rechtzeitig zu erscheinen, um vom Papst empfangen zu werden.\n\n2. Erweiterung „Offices of Honor“: Das Postpersonal hilft weiter — zusätzliche Stadtkarten, Siegpunkte oder ein neues Haus setzen.\n\nErweitert:\n\n    Thurn and Taxis\n\nInhalt:\n\n    1 Spielbrett mit Wegen nach Rom\n    5 Kutschen in Länderfarben (beige – Baiern; orange – Böhmen/Salzburg; usw.)\n    26 Amtstafeln\n    20 Audience-Tafeln mit fünf Klerikern in vier Spielerfarben\n    4 Übersichtstafeln\n    12 Siegpunkt-Chips",
+    "descriptionDe": "Zweite Erweiterung für Thurn and Taxis — eigentlich zwei in einer.\n\n„All roads lead to Rome“\n\n1. Erweiterung „Audience“: Ihr (als Kleriker) versucht rechtzeitig zu erscheinen, um vom Papst empfangen zu werden.\n\n2. Erweiterung „Offices of Honor“: Das Postpersonal hilft weiter — zusätzliche Stadtkarten, Siegpunkte oder ein neues Haus setzen.\n\nErweitert:\n\n Thurn and Taxis\n\nInhalt:\n\n 1 Spielbrett mit Wegen nach Rom\n 5 Kutschen in Länderfarben (beige – Baiern; orange – Böhmen/Salzburg; usw.)\n 26 Amtstafeln\n 20 Audience-Tafeln mit fünf Klerikern in vier Spielerfarben\n 4 Übersichtstafeln\n 12 Siegpunkt-Chips",
     "categoriesDe": [
-      "Expansion for Base-game",
-      "Post-Napoleonic",
-      "Religious",
-      "Transportation"
+      "Erweiterung zum Basisspiel",
+      "Nach-Napoleonisch",
+      "Religion",
+      "Transport"
     ],
     "mechanicsDe": [
-      "Hand Management",
-      "Network and Route Building",
-      "Open Drafting",
-      "Set Collection"
+      "Handmanagement",
+      "Netzwerk- und Routenbau",
+      "Offenes Drafting",
+      "Sets sammeln"
+    ],
+    "expandsGameIds": [
+      21790
     ]
   },
   "35677": {
@@ -633,21 +788,21 @@
       "Solo / Solitaire Game",
       "Worker Placement"
     ],
-    "descriptionDe": "In Le Havre besteht ein Zug aus zwei Teilen: Zuerst werden neue Güter auf die Angebotsfelder verteilt, dann führt man eine Aktion aus — alle Güter eines Typs nehmen oder ein Gebäude nutzen. Gebäude erlauben Aufwertung, Verkauf oder eigenes Bauen von Gebäuden und Schiffen. Gebäude sind Investition und Einnahme — fremde Gebäude kosten Eintritt. Schiffe liefern vor allem Nahrung für die Arbeiter.\n\nAlle sieben Züge endet eine Runde: Vieh und Getreide können durch die Ernte vermehrt werden; Arbeiter müssen gefüttert werden. Nach fester Rundenzahl ein letzter Zug, dann zählt Geld plus Wert von Gebäuden und Schiffen — größtes Vermögen gewinnt.",
+    "descriptionDe": "In Le Havre besteht ein Zug aus zwei Teilen: Zuerst werden neue Güter auf die Angebotsfelder verteilt, dann führt ihr eine Aktion aus — alle Güter eines Typs nehmen oder ein Gebäude nutzen. Gebäude erlauben Aufwertung, Verkauf oder eigenes Bauen von Gebäuden und Schiffen. Gebäude sind Investition und Einnahme — fremde Gebäude kosten Eintritt. Schiffe liefern vor allem Nahrung für die Arbeiter.\n\nAlle sieben Züge endet eine Runde: Vieh und Getreide können durch die Ernte vermehrt werden; Arbeiter müssen gefüttert werden. Nach fester Rundenzahl ein letzter Zug, dann zählt Geld plus Wert von Gebäuden und Schiffen — größtes Vermögen gewinnt.",
     "categoriesDe": [
-      "City Building",
-      "Economic",
-      "Industry / Manufacturing",
-      "Nautical"
+      "Städtebau",
+      "Wirtschaft",
+      "Industrie / Fertigung",
+      "Seefahrt"
     ],
     "mechanicsDe": [
-      "Automatic Resource Growth",
-      "End Game Bonuses",
-      "Increase Value of Unchosen Resources",
-      "Loans",
-      "Ownership",
-      "Solo / Solitaire Game",
-      "Worker Placement"
+      "Automatisches Ressourcenwachstum",
+      "Endspielboni",
+      "Wert ungenutzter Ressourcen",
+      "Darlehen",
+      "Besitz",
+      "Solo / Solitär",
+      "Arbeiterplatzierung"
     ]
   },
   "65244": {
@@ -675,26 +830,26 @@
       "Tile Placement",
       "Variable Player Powers"
     ],
-    "descriptionDe": "Forbidden Island ist ein visuell starkes kooperatives Spiel. Statt gegen andere zu gewinnen, arbeitet alle zusammen. Ihr bewegt eure Figuren über die „Insel“ aus vielen bedruckten Plättchen. Im Verlauf versinken immer mehr Felder, das Tempo steigt. Strategien halten die Insel über Wasser, während ihr Schätze sammelt. Steigt der Wasserstand, wird es härter — Opfer sind nötig.\n\nHerausragend sind die Komponenten: stabile, ordentliche Dose, gut gearbeitete Schätze und Holzfiguren, haltbare Karten, lebendige Inselplättchen mit einzigartigen Motiven.\n\nMehrere Schwierigkeitsstufen, Charaktere mit Spezialfähigkeiten, optionale Insellayouts und Varianten — hoher Wiederspielwert. 2–4 Spieler (5 möglich); mehr Spieler = schneller und schwerer, aber mehr Hilfe. Unter zwanzig Dollar, selten so viel Qualität für den Preis.\n\nFür Fans von Forbidden Island: Forbidden Desert (2013).\n\nVom Verlag:\n\nWagt euch auf Forbidden Island! Als Team holt ihr vier heilige Schätze aus den Ruinen — die Insel versinkt unter jedem Schritt. Rennt zu den Schätzen und entkommt, bevor die Flut euch verschlingt!",
+    "descriptionDe": "Forbidden Island ist ein visuell starkes kooperatives Spiel. Statt gegeneinander arbeitet ihr zusammen. Ihr bewegt eure Figuren über die „Insel“ aus vielen bedruckten Plättchen. Im Verlauf versinken immer mehr Felder, das Tempo steigt. Mit kluger Strategie haltet ihr die Insel über Wasser, während ihr Schätze sammelt. Steigt der Wasserstand, wird es härter — Opfer sind nötig.\n\nHerausragend sind die Komponenten: stabile Metalldose, gut gearbeitete Schätze und Holzfiguren, haltbare Karten, lebendige Inselplättchen mit einzigartigen Motiven.\n\nMehrere Schwierigkeitsstufen, Charaktere mit Spezialfähigkeiten, optionale Insellayouts und Varianten — hoher Wiederspielwert. 2–4 Spieler (5 möglich); mehr Spieler bedeutet schnelleres und schwereres Spiel, aber auch mehr Hilfe. Für fast jedes Alter knifflig und unterhaltsam.\n\nFür Fans von Forbidden Island: Forbidden Desert (2013).\n\nVom Verlag:\n\nWagt euch auf Forbidden Island! Als Team holt ihr vier heilige Schätze aus den Ruinen — die Insel versinkt unter jedem Schritt. Rennt zu den Schätzen und entkommt, bevor die Flut euch verschlingt!",
     "categoriesDe": [
-      "Adventure",
+      "Abenteuer",
       "Fantasy",
-      "Science Fiction"
+      "Science-Fiction"
     ],
     "mechanicsDe": [
-      "Action Points",
-      "Cooperative Game",
-      "Events",
-      "Grid Movement",
-      "Hand Management",
-      "Map Reduction",
-      "Modular Board",
-      "Pick-up and Deliver",
-      "Set Collection",
-      "Solo / Solitaire Game",
-      "Square Grid",
-      "Tile Placement",
-      "Variable Player Powers"
+      "Aktionspunkte",
+      "Kooperatives Spiel",
+      "Ereignisse",
+      "Rasterbewegung",
+      "Handmanagement",
+      "Kartenverkleinerung",
+      "Modulares Spielbrett",
+      "Abholen und Liefern",
+      "Sets sammeln",
+      "Solo / Solitär",
+      "Quadratraster",
+      "Legespiel",
+      "Variable Spielerfähigkeiten"
     ]
   },
   "68448": {
@@ -727,27 +882,27 @@
     ],
     "descriptionDe": "Ihr führt eine der sieben großen Städte der Antike. Sammelt Rohstoffe, Handelswege und militärische Macht. Baut eure Stadt und ein Weltwunder für die Ewigkeit.\n\n7 Wonders dauert drei Zeitalter. Pro Zeitalter sieben Karten, eine behalten, Rest an den Nachbarn. Gleichzeitiges Aufdecken, Ressourcen zahlen oder sammeln, mit Nachbarn interagieren. Doppelseitige Spielertafeln mit Spezialkräften. Sechs Karten pro Zeitalter, dann nächstes Zeitalter — nach drei endet das Spiel.\n\n7 Wonders ist Kartenspiel-Entwicklung: sofortige Effekte, spätere Boni, Rabatte, Militär, reine Siegpunkte. Karten werden sofort nach dem Ziehen gespielt — ihr seht, was Nachbarn bekommen. Karten gehen links-rechts-links über drei Zeitalter.\n\nFrühere Boxen: 3–7 Spieler, offizielle 2-Spieler-Variante in den Regeln.",
     "categoriesDe": [
-      "Ancient",
-      "Card Game",
-      "City Building",
-      "Civilization",
-      "Economic"
+      "Antike",
+      "Kartenspiel",
+      "Städtebau",
+      "Zivilisation",
+      "Wirtschaft"
     ],
     "mechanicsDe": [
-      "Closed Drafting",
-      "End Game Bonuses",
-      "Hand Management",
-      "Melding and Splaying",
-      "Multi-Use Cards",
-      "Neighbor Scope",
-      "Once-Per-Game Abilities",
-      "Score-and-Reset Game",
-      "Set Collection",
-      "Simultaneous Action Selection",
+      "Geschlossenes Drafting",
+      "Endspielboni",
+      "Handmanagement",
+      "Melden und Auslegen",
+      "Mehrfachnutzbare Karten",
+      "Nachbarbereich",
+      "Einmal-pro-Spiel-Fähigkeiten",
+      "Punkte-Runden",
+      "Sets sammeln",
+      "Gleichzeitige Aktionswahl",
       "Tags",
-      "Tech Trees / Tech Tracks",
-      "Variable Player Powers",
-      "Variable Set-up"
+      "Technologiebäume / -pfade",
+      "Variable Spielerfähigkeiten",
+      "Variabler Aufbau"
     ]
   },
   "72125": {
@@ -777,24 +932,53 @@
     ],
     "descriptionDe": "Die Galaxie war lange friedlich. Nach dem Terran-Hegemony-Krieg (30.027–33.364) arbeiteten alle großen Spezies an dauerhaftem Frieden. Der Galaktische Rat sollte ihn wahren — doch Spannung wächst. Alte Bündnisse zerfallen, heimliche Verträge entstehen. Ein Konflikt der Supermächte scheint unvermeidlich — nur der Ausgang ist offen. Welche Fraktion herrscht über die Galaxie?\n\nEclipse lässt euch eine interstellare Zivilisation steuern und gegen Rivalen antreten: neue Systeme, Technologien, Kriegsschiffe. Viele Siegwege — plant nach Stärken eurer Spezies und den Plänen der anderen.\n\nDie Schatten großer Zivilisationen verdunkeln die Galaxie. Führt euer Volk zum Sieg!",
     "categoriesDe": [
-      "Civilization",
-      "Fighting",
-      "Science Fiction",
-      "Space Exploration",
-      "Territory Building",
-      "Wargame"
+      "Zivilisation",
+      "Kampf",
+      "Science-Fiction",
+      "Weltraumforschung",
+      "Gebietsaufbau",
+      "Kriegsspiel"
     ],
     "mechanicsDe": [
+      "Würfeln",
+      "Rasterbewegung",
+      "Sechseckraster",
+      "Heiße Kartoffel",
+      "Kartenerweiterung",
+      "Modulares Spielbrett",
+      "Spielerausschluss",
+      "Legespiel",
+      "Variable Phasenreihenfolge",
+      "Variable Spielerfähigkeiten"
+    ]
+  },
+  "86955": {
+    "id": 86955,
+    "description": "In a reversal of roles, all players in Munchkin Zombies start out as zombies, and the &quot;monsters&quot; are the normal people trying to stop the zombie invasion (such as the Action Hero, Soccer Mom, Fireman, etc.). Unlike most Munchkin games, there are no classes or races; instead, you can have a mojo: Atomic Zombie, Plague Zombie, and Voodoo Zombie. As with Munchkin Bites! and Super Munchkin, Munchkin Zombies includes powers &ndash; special abilities that you can play as you gain levels.\n\nGuest artist is Alex Fernandez, who drew the Meals on Wheels card.\n\nPart of the Munchkin series.\n\nMunchkin is a satirical card game based on the clich&eacute;s and oddities of Dungeons and Dragons and other role-playing games. Each player starts at level 1 and the winner is the first player to reach level 10. Players can acquire familiar D&amp;D style character classes during the game which determine to some extent the cards they can play.\n\nThere are two types of cards - treasure and encounters. Each turn the current players 'kicks down the door' - drawing an encounter card from the deck. Usually this will involve battling a monster. Monsters have their own levels and players must try and overcome it using the levels, weapons and powers they have acquired during the game or run away. Other players can chose to help the player or hinder by adding extra monsters to the encounter. Defeating a monster will usually result in drawing treasure cards and acquiring levels. Being defeated by a monster results in &quot;bad stuff&quot; which usually involves losing levels and treasure.\n\nNote: The 2012 edition of Munchkin Zombies from Pegasus Spiele includes the first expansion, Munchkin Zombies 2: Armed and Dangerous.",
+    "image": "https://cf.geekdo-images.com/f1fQFAGyNsPrcOruyrwSZA__itemheader/img/kPy5xjcSqNUHnZnc85WmVWHURr0=/800x450/filters:quality(30):strip_icc()/pic942365.jpg",
+    "thumbnail": "https://cf.geekdo-images.com/Vy2f9X76jdpb5BEkSyen5Q__itemrep/img/Key_HT_dN7tPvqeJkrSBCRMDm-A=/fit-in/246x300/filters:strip_icc()/pic871528.jpg",
+    "categories": [
+      "Card Game",
+      "Fighting",
+      "Humor",
+      "Zombies"
+    ],
+    "mechanics": [
       "Dice Rolling",
-      "Grid Movement",
-      "Hexagon Grid",
-      "Hot Potato",
-      "Map Addition",
-      "Modular Board",
-      "Player Elimination",
-      "Tile Placement",
-      "Variable Phase Order",
+      "Hand Management",
       "Variable Player Powers"
+    ],
+    "descriptionDe": "Bei Munchkin Zombies seid ihr von Anfang an Zombies — die „Monster“ sind normale Menschen, die die Invasion stoppen wollen (Action Hero, Soccer Mom, Fireman usw.). Anders als in den meisten Munchkin-Spielen gibt es keine Klassen oder Völker; stattdessen könnt ihr ein Mojo haben: Atomic Zombie, Plague Zombie oder Voodoo Zombie. Wie bei Munchkin Bites! und Super Munchkin gibt es Kräfte — Spezialfähigkeiten, die ihr beim Aufsteigen spielen könnt.\n\nGastkünstler ist Alex Fernandez (Meals on Wheels).\n\nTeil der Munchkin-Serie.\n\nMunchkin ist ein satirisches Kartenspiel nach D&D-Klischees. Jeder startet auf Stufe 1; gewonnen hat, wer zuerst Stufe 10 erreicht. Zwei Kartentypen — Schatz und Begegnung. Jeder Zug „tritt die Tür ein“ und zieht eine Begegnung, meist ein Monster. Sieg bringt Schatz und Stufen; Niederlage „Übles“.\n\nDie Pegasus-Ausgabe von 2012 enthält die erste Erweiterung Munchkin Zombies 2: Armed and Dangerous.",
+    "categoriesDe": [
+      "Kartenspiel",
+      "Kampf",
+      "Humor",
+      "Zombies"
+    ],
+    "mechanicsDe": [
+      "Würfeln",
+      "Handmanagement",
+      "Variable Spielerfähigkeiten"
     ]
   },
   "98778": {
@@ -817,17 +1001,17 @@
     ],
     "descriptionDe": "Hanabi — japanisch für „Feuerwerk“ — ist ein Kooperationsspiel: gemeinsam die perfekte Show legen, Karten in der richtigen Reihenfolge (花火: Blume und Feuer).\n\nDas Deck hat fünf Farben mit Karten 1–5 je Farbe. Pro Farbe eine Reihe 1–5 aufbauen — klingt einfach, aber die eigenen Karten sieht nur der Mitspieler. Hinweise zu Zahl oder Farbe helfen anderen; als Team Fehler vermeiden und die Show vor dem Kartenende schaffen.\n\nEin Regenbogen-Satz für Fortgeschrittene/Varianten.\n\nHanabi erschien zuerst in Hanabi & Ikebana.",
     "categoriesDe": [
-      "Card Game",
-      "Deduction",
-      "Memory"
+      "Kartenspiel",
+      "Deduktion",
+      "Gedächtnis"
     ],
     "mechanicsDe": [
-      "Communication Limits",
-      "Cooperative Game",
-      "Hand Management",
-      "Memory",
-      "Ordering",
-      "Set Collection"
+      "Kommunikationsbeschränkung",
+      "Kooperatives Spiel",
+      "Handmanagement",
+      "Gedächtnis",
+      "Reihenfolge",
+      "Sets sammeln"
     ]
   },
   "103343": {
@@ -861,32 +1045,32 @@
       "Turn Order: Auction",
       "Variable Player Powers"
     ],
-    "descriptionDe": "Vom Verlag:\n\nKönig Robert Baratheon ist tot; Westeros rüstet zum Kampf.\n\nIn der zweiten Edition von A Game of Thrones: The Board Game übernehmen drei bis sechs Spieler die großen Häuser der Sieben Königreiche und ringen per Diplomatie und Krieg um den Eisernen Thron. Basierend auf George R.R. Martins A Song of Ice and Fire — episch, Sieg braucht mehr als Armeen. Gewinnt ihr mit Gewalt, Worten oder Volksgunst? Strategie, Diplomatie und Karten führen euren Einfluss aus.\n\nZu Beginn: Armee aus Fußvolk, Rittern, Belagerungsmaschinen und Schiffen, Ordertoken und Hauskarten als Anführer in Schlachten.\n\nJede Runde: Westeros-Phase (Ereignisse und Alltag), Planungsphase (verdeckte Ordertoken auf besetzten Gebieten — Diplomatie und Deduktion; Bündnisse sind nicht bindend), Aktionsphase (Auflösung und Kampf mit Hauskarten). Danach Konsolidierung für Hof und Wildlinge.\n\nDie zweite Edition bringt Grafik und Regeln, Elemente aus A Clash of Kings und A Storm of Swords (Häfen, Garnisonen, Wildling-Karten, Belagerungsmaschinen) sowie Spielerschirme und Tides of Battle.\n\nTides of Battle (optional) bringt Unberechenbarkeit in Kämpfe (Wetter, Moral, Chancen) — beide ziehen eine Karte, die die Hauskarte modifiziert, teils mit Symbolen.\n\nErweiterungen:\n\n     A Game of Thrones: The Board Game (Second Edition) – A Dance with Dragons (2012)\n     A Game of Thrones: The Board Game (Second Edition) – A Feast for Crows (2013)\n     A Game of Thrones: The Board Game (Second Edition) – Mother of Dragons (2018)\n\nNeuauflage von:\n\n     A Game of Thrones (2003)\n     A Game of Thrones: A Clash of Kings Expansion (2004)\n     A Game of Thrones: A Storm of Swords Expansion (2006)",
+    "descriptionDe": "Verlagsbeschreibung:\n\nKönig Robert Baratheon ist tot; Westeros rüstet zum Kampf.\n\nIn der zweiten Edition von A Game of Thrones: The Board Game übernehmen drei bis sechs Spieler die großen Häuser der Sieben Königreiche und ringen per Diplomatie und Krieg um den Eisernen Thron. Basierend auf George R.R. Martins A Song of Ice and Fire — episch; zum Sieg reicht militärische Macht allein nicht.\n\nZu Beginn erhält jeder Armeen aus Fußsoldaten, Rittern, Belagerungsmaschinen und Schiffen sowie Befehlsmarker und Hauskarten als Anführer im Kampf.\n\nJede Runde hat drei Phasen: Westeros-Phase (globale Ereignisse), Planungsphase und Aktionsphase. In der Planungsphase legt ihr verdeckt Befehle auf eure Gebiete — Diplomatie und Deduktion. Versprechungen sind nie bindend; Verrat ist alltäglich.\n\nIn der Aktionsphase werden Befehle aufgelöst und gekämpft. Bei Kämpfen wählt ihr verdeckt eine Hauskarte. Danach konsolidiert ihr Macht und nutzt sie für den Hof des Eisernen Throns und gegen die Wildlings-Horden.\n\nDie zweite Edition bringt aktualisierte Grafik, klare Regeln und Elemente aus A Clash of Kings und A Storm of Swords — Häfen, Garnisonen, Wildling-Karten, Belagerungsmaschinen, Spielerschirme und Tides of Battle-Karten.\n\nTides of Battle (optional) bringt Unberechenbarkeit in Kämpfe — Wetter, Moral, taktische Chancen. Beide ziehen eine Karte, die die Stärke der Hauskarte modifiziert.\n\nErweiterungen: A Dance with Dragons (2012), A Feast for Crows (2013), Mother of Dragons (2018).\n\nNeuauflage von A Game of Thrones (2003) inkl. A Clash of Kings und A Storm of Swords.",
     "categoriesDe": [
-      "Bluffing",
+      "Bluffen",
       "Fantasy",
-      "Negotiation",
-      "Novel-based",
-      "Political",
-      "Wargame"
+      "Verhandlung",
+      "Literaturvorlage",
+      "Politik",
+      "Kriegsspiel"
     ],
     "mechanicsDe": [
-      "Advantage Token",
-      "Alliances",
-      "Area Movement",
-      "Auction / Bidding",
-      "Auction: Sealed Bid",
-      "Card Play Conflict Resolution",
-      "Events",
-      "Hand Management",
-      "Income",
-      "Negotiation",
-      "Order Counters",
-      "Player Elimination",
-      "Simultaneous Action Selection",
-      "Sudden Death Ending",
-      "Turn Order: Auction",
-      "Variable Player Powers"
+      "Vorteilsmarker",
+      "Allianzen",
+      "Gebietbewegung",
+      "Auktion / Bieten",
+      "Verdeckte Gebote",
+      "Kartenkampf",
+      "Ereignisse",
+      "Handmanagement",
+      "Einkommen",
+      "Verhandlung",
+      "Reihenfolgezähler",
+      "Spielerausschluss",
+      "Gleichzeitige Aktionswahl",
+      "Sudden-Death-Ende",
+      "Zugreihenfolge: Auktion",
+      "Variable Spielerfähigkeiten"
     ]
   },
   "104162": {
@@ -919,31 +1103,31 @@
       "Team-Based Game",
       "Variable Player Powers"
     ],
-    "descriptionDe": "In Descent: Journeys in the Dark (Second Edition) spielt einer den finsteren Overlord, bis zu vier andere sind Helden. Quests führen in Höhlen, Ruinen, Wälder und Verliese — Monster, Reichtum, Stoppen des Overlords. Modulare doppelseitige Teile, viele Helden- und Fertigkeitskombinationen, storygetriebene Kampagne.\n\nGefahr lauert überall; Kampf nutzt ein einzigartiges Würfelsystem. Würfelpools nach Fähigkeiten und Waffen; jeder Würfel trägt zur Attacke bei. Surges auf vielen Würfeln lösen Spezialeffekte aus — nutzt jeden Vorteil.\n\nGegenüber der ersten Edition:\n\n     Einfachere Sichtlinienregeln\n     Schnelleres Setup\n     Verteidigungswürfel statt „alles ausrechnen“\n     Kürzere Quests mit natürlichen Stopps\n     Karten mit Statistik, Bedingungen, Effekten\n     Neuer Mechanismus für Overlord-Kräfte\n     Verbesserter Heldenwahl und -erschaffung\n     Erfahrungssystem für Wachstum\n     Kampagne out of the box",
+    "descriptionDe": "In Descent: Journeys in the Dark (Second Edition) spielt einer den finsteren Overlord, bis zu vier andere sind Helden. Die Helden begeben sich auf Quests in Höhlen, Ruinen, Verliese und verfluchte Wälder — Monster bekämpfen, Reichtum sammeln, den Overlord stoppen.\n\nDoppelseitige modulare Bretter, unzählige Helden- und Fertigkeitskombinationen und eine handlungsgetriebene Kampagne in einer lebendigen Fantasy-Welt.\n\nKämpfe nutzen ein einzigartiges Würfelsystem: Würfelpools nach Fähigkeiten und Waffen; Surge-Symbole lösen Spezialeffekte aus.\n\nGegenüber der ersten Edition: einfachere Sichtlinien, schnelleres Setup, Verteidigungswürfel, kürzere Quests mit natürlichen Pausen, übersichtliche Karten, neues Overlord-System, verbesserter Heldenaufbau, Erfahrungssystem und Kampagne direkt mit dabei.",
     "categoriesDe": [
-      "Adventure",
-      "Exploration",
+      "Abenteuer",
+      "Erkundung",
       "Fantasy",
-      "Fighting",
-      "Miniatures"
+      "Kampf",
+      "Miniaturen"
     ],
     "mechanicsDe": [
-      "Action Points",
-      "Dice Rolling",
-      "Grid Movement",
-      "Hand Management",
-      "Line of Sight",
-      "Map Addition",
-      "Modular Board",
-      "Movement Points",
-      "Multiple Maps",
-      "Once-Per-Game Abilities",
-      "Role Playing",
-      "Scenario / Mission / Campaign Game",
-      "Solo / Solitaire Game",
-      "Stat Check Resolution",
-      "Team-Based Game",
-      "Variable Player Powers"
+      "Aktionspunkte",
+      "Würfeln",
+      "Rasterbewegung",
+      "Handmanagement",
+      "Sichtlinie",
+      "Kartenerweiterung",
+      "Modulares Spielbrett",
+      "Bewegungspunkte",
+      "Mehrere Karten",
+      "Einmal-pro-Spiel-Fähigkeiten",
+      "Rollenspiel",
+      "Szenario-, Missions- & Kampagnenspiel",
+      "Solo / Solitär",
+      "Attributprüfung",
+      "Teams",
+      "Variable Spielerfähigkeiten"
     ]
   },
   "104581": {
@@ -964,19 +1148,19 @@
       "Real-Time",
       "Stock Holding"
     ],
-    "descriptionDe": "In Panic on Wall Street! seid ihr als freizügiger Kapitalist im Wettstreit um den Titel des größten Industriellen.\n\nManager und Investoren. Ziel: als Manager mehr Geld als jeder andere Manager, als Investor mehr als jeder andere Investor — nach fünf Runden.\n\nJede Runde verhandeln Manager und Investoren zwei Minuten lautstark über Aktienkurse. Investoren kassieren Einkommen — erst nach einem Würfelwurf mit wirtschaftlichen (teils drastischen) Folgen. Manager kassieren von Investoren, zahlen Gebühren pro Firma und ersteigern neue Firmen.\n\nNach fünf „Monaten“ gewinnen der erfolgreichste Manager und der erfolgreichste Investor.\n\nNeuauflage von Masters of Commerce — siehe „More Information“ für Unterschiede.",
+    "descriptionDe": "In Panic on Wall Street! seid ihr als skrupellose Kapitalisten im Wettstreit um den Titel des größten Industriellen.\n\nIhr spielt Manager und Investoren. Ziel: als Manager mehr Geld als jeder andere Manager, als Investor mehr als jeder andere Investor — nach fünf Runden.\n\nJede Runde verhandeln Manager und Investoren zwei Minuten lautstark über Aktienkurse. Investoren kassieren Einkommen — erst nach einem Würfelwurf mit wirtschaftlichen (teils drastischen) Folgen. Manager kassieren von Investoren, zahlen Gebühren pro Firma und ersteigern neue Firmen.\n\nNach fünf „Monaten“ gewinnen der erfolgreichste Manager und der erfolgreichste Investor.\n\nNeuauflage von Masters of Commerce.",
     "categoriesDe": [
-      "Economic",
-      "Negotiation",
-      "Real-time"
+      "Wirtschaft",
+      "Verhandlung",
+      "Echtzeit"
     ],
     "mechanicsDe": [
-      "Auction / Bidding",
-      "Commodity Speculation",
-      "Dice Rolling",
-      "Player Elimination",
-      "Real-Time",
-      "Stock Holding"
+      "Auktion / Bieten",
+      "Warenspekulation",
+      "Würfeln",
+      "Spielerausschluss",
+      "Echtzeit",
+      "Aktienbesitz"
     ]
   },
   "111661": {
@@ -999,21 +1183,25 @@
       "Team-Based Game",
       "Variable Player Powers"
     ],
-    "descriptionDe": "7 Wonders: Cities, zweite Erweiterung für 7 Wonders, bringt optionale Teamregeln, einen 8. Spieler (Basis bis 7), einen neuen Kartentyp (schwarz, Überreste von Städten) und neue alte Typen (zwei Wunder: Petras und Byzanz, 3 neue Gilde- und 6 neue Anführer-Karten). Aggressiver, mehr Interaktion — trotzdem meiste Punkte.\n\nMit Teamregeln bis acht Spieler in Teams nebeneinander, die Karten für das Team wählen.\n\nSchwarze Karten je Zeitalter, neun pro Alter, u. a.:\n\n    Gold für den Aktiven, Nachbarn etwas mit.\n    Mehr Militär in Alter 1, höhere Kosten.\n    Botschaftskarten — kein Militär in diesem Alter.\n    Friedhöfe — Endpunkte, Gegner zahlen Gold.\n    Spion-Karten kopieren grüne (Wissenschaft)-Symbole.\n    Geheimlager verdoppelt Rohstoff, Schwarzmarkt liefert fehlenden.\n    Kostenlos bauen durch Ketten anderer Spieler kopieren.\n\nDie 6 neuen Anführer-Karten brauchen 7 Wonders: Leaders.",
+    "descriptionDe": "7 Wonders: Cities, zweite Erweiterung für 7 Wonders, bringt optionale Teamregeln, einen 8. Spieler (Basis bis 7), einen neuen Kartentyp (schwarz, Überreste von Städten) und neue alte Typen (zwei Wunder: Petras und Byzanz, 3 neue Gilde- und 6 neue Anführer-Karten). Aggressiver, mehr Interaktion — trotzdem meiste Punkte.\n\nMit Teamregeln bis acht Spieler in Teams nebeneinander, die Karten für das Team wählen.\n\nSchwarze Karten je Zeitalter, neun pro Alter, u. a.:\n\n Gold für den Aktiven, Nachbarn etwas mit.\n Mehr Militär in Alter 1, höhere Kosten.\n Botschaftskarten — kein Militär in diesem Alter.\n Friedhöfe — Endpunkte, Gegner zahlen Gold.\n Spion-Karten kopieren grüne (Wissenschaft)-Symbole.\n Geheimlager verdoppelt Rohstoff, Schwarzmarkt liefert fehlenden.\n Kostenlos bauen durch Ketten anderer Spieler kopieren.\n\nDie 6 neuen Anführer-Karten brauchen 7 Wonders: Leaders.",
     "categoriesDe": [
-      "Ancient",
-      "Card Game",
-      "City Building",
-      "Civilization",
-      "Expansion for Base-game"
+      "Antike",
+      "Kartenspiel",
+      "Städtebau",
+      "Zivilisation",
+      "Erweiterung zum Basisspiel"
     ],
     "mechanicsDe": [
-      "Closed Drafting",
-      "Hand Management",
-      "Set Collection",
-      "Simultaneous Action Selection",
-      "Team-Based Game",
-      "Variable Player Powers"
+      "Geschlossenes Drafting",
+      "Handmanagement",
+      "Sets sammeln",
+      "Gleichzeitige Aktionswahl",
+      "Teams",
+      "Variable Spielerfähigkeiten"
+    ],
+    "expandsGameIds": [
+      68448,
+      92539
     ]
   },
   "121921": {
@@ -1046,31 +1234,31 @@
       "Variable Player Powers",
       "Worker Placement"
     ],
-    "descriptionDe": "Robinson Crusoe: Adventures on the Cursed Island bringt euch auf eine verlassene Insel als Schiffbrüchige in ein außergewöhnliches Abenteuer: Unterschlupf, Nahrung, wilde Tiere, Wetter. Ihr entscheidet die Richtung — nach Wochen im Spiel, wie sieht eure Siedlung aus? Piratenschatz, verlassenes Dorf, unterirdische Stadt oder verfluchter Tempel im Vulkan? Hunderte Ereignis-, Objekt- und Gebäudekarten.\n\nIhr spielt einen von vier Besatzungsrollen (Koch, Zimmermann, Forscher, Soldat) und arbeitet kooperativ: Unterschlupf, Palisade, Werkzeuge, Überleben, Nahrung, Tiere, Wetter.\n\nSchatzsuche, Geheimnisse, sechs Szenarien. Beginnt mit einem Holzstoß und Feuer für Hilfe — dann neue Abenteuer.",
+    "descriptionDe": "Robinson Crusoe: Adventures on the Cursed Island bringt euch als Schiffbrüchige auf eine verlassene Insel in ein außergewöhnliches Abenteuer: Unterschlupf, Nahrung, wilde Tiere, Wetter. Ihr entscheidet die Richtung — nach Wochen im Spiel, wie sieht eure Siedlung aus? Piratenschatz, verlassenes Dorf, unterirdische Stadt oder verfluchter Tempel im Vulkan? Hunderte Ereignis-, Objekt- und Gebäudekarten.\n\nIhr spielt einen von vier Besatzungsrollen (Koch, Zimmermann, Forscher, Soldat) und arbeitet kooperativ: Unterschlupf, Palisade, Werkzeuge, Überleben, Nahrung, Tiere, Wetter.\n\nSchatzsuche, Geheimnisse, sechs Szenarien. Beginnt mit einem Holzstoß und Feuer für Hilfe — dann neue Abenteuer.",
     "categoriesDe": [
-      "Adventure",
-      "Exploration",
-      "Fighting",
-      "Novel-based",
-      "Territory Building"
+      "Abenteuer",
+      "Erkundung",
+      "Kampf",
+      "Literaturvorlage",
+      "Gebietsaufbau"
     ],
     "mechanicsDe": [
-      "Action Queue",
-      "Area Movement",
-      "Cooperative Game",
-      "Dice Rolling",
-      "Die Icon Resolution",
-      "Events",
-      "Hexagon Grid",
-      "Map Addition",
-      "Movement Points",
-      "Narrative Choice / Paragraph",
-      "Scenario / Mission / Campaign Game",
-      "Solo / Solitaire Game",
-      "Tile Placement",
-      "Turn Order: Progressive",
-      "Variable Player Powers",
-      "Worker Placement"
+      "Aktionsreihe",
+      "Gebietbewegung",
+      "Kooperatives Spiel",
+      "Würfeln",
+      "Würfelsymbol-Auflösung",
+      "Ereignisse",
+      "Sechseckraster",
+      "Kartenerweiterung",
+      "Bewegungspunkte",
+      "Absatz-System",
+      "Szenario-, Missions- & Kampagnenspiel",
+      "Solo / Solitär",
+      "Legespiel",
+      "Zugreihenfolge: Progressiv",
+      "Variable Spielerfähigkeiten",
+      "Arbeiterplatzierung"
     ]
   },
   "122522": {
@@ -1097,25 +1285,25 @@
       "Variable Player Powers",
       "Variable Set-up"
     ],
-    "descriptionDe": "Das „Shufflebuilding“-Spiel Smash Up startet einfach: zwei 20-Karten-Fraktionen zu einem 40-Karten-Deck mischen und mehr Basen als die Gegner erobern. Jede Fraktion hat einen anderen Mechanismus — Piraten bewegen Minions, Zombies holen Karten aus dem Ablagestapel, Dinosaurier haben enorme Kraft — jede Kombination fühlt sich anders an.\n\nIhr spielt Minions auf Basen; bei „Break“ gewinnt, wer die höchste Gesamtstärke hat. Einfach? Nicht wenn Alien-Ninja eure Minions zerstört, Pirate-Dinosaur mit Full Sail King Rex entfesselt oder Wizard-Zombies eine Epidemie aus dem Ablagestapel schwemmt — oder Zombie-Dinos mit Massenbestien!\n\nAcht Fraktionen, Dutzende Kombinationen — Pirate-Aliens ≠ Ninja-Aliens. Welche zerquetscht die Gegner?\n\nUnd die Dinosaurier haben Laser.",
+    "descriptionDe": "Smash Up ist ein „Misch-und-Bau“-Spiel: Zwei 20-Karten-Fraktionen zu einem 40-Karten-Deck mischen und mehr Basen als die Gegner erobern. Jede Fraktion spielt anders — Piraten bewegen Schergen, Zombies holen Karten aus dem Ablagestapel, Dinosaurier haben enorme Kraft.\n\nIhr spielt Schergen auf Basen; bei der Auflösung gewinnt, wer die höchste Gesamtstärke hat. Einfach? Nicht wenn Alien-Ninja eure Schergen zerstört oder Wizard-Zombies eine Epidemie aus dem Ablagestapel schwemmt — oder Zombie-Dinosaurier eine Massenepidemie entfesseln!\n\nAcht Fraktionen, Dutzende Kombinationen — Pirate-Aliens fühlt sich anders an als Ninja-Aliens. Welche zerquetscht die Gegner?\n\nUnd die Dinosaurier haben Laser.",
     "categoriesDe": [
-      "Card Game",
+      "Kartenspiel",
       "Fantasy",
       "Humor",
-      "Pirates",
-      "Science Fiction",
+      "Piraten",
+      "Science-Fiction",
       "Zombies"
     ],
     "mechanicsDe": [
-      "Area Majority / Influence",
-      "Card Play Conflict Resolution",
-      "Deck Construction",
-      "Hand Management",
+      "Gebietsherrschaft / Einfluss",
+      "Kartenkampf",
+      "Deckbau",
+      "Handmanagement",
       "Kill Steal",
-      "Open Drafting",
+      "Offenes Drafting",
       "Take That",
-      "Variable Player Powers",
-      "Variable Set-up"
+      "Variable Spielerfähigkeiten",
+      "Variabler Aufbau"
     ]
   },
   "128667": {
@@ -1137,16 +1325,16 @@
     ],
     "descriptionDe": "Samurai Sword basiert auf den bewährten Bang!-Mechaniken im feudalen Japan. Vertraute Bang!-Elemente, aber dynamischer und schneller; ein neues Punktesystem aus Ehre und Widerstand — kein Spielerausschluss, alle kämpfen bis zum Ende. Waffen und Angriffe sind auf einer Karte vereint.",
     "categoriesDe": [
-      "Bluffing",
-      "Card Game",
-      "Deduction",
-      "Fighting",
-      "Medieval"
+      "Bluffen",
+      "Kartenspiel",
+      "Deduktion",
+      "Kampf",
+      "Mittelalter"
     ],
     "mechanicsDe": [
-      "Hand Management",
-      "Team-Based Game",
-      "Variable Player Powers"
+      "Handmanagement",
+      "Teams",
+      "Variable Spielerfähigkeiten"
     ]
   },
   "129976": {
@@ -1168,16 +1356,16 @@
     ],
     "descriptionDe": "Basierend auf der HBO-Serie: Game of Thrones: The Card Game — zwei Spieler führen Krieg in Westeros und intrigiert am Hof in King's Landing. Zwei feste 50-Karten-Decks: House Lannister oder House Stark — Eddard Stark, Cersei Lannister, Robert Baratheon, Littlefinger, Jon Snow und bekannte Schauplätze.\n\nGame of Thrones strafft die Regeln von A Game of Thrones: The Card Game (LCG) für ein breiteres Publikum.\n\nRegeln: http://www.fantasyflightgames.com/ffg_content/game-of-thrones-HBO/Game-of-Thrones-rulebook.pdf",
     "categoriesDe": [
-      "Card Game",
+      "Kartenspiel",
       "Fantasy",
-      "Medieval",
-      "Movies / TV / Radio theme",
-      "Novel-based"
+      "Mittelalter",
+      "Film, TV & Radio",
+      "Literaturvorlage"
     ],
     "mechanicsDe": [
-      "Hand Management",
-      "Simultaneous Action Selection",
-      "Variable Player Powers"
+      "Handmanagement",
+      "Gleichzeitige Aktionswahl",
+      "Variable Spielerfähigkeiten"
     ]
   },
   "143741": {
@@ -1204,21 +1392,21 @@
     ],
     "descriptionDe": "Im Wilden Westen der USA tobt der ewige Kampf zwischen Gesetz und Gesetzlosen. Plötzlich verdunkeln Pfeile den Himmel: Indianerangriff! Habt ihr den Mut, mit den Indianern mitzuhalten, euer Schicksal herauszufordern und skrupellose Revolverhelden zu entlarven?\n\nBANG! The Dice Game behält den Kern von Bang! Bei Start zieht jeder eine geheime Rollenkarte: Sheriff und Deputies, Outlaws, Renegades. Sheriff und Deputies müssen Outlaws töten; Outlaws gewinnen durch Tod des Sheriffs; Renegades wollen als Letzte übrig bleiben.\n\nJeder erhält eine Charakterkarte mit Spezialfähigkeit. Der Sheriff zeigt sich und beginnt. Pro Zug bis zu dreimal fünf Würfel: Nachbarn treffen, Reichweite erhöhen, Lebenspunkte heilen (eigene oder fremde), oder in Reichweite der neun Indianer-Marker in der Mitte. Jeder Pfeil-Wurf nimmt einen Marker; ist der letzte weg, verliert jeder Lebenspunkte je nach Markern, dann zurück in die Mitte.\n\nDrei Gatling-Symbole: ein Schuss auf alle, Indianer-Marker weg. Wer schießt zuerst? Bis eine Seite gewinnt — Tod hält euch nicht auf, wenn das Team durchhält!",
     "categoriesDe": [
-      "American West",
-      "Bluffing",
-      "Deduction",
-      "Dice",
-      "Fighting",
-      "Party Game"
+      "Wilder Westen",
+      "Bluffen",
+      "Deduktion",
+      "Würfel",
+      "Kampf",
+      "Partyspiel"
     ],
     "mechanicsDe": [
-      "Dice Rolling",
-      "Hidden Roles",
-      "Player Elimination",
-      "Push Your Luck",
-      "Re-rolling and Locking",
-      "Team-Based Game",
-      "Variable Player Powers"
+      "Würfeln",
+      "Verdeckte Rollen",
+      "Spielerausschluss",
+      "Push-your-Luck",
+      "Neu-Würfeln und Festhalten",
+      "Teams",
+      "Variable Spielerfähigkeiten"
     ]
   },
   "143789": {
@@ -1238,14 +1426,17 @@
     ],
     "descriptionDe": "Wahlkampf in Machi Koro — eure Bürgermeisterkandidatur steht auf der Kippe. Käsefabriken und Cafés reichen nicht mehr. Rettung: die Bucht, in die die Fabriken unverkauften Gouda gekippt haben — Hafen mit Booten, Sushi und neuem Flughafen für Gold und Dankbarkeit. Die Stadt hat kein Geld — das hat euch noch nie gestoppt.\n\nMachi Koro: Harbor bringt mehr Abwechslung, Strategie und einen 5. Spieler. Noch mehr Spaß? Zehn neue Betriebe, ein neuer Startbetrieb, zwei neue Wahrzeichen.\n\nHarbor braucht Machi Koro (Basis) und erlaubt bis zu fünf Spieler (82 Karten), inklusive Karten aus Machi Koro Plus.\n\nMehr Vielfalt, mehr Nervenkitzel, mehr Spieler — ein Muss für Machi-Koro-Fans und Neulinge!",
     "categoriesDe": [
-      "Card Game",
-      "City Building",
-      "Dice",
-      "Expansion for Base-game"
+      "Kartenspiel",
+      "Städtebau",
+      "Würfel",
+      "Erweiterung zum Basisspiel"
     ],
     "mechanicsDe": [
-      "Dice Rolling",
-      "Set Collection"
+      "Würfeln",
+      "Sets sammeln"
+    ],
+    "expandsGameIds": [
+      143884
     ]
   },
   "143884": {
@@ -1263,16 +1454,16 @@
       "Race",
       "Random Production"
     ],
-    "descriptionDe": "Willkommen in Machi Koro. Ihr wurdet Bürgermeister — Glückwunsch! Die Bürger wollen Jobs, einen Freizeitpark, Käsefabriken, vielleicht einen Funkturm. Schwer, wenn die Stadt nur Weizenfeld, Bäckerei und einen Würfel hat.\n\nMit Würfel und Traum baut ihr die größte Stadt der Region. Einkommen aus Betrieben, öffentliche Werke, Nachbarn bestehlen — und aufpassen, dass sie nicht dasselbe tun!\n\nSchnelles Spiel für 2–4. Jeder entwickelt die Stadt nach eigenem Plan und vollendet Wahrzeichen schneller als die Rivalen. Pro Zug ein oder zwei Würfel; passt die Summe zu einem Gebäude, dessen Effekt — manchmal profitieren Gegner von euren Würfeln. Mit Geld baut man Wahrzeichen oder Betriebe für künftige Runden. Wer zuerst alle Wahrzeichen hat, gewinnt!",
+    "descriptionDe": "Willkommen in Machi Koro. Ihr wurdet Bürgermeister — Glückwunsch! Die Bürger wollen Jobs, einen Freizeitpark, Käsefabriken, vielleicht einen Funkturm. Schwer, wenn die Stadt nur Weizenfeld, Bäckerei und einen Würfel hat.\n\nMit Würfel und Traum baut ihr die größte Stadt der Region. Einkommen aus Betrieben, öffentliche Werke, Nachbarn bestehlen — und aufpassen, dass sie nicht dasselbe tun!\n\nSchnelles Spiel für 2–4. Jeder entwickelt die Stadt nach eigenem Plan und vollendet Wahrzeichen schneller als die Rivalen. Pro Zug ein oder zwei Würfel; passt die Summe zu einem eurer Gebäude, greift dessen Effekt — manchmal profitieren Gegner von euren Würfeln. Mit Geld baut ihr Wahrzeichen oder Betriebe für künftige Runden. Wer zuerst alle Wahrzeichen hat, gewinnt!",
     "categoriesDe": [
-      "City Building",
-      "Dice"
+      "Städtebau",
+      "Würfel"
     ],
     "mechanicsDe": [
-      "Dice Rolling",
-      "Ownership",
-      "Race",
-      "Random Production"
+      "Würfeln",
+      "Besitz",
+      "Wettlauf",
+      "Zufällige Produktion"
     ]
   },
   "150376": {
@@ -1303,29 +1494,29 @@
       "Variable Player Powers",
       "Voting"
     ],
-    "descriptionDe": "„Crossroads“ von Plaid Hat Games testet Überlebende in Krisen von innen und außen. Dead of Winter: A Crossroads Game (erster Titel) stellt 2–5 Spieler in eine geschwächte Kolonie in einer Welt voller Untoter.\n\nMeta-kooperatives psychologisches Überleben: gemeinsames Siegziel, aber jeder hat ein geheimes persönliches Ziel — harmloser Tick, gefährliche Obsession, Sabotage der Hauptmission oder Rache an der Kolonie. Ende: alle gewinnen, gemischt oder alle verlieren. Arbeitet fürs Ganze, lasst euch nicht von Egoisten überrollen.\n\nNur am Tisch erzählbar: harte Winter, apokalyptische Welt, psychologische Zwänge, aber Zusammenarbeit gegen Bedrohungen, Krisen, Nahrung, Moral.\n\nStändige schwere, thematische Entscheidungen — Kolonie vs. Eigeninteresse. Regeln enthalten eine rein kooperative Variante ohne persönliche Ziele.",
+    "descriptionDe": "„Crossroads“ von Plaid Hat Games testet Überlebende in Krisen von innen und außen. Dead of Winter: A Crossroads Game (erster Titel der Serie) stellt 2–5 Spieler in eine geschwächte Kolonie in einer Welt, in der die meisten Menschen tot oder zu fleischgierigen Monstern geworden sind. Jeder führt eine Fraktion Überlebender; Dutzende verschiedene Charaktere stehen zur Auswahl.\n\nHalb-kooperatives psychologisches Überleben: ihr arbeitet auf ein gemeinsames Siegziel hin, aber jeder hat ein geheimes persönliches Ziel — harmloser Tick, gefährliche Obsession, Sabotage der Hauptmission oder Rache an der Kolonie. Spiele können mit Sieg für alle, gemischten Ergebnissen oder Totalausfall enden. Arbeitet fürs Ganze, lasst euch nicht von Egoisten überrollen.\n\nNur am Tisch erzählbar: eine handlungszentrierte Erfahrung über das Überleben eines harten Winters in einer apokalyptischen Welt. Psychologische Zwänge treffen auf Zusammenarbeit gegen Bedrohungen, Krisen, Nahrungssuche und Moral.\n\nStändig schwere, thematische Entscheidungen — Kolonie vs. Eigeninteresse. Die Regeln enthalten eine rein kooperative Variante ohne persönliche Ziele.",
     "categoriesDe": [
-      "Bluffing",
-      "Deduction",
+      "Bluffen",
+      "Deduktion",
       "Horror",
-      "Science Fiction",
+      "Science-Fiction",
       "Zombies"
     ],
     "mechanicsDe": [
-      "Action Points",
-      "Area Movement",
-      "Dice Rolling",
-      "Hand Management",
-      "Narrative Choice / Paragraph",
-      "Push Your Luck",
-      "Scenario / Mission / Campaign Game",
-      "Semi-Cooperative Game",
-      "Storytelling",
-      "Trading",
-      "Traitor Game",
-      "Turn Order: Progressive",
-      "Variable Player Powers",
-      "Voting"
+      "Aktionspunkte",
+      "Gebietbewegung",
+      "Würfeln",
+      "Handmanagement",
+      "Absatz-System",
+      "Push-your-Luck",
+      "Szenario-, Missions- & Kampagnenspiel",
+      "Semi-kooperatives Spiel",
+      "Geschichtenerzählen",
+      "Tauschhandel",
+      "Verräterspiel",
+      "Zugreihenfolge: Progressiv",
+      "Variable Spielerfähigkeiten",
+      "Abstimmung"
     ]
   },
   "155969": {
@@ -1348,21 +1539,21 @@
       "Variable Set-up",
       "Worker Placement"
     ],
-    "descriptionDe": "Hafenmeister Schlibble und Constable O'Brady laden euch in ihre geschäftige Hafenstadt ein! Geschäfte in der Trader's Guild oder Masoner's Hall, Sushi oder Pub, vorher der Wizard's Traveling Imaginarium — überall feilschen! Sammelt und tauscht Ressourcen, tauscht sie in Gebäude (Arbeiterplätze) ein. Wer am Ende die wertvollsten Gebäude hat, gewinnt!\n\nHarbour ist Worker Placement: Arbeiter von Gebäude zu Gebäude, Fisch, Vieh, Holz, Stein sammeln und in Gebäude (aus dem zentralen Pool) eintauschen. Gekaufte Gebäude werden aus dem Deck ersetzt; der Pool ist eine Teilmenge — jedes Spiel anders.\n\nEnde, wenn jemand sein viertes Gebäude kauft; danach wertvollste Gebäude gewinnen.\n\nKern: dynamischer Markt. Jeder Kauf senkt den Wert der genutzten Rohstoffe und hebt andere — Timing oder Verschwendung!",
+    "descriptionDe": "Hafenmeister Schlibble und Constable O'Brady laden euch in ihre geschäftige Hafenstadt ein! Geschäfte in der Trader's Guild oder Masoner's Hall, Sushi oder Pub, vorher der Wizard's Traveling Imaginarium — überall feilschen! Sammelt und tauscht Ressourcen, tauscht sie in Gebäude (Arbeiterplätze) ein. Wer am Ende die wertvollsten Gebäude hat, gewinnt!\n\nHarbour ist Arbeiterplatzierung: Arbeiter von Gebäude zu Gebäude, Fisch, Vieh, Holz, Stein sammeln und in Gebäude (aus dem zentralen Pool) eintauschen. Gekaufte Gebäude werden aus dem Deck ersetzt; der Pool ist eine Teilmenge — jedes Spiel anders.\n\nEnde, wenn jemand sein viertes Gebäude kauft; danach wertvollste Gebäude gewinnen.\n\nKern: dynamischer Markt. Jeder Kauf senkt den Wert der genutzten Rohstoffe und hebt andere — Timing oder Verschwendung!",
     "categoriesDe": [
-      "Card Game",
-      "City Building",
-      "Economic",
+      "Kartenspiel",
+      "Städtebau",
+      "Wirtschaft",
       "Fantasy",
       "Humor"
     ],
     "mechanicsDe": [
-      "Market",
-      "Ownership",
-      "Set Collection",
-      "Variable Player Powers",
-      "Variable Set-up",
-      "Worker Placement"
+      "Markt",
+      "Besitz",
+      "Sets sammeln",
+      "Variable Spielerfähigkeiten",
+      "Variabler Aufbau",
+      "Arbeiterplatzierung"
     ]
   },
   "156042": {
@@ -1385,17 +1576,20 @@
     ],
     "descriptionDe": "Diese Erweiterung führt zurück in die Welt von Samurai und Ninja. 12 neue Charaktere, 40 neue Karten und mächtige Waffen für noch spannendere Duelle. Mit der zusätzlichen Rollenkarte spielt ihr zu acht.",
     "categoriesDe": [
-      "Bluffing",
-      "Card Game",
-      "Deduction",
-      "Expansion for Base-game",
-      "Fighting",
-      "Medieval"
+      "Bluffen",
+      "Kartenspiel",
+      "Deduktion",
+      "Erweiterung zum Basisspiel",
+      "Kampf",
+      "Mittelalter"
     ],
     "mechanicsDe": [
-      "Hand Management",
-      "Team-Based Game",
-      "Variable Player Powers"
+      "Handmanagement",
+      "Teams",
+      "Variable Spielerfähigkeiten"
+    ],
+    "expandsGameIds": [
+      128667
     ]
   },
   "160499": {
@@ -1420,21 +1614,21 @@
       "Tags",
       "Take That"
     ],
-    "descriptionDe": "In der Stadt, die niemals schläft, passiert immer etwas — Lichter, Energie oder Riesenmonster, die alles dem Erdboden gleichmachen!\n\nKing of New York ist ein eigenständiges Spiel von Richard Garfield mit den Kernideen von King of Tokyo. Ziel: als Erster 20 Siegpunkte (VP) oder als letztes Monster übrig bleiben. Sechs Würfel, bis zu dreimal, dann Aktionen: Klauen Schaden, Herzen heilen, Energie für einzigartige Power-Karten.\n\nNeu: „Fame“ in der Großstadt — VP, aber Ruhm ist vergänglich.\n\nGrößeres Brett: jedes Monster hat einen Bezirk, alle wollen in Manhattan glänzen. Angriffe verdrängen Monster in andere Bezirke — vor der Armee fliehen oder neues Smashing. Gebäude zerstören bringt Boni, aber mehr Zerstörung = härtere Militärreaktion.\n\nMonster aus King of New York funktionieren in KoT und umgekehrt; Power-Karten sind spiel-spezifisch.\n\nTeil der King of Tokyo-Serie.",
+    "descriptionDe": "In der Stadt, die niemals schläft, passiert immer etwas — Lichter, Energie oder Riesenmonster, die alles dem Erdboden gleichmachen!\n\nKing of New York ist ein eigenständiges Spiel von Richard Garfield mit den Kernideen von King of Tokyo. Ziel: als Erster 20 Siegpunkte sammeln oder als letztes Monster übrig bleiben. Sechs Würfel, bis zu dreimal würfeln, dann Aktionen: Klauen verursachen Schaden, Herzen heilen, Energie für einzigartige Kraftkarten.\n\nNeu: „Ruhm“ in der Großstadt — Siegpunkte, aber Berühmtheit ist vergänglich.\n\nGrößeres Brett: jedes Monster hat einen Bezirk, alle wollen in Manhattan glänzen. Angriffe verdrängen Monster in andere Bezirke — vor der Armee fliehen oder neue Zerstörung. Gebäude zerstören bringt Boni, aber mehr Zerstörung = härtere Militärreaktion.\n\nMonster aus King of New York funktionieren in King of Tokyo und umgekehrt; Kraftkarten gibt es nur in diesem Spiel.\n\nTeil der King of Tokyo-Serie.",
     "categoriesDe": [
-      "Dice",
-      "Fighting",
-      "Movies / TV / Radio theme",
-      "Science Fiction"
+      "Würfel",
+      "Kampf",
+      "Film, TV & Radio",
+      "Science-Fiction"
     ],
     "mechanicsDe": [
-      "Dice Rolling",
-      "Die Icon Resolution",
-      "King of the Hill",
-      "Open Drafting",
-      "Player Elimination",
-      "Push Your Luck",
-      "Re-rolling and Locking",
+      "Würfeln",
+      "Würfelsymbol-Auflösung",
+      "König des Hügels",
+      "Offenes Drafting",
+      "Spielerausschluss",
+      "Push-your-Luck",
+      "Neu-Würfeln und Festhalten",
       "Tags",
       "Take That"
     ]
@@ -1457,19 +1651,19 @@
       "Real-Time",
       "Variable Player Powers"
     ],
-    "descriptionDe": "Ihr seid die letzte Hoffnung der Menschheit.\n\nIn XCOM: The Board Game übernehmt ihr bis zu drei Freunde die Führung der Eliteorganisation XCOM. Verteidigt die Menschheit, dämpft Panik, wehrt die Alien-Invasion ab.\n\nWo Militärs scheitern, müsst ihr siegen: Interceptors gegen UFOs, Soldaten auf Missionen, Alien-Tech erforschen, Basis schützen — und die Welt am Abgrund halten, bis die finale Mission die Invasoren vertreibt.\n\nBesonders: eine kostenlose innovative Digital-App (Download oder Online).\n\nDie App koordiniert die eskalierende Invasion aus fünf Invasionsplänen — UFO-Ankunft, Schläge auf die Basis, Reaktion auf Erfolg/Misserfolg. Sie steigert Spannung und erzwingt Echtzeit-Reaktion; danach ungetaktete Auflösung und Rückmeldung an die App für die nächsten Schläge.\n\nDie App lehrt Regeln, steuert Satelliten-Intel und verfolgt den Widerstand — Schwierigkeit Easy, Normal oder Hard.\n\nDie App strafft nicht nur den Ablauf: Phasen bleiben, aber Reihenfolge und Anzahl können sich ändern. UFO-Position vor Interceptor-Einsatz — Aliens können Intel stören. Krisenlösung vor Truppenplanung für die Basis — anders als gewohnt.\n\nSo entsteht die dramatische Spannung von XCOM — herausfordernd kooperativ (oder solo), einzigartig. Wie die Abteilungsleiter, die ihr spielt, braucht ihr kühle Köpfe.",
+    "descriptionDe": "Verlagsbeschreibung:\n\nIhr seid die letzte Hoffnung der Menschheit.\n\nIn XCOM: The Board Game übernehmt ihr mit bis zu drei Freunden die Führung der Eliteorganisation XCOM. Eure Aufgabe: die Menschheit verteidigen, die Panik dämpfen und die Alien-Invasion zurückschlagen.\n\nWo die Militärs der Welt scheitern, müsst ihr siegen. Setzt Abfangjäger gegen UFOs ein, schickt Soldaten auf Missionen, erforscht Alien-Technologie und schützt eure Basis — und haltet die Welt am Abgrund, bis eine finale Mission die Invasoren vertreibt.\n\nBesonders: eine kostenlose digitale App (Download oder Online).\n\nDie App koordiniert die eskalierende Invasion, wählt zufällig einen von fünf Invasionsplänen und steuert UFO-Ankünfte, Schläge auf die Basis sowie Reaktionen auf Erfolg und Misserfolg. Sie steigert die Spannung und erzwingt Echtzeit-Reaktion; danach folgt die ungetaktete Auflösung und Rückmeldung an die App.\n\nDie App lehrt Regeln, steuert Satellitenaufklärung und verfolgt den Widerstand — Schwierigkeit Leicht, Normal oder Schwer.\n\nPhasen bleiben, aber Reihenfolge und Anzahl können sich ändern. Ihr wollt UFO-Positionen kennen, bevor ihr Abfangjäger einsetzt — die Aliens können die Aufklärung stören. Krisen müsst ihr lösen, bevor ihr Truppen plant — anders als in vielen Koops.\n\nSo entsteht die dramatische Spannung von XCOM — herausfordernd kooperativ (oder solo), einzigartig.",
     "categoriesDe": [
-      "Real-time",
-      "Science Fiction",
-      "Video Game Theme"
+      "Echtzeit",
+      "Science-Fiction",
+      "Videospielthema"
     ],
     "mechanicsDe": [
-      "Cooperative Game",
-      "Dice Rolling",
-      "Hand Management",
-      "Push Your Luck",
-      "Real-Time",
-      "Variable Player Powers"
+      "Kooperatives Spiel",
+      "Würfeln",
+      "Handmanagement",
+      "Push-your-Luck",
+      "Echtzeit",
+      "Variable Spielerfähigkeiten"
     ]
   },
   "164153": {
@@ -1499,28 +1693,28 @@
       "Team-Based Game",
       "Variable Player Powers"
     ],
-    "descriptionDe": "Star Wars: Imperial Assault ist ein taktisches Strategiespiel mit Missionen für zwei bis fünf Spieler — Kampf und Abenteuer im Star-Wars-Universum!\n\nNach der Zerstörung des Todessterns über Yavin 4: Galaktischer Bürgerkrieg. Kampagne: imperiale Macht gegen ein Elite-Rebel-Team. Skirmish: Strike Teams und Kommandokarten Kopf an Kopf.\n\nKampagne: filmische Geschichte; ein Spieler führt Imperiumsarmeen, bis zu vier werden Rebellen-Helden mit verdeckten Operationen. Charaktere und Fähigkeiten wachsen mit der Story.\n\nSkirmish: taktischer Zweispieler-Kampf, Imperium, Rebellen, Söldner, Kommandodeck für Überraschungen — Holocrons oder Überfall, Gefahr in jeder Mission.\n\nIm Core Set: Luke Skywalker Ally Pack und Darth Vader Villain Pack mit Figuren und extra Kampagnen-/Skirmish-Missionen.\n\nWeitere Figure Packs und Box-Erweiterungen (siehe IA Community Wiki); die kostenlose App Star Wars: Imperial Assault – Legends of the Alliance für Solo/Koop.",
+    "descriptionDe": "Star Wars: Imperial Assault ist ein Strategiespiel mit taktischen Gefechten und Missionen für zwei bis fünf Spieler — zwei verschiedene Spielarten aus Kampf und Abenteuer im Star-Wars-Universum!\n\nNach der Zerstörung des Todessterns über Yavin 4 tobt der Galaktische Bürgerkrieg. In der Kampagne stellt das scheinbar unbegrenzte Imperium seine Truppen und Ressourcen einem Elite-Team von Rebellen-Agenten entgegen, das den Griff des Imperiums brechen will. Im Gefechtsspiel bildet ihr Einsatzteams und kämpft taktisch Kopf an Kopf um widersprüchliche Ziele.\n\nIn der Kampagne erlebt ihr eine filmische Geschichte im Star-Wars-Universum. Ein Spieler führt die Armeen des Galaktischen Imperiums; bis zu vier andere werden Helden der Rebellenallianz und führen verdeckte Operationen durch. Im Verlauf gewinnen Imperium und Rebellen Erfahrung und Fähigkeiten — Charaktere entwickeln sich mit der Handlung.\n\nIm Gefechtsspiel trefft ihr in taktischen Zweispieler-Missionen aufeinander. Ihr stellt Einsatzteams aus Imperialen, Rebellen und Söldnern auf und baut ein Kommandodeck für Überraschungen im Kampf — ob ihr verlorene Holocrons bergt oder einen Überfall abwehrt.\n\nIm Core Set sind das Luke Skywalker Ally Pack und das Darth Vader Villain Pack enthalten — Figuren plus zusätzliche Kampagnen- und Gefechtsmissionen.\n\nWeitere Figure Packs und Box-Erweiterungen (siehe IA Community Wiki) erweitern die Missionen; die kostenlose App Star Wars: Imperial Assault – Legends of the Alliance bietet Solo- und Koop-Inhalte.",
     "categoriesDe": [
-      "Adventure",
-      "Exploration",
-      "Fighting",
-      "Miniatures",
-      "Movies / TV / Radio theme",
-      "Science Fiction",
-      "Wargame"
+      "Abenteuer",
+      "Erkundung",
+      "Kampf",
+      "Miniaturen",
+      "Film, TV & Radio",
+      "Science-Fiction",
+      "Kriegsspiel"
     ],
     "mechanicsDe": [
-      "Dice Rolling",
-      "Die Icon Resolution",
-      "Grid Movement",
-      "Line of Sight",
-      "Modular Board",
-      "Role Playing",
-      "Scenario / Mission / Campaign Game",
-      "Solo / Solitaire Game",
-      "Square Grid",
-      "Team-Based Game",
-      "Variable Player Powers"
+      "Würfeln",
+      "Würfelsymbol-Auflösung",
+      "Rasterbewegung",
+      "Sichtlinie",
+      "Modulares Spielbrett",
+      "Rollenspiel",
+      "Szenario-, Missions- & Kampagnenspiel",
+      "Solo / Solitär",
+      "Quadratraster",
+      "Teams",
+      "Variable Spielerfähigkeiten"
     ]
   },
   "167355": {
@@ -1549,27 +1743,27 @@
       "Traitor Game",
       "Variable Player Powers"
     ],
-    "descriptionDe": "Nemesis ist Sci-Fi-Survival-Horror: ein Soldat feuert blind in einen Korridor gegen Aliens; ein Wissenschaftler sucht in der Improvisiert-Lab-Lösung; ein Verräter kapert im letzten Moment die Rettungskapsel. Eindringlinge reagieren auf Lärm und werden mit der Zeit stärker. Ihr steuert Crewmitglieder mit eigenen Skills, Karten und Startausrüstung — Wissenschaftler gut am Computer, schwach im Kampf; der Soldat …\n\nSemi-kooperativ: mit der Crew auf einem Schiff voller feindlicher Organismen überleben, ein von zwei Startzielen erfüllen und lebend zur Erde. Hindernisse: Schwärme (so nennt die Schiffs-KI die Aliens), schlechter Zustand des Schiffs, Agenda der Mitspieler, manchmal das Schicksal.\n\nVoller dramatischer Momente — auch wenn Pläne scheitern und Charaktere sterben.",
+    "descriptionDe": "Nemesis ist Science-Fiction-Survival-Horror in Reinform: ein Soldat feuert blind in einen Korridor gegen Aliens; ein Wissenschaftler sucht in seinem improvisierten Labor eine Lösung; ein Verräter kapert im letzten Moment die Rettungskapsel. Eindringlinge reagieren auf Lärm und werden mit der Zeit stärker. Ihr steuert Crewmitglieder mit eigenen Fähigkeiten, Karten und Startausrüstung — Wissenschaftler gut am Computer, schwach im Kampf; der Soldat …\n\nHalb-kooperativ: mit der Crew auf einem Schiff voller feindlicher Organismen überleben, eines von zwei Startzielen erfüllen und lebend zur Erde zurückkehren. Hindernisse: Schwärme (so nennt die Schiffs-KI die Aliens), schlechter Schiffszustand, Agenda der Mitspieler und manchmal das Schicksal.\n\nVoller dramatischer Momente — auch wenn Pläne scheitern und Charaktere sterben.",
     "categoriesDe": [
-      "Adventure",
+      "Abenteuer",
       "Horror",
-      "Miniatures",
-      "Science Fiction"
+      "Miniaturen",
+      "Science-Fiction"
     ],
     "mechanicsDe": [
-      "Campaign / Battle Card Driven",
-      "Cooperative Game",
-      "Dice Rolling",
-      "Hand Management",
-      "Hidden Roles",
-      "Interrupts",
-      "Modular Board",
-      "Player Elimination",
-      "Semi-Cooperative Game",
-      "Solo / Solitaire Game",
-      "Team-Based Game",
-      "Traitor Game",
-      "Variable Player Powers"
+      "Kampagnen- & Schlachtkarten",
+      "Kooperatives Spiel",
+      "Würfeln",
+      "Handmanagement",
+      "Verdeckte Rollen",
+      "Unterbrechungen",
+      "Modulares Spielbrett",
+      "Spielerausschluss",
+      "Semi-kooperatives Spiel",
+      "Solo / Solitär",
+      "Teams",
+      "Verräterspiel",
+      "Variable Spielerfähigkeiten"
     ]
   },
   "169786": {
@@ -1602,31 +1796,31 @@
       "Victory Points as a Resource",
       "Zone of Control"
     ],
-    "descriptionDe": "Unruhe im Europa der 1920er. Die Asche des Ersten Weltkriegs verdunkelt noch den Schnee. Die kapitalistische Stadtstaat „The Factory“, die den Krieg mit schwer gepanzerten Mechs befeuerte, schloss die Tore — Nachbarstaaten beobachten gespannt.\n\nScythe ist Engine-Building in einer alternativen 1920er-Geschichte — Landwirtschaft und Krieg, gebrochene Herzen und rostige Zahnräder, Innovation und Tapferkeit. Fünf Fraktionen Osteuropas ringen um Reichtum und Anteile am geheimnisvollen Factory. Territorium erobern, Rekruten, Ressourcen, Dorfbewohner, Gebäude, riesige Mechs aktivieren.\n\nStart mit unterschiedlichen Ressourcen (Macht, Münzen, Kampfkönnen, Popularität), Position und verdecktem Ziel — asymmetrisch kalibriert. Straffes Aktionswahl-System ohne Runden/Phasen, wenig Auszeit, kein Spielerausschluss.\n\nFast volle Kontrolle über das Schicksal; außer verdeckten Zielen nur „Encounter“-Karten bei neuen Ländern — mehrere Optionen mildern das Glück. Kampf durch Entscheidungen, nicht Würfel. Überall Engine-Building: effizientere Aktionen, bessere Kartenposition, Rekruten, Mechs als Abschreckung, Grenzen für mehr Ressourcen — Momentum bis zum Ende; Reihenfolge der Upgrades macht jedes Spiel einzigartig.",
+    "descriptionDe": "Unruhe im Europa der 1920er. Die Asche des Ersten Weltkriegs verdunkelt noch den Schnee. Der kapitalistische Stadtstaat „The Factory“, der den Krieg mit schwer gepanzerten Mechs befeuerte, schloss die Tore — Nachbarstaaten beobachten gespannt.\n\nScythe ist ein Aufbauspiel in einer alternativen 1920er-Geschichte — Landwirtschaft und Krieg, gebrochene Herzen und rostige Zahnräder, Innovation und Tapferkeit. Fünf Fraktionen Osteuropas ringen um Reichtum und Anteile am geheimnisvollen Factory. Territorium erobern, Rekruten werben, Ressourcen sammeln, Dorfbewohner einsetzen, Gebäude errichten, riesige Mechs aktivieren.\n\nIhr startet mit unterschiedlichen Ressourcen (Macht, Münzen, Kampfkönnen, Popularität), Position und verdecktem Ziel — asymmetrisch ausbalanciert. Straffes Aktionswahl-System ohne Runden und Phasen, wenig Auszeit, kein Spielerausschluss.\n\nFast volle Kontrolle über euer Schicksal; außer verdeckten Zielen nur Begegnungskarten bei neuen Ländern — mehrere Optionen mildern das Glück. Kampf durch Entscheidungen, nicht Würfel. Überall Motorenbau: effizientere Aktionen, bessere Kartenposition, Rekruten, Mechs als Abschreckung, Grenzen für mehr Ressourcen. Die Reihenfolge eurer Verbesserungen prägt jedes Spiel.",
     "categoriesDe": [
-      "Economic",
-      "Fighting",
-      "Science Fiction",
-      "Territory Building"
+      "Wirtschaft",
+      "Kampf",
+      "Science-Fiction",
+      "Gebietsaufbau"
     ],
     "mechanicsDe": [
-      "Area Majority / Influence",
-      "Card Play Conflict Resolution",
-      "Contracts",
-      "End Game Bonuses",
-      "Force Commitment",
-      "Grid Movement",
-      "Hexagon Grid",
-      "King of the Hill",
-      "Movement Points",
-      "Narrative Choice / Paragraph",
-      "Solo / Solitaire Game",
+      "Gebietsherrschaft / Einfluss",
+      "Kartenkampf",
+      "Verträge",
+      "Endspielboni",
+      "Truppenbindung",
+      "Rasterbewegung",
+      "Sechseckraster",
+      "König des Hügels",
+      "Bewegungspunkte",
+      "Absatz-System",
+      "Solo / Solitär",
       "Take That",
-      "Tech Trees / Tech Tracks",
-      "Variable Player Powers",
-      "Variable Set-up",
-      "Victory Points as a Resource",
-      "Zone of Control"
+      "Technologiebäume / -pfade",
+      "Variable Spielerfähigkeiten",
+      "Variabler Aufbau",
+      "Siegpunkte als Ressource",
+      "Kontrollzone"
     ]
   },
   "171131": {
@@ -1652,24 +1846,24 @@
       "Simulation",
       "Team-Based Game"
     ],
-    "descriptionDe": "Auf dem Meeresgrund hört niemand euch schreien!\n\nIn Captain Sonar steuert ihr mit dem Team ein U-Boot und sucht das feindliche Boot, um es zu versenken, bevor es euch trifft. Jede Rolle zählt; der Kapitän ist nichts ohne Crew: Chief Mate, Funker, Ingenieur.\n\nEin Team sitzt auf einer Seite; Rollen je nach Spielerzahl — Kapitän bewegt das Boot und meldet Details; Funker hört gegnerische Befehle und ortet; Ingenieur bereitet Torpedos, Minen usw. vor.\n\nZwei Modi: zugweise oder simultan. Im letzteren handeln alle gleichzeitig und verfolgen die Gegner; beim Angriff kurze Pause für Treffer — dann weiter oder Trümmer auf dem Grund.\n\nMehrere Karten mit unterschiedlicher Schwierigkeit.",
+    "descriptionDe": "Am Meeresgrund hört niemand euch schreien!\n\nIn Captain Sonar steuert ihr mit eurem Team ein modernes U-Boot und versucht, ein feindliches U-Boot zu orten und zu versenken, bevor es dasselbe mit euch tut. Jede Rolle zählt, der Konflikt ist gnadenlos. Ohne Crew ist ein Kapitän nichts: Erster Offizier, Funker und Ingenieur.\n\nAlle Teammitglieder sitzen auf einer Seite des Tisches und übernehmen eine U-Boot-Rolle — die Aufteilung hängt von der Spielerzahl ab. Der Kapitän bewegt das Boot und meldet Positionen; der Funker hört die Befehle des Gegners und versucht, dessen Position zu erraten; der Ingenieur bereitet Torpedos, Minen und andere Waffen vor.\n\nCaptain Sonar gibt es im Runden- oder Echtzeitmodus. Im Echtzeitmodus handelt ihr gleichzeitig und versucht mitzubekommen, was der Gegner tut. Startet ein Angriff, pausiert das Spiel kurz für Trefferprüfung — dann geht es weiter, ob das Ziel entkommen ist oder am Meeresboden liegt.\n\nMehrere Karten mit unterschiedlichem Schwierigkeitsgrad sind enthalten.",
     "categoriesDe": [
-      "Deduction",
-      "Fighting",
-      "Modern Warfare",
-      "Nautical",
-      "Real-time"
+      "Deduktion",
+      "Kampf",
+      "Moderne Kriegsführung",
+      "Seefahrt",
+      "Echtzeit"
     ],
     "mechanicsDe": [
-      "Deduction",
-      "Grid Movement",
-      "Hidden Movement",
-      "Line Drawing",
-      "Real-Time",
-      "Role Playing",
-      "Secret Unit Deployment",
+      "Deduktion",
+      "Rasterbewegung",
+      "Verdeckte Bewegung",
+      "Linienzeichnen",
+      "Echtzeit",
+      "Rollenspiel",
+      "Geheime Einheitenplatzierung",
       "Simulation",
-      "Team-Based Game"
+      "Teams"
     ]
   },
   "172225": {
@@ -1691,19 +1885,19 @@
       "Set Collection",
       "Take That"
     ],
-    "descriptionDe": "Exploding Kittens ist Katzengewalt-Roulette: Karten ziehen, bis jemand eine Exploding Kitten zieht und verliert. Das Deck hilft, der Katastrophe auszuweichen — spähen, Gegner zwingen mehr zu ziehen, mischen.\n\nMit jeder Karte wird es intensiver — weniger Karten, höhere Explosionschance.\n\nFassungslos feline hyperbole.",
+    "descriptionDe": "Exploding Kittens ist Katzengewalt-Roulette: Karten ziehen, bis jemand eine Exploding Kitten zieht und ausscheidet. Das Deck hilft, der Katastrophe auszuweichen — spähen, Gegner zu mehr Zügen zwingen, mischen.\n\nMit jeder Karte wird es intensiver — weniger Karten im Stapel, höhere Explosionschance.\n\nFür alle, die Katzen, Explosionen, Laserstrahlen und manchmal Ziegen lieben.",
     "categoriesDe": [
-      "Animals",
-      "Card Game",
-      "Comic Book / Strip",
+      "Tiere",
+      "Kartenspiel",
+      "Comic / Comicstrip",
       "Humor"
     ],
     "mechanicsDe": [
-      "Hand Management",
-      "Hot Potato",
-      "Player Elimination",
-      "Push Your Luck",
-      "Set Collection",
+      "Handmanagement",
+      "Heiße Kartoffel",
+      "Spielerausschluss",
+      "Push-your-Luck",
+      "Sets sammeln",
       "Take That"
     ]
   },
@@ -1728,17 +1922,17 @@
     ],
     "descriptionDe": "Ursprünglich Erweiterung für Exploding Kittens (erfolgreichstes Kickstarter-Projekt) mit zu gruseligen/unglaublichen Karten für die Kinderversion. Stretch Goal wurde eigenständiges Spiel, kombinierbar mit dem Standarddeck — zusammen bis 9 Spieler, mit Imploding Kittens 10.",
     "categoriesDe": [
-      "Animals",
-      "Card Game",
-      "Comic Book / Strip",
+      "Tiere",
+      "Kartenspiel",
+      "Comic / Comicstrip",
       "Humor",
-      "Mature / Adult"
+      "Ab 18"
     ],
     "mechanicsDe": [
-      "Hand Management",
-      "Player Elimination",
-      "Push Your Luck",
-      "Set Collection",
+      "Handmanagement",
+      "Spielerausschluss",
+      "Push-your-Luck",
+      "Sets sammeln",
       "Take That"
     ]
   },
@@ -1771,30 +1965,30 @@
       "Tug of War",
       "Variable Set-up"
     ],
-    "descriptionDe": "7 Wonders Duel ähnelt 7 Wonders: drei Zeitalter, Karten für Ressourcen, Militär, Wissenschaft, Zivilisation und Wunder. Anders: nur zwei Spieler.\n\nKein gleichzeitiges Draft aus Stapeln, sondern aus offenen und verdeckten Karten — nur unbedeckte sind wählbar, Timing und Bonuszüge für eine zweite Karte zählen. Karten bauen, für Münzen abwerfen oder Wunder — vier Wunder pro Spieler, nur sieben insgesamt, einer bleibt leer.\n\nRessourcen jederzeit von der Bank oder durch Karten; Kosten für den Gegner steigen mit eurer Dominanz.\n\nDrei Siegwege: Militärkarten schieben den Marker zur gegnerischen Hauptstadt — dort sofortiger Sieg; sechs von sieben Wissenschaftssymbolen = wissenschaftliche Dominanz; sonst meiste Punkte am Ende.",
+    "descriptionDe": "7 Wonders Duel ähnelt seinem Vorbild 7 Wonders: über drei Zeitalter sammelt ihr Karten für Ressourcen, Militär, Wissenschaft, Zivilisation und Wunder. Anders als im Original ist es nur für zwei Spieler.\n\nIhr zieht nicht gleichzeitig aus verdeckten Stapeln, sondern aus einer Auslage verdeckter und offener Karten. Eine Karte dürft ihr nur nehmen, wenn sie nicht von anderen bedeckt wird — Timing ist entscheidend. Jede Karte könnt ihr bauen, für Münzen abwerfen oder zum Wunderbau nutzen. Jeder startet mit vier Wunderkarten; nur sieben Wunder können gebaut werden.\n\nRessourcen kauft ihr jederzeit von der Bank oder ihr sammelt Karten, die sie liefern — der Preis für den Gegner steigt, wenn er dieselbe Ressource braucht.\n\nDrei Siegwege: Militärkarten schieben den Marker Richtung gegnerischer Hauptstadt — Erreichen bedeutet sofortigen Sieg. Sechs von sieben Wissenschaftssymbolen geben wissenschaftliche Dominanz. Sonst gewinnt, wer am Ende die meisten Punkte hat.",
     "categoriesDe": [
-      "Ancient",
-      "Card Game",
-      "City Building",
-      "Civilization",
-      "Economic"
+      "Antike",
+      "Kartenspiel",
+      "Städtebau",
+      "Zivilisation",
+      "Wirtschaft"
     ],
     "mechanicsDe": [
-      "End Game Bonuses",
-      "Income",
-      "Melding and Splaying",
-      "Modular Board",
-      "Multi-Use Cards",
-      "Once-Per-Game Abilities",
-      "Open Drafting",
-      "Score-and-Reset Game",
-      "Set Collection",
-      "Sudden Death Ending",
+      "Endspielboni",
+      "Einkommen",
+      "Melden und Auslegen",
+      "Modulares Spielbrett",
+      "Mehrfachnutzbare Karten",
+      "Einmal-pro-Spiel-Fähigkeiten",
+      "Offenes Drafting",
+      "Punkte-Runden",
+      "Sets sammeln",
+      "Sudden-Death-Ende",
       "Tags",
-      "Tech Trees / Tech Tracks",
-      "Track Movement",
-      "Tug of War",
-      "Variable Set-up"
+      "Technologiebäume / -pfade",
+      "Streckenbewegung",
+      "Tauziehen",
+      "Variabler Aufbau"
     ]
   },
   "174430": {
@@ -1835,39 +2029,39 @@
       "Tags",
       "Variable Player Powers"
     ],
-    "descriptionDe": "Gloomhaven ist taktisches Euro-inspiriertes Kampfspiel in einer Welt wechselnder Motive. Wandernde Abenteurer mit eigenen Skills reisen in diese dunkle Ecke, räumen Verliese und Ruinen, verbessern sich durch Erfahrung und Beute, entdecken Orte und verzweigen die Story durch Entscheidungen.\n\nPersistentes Spiel über viele Sessions; nach Szenarien entscheidet ihr weiter wie in einem „Choose Your Own Adventure“. Szenarien sind kooperativ gegen automatisierte Monster mit innovativem Kartensystem für Initiative und Zugaktionen.\n\nPro Zug zwei Karten aus der Hand; die obere Zahl der obersten Karte ist die Initiative. Jede Karte hat oben und unten Kräfte — oben von einer, unten von der anderen oder umgekehrt. Karten gehen dauerhaft verloren; zu lange im Dungeon erschöpft euch zum Rückzug.",
+    "descriptionDe": "Gloomhaven ist ein taktisches, von Eurogames inspiriertes Kampfspiel in einer Welt wechselnder Motive. Wandernde Abenteurer mit eigenen Fähigkeiten reisen in diese dunkle Ecke, räumen Verliese und Ruinen, verbessern sich durch Erfahrung und Beute, entdecken Orte und verzweigen die Geschichte durch eure Entscheidungen.\n\nPersistentes Spiel über viele Sessions; nach Szenarien entscheidet ihr weiter wie in einem „Wähle-dein-Abenteuer“-Buch. Szenarien sind kooperativ gegen automatisierte Monster mit einem innovativen Kartensystem für Initiative und Zugaktionen.\n\nPro Zug spielt ihr zwei Karten aus der Hand; die obere Zahl der obersten Karte bestimmt die Initiative. Jede Karte hat oben und unten Kräfte — oben von einer, unten von der anderen oder umgekehrt. Karten gehen dauerhaft verloren; verbringt ihr zu lange im Verlies, erschöpft ihr euch und müsst euch zurückziehen.",
     "categoriesDe": [
-      "Adventure",
-      "Exploration",
+      "Abenteuer",
+      "Erkundung",
       "Fantasy",
-      "Fighting",
-      "Miniatures"
+      "Kampf",
+      "Miniaturen"
     ],
     "mechanicsDe": [
-      "Action Queue",
-      "Action Retrieval",
-      "Campaign / Battle Card Driven",
-      "Card Play Conflict Resolution",
-      "Communication Limits",
-      "Cooperative Game",
-      "Critical Hits and Failures",
-      "Deck Construction",
-      "Grid Movement",
-      "Hand Management",
-      "Hexagon Grid",
-      "Legacy Game",
-      "Line of Sight",
-      "Modular Board",
-      "Multi-Use Cards",
-      "Narrative Choice / Paragraph",
-      "Once-Per-Game Abilities",
-      "Role Playing",
-      "Scenario / Mission / Campaign Game",
-      "Simultaneous Action Selection",
-      "Solo / Solitaire Game",
-      "Storytelling",
+      "Aktionsreihe",
+      "Aktion zurückholen",
+      "Kampagnen- & Schlachtkarten",
+      "Kartenkampf",
+      "Kommunikationsbeschränkung",
+      "Kooperatives Spiel",
+      "Kritische Treffer und Fehlschläge",
+      "Deckbau",
+      "Rasterbewegung",
+      "Handmanagement",
+      "Sechseckraster",
+      "Legacy-Spiel",
+      "Sichtlinie",
+      "Modulares Spielbrett",
+      "Mehrfachnutzbare Karten",
+      "Absatz-System",
+      "Einmal-pro-Spiel-Fähigkeiten",
+      "Rollenspiel",
+      "Szenario-, Missions- & Kampagnenspiel",
+      "Gleichzeitige Aktionswahl",
+      "Solo / Solitär",
+      "Geschichtenerzählen",
       "Tags",
-      "Variable Player Powers"
+      "Variable Spielerfähigkeiten"
     ]
   },
   "179303": {
@@ -1887,14 +2081,14 @@
     ],
     "descriptionDe": "In Cthulhu Realms versucht jeder, Gegner in den Wahnsinn zu treiben oder bei leerem Deck die meiste Verstandspunkte zu haben.\n\nStart mit kleinem Deck aus Initiierten, Schlägern und Anhängern. Fünf Karten bilden eine Reihe verfügbarer Karten; bei mehr als zwei Spielern drei Karten zwischen jedem Paar.\n\nJeder Zug: fünf Handkarten, spielen um Orte, Verstand zu stärken oder anderen zu schaden, Beschwörungskraft für neue Karten, Karten aus dem Spiel nehmen. Ortskräfte einmal pro Zug. Am Zugende Hand und gespielte Entitäten/Artefakte abwerfen.\n\nOhne Verstand seid ihr raus; allein noch bei Verstand gewinnt ihr. Sonst endet es bei leerem Deck — meiste Verstandspunkte gewinnen.",
     "categoriesDe": [
-      "Card Game",
+      "Kartenspiel",
       "Horror",
       "Humor",
-      "Novel-based"
+      "Literaturvorlage"
     ],
     "mechanicsDe": [
-      "Deck, Bag, and Pool Building",
-      "Player Elimination"
+      "Deck-, Beutel- und Poolbildung",
+      "Spielerausschluss"
     ]
   },
   "195539": {
@@ -1918,22 +2112,22 @@
       "Worker Placement",
       "Worker Placement, Different Worker Types"
     ],
-    "descriptionDe": "Designer Eric Lang („dudes on a map“) nennt The Godfather: Corleone's Empire — eigenständiges Big-Box-Spiel mit hochwertigen Miniaturen — „thugs on a map“.\n\nKurz: straffes, konfrontatives Worker Placement mit Mord und Intrige. Konkurrierende Mafia-Familien um die Kontrolle des organisierten Verbrechens in New York: Schläger, Don, Frau und Erbe auf dem Brett, Geschäfte schütteln, Revierkämpfe.\n\nGeld, Schutzgelder, Verträge und Vorteile (z. B. Gewerkschaftsboss) sind Handkarten mit begrenzter Hand — am Ende jeder von fünf Runden zahlt ihr Tribut an den Don. Am Ende zählt nur Cash.\n\nDrive-by-Shootings entfernen gegnerische Figuren ins „Fluss“-Ablagefeld.",
+    "descriptionDe": "Designer Eric Lang nennt The Godfather: Corleone's Empire — ein eigenständiges Big-Box-Spiel mit hochwertigen Miniaturen — treffend ein „Gangster-auf-der-Karte“-Spiel.\n\nKurz: straffes, konfrontatives Arbeiterplatzierungsspiel mit Mord und Intrige. Konkurrierende Mafia-Familien um die Kontrolle des organisierten Verbrechens in New York: Schläger, Don, Frau und Erbe auf dem Brett, Geschäfte schütteln, Revierkämpfe.\n\nGeld, Schutzgelder, Verträge und Vorteile (z. B. Gewerkschaftsboss) sind Handkarten mit begrenzter Hand — am Ende jeder von fünf Runden zahlt ihr Tribut an den Don. Am Ende zählt nur Bargeld.\n\nDrive-by-Shootings entfernen gegnerische Figuren ins „Fluss“-Ablagefeld.",
     "categoriesDe": [
-      "Economic",
+      "Wirtschaft",
       "Mafia",
-      "Movies / TV / Radio theme"
+      "Film, TV & Radio"
     ],
     "mechanicsDe": [
-      "Area Majority / Influence",
-      "Auction / Bidding",
-      "Hand Management",
-      "Memory",
-      "Open Drafting",
+      "Gebietsherrschaft / Einfluss",
+      "Auktion / Bieten",
+      "Handmanagement",
+      "Gedächtnis",
+      "Offenes Drafting",
       "Take That",
-      "Variable Player Powers",
-      "Worker Placement",
-      "Worker Placement, Different Worker Types"
+      "Variable Spielerfähigkeiten",
+      "Arbeiterplatzierung",
+      "Arbeiterplatzierung, verschiedene Arbeitertypen"
     ]
   },
   "205637": {
@@ -1967,32 +2161,32 @@
       "Stat Check Resolution",
       "Variable Player Powers"
     ],
-    "descriptionDe": "Etwas Böses regt sich in Arkham — nur ihr könnt es stoppen. Arkham Horror: The Card Game verschwimmt LCG und Rollenspiel — Lovecraftsche Geheimnisse, Monster und Wahnsinn!\n\nAllein oder mit Freunden (bis drei mit zwei Core Sets) seid ihr Ermittler in Arkham, New England. Talente und Fehler — vielleicht zu viel Necronomicon, ihr vertuscht Übernatürliches, oder eine Ghulkult-Begegnung zeichnet euch.\n\nStärken und Schwächen spiegeln sich im Deck — eure Ressource in schrecklichen Mysterien. Jede Kampagne geht tiefer: Kulte, Rituale, Spukhäuser, Kreaturen, Anzeichen der Great Old Ones hinter den Schleiern.\n\nKernmodus: Kampagne — Entscheidungen wirken über das Szenario hinaus; Erfahrung bereitet auf kommende Abenteuer vor.",
+    "descriptionDe": "Etwas Böses regt sich in Arkham — nur ihr könnt es stoppen. Arkham Horror: The Card Game verschwimmt die Grenzen zwischen Living Card Game und Rollenspiel — Lovecraftsche Geheimnisse, Monster und Wahnsinn!\n\nAllein oder mit Freunden (bis zu drei mit zwei Core Sets) seid ihr Ermittler in Arkham, New England. Talente und Fehler prägen euch — vielleicht zu viel Necronomicon, ihr vertuscht Übernatürliches, oder eine Ghulkult-Begegnung zeichnet euch.\n\nStärken und Schwächen spiegeln sich im Deck — eure Ressource in schrecklichen Mysterien. Jede Kampagne geht tiefer: Kulte, Rituale, Spukhäuser, Kreaturen, Anzeichen der Great Old Ones hinter den Schleiern.\n\nKernmodus ist die Kampagne: Entscheidungen wirken über das Szenario hinaus; Erfahrung bereitet auf kommende Abenteuer vor.",
     "categoriesDe": [
-      "Adventure",
-      "Card Game",
-      "Collectible Components",
-      "Exploration",
+      "Abenteuer",
+      "Kartenspiel",
+      "Sammelkomponenten",
+      "Erkundung",
       "Horror",
-      "Novel-based"
+      "Literaturvorlage"
     ],
     "mechanicsDe": [
-      "Action Points",
-      "Area Movement",
-      "Communication Limits",
-      "Cooperative Game",
-      "Deck Construction",
-      "Events",
-      "Hand Management",
-      "Map Deformation",
-      "Modular Board",
-      "Player Elimination",
-      "Push Your Luck",
-      "Role Playing",
-      "Scenario / Mission / Campaign Game",
-      "Solo / Solitaire Game",
-      "Stat Check Resolution",
-      "Variable Player Powers"
+      "Aktionspunkte",
+      "Gebietbewegung",
+      "Kommunikationsbeschränkung",
+      "Kooperatives Spiel",
+      "Deckbau",
+      "Ereignisse",
+      "Handmanagement",
+      "Kartenverformung",
+      "Modulares Spielbrett",
+      "Spielerausschluss",
+      "Push-your-Luck",
+      "Rollenspiel",
+      "Szenario-, Missions- & Kampagnenspiel",
+      "Solo / Solitär",
+      "Attributprüfung",
+      "Variable Spielerfähigkeiten"
     ]
   },
   "216201": {
@@ -2025,31 +2219,31 @@
       "Variable Player Powers",
       "Variable Set-up"
     ],
-    "descriptionDe": "Die Roboter der Robo Rally-Autofabrik bauen Supersportwagen, sehen sie nie fahren. Samstagnacht wird die Fabrik zur Rennstrecke mit Fallen und Sabotage. In Robo Rally bewegt ihr Roboter per Karten durch Korridore und Fallen zu Checkpoints — nur die Stärksten überleben!\n\nMad machines, gefährliche Pläne. Karten zeigen Bewegungen; Strategie schlägt Rivalen, Checkpoints in numerischer Reihenfolge. Lasers, Gruben, Fließbänder entscheiden.\n\n2016er Edition u. a.:\n\n    Eigenes 20-Karten-Deck je Spieler, gleiche Karten. Pro Zug neun ziehen, fünf programmieren, Rest abwerfen. Zwei „Again“ wiederholen den vorherigen Slot; „Energy“ gibt Energie für Optionen.\n\n     Keine Prioritätszahlen mehr — Bewegungsreihenfolge nach Nähe zum Sender auf dem Brett.\n\n    Schaden als Schadenskarten ins Deck statt weniger Programmierkarten. „Normal“-Schaden = Spam; beim Programmieren entfernt und ersetzt. Trojaner: zwei Spam; Virus infiziert Nachbarn; Wurm erzwingt Reboot mit mehr Schaden — durch Spielen entfernt ihr sie.",
+    "descriptionDe": "Die Roboter der Robo Rally-Autofabrik bauen Supersportwagen, sehen sie aber nie fahren. Samstagnacht wird die Fabrik zur Rennstrecke mit Fallen und Sabotage. In Robo Rally bewegt ihr Roboter per Karten durch Korridore und Fallen zu Kontrollpunkten — nur die Stärksten überleben!\n\nVerrückte Maschinen, gefährliche Pläne. Karten zeigen Bewegungen; mit Strategie schlagt ihr Rivalen und erreicht Kontrollpunkte in numerischer Reihenfolge. Laser, Gruben und Fließbänder entscheiden.\n\n2016er Edition u. a.:\n\n Eigenes 20-Karten-Deck je Spieler mit gleichen Karten. Pro Zug neun ziehen, fünf programmieren, Rest abwerfen. Zwei „Again“-Karten wiederholen die Aktion im vorherigen Slot; eine „Energy“-Karte gibt einen Energiewürfel für Optionen.\n\n Keine Prioritätszahlen mehr — Bewegungsreihenfolge nach Nähe zum Sender auf dem Brett.\n\n Schaden als Schadenskarten im Deck statt weniger Programmierkarten. Normaler Schaden vom Brett oder Laser = „Spam“-Karten; beim Programmieren entfernt und ersetzt ihr sie. Trojaner: zwei Spam; Virus infiziert Nachbarn; Wurm erzwingt Neustart mit mehr Schaden.",
     "categoriesDe": [
-      "Maze",
-      "Miniatures",
-      "Racing",
-      "Science Fiction"
+      "Labyrinth",
+      "Miniaturen",
+      "Rennen",
+      "Science-Fiction"
     ],
     "mechanicsDe": [
-      "Action Queue",
-      "Bias",
-      "Grid Movement",
-      "Hand Management",
-      "Line of Sight",
-      "Lose a Turn",
-      "Modular Board",
-      "Pattern Movement",
-      "Programmed Movement",
-      "Race",
-      "Simultaneous Action Selection",
-      "Slide / Push",
-      "Square Grid",
+      "Aktionsreihe",
+      "Startvorteil",
+      "Rasterbewegung",
+      "Handmanagement",
+      "Sichtlinie",
+      "Zug verlieren",
+      "Modulares Spielbrett",
+      "Mustergesteuerte Bewegung",
+      "Programmierte Bewegung",
+      "Wettlauf",
+      "Gleichzeitige Aktionswahl",
+      "Schieben / Drücken",
+      "Quadratraster",
       "Take That",
-      "Turn Order: Stat-Based",
-      "Variable Player Powers",
-      "Variable Set-up"
+      "Zugreihenfolge: Attributbasiert",
+      "Variable Spielerfähigkeiten",
+      "Variabler Aufbau"
     ]
   },
   "223040": {
@@ -2068,16 +2262,16 @@
       "Set Collection",
       "Tags"
     ],
-    "descriptionDe": "Als Herrscher baut ihr das mächtigste Reich! Militär und riesige Armee, Magie und unzugängliche Flammeninsel — keine zwei Reiche gleich in Fantasy Realms.\n\nSekunden zum Lernen: Karte ziehen, Karte abwerfen — vom Stapel oder Ablage.\n\nBeste Kombos für die beste Hand; Ende bei zehn Karten im Ablagestapel — höchste Punktzahl gewinnt.\n\nDie WizKids Games Companion-App hilft beim Scoring und listet alle Karten (iOS und Google Play).",
+    "descriptionDe": "Als Herrscher baut ihr das mächtigste Reich! Militär und riesige Armee, Magie und unzugängliche Flammeninsel — keine zwei Reiche gleich in Fantasy Realms.\n\nSekunden zum Lernen: Karte ziehen, Karte abwerfen — vom Stapel oder Ablage.\n\nBeste Kombos für die beste Hand; Ende bei zehn Karten im Ablagestapel — höchste Punktzahl gewinnt.\n\nDie WizKids Games Begleit-App hilft bei der Wertung und listet alle Karten (iOS und Google Play).",
     "categoriesDe": [
-      "Card Game",
+      "Kartenspiel",
       "Fantasy"
     ],
     "mechanicsDe": [
-      "End Game Bonuses",
-      "Hand Management",
-      "Open Drafting",
-      "Set Collection",
+      "Endspielboni",
+      "Handmanagement",
+      "Offenes Drafting",
+      "Sets sammeln",
       "Tags"
     ]
   },
@@ -2110,30 +2304,30 @@
       "Turn Order: Stat-Based",
       "Variable Set-up"
     ],
-    "descriptionDe": "Brass: Birmingham ist die Wirtschaftsstrategie-Fortsetzung zu Martin Wallaces Brass (2007). Konkurrierende Unternehmer in Birmingham zur Industriellen Revolution 1770–1870.\n\nAndere Story und Erfahrung als der Vorgänger. Industrien und Netzwerk aufbauen, niedrige oder hohe Nachfrage nutzen. Zwei Hälften: Kanalzeit (1770–1830) und Eisenbahnzeit (1830–1870). Sieg: meiste VP; pro Hälfte VP für Kanäle, Schienen und etablierte (umgedrehte) Industrieplättchen.\n\nPro Runde zwei Aktionen aus:\n\n1) Bauen — Rohstoffe zahlen, Industrieplättchen legen.\n2) Netzwerk — Schienen-/Kanalverbindung.\n3) Entwickeln — VP-Wert einer Industrie erhöhen.\n4) Verkaufen — Baumwolle, Manufakturwaren, Keramik.\n5) Darlehen — £30, Einkommen sinkt.\n\nBrass: Birmingham hat eine sechste Aktion:\n\n6) Scout — drei Karten abwerfen, wilde Ort- und Industriekarte (ersetzt Double Action Build aus Brass).",
+    "descriptionDe": "Brass: Birmingham ist die Wirtschaftsstrategie-Fortsetzung zu Martin Wallaces Brass (2007). Konkurrierende Unternehmer in Birmingham zur Industriellen Revolution 1770–1870.\n\nAndere Handlung und Erfahrung als der Vorgänger. Wie dort baut ihr Industrien und Netzwerke und nutzt niedrige oder hohe Nachfrage. Zwei Hälften: Kanalzeit (1770–1830) und Eisenbahnzeit (1830–1870). Sieg: die meisten Siegpunkte; pro Hälfte Siegpunkte für Kanäle, Schienen und etablierte (umgedrehte) Industrieplättchen.\n\nPro Runde zwei Aktionen aus:\n\n1) Bauen — Rohstoffe zahlen, Industrieplättchen legen.\n2) Netzwerk — Schienen-/Kanalverbindung.\n3) Entwickeln — Siegpunktwert einer Industrie erhöhen.\n4) Verkaufen — Baumwolle, Manufakturwaren, Keramik.\n5) Darlehen — £30, Einkommen sinkt.\n\nBrass: Birmingham hat eine sechste Aktion:\n\n6) Scout — drei Karten abwerfen, wilde Ort- und Industriekarte (ersetzt Double Action Build aus Brass).",
     "categoriesDe": [
-      "Age of Reason",
-      "Economic",
-      "Industry / Manufacturing",
-      "Post-Napoleonic",
-      "Trains",
-      "Transportation"
+      "Zeitalter der Aufklärung",
+      "Wirtschaft",
+      "Industrie / Fertigung",
+      "Nach-Napoleonisch",
+      "Züge",
+      "Transport"
     ],
     "mechanicsDe": [
-      "Chaining",
-      "End Game Bonuses",
-      "Hand Management",
-      "Income",
-      "Loans",
-      "Market",
-      "Multi-Use Cards",
-      "Network and Route Building",
-      "Ownership",
+      "Verkettung",
+      "Endspielboni",
+      "Handmanagement",
+      "Einkommen",
+      "Darlehen",
+      "Markt",
+      "Mehrfachnutzbare Karten",
+      "Netzwerk- und Routenbau",
+      "Besitz",
       "Tags",
-      "Tech Trees / Tech Tracks",
-      "Tile Placement",
-      "Turn Order: Stat-Based",
-      "Variable Set-up"
+      "Technologiebäume / -pfade",
+      "Legespiel",
+      "Zugreihenfolge: Attributbasiert",
+      "Variabler Aufbau"
     ]
   },
   "244521": {
@@ -2162,21 +2356,21 @@
     "descriptionDe": "In Quacks (Erstveröffentlichung als The Quacks of Quedlinburg) seid Scharlatane, die heimlich Brühe zubereiten — zu viel von diesem oder jenem verdirbt die Mischung!\n\nJeder hat einen Beutel Zutaten-Chips. Pro Runde gleichzeitig ziehen und in den Topf legen — höherer Wert weiter außen in der Wirbelmuster, wertvoller die Brühe. Drückt euer Glück — zu viele Kirschbomben, und der Topf explodiert!\n\nAm Rundenende Siegpunkte und Münzen für neue Zutaten — explodierte Töpfe wählen Punkte oder Münzen, nicht beides. Nach neun Runden gewinnt, wer die meisten Siegpunkte hat.",
     "categoriesDe": [
       "Fantasy",
-      "Medieval"
+      "Mittelalter"
     ],
     "mechanicsDe": [
-      "Catch the Leader",
-      "Deck, Bag, and Pool Building",
-      "Delayed Purchase",
-      "Dice Rolling",
-      "Die Icon Resolution",
-      "Events",
-      "Neighbor Scope",
-      "Push Your Luck",
-      "Score-and-Reset Game",
-      "Simultaneous Action Selection",
-      "Track Movement",
-      "Variable Set-up"
+      "Aufholjagd",
+      "Deck-, Beutel- und Poolbildung",
+      "Verzögerter Kauf",
+      "Würfeln",
+      "Würfelsymbol-Auflösung",
+      "Ereignisse",
+      "Nachbarbereich",
+      "Push-your-Luck",
+      "Punkte-Runden",
+      "Gleichzeitige Aktionswahl",
+      "Streckenbewegung",
+      "Variabler Aufbau"
     ]
   },
   "246900": {
@@ -2207,29 +2401,62 @@
       "Tech Trees / Tech Tracks",
       "Variable Player Powers"
     ],
-    "descriptionDe": "Eclipse lässt euch eine interstellare Zivilisation steuern: Systeme erkunden, Technologien, Kriegsschiffe. Viele Siegwege — plant nach Spezies-Stärken und rivalisierenden Zivilisationen.\n\nEclipse: Second Dawn for the Galaxy ist überarbeitete Version von Eclipse (2011) mit:\n\n    Neuem Grafikdesign bei bewährter Symbolik\n    Voller Ship Pack 1-Miniaturenlinie\n    Neuen Miniaturen für Ancients, GCDS, Orbitals u. a.\n    Kunststoff-Inlays\n    Speziellen Kampfwürfeln\n    Feinjustiertem Gameplay",
+    "descriptionDe": "Eclipse lässt euch eine interstellare Zivilisation steuern: Systeme erkunden, Technologien, Kriegsschiffe. Viele Siegwege — plant nach Spezies-Stärken und rivalisierenden Zivilisationen.\n\nEclipse: Second Dawn for the Galaxy ist überarbeitete Version von Eclipse (2011) mit:\n\n Neuem Grafikdesign bei bewährter Symbolik\n Vollständiger Ship Pack 1-Miniaturenlinie\n Neuen Miniaturen für Ancients, GCDS, Orbitals u. a.\n Kunststoff-Inlays\n Speziellen Kampfwürfeln\n Fein abgestimmtem Spielablauf",
     "categoriesDe": [
-      "Civilization",
-      "Exploration",
-      "Science Fiction",
-      "Space Exploration",
-      "Territory Building",
-      "Wargame"
+      "Zivilisation",
+      "Erkundung",
+      "Science-Fiction",
+      "Weltraumforschung",
+      "Gebietsaufbau",
+      "Kriegsspiel"
     ],
     "mechanicsDe": [
-      "Alliances",
-      "Area Majority / Influence",
-      "Area-Impulse",
-      "Dice Rolling",
-      "Grid Movement",
+      "Allianzen",
+      "Gebietsherrschaft / Einfluss",
+      "Gebietsimpuls",
+      "Würfeln",
+      "Rasterbewegung",
+      "Sechseckraster",
+      "Verdeckte Siegpunkte",
+      "Heiße Kartoffel",
+      "Einkommen",
+      "Modulares Spielbrett",
+      "Weitergereichter Aktionsmarker",
+      "Technologiebäume / -pfade",
+      "Variable Spielerfähigkeiten"
+    ]
+  },
+  "295947": {
+    "id": 295947,
+    "description": "Cascadia is a puzzly tile-laying and token-drafting game featuring the habitats and wildlife of the Pacific Northwest.\n\nIn the game, you take turns building out your own terrain area and populating it with wildlife. You start with three hexagonal habitat tiles (with the five types of habitat in the game), and on a turn you choose a new habitat tile that's paired with a wildlife token, then place that tile next to your other ones and place the wildlife token on an appropriate habitat. (Each tile depicts 1-3 types of wildlife from the five types in the game, and you can place at most one token on a habitat.) Four tiles are on display, with each tile being paired at random with a wildlife token, so you must make the best of what's available &mdash; unless you have a nature token to spend so that you can pick your choice of each item.\n\nIdeally you can place habitat tiles to create matching terrain that reduces fragmentation and creates wildlife corridors, mostly because you score for the largest area of each type of habitat at game's end, with a bonus if your group is larger than each other player's. At the same time, you want to place wildlife tokens so that you can maximize the number of points scored by them, with the wildlife goals being determined at random by one of the four scoring cards for each type of wildlife. Maybe hawks want to be separate from other hawks, while foxes want lots of different animals surrounding them and bears want to be in pairs. Can you make it happen?",
+    "image": "https://cf.geekdo-images.com/gAfT3O6dqIGYODnE4ouFKA__itemheader/img/2vshfeevBVbkQYO3EElW2_rIINs=/800x450/filters:quality(30):strip_icc()/pic7243634.jpg",
+    "thumbnail": "https://cf.geekdo-images.com/MjeJZfulbsM1DSV3DrGJYA__itemrep/img/RjD03wEf_LoX0EF4DhnW6f0xNHU=/fit-in/246x300/filters:strip_icc()/pic5100691.jpg",
+    "categories": [
+      "Animals",
+      "Environmental"
+    ],
+    "mechanics": [
+      "End Game Bonuses",
       "Hexagon Grid",
-      "Hidden Victory Points",
-      "Hot Potato",
-      "Income",
-      "Modular Board",
-      "Passed Action Token",
-      "Tech Trees / Tech Tracks",
-      "Variable Player Powers"
+      "Open Drafting",
+      "Pattern Building",
+      "Solo / Solitaire Game",
+      "Tile Placement",
+      "Variable Set-up"
+    ],
+    "descriptionDe": "Cascadia ist ein puzzliges Legespiel mit Token-Drafting rund um die Lebensräume und Tierwelt des pazifischen Nordwestens.\n\nIhr baut euer Gelände aus und bevölkert es mit Wildtieren. Ihr startet mit drei hexagonalen Habitat-Plättchen (fünf Habitat-Typen im Spiel). Im Zug wählt ihr ein neues Habitat-Plättchen, das mit einem Wildtier-Token gepaart ist, legt es an eure anderen an und setzt das Token auf ein passendes Habitat. (Jedes Plättchen zeigt 1–3 Tierarten; pro Habitat maximal ein Token.) Vier Paare liegen offen aus — es sei denn, ihr gebt ein Natur-Token aus und wählt frei.\n\nIdealerweise legt ihr Habitate so, dass zusammenhängendes Gelände Entfragmentierung reduziert und Wildtierkorridore entstehen. Am Ende gibt es Punkte für das größte zusammenhängende Habitat je Typ, mit Bonus, wenn eures größer ist als das der Gegner. Gleichzeitig platziert ihr Wildtier-Token nach zufälligen Zielkarten — Falken wollen Abstand, Füchse viele Nachbarn, Bären Paare. Schafft ihr das?",
+    "categoriesDe": [
+      "Tiere",
+      "Umwelt"
+    ],
+    "mechanicsDe": [
+      "Endspielboni",
+      "Sechseckraster",
+      "Offenes Drafting",
+      "Musterlegen",
+      "Solo / Solitär",
+      "Legespiel",
+      "Variabler Aufbau"
     ]
   },
   "309116": {
@@ -2249,14 +2476,17 @@
     ],
     "descriptionDe": "7 Wonders Duel: Agora bringt das Senatsbrett mit sechs Kammern — Vorteile nach Besitz. Senatskammern über Senator-Karten; wer die Mehrheit der Kammern hat, gewinnt sofort.\n\n1 Senatsbrett\n24 Einflusswürfel (12 bronze, 12 silber)\n13 Senator-Karten (7 Politiker, 6 Verschwörer)\n2 Wunder-Karten\n16 Verschwörungs-Karten\n16 Dekret-Marker\n2 Fortschrittsmarker\n4 Militärmarker\n1 Wertungsblock\n1 Spielhilfe\n1 Regelbuch",
     "categoriesDe": [
-      "Expansion for Base-game",
-      "Ancient",
-      "Card Game",
-      "City Building",
-      "Civilization"
+      "Erweiterung zum Basisspiel",
+      "Antike",
+      "Kartenspiel",
+      "Städtebau",
+      "Zivilisation"
     ],
     "mechanicsDe": [
       "Take That"
+    ],
+    "expandsGameIds": [
+      173346
     ]
   },
   "315200": {
@@ -2273,15 +2503,18 @@
       "Open Drafting",
       "Set Collection"
     ],
-    "descriptionDe": "Fantasy Realms von Bruce Glassco: ziehen, abwerfen, stärkste Kombos — Sekunden zum Lernen.\n\nFantasy Realms: The Cursed Hoard erweitert modular (einzeln oder zusammen):\n\n     Verfluchte Gegenstände: neues Item-Deck; jeder hat ein Item mit mächtigem Effekt (Doppelzug, verdeckte Karten, Extra-Karte behalten) — Nutzung wird am Ende zu Minuspunkten, je stärker der Effekt, desto mehr Verlust.\n     Drei neue Farben: Gebäude, mächtige Outsider, Untote.\n\n47 Karten.",
+    "descriptionDe": "Fantasy Realms von Bruce Glassco: ziehen, abwerfen, stärkste Kombos — Sekunden zum Lernen.\n\nFantasy Realms: The Cursed Hoard erweitert das Original um zwei modulare Erweiterungen (einzeln oder kombiniert):\n\n Verfluchte Gegenstände: neues Item-Deck. Jeder erhält ein Item mit mächtigem Effekt — Doppelzüge, verdeckte Karten, Extra-Karte behalten. Jedes genutzte verfluchte Item wird am Ende zu Minuspunkten — je stärker, desto mehr.\n Drei neue Farben: Gebäude, mythische Outsider, Untote.\n\nEnthält 47 Karten.",
     "categoriesDe": [
-      "Expansion for Base-game",
-      "Card Game",
+      "Erweiterung zum Basisspiel",
+      "Kartenspiel",
       "Fantasy"
     ],
     "mechanicsDe": [
-      "Open Drafting",
-      "Set Collection"
+      "Offenes Drafting",
+      "Sets sammeln"
+    ],
+    "expandsGameIds": [
+      223040
     ]
   },
   "316554": {
@@ -2312,29 +2545,29 @@
       "Variable Player Powers",
       "Worker Placement"
     ],
-    "descriptionDe": "Dune: Imperium verbindet Deckbuilding mit verdeckter Information in Worker Placement — inspiriert von Dune (Legendary-Film und Herbert-Literatur).\n\nAls Anführer eines Großen Hauses des Landsraad hebt ihr Banner, sammelt Truppen und Spione. Krieg droht; im Zentrum Arrakis — Dune.\n\nStart mit einzigartiger Anführerkarte und identischem Deck wie die Gegner; Karten definieren Stärken und Schwächen. Agenten aufs Brett schicken — Deckentwicklung = Strategie: militärisch stärker oder Vorteil bei Kaiser, Spacing Guild, Bene Gesserit, Fremen.\n\nAnders als viele Deckbuilder spielt ihr nicht die ganze Hand auf einmal: zu Rundenbeginn ziehen, abwechselnd je ein Agentenzug (eine Karte), ohne Agenten folgt Reveal — Rest der Karten für Persuasion und Swords. Persuasion kauft Karten, Swords kämpfen um die Conflict-Belohnung.\n\nBesiegt Rivalen, navigiert Fraktionen, sammelt Karten. The Spice must flow!\n\nLinks: Official FAQ, Unofficial FAQ, Automa (Solo/2p) Overview",
+    "descriptionDe": "Dune: Imperium verbindet Deckbau mit verdeckter Information und Arbeiterplatzierung — inspiriert von Dune (Legendary-Film und Herbert-Literatur).\n\nAls Anführer eines Großen Hauses des Landsraad hebt ihr Banner, sammelt Truppen und Spione. Krieg droht; im Zentrum liegt Arrakis — Dune.\n\nIhr startet mit einzigartiger Anführerkarte und identischem Deck wie die Gegner; Karten definieren Stärken und Schwächen. Agenten aufs Brett schicken — Deckentwicklung ist Strategie: militärisch stärker oder Vorteil bei Kaiser, Spacing Guild, Bene Gesserit, Fremen.\n\nAnders als viele Deckbuilder spielt ihr nicht die ganze Hand auf einmal: zu Rundenbeginn zieht ihr, dann abwechselnd je ein Agentenzug (eine Karte); ohne Agenten folgt das Aufdecken — Rest der Karten für Überredung und Schwerter. Überredung kauft Karten, Schwerter kämpfen um die Konflikt-Belohnung.\n\nBesiegt Rivalen, navigiert Fraktionen, sammelt Karten. The Spice must flow!",
     "categoriesDe": [
-      "Movies / TV / Radio theme",
-      "Novel-based",
-      "Political",
-      "Science Fiction"
+      "Film, TV & Radio",
+      "Literaturvorlage",
+      "Politik",
+      "Science-Fiction"
     ],
     "mechanicsDe": [
-      "Card Play Conflict Resolution",
-      "Deck, Bag, and Pool Building",
-      "Delayed Purchase",
-      "Force Commitment",
-      "Increase Value of Unchosen Resources",
-      "Multi-Use Cards",
-      "Open Drafting",
-      "Ownership",
-      "Race",
-      "Solo / Solitaire Game",
+      "Kartenkampf",
+      "Deck-, Beutel- und Poolbildung",
+      "Verzögerter Kauf",
+      "Truppenbindung",
+      "Wert ungenutzter Ressourcen",
+      "Mehrfachnutzbare Karten",
+      "Offenes Drafting",
+      "Besitz",
+      "Wettlauf",
+      "Solo / Solitär",
       "Tags",
       "Take That",
-      "Turn Order: Progressive",
-      "Variable Player Powers",
-      "Worker Placement"
+      "Zugreihenfolge: Progressiv",
+      "Variable Spielerfähigkeiten",
+      "Arbeiterplatzierung"
     ]
   },
   "324090": {
@@ -2357,21 +2590,52 @@
       "Variable Player Powers",
       "Worker Placement, Different Worker Types"
     ],
-    "descriptionDe": "„Mit einem Lächeln kommt man weit. Mit Lächeln und Pistole noch weiter.“ — Al Capone\n\nChicago in den Roaring Twenties. Prohibition machte Alkohol illegal; Gangs kämpfen in der Unterwelt um die Stadt. Blut, Einfluss, Macht, Geld — gefährlicher Mix.\n\nIn Scarface 1920 führt ihr eine Gang und wollt Chicago in der Prohibition (1920–33) beherrschen. Jedes Viertel, Schutzgelder, Schmuggel, bestochene Beamte, Polizei auf eurer Seite.\n\nWorker Placement trifft Deckbuilding: Rekruten, Deals, Thugs auf die Straßen, HQ ausbauen — und dreckige Jobs.\n\nJede Gang hat eigene Boss-Fähigkeiten und Siegwege — aber Rivalen mit demselben Ziel und Eliot Ness mit den Feds.",
+    "descriptionDe": "„Mit einem Lächeln kommt man weit. Mit Lächeln und Pistole noch weiter.“ — Al Capone\n\nChicago in den Roaring Twenties. Die Prohibition machte Alkohol illegal; Gangs kämpfen in der Unterwelt um die Stadt. Blut, Einfluss, Macht, Geld — ein gefährlicher Mix.\n\nIn Scarface 1920 führt ihr eine Gang und wollt Chicago in der Prohibition (1920–33) beherrschen. Jedes Viertel, Schutzgelder, Schmuggel, bestochene Beamte, Polizei auf eurer Seite.\n\nArbeiterplatzierung trifft Deckbau: Rekruten, Deals, Schläger auf die Straßen, HQ ausbauen — und dreckige Jobs.\n\nJede Gang hat eigene Boss-Fähigkeiten und Siegwege — aber Rivalen mit demselben Ziel und Eliot Ness mit den Feds.",
     "categoriesDe": [
-      "Economic",
+      "Wirtschaft",
       "Mafia"
     ],
     "mechanicsDe": [
-      "Area Majority / Influence",
-      "Area Movement",
-      "Deck, Bag, and Pool Building",
-      "End Game Bonuses",
-      "Hand Management",
-      "Open Drafting",
+      "Gebietsherrschaft / Einfluss",
+      "Gebietbewegung",
+      "Deck-, Beutel- und Poolbildung",
+      "Endspielboni",
+      "Handmanagement",
+      "Offenes Drafting",
+      "Solo / Solitär",
+      "Variable Spielerfähigkeiten",
+      "Arbeiterplatzierung, verschiedene Arbeitertypen"
+    ]
+  },
+  "338834": {
+    "id": 338834,
+    "description": "Crimes have taken place all over the city, and you want to figure out exactly what's happened, so you'll need to look closely at the giant city map (75 x 110 cm) to find all the hidden information and trace the trails of those who had it in for their foes.\n\nMicroMacro: Crime City &ndash; Full House includes 16 cases for you to solve. Each case includes a number of cards that ask you to find something on the map or uncover where someone has gone or otherwise reveal information relevant to a case. The city map serves as a map in time as well as space, so you'll typically find people in multiple locations throughout the streets and buildings, and you need to piece together what happened, whether by going through the case card by card or by reading only the starting card in the case and trying to figure out everything that happened for yourself. Will you be able to answer all questions about the case without fail?\n\nUnlike the original MicroMacro: Crime City, Full House marks each case with symbols so that parents can decide which cases the youngest investigators are cleared to research.",
+    "image": "https://cf.geekdo-images.com/3KhvccYEeQe71Tv5Hy6rAw__itemheader/img/M79EIFYDgDdI0-ffEUmpPnb8Xgc=/800x450/filters:quality(30):strip_icc()/pic6703122.jpg",
+    "thumbnail": "https://cf.geekdo-images.com/bNuZIssobDbFYaLbgMofgw__itemrep/img/lV9teFwDwT0Qcep3TKOp4Ojc4dQ=/fit-in/246x300/filters:strip_icc()/pic6242068.jpg",
+    "categories": [
+      "Deduction",
+      "Murder / Mystery"
+    ],
+    "mechanics": [
+      "Cooperative Game",
+      "Deduction",
+      "Scenario / Mission / Campaign Game",
       "Solo / Solitaire Game",
-      "Variable Player Powers",
-      "Worker Placement, Different Worker Types"
+      "Storytelling",
+      "Team-Based Game"
+    ],
+    "descriptionDe": "Überall in der Stadt sind Verbrechen geschehen — ihr wollt genau wissen, was passiert ist. Dafür müsst ihr die riesige Stadtkarte (75 × 110 cm) genau studieren, versteckte Hinweise finden und den Spuren derer folgen, die ihren Feinden nachstellten.\n\nMicroMacro: Crime City – Full House enthält 16 Fälle. Jeder Fall hat Karten, die euch bitten, etwas auf der Karte zu finden, einen Aufenthaltsort aufzudecken oder Informationen zu einem Verbrechen zu liefern. Die Karte ist Karte in Raum und Zeit — Personen tauchen an mehreren Orten auf, und ihr müsst zusammenfügen, was geschah. Schafft ihr es, alle Fragen eines Falls fehlerfrei zu beantworten?\n\nAnders als beim Original markiert Full House jeden Fall mit Symbolen, damit Eltern entscheiden können, welche Fälle für jüngere Detektive geeignet sind.",
+    "categoriesDe": [
+      "Deduktion",
+      "Krimi / Mystery"
+    ],
+    "mechanicsDe": [
+      "Kooperatives Spiel",
+      "Deduktion",
+      "Szenario-, Missions- & Kampagnenspiel",
+      "Solo / Solitär",
+      "Geschichtenerzählen",
+      "Teams"
     ]
   },
   "341169": {
@@ -2393,20 +2657,20 @@
       "Track Movement",
       "Variable Set-up"
     ],
-    "descriptionDe": "Amerika im 19. Jahrhundert: Ihr seid Rancher und treibt Rinder von Texas nach Kansas City, Versand per Zug — Geld und Siegpunkte. In Kansas City soll die wertvollste Herde mit. The Great Western Trail verlangt gute Herde und kluges Nutzen der Gebäude am Weg. Cowboys, Handwerker, Ingenieure für die Eisenbahn — wer am meisten VP hat, gewinnt.\n\nDie zweite Edition enthält Soloregeln (1–4 Spieler).\n\nSecond Edition:\n\nErinnert ihr euch an den Wilden Westen? Die Zeiten ändern sich! Neuer Solo-Gegner, Landschaften, neue Rinderrasse Simmental, zwei neue doppelseitige Gebäude (#11 & 12), zwölf Exchange Tokens (aus Rails of North) für mehr Interaktion, vier neue Master Tiles.\n\n— Beschreibung vom Verlag",
+    "descriptionDe": "Amerika im 19. Jahrhundert: Ihr seid Rancher und treibt eure Rinder immer wieder von Texas nach Kansas City, wo ihr sie per Zug verschickt. Das bringt euch Geld und Siegpunkte. Bei jeder Ankunft in Kansas City wollt ihr natürlich die wertvollste Herde dabei haben. Der „Great Western Trail“ verlangt jedoch nicht nur eine gesunde Herde, sondern auch einen klugen Umgang mit den verschiedenen Gebäuden am Weg. Zudem lohnt sich fähiges Personal: Cowboys zur Verbesserung der Herde, Handwerker für eigene Gebäude oder Ingenieure für die wichtige Eisenbahnlinie.\n\nWer Herde und Chancen des Great Western Trail geschickt steuert und Fallstricke meidet, holt sich die meisten Siegpunkte und gewinnt.\n\nDie zweite Edition enthält Soloregeln — 1–4 Spieler.\n\nZweite Edition:\n\nErinnert ihr euch an die alten Tage im Westen? Die Zeiten ändern sich! Vom neuen Solo-Gegner bis zu atemberaubenden Landschaften — ihr wisst kaum, wo ihr anfangen sollt. Und es gibt eine neue Rinderrasse zum Verkauf!\n\nGreat Western Trail ist das vielfach gelobte Viehzucht-Spiel von Alexander Pfister. Ihr treibt eure Herde über die Prärie des Mittleren Westens nach Kansas City — aber Achtung: Andere Cowboys teilen den Pfad mit euch. Aufsitzen!\n\nÄnderungen in der zweiten Edition:\n\n Brandneue Grafik von Chris Quilliams\n Solo-Modus: ein neuer Herausforderer im Westen\n Doppellagige Spielerbretter\n Neue Rinderrasse: Simmental\n Zwei neue doppelseitige Gebäude (#11 und 12)\n Zwölf Austausch-Token (erstmals in der Erweiterung Rails of North) für mehr Interaktion\n Vier neue Meisterplättchen für mehr Strategie, Wiederspielwert und Herausforderungen\n\n— Verlagsbeschreibung",
     "categoriesDe": [
-      "American West",
-      "Animals"
+      "Wilder Westen",
+      "Tiere"
     ],
     "mechanicsDe": [
-      "Deck, Bag, and Pool Building",
-      "Hand Management",
-      "Ownership",
-      "Set Collection",
-      "Solo / Solitaire Game",
+      "Deck-, Beutel- und Poolbildung",
+      "Handmanagement",
+      "Besitz",
+      "Sets sammeln",
+      "Solo / Solitär",
       "Tags",
-      "Track Movement",
-      "Variable Set-up"
+      "Streckenbewegung",
+      "Variabler Aufbau"
     ]
   },
   "373106": {
@@ -2430,18 +2694,18 @@
     ],
     "descriptionDe": "Sky Team ist ein reines Zwei-Spieler-Kooperationsspiel: Pilot und Copilot eines Airliners. Gemeinsam an verschiedenen Flughäfen landen.\n\nStille Würfelzuweisung im Cockpit: Achse, Geschwindigkeit, Klappen, Fahrwerk, Turm, Kaffee für bessere Konzentration und Würfelwerte.\n\nZu viel Neigung = Strömung; Überflug; Kollision — Spiel verloren, Lizenz weg, vermutlich das Leben.\n\nMontreal bis Tokyo, jedes Flughafen eigene Herausforderungen. Turbulenz macht die Landung holprig.\n\n— Beschreibung vom Verlag",
     "categoriesDe": [
-      "Aviation / Flight",
-      "Dice"
+      "Luftfahrt",
+      "Würfel"
     ],
     "mechanicsDe": [
-      "Communication Limits",
-      "Cooperative Game",
-      "Dice Rolling",
-      "Scenario / Mission / Campaign Game",
-      "Turn Order: Progressive",
-      "Variable Player Powers",
-      "Variable Set-up",
-      "Worker Placement with Dice Workers"
+      "Kommunikationsbeschränkung",
+      "Kooperatives Spiel",
+      "Würfeln",
+      "Szenario-, Missions- & Kampagnenspiel",
+      "Zugreihenfolge: Progressiv",
+      "Variable Spielerfähigkeiten",
+      "Variabler Aufbau",
+      "Arbeiterplatzierung mit Würfelarbeitern"
     ]
   },
   "397931": {
@@ -2463,20 +2727,47 @@
       "Set Collection",
       "Solo / Solitaire Game"
     ],
-    "descriptionDe": "Deep Regrets ist ein bedauerliches Angelspiel: immer schrecklichere Dinge aus dem Meer. Essen, verkaufen, präparieren, Reue tragen — zu weit gehen und spiralen zum Ende.\n\nZu Beginn jedes Zugs Würfel für die Stärke der Runde; bleibt ihr auf See oder kehrt ihr für Verkauf, Proviant und Energie zurück?\n\nNeun Fischschwärme in drei Tiefen — Schattengrößen ablesen, was ihr fangen könnt und ob ihr es riskiert. Fische umdrehen, Würfel ausgeben, sammeln — Reveal- und Catch-Fähigkeiten! Mehr Grauen = Reue-Karten: Wahnsinn steigt, aber mehr Würfel und wertvollere bizarre Fische. Am Ende wirft der Spieler mit den meisten Reue-Karten sein wertvollstes Präparat weg.\n\nSolo/Koop: Ichthyologe fängt und katalogisiert jeden Fisch über viele Partien; am Ende Fische im Wert der Reue abwerfen; Katalog hilft im Multiplayer.\n\n— Beschreibung vom Designer",
+    "descriptionDe": "Deep Regrets ist ein bedauerliches Angelspiel: immer schrecklichere Dinge aus dem Meer. Entscheidet, was ihr esst, verkauft, präpariert und wie viele Bedauern ihr mitnehmt, während ihr euch zu weit vorwagt — strategischer Horror auf hoher See.\n\nZu Beginn jeder Runde würfelt ihr mit speziellen Angelausrüstungswürfeln für eure Stärke, dann bleibt ihr auf See oder kehrt in den Hafen zurück, um Fisch zu verkaufen, Proviant zu kaufen und Energie aufzuladen.\n\nNeun Fischschwärme auf drei Tiefen — schätzt Schattengrößen ab, was ihr fangen könnt und ob sich das Risiko lohnt. Fische aufdecken, Würfel ausgeben, zur Sammlung hinzufügen — aber Vorsicht vor Aufdeck- und Fangfähigkeiten! Je mehr Schreckliches ihr seht, desto mehr Bedauern-Karten — sie steigern den Wahnsinn, geben aber mehr Würfel und erhöhen den Wert seltener Fische. Am Ende verliert, wer die meisten Bedauern hat, seinen wertvollsten präparierten Fisch.\n\nSolo-Modus (auch kooperativ): ihr seid Ichthyologe auf Mission, jeden Fisch zu fangen und zu katalogisieren. Über Dutzende Partien dokumentiert ihr Namen, Tiefen, Werte und Schwierigkeiten auf einem Katalogblatt.",
     "categoriesDe": [
-      "Dice",
+      "Würfel",
       "Horror",
-      "Nautical"
+      "Seefahrt"
     ],
     "mechanicsDe": [
+      "Kooperatives Spiel",
+      "Würfeln",
+      "Markt",
+      "Push-your-Luck",
+      "Neu-Würfeln und Festhalten",
+      "Sets sammeln",
+      "Solo / Solitär"
+    ]
+  },
+  "398162": {
+    "id": 398162,
+    "description": "Welcome to Crime City - a city where crime lurks around every corner. Fatal secrets, sneaky attacks and cold-blooded murders are the order of the day here.\n\nMicroMacro is a cooperative detective game. Together you will solve tricky criminal cases, determine motives, find evidence and convict the perpetrators.\n\nAn attentive eye is just as important as creative combination skills!\n\nShowdown is the fourth and final part of the MicroMacro: Crime City series.\n\nA new city map with brand new criminal cases awaits you. It is a standalone game. The 16 cases contained here can be played without knowledge of the first parts.\n\n&mdash;description from the publisher (translated)",
+    "image": "https://cf.geekdo-images.com/pPbsdsC6yIBEv6Oav0QZDw__itemheader/img/tahiHov3pZuDDBJzKezWqqj-fHI=/800x450/filters:quality(30):strip_icc()/pic8263297.jpg",
+    "thumbnail": "https://cf.geekdo-images.com/9y3smbtFTGqNjmkMhKFq1w__itemrep/img/TdDJHcGXb-FrMEMz50UgM_IDHMA=/fit-in/246x300/filters:strip_icc()/pic8987382.png",
+    "categories": [
+      "Deduction",
+      "Murder / Mystery"
+    ],
+    "mechanics": [
       "Cooperative Game",
-      "Dice Rolling",
-      "Market",
-      "Push Your Luck",
-      "Re-rolling and Locking",
-      "Set Collection",
+      "Deduction",
+      "Scenario / Mission / Campaign Game",
       "Solo / Solitaire Game"
+    ],
+    "descriptionDe": "Willkommen in Crime City — einer Stadt, in der hinter jeder Ecke ein Verbrechen lauert. Tödliche Geheimnisse, hinterhältige Angriffe und kaltschnäuzige Morde gehören hier zum Alltag.\n\nMicroMacro ist ein kooperatives Detektivspiel. Gemeinsam löst ihr knifflige Kriminalfälle, ermittelt Motive, findet Beweise und überführt die Täter.\n\nEin aufmerksames Auge ist ebenso wichtig wie Kombinationsgeschick!\n\nShowdown ist der vierte und letzte Teil der MicroMacro: Crime City-Reihe.\n\nEine neue Stadtkarte mit brandneuen Fällen erwartet euch. Eigenständig spielbar — die 16 Fälle brauchen kein Wissen aus den vorherigen Teilen.",
+    "categoriesDe": [
+      "Deduktion",
+      "Krimi / Mystery"
+    ],
+    "mechanicsDe": [
+      "Kooperatives Spiel",
+      "Deduktion",
+      "Szenario-, Missions- & Kampagnenspiel",
+      "Solo / Solitär"
     ]
   },
   "425549": {
@@ -2495,17 +2786,37 @@
       "Simultaneous Action Selection",
       "Variable Phase Order"
     ],
-    "descriptionDe": "Städte auf dem Mond! Die Krönung der Menschheit — nicht mehr an die Erde gebunden; der Mond als Sprungbrett zu den Sternen. Raketen voller Vorräte und Kolonisten, Roboter bereit. Alles geplant, kein Scheitern möglich. Zum Mond!\n\nMoon Colony Bloodbath ist Engine-Building, Engine-Losing mit gemeinsamem Deck: viel Schlimmes für eure Kolonie, manches Positives, manches zum Ausbauen.\n\nPro Zug eine Karte vom gemeinsamen Deck (vier Arbeit, zwei Trouble, zwei Twists). Arbeit gleichzeitig: abbauen, farmen, forschen, bauen, Kisten nachfüllen. Twists variieren. Trouble legt Ereignisse ins Deck — Hunger, Papierkram, Glitches, Unfälle, Lecks, Stromausfall — beim Mischen wieder vorbereiten.\n\nSpieler fügen Perks (nur für sich) oder Entwicklungen (für alle) hinzu.\n\nEnde wenn eine Mondkolonie keine Menschen mehr hat oder das Ereignisdeck leer ist — meiste Überlebende gewinnen.",
+    "descriptionDe": "Städte auf dem Mond! Die Krönung der Menschheit — nicht mehr an die Erde gebunden; der Mond als Sprungbrett zu den Sternen. Raketen voller Vorräte und Kolonisten, Roboter bereit. Alles geplant, kein Scheitern möglich. Zum Mond!\n\nMoon Colony Bloodbath ist ein Aufbauspiel mit gemeinsamem Deck und viel Gegenwind: viel Schlimmes für eure Kolonie, manches Positives, manches zum Ausbauen.\n\nPro Zug wird eine Karte vom gemeinsamen Deck aufgedeckt (vier Arbeits-, zwei Ärger- und zwei Wendungskarten). Bei Arbeitskarten wählt ihr gleichzeitig: abbauen, farmen, forschen, bauen oder Kisten nachfüllen. Wendungskarten variieren je nach Spiel. Ärgerkarten legen Ereignisse ins Deck — Hunger, Papierkram, Störungen, Unfälle, Lecks, Stromausfall — beim Mischen bereitet ihr euch erneut darauf vor.\n\nIhr könnt Vorteilskarten (nur für euch) oder Entwicklungen (für alle) ins Deck mischen.\n\nEnde, wenn eine Mondkolonie keine Menschen mehr hat oder das Ereignisdeck leer ist — die meisten Überlebenden gewinnen.",
     "categoriesDe": [
-      "Card Game",
-      "Science Fiction"
+      "Kartenspiel",
+      "Science-Fiction"
     ],
     "mechanicsDe": [
-      "Deck, Bag, and Pool Building",
-      "Delayed Purchase",
-      "Events",
-      "Simultaneous Action Selection",
-      "Variable Phase Order"
+      "Deck-, Beutel- und Poolbildung",
+      "Verzögerter Kauf",
+      "Ereignisse",
+      "Gleichzeitige Aktionswahl",
+      "Variable Phasenreihenfolge"
+    ]
+  },
+  "450175": {
+    "id": 450175,
+    "description": "The Hitster version with an exclusive collection of famous rock songs and classics compiled by Germany's Rock Radio Bob!",
+    "image": "https://cf.geekdo-images.com/Ln6wFgi5K2EHJs-_eI6h3A__itemheader/img/-tViVD8zCViU026TUWkOOhgM-4M=/800x450/filters:quality(30):strip_icc()/pic8997807.jpg",
+    "thumbnail": "https://cf.geekdo-images.com/X_Mcu2HbYx1tnnWiztAKqg__itemrep/img/oq0FL5muRLZvPGN28naLttOs8sc=/fit-in/246x300/filters:strip_icc()/pic9054792.png",
+    "categories": [
+      "Card Game",
+      "Music",
+      "Party Game",
+      "Trivia"
+    ],
+    "mechanics": [],
+    "descriptionDe": "Die Hitster-Version mit einer exklusiven Sammlung berühmter Rock-Songs und Klassiker, zusammengestellt von Deutschlands Rock Radio Bob!",
+    "categoriesDe": [
+      "Kartenspiel",
+      "Musik",
+      "Partyspiel",
+      "Wissensspiel"
     ]
   },
   "452264": {
@@ -2533,22 +2844,22 @@
     ],
     "descriptionDe": "Von Roxley und Gavan Brown (Mitdesigner von Brass: Birmingham): Brass: Pittsburgh — der industrielle Boom des Gilded Age im nordöstlichen „Steel Belt“ (1865–1913). Ihr seid skrupellose Industrietitanen à la Cornelius Vanderbilt, Andrew Carnegie, John D. Rockefeller, Henry Frick und baut Schienen, Pipelines, Stahlwerke, Ölraffinerien.\n\nAuf Martin Wallaces Brass-System: eigenständig mit neuen Mechanismen und Inhalten, gleicher Struktur und strategischer Tiefe wie Brass.",
     "categoriesDe": [
-      "Economic",
-      "Industry / Manufacturing"
+      "Wirtschaft",
+      "Industrie / Fertigung"
     ],
     "mechanicsDe": [
-      "Chaining",
-      "Hand Management",
-      "Income",
-      "Loans",
-      "Market",
-      "Multi-Use Cards",
-      "Network and Route Building",
-      "Ownership",
-      "Tech Trees / Tech Tracks",
-      "Tile Placement",
-      "Turn Order: Stat-Based",
-      "Variable Set-up"
+      "Verkettung",
+      "Handmanagement",
+      "Einkommen",
+      "Darlehen",
+      "Markt",
+      "Mehrfachnutzbare Karten",
+      "Netzwerk- und Routenbau",
+      "Besitz",
+      "Technologiebäume / -pfade",
+      "Legespiel",
+      "Zugreihenfolge: Attributbasiert",
+      "Variabler Aufbau"
     ]
   }
 }

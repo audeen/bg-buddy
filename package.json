@@ -18,6 +18,7 @@
     "prefetch-geekdo": "tsx scripts/prefetch-geekdo.ts",
     "translate-enrichment": "tsx scripts/translate-enrichment.ts",
     "test:enrichment-cache": "tsx scripts/test-enrichment-cache.ts",
+    "test:expansion-links": "tsx scripts/test-expansion-links.ts",
     "test:duel-pairs": "tsx scripts/test-duel-pairs.ts",
     "test:pick-phase": "tsx scripts/test-pick-phase.ts",
     "test:dummy-meetups": "tsx scripts/test-dummy-meetups.ts"

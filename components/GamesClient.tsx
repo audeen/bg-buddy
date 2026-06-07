@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { GameCard } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameDetailData } from "@/components/GameDetailView";
@@ -8,11 +8,17 @@ import type { GameDetailData } from "@/components/GameDetailView";
 export function GamesClient({
   games,
   playerCount,
+  expansionBaseIds,
 }: {
   games: GameDetailData[];
   playerCount?: number;
+  expansionBaseIds: number[];
 }) {
   const [detailGame, setDetailGame] = useState<GameDetailData | null>(null);
+  const expansionBaseSet = useMemo(
+    () => new Set(expansionBaseIds),
+    [expansionBaseIds],
+  );
 
   if (games.length === 0) {
     return (
@@ -31,6 +37,7 @@ export function GamesClient({
             <GameCard
               game={g}
               playerCount={playerCount}
+              hasOwnedExpansion={expansionBaseSet.has(g.id)}
               onClick={() => setDetailGame(g)}
             />
           </li>

@@ -42,6 +42,7 @@ export function PickClient({
   picksLocked,
   readyForDuels,
   pickPhaseSummary,
+  expansionBaseIds,
 }: {
   meetupId: string;
   expected: number;
@@ -51,7 +52,12 @@ export function PickClient({
   picksLocked: boolean;
   readyForDuels: boolean;
   pickPhaseSummary: PickPhaseSummary;
+  expansionBaseIds: number[];
 }) {
+  const expansionBaseSet = useMemo(
+    () => new Set(expansionBaseIds),
+    [expansionBaseIds],
+  );
   const [selected, setSelected] = useState(expected);
   const [points, setPoints] = useState<Record<string, number>>(() => {
     const m: Record<string, number> = {};
@@ -261,6 +267,7 @@ export function PickClient({
                   playerCount={selected}
                   selected={gamePoints > 0}
                   selectedPoints={gamePoints}
+                  hasOwnedExpansion={expansionBaseSet.has(g.id)}
                   disabled={expectedLocked}
                   onClick={() => cycleGamePoints(g.id)}
                   onDetailsClick={() => setDetailGame(g)}
