@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { logoutAction } from "@/app/actions";
+import { HeaderChrome } from "@/components/HeaderChrome";
 import { HeaderMenu } from "@/components/HeaderMenu";
 import { HeaderNavLink } from "@/components/HeaderNavLink";
 
@@ -8,7 +9,7 @@ export async function Header() {
   const user = await getCurrentUser();
 
   return (
-    <header className="border-b border-[var(--border)] bg-[var(--surface)] sticky top-0 z-20 safe-top header-shadow">
+    <HeaderChrome>
       <div className="container-app flex items-center justify-between gap-3 py-3 min-h-[var(--header-height)]">
         <Link
           href="/"
@@ -48,6 +49,6 @@ export async function Header() {
           )}
         </div>
       </div>
-    </header>
+    </HeaderChrome>
   );
 }

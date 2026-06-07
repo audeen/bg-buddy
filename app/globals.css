@@ -286,6 +286,13 @@ body {
     position: sticky;
     top: var(--header-height);
     z-index: 10;
+    transition: top 0.25s ease;
+  }
+
+  @media (max-width: 767px) {
+    html.scroll-chrome-hidden .sticky-below-header {
+      top: env(safe-area-inset-top, 0px);
+    }
   }
 
   .sticky-above-nav {
@@ -956,6 +963,16 @@ body {
     min-height: 0;
   }
 
+  .header-chrome {
+    transition: transform 0.25s ease;
+  }
+
+  @media (max-width: 767px) {
+    .header-chrome.chrome-hidden {
+      transform: translateY(-100%);
+    }
+  }
+
   .bottom-nav-chrome {
     transition: transform 0.25s ease;
   }
@@ -965,8 +982,10 @@ body {
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .header-chrome,
     .bottom-nav-chrome,
     .picker-sticky-bar,
+    .sticky-below-header,
     .pb-nav,
     .pb-sticky-picker,
     .pb-sticky-picker-at-limit,
