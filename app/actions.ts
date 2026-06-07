@@ -280,6 +280,28 @@ export async function setPickPointsAction(
   });
   if (!meetup) return { error: "Treffen nicht gefunden." };
 
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: {
+      isExpansion: true,
+      listedInCollection: true,
+      meetupGuestGames: {
+        where: { meetupId },
+        select: { id: true },
+        take: 1,
+      },
+    },
+  });
+  if (!game) return { error: "Spiel nicht gefunden." };
+  if (game.isExpansion) {
+    return { error: "Stimmen können nur für Basisspiele vergeben werden." };
+  }
+  const inPickPool =
+    game.listedInCollection || game.meetupGuestGames.length > 0;
+  if (!inPickPool) {
+    return { error: "Dieses Spiel ist nicht in der Abstimmungsliste." };
+  }
+
   const beforeData = await loadMeetupParticipantData(meetupId, prisma);
   const beforeCount = beforeData?.registeredCount ?? 0;
 

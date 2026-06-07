@@ -311,9 +311,14 @@ export function GameCard(props: ButtonProps | LinkProps) {
     expansionNames,
   } = useDisplayedGame(game, ownedExpansions);
 
-  const cardClass = `card card-game w-full ${selected ? "card-game-selected" : ""} ${
-    disabled ? "card-game-disabled opacity-50 cursor-not-allowed" : ""
-  } ${className}`;
+  const { onClick: cardOnClick, onActivate } = props as ButtonProps;
+  const pickMode = !!onActivate;
+  const onBaseView = viewExpansionId == null;
+  const showVoteState = !pickMode || onBaseView;
+
+  const cardClass = `card card-game w-full ${
+    showVoteState && selected ? "card-game-selected" : ""
+  } ${disabled ? "card-game-disabled opacity-50 cursor-not-allowed" : ""} ${className}`;
 
   const bodyProps = {
     game: displayedGame,
@@ -352,17 +357,16 @@ export function GameCard(props: ButtonProps | LinkProps) {
         <CardCover {...coverProps} />
         <CardBody {...bodyProps} />
         {expansionBadge}
-        {points > 0 && <StarsBadge points={points} />}
+        {showVoteState && points > 0 && <StarsBadge points={points} />}
       </Link>
     );
   }
-
-  const { onClick: cardOnClick, onActivate } = props as ButtonProps;
 
   const activateProps = onActivate
     ? {
         onPointerUp: (e: PointerEvent<HTMLButtonElement>) => {
           if (disabled || e.button !== 0) return;
+          if (pickMode && !onBaseView) return;
           e.preventDefault();
           onActivate();
         },
@@ -388,7 +392,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
         </button>
         <DetailsButton onClick={() => onDetailsClick(displayedGame)} />
         {expansionBadge}
-        {points > 0 && <StarsBadge points={points} />}
+        {showVoteState && points > 0 && <StarsBadge points={points} />}
       </div>
     );
   }
@@ -403,7 +407,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
       <CardCover {...coverProps} />
       <CardBody {...bodyProps} />
       {expansionBadge}
-      {points > 0 && <StarsBadge points={points} />}
+      {showVoteState && points > 0 && <StarsBadge points={points} />}
     </button>
   );
 }

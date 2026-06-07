@@ -30,7 +30,8 @@
     "test:game-tags": "tsx scripts/test-game-tags.ts",
     "test:effective-player-count": "tsx scripts/test-effective-player-count.ts",
     "test:barcode-lookup": "tsx scripts/test-barcode-lookup.ts",
-    "test:meetup-guest-games": "tsx scripts/test-meetup-guest-games.ts"
+    "test:meetup-guest-games": "tsx scripts/test-meetup-guest-games.ts",
+    "test:pick-base-only": "tsx scripts/test-pick-base-only.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
