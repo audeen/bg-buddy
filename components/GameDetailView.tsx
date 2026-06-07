@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ExpansionFamilyNav } from "@/components/ExpansionFamilyNav";
 import { FilterChipButton } from "@/components/FilterChipButton";
 import { GameCover } from "@/components/GameCover";
 import type { GameCardGame } from "@/components/GameCard";
@@ -40,6 +41,7 @@ type GameDetailViewProps = {
   ownedExpansions?: GameCardGame[];
   onSelectExpansion?: (id: number) => void;
   onSelectBase?: () => void;
+  baseGameId?: number;
   baseGameName?: string;
 };
 
@@ -54,6 +56,7 @@ export function GameDetailView({
   ownedExpansions,
   onSelectExpansion,
   onSelectBase,
+  baseGameId,
   baseGameName,
 }: GameDetailViewProps) {
   const time = playtime(game.minPlaytime, game.maxPlaytime, game.playingTime);
@@ -66,14 +69,13 @@ export function GameDetailView({
     (game.bestPlayerCounts.includes(playerCount) ||
       game.recommendedPlayerCounts.includes(playerCount));
 
-  const showExpansionList =
+  const showExpansionNav =
     ownedExpansions &&
     ownedExpansions.length > 0 &&
     onSelectExpansion &&
-    !game.isExpansion;
-
-  const showBackToBase =
-    game.isExpansion && baseGameName && onSelectBase;
+    onSelectBase &&
+    baseGameId != null &&
+    baseGameName;
 
   return (
     <div className="flex flex-col gap-6">
@@ -137,34 +139,15 @@ export function GameDetailView({
             {game.isExpansion && <span className="chip">Erweiterung</span>}
           </div>
 
-          {showBackToBase && (
-            <button
-              type="button"
-              className="text-sm text-[var(--accent)] hover:underline w-fit text-left"
-              onClick={onSelectBase}
-            >
-              ← Zurück zu {baseGameName}
-            </button>
-          )}
-
-          {showExpansionList && (
-            <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-semibold">
-                Erweiterungen in der Sammlung
-              </span>
-              <div className="chip-row">
-                {ownedExpansions.map((exp) => (
-                  <button
-                    key={exp.id}
-                    type="button"
-                    className="chip hover:bg-[var(--surface-2)]"
-                    onClick={() => onSelectExpansion(exp.id)}
-                  >
-                    {exp.name}
-                  </button>
-                ))}
-              </div>
-            </div>
+          {showExpansionNav && (
+            <ExpansionFamilyNav
+              baseGame={{ id: baseGameId, name: baseGameName }}
+              expansions={ownedExpansions}
+              activeId={game.isExpansion ? game.id : null}
+              onSelectBase={onSelectBase}
+              onSelectExpansion={onSelectExpansion}
+              variant="detail"
+            />
           )}
 
           {showPlayerCountHint && (

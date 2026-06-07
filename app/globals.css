@@ -421,6 +421,14 @@ body {
     gap: 0.375rem;
   }
 
+  .chip-row-scroll {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 0.125rem;
+  }
+
   .chip-interactive {
     cursor: pointer;
     transition:

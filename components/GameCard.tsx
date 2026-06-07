@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { GameCover } from "@/components/GameCover";
+import { ExpansionFamilyNav } from "@/components/ExpansionFamilyNav";
 import {
   expansionAvailableLabel,
   expansionCountLabel,
@@ -108,29 +109,25 @@ function CardCover({ game }: { game: GameCardGame }) {
 
 function CardBody({
   game,
+  baseGame,
   playerCount,
   activeFilters,
   filterMode,
   ownedExpansions,
   viewExpansionId,
-  onShowExpansions,
   onSelectBase,
+  onSelectExpansion,
 }: {
   game: GameCardGame;
+  baseGame: GameCardGame;
   playerCount?: number;
   activeFilters?: GameFilters;
   filterMode?: boolean;
   ownedExpansions: GameCardGame[];
   viewExpansionId: number | null;
-  onShowExpansions: () => void;
   onSelectBase: () => void;
+  onSelectExpansion: (id: number) => void;
 }) {
-  const showExpansionHint =
-    ownedExpansions.length > 0 && viewExpansionId == null;
-
-  const showBackToBase =
-    ownedExpansions.length > 0 && viewExpansionId != null;
-
   return (
     <div
       className="flex flex-col gap-2.5 flex-1"
@@ -145,29 +142,15 @@ function CardBody({
         activeFilters={activeFilters}
         filterMode={filterMode}
       />
-      {showExpansionHint && (
-        <button
-          type="button"
-          className="chip chip-meta w-fit text-left"
-          onClick={(e) => {
-            e.stopPropagation();
-            onShowExpansions();
-          }}
-        >
-          {expansionAvailableLabel(ownedExpansions.length)}
-        </button>
-      )}
-      {showBackToBase && (
-        <button
-          type="button"
-          className="chip chip-meta w-fit text-left"
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelectBase();
-          }}
-        >
-          Basisspiel
-        </button>
+      {ownedExpansions.length > 0 && (
+        <ExpansionFamilyNav
+          baseGame={baseGame}
+          expansions={ownedExpansions}
+          activeId={viewExpansionId}
+          onSelectBase={onSelectBase}
+          onSelectExpansion={onSelectExpansion}
+          variant="card"
+        />
       )}
       {game.isExpansion && <span className="chip w-fit">Erweiterung</span>}
     </div>
@@ -251,17 +234,12 @@ function useDisplayedGame(game: GameCardGame, ownedExpansions: GameCardGame[]) {
   const showExpansionBadge =
     !game.isExpansion && ownedExpansions.length > 0;
 
-  const showFirstExpansion = () => {
-    if (ownedExpansions.length === 0) return;
-    setViewExpansionId(ownedExpansions[0].id);
-  };
-
   return {
     displayedGame,
     viewExpansionId,
     showExpansionBadge,
     selectBase: () => setViewExpansionId(null),
-    showFirstExpansion,
+    selectExpansion: (id: number) => setViewExpansionId(id),
     expansionNames: ownedExpansions.map((e) => e.name).join(", "),
   };
 }
@@ -287,7 +265,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
     viewExpansionId,
     showExpansionBadge,
     selectBase,
-    showFirstExpansion,
+    selectExpansion,
     expansionNames,
   } = useDisplayedGame(game, ownedExpansions);
 
@@ -297,13 +275,14 @@ export function GameCard(props: ButtonProps | LinkProps) {
 
   const bodyProps = {
     game: displayedGame,
+    baseGame: game,
     playerCount,
     activeFilters,
     filterMode,
     ownedExpansions,
     viewExpansionId,
-    onShowExpansions: showFirstExpansion,
     onSelectBase: selectBase,
+    onSelectExpansion: selectExpansion,
   };
 
   const expansionBadge = showExpansionBadge ? (

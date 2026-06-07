@@ -232,6 +232,7 @@ export function GameDetailModal({
               if (exp) setViewGame(exp as GameDetailData);
             }}
             onSelectBase={() => setViewGame(baseGame)}
+            baseGameId={baseGame.id}
             baseGameName={baseGame.name}
           />
         </div>
