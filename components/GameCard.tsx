@@ -92,17 +92,24 @@ function CardBody({
   ownedExpansions,
   viewExpansionId,
   onShowExpansions,
+  onSelectBase,
 }: {
   game: GameCardGame;
   playerCount?: number;
   ownedExpansions: GameCardGame[];
   viewExpansionId: number | null;
   onShowExpansions: () => void;
+  onSelectBase: () => void;
 }) {
   const showExpansionHint =
     !game.isExpansion &&
     ownedExpansions.length > 0 &&
     viewExpansionId == null;
+
+  const showBackToBase =
+    !game.isExpansion &&
+    ownedExpansions.length > 0 &&
+    viewExpansionId != null;
 
   return (
     <div
@@ -125,6 +132,18 @@ function CardBody({
           {expansionAvailableLabel(ownedExpansions.length)}
         </button>
       )}
+      {showBackToBase && (
+        <button
+          type="button"
+          className="chip chip-meta w-fit text-left"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelectBase();
+          }}
+        >
+          Basis
+        </button>
+      )}
       {game.isExpansion && <span className="chip w-fit">Erweiterung</span>}
     </div>
   );
@@ -143,57 +162,22 @@ function StarsBadge({ points }: { points: number }) {
   );
 }
 
-function ExpansionTabs({
-  ownedExpansions,
-  viewExpansionId,
-  onSelectBase,
-  onCycleExpansions,
+function ExpansionCountBadge({
+  count,
+  expansionNames,
 }: {
-  ownedExpansions: GameCardGame[];
-  viewExpansionId: number | null;
-  onSelectBase: () => void;
-  onCycleExpansions: () => void;
+  count: number;
+  expansionNames: string;
 }) {
-  const tabClass = (active: boolean) =>
-    `shrink-0 h-7 max-w-[8rem] px-2 rounded-full text-[10px] font-bold border tracking-tight truncate ${
-      active
-        ? "bg-[var(--accent)] text-white border-[var(--accent)]"
-        : "bg-[var(--surface)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--surface-2)]"
-    }`;
-
-  const expansionNames = ownedExpansions.map((e) => e.name).join(", ");
-  const onBaseView = viewExpansionId == null;
-
   return (
-    <div
-      className="absolute top-2.5 left-1/2 -translate-x-1/2 z-[1] flex gap-1 max-w-[calc(100%-5.5rem)] overflow-x-auto pointer-events-auto"
+    <span
+      className="absolute top-2.5 left-1/2 -translate-x-1/2 z-[1] shrink-0 h-7 max-w-[8rem] px-2 rounded-full text-[10px] font-bold border tracking-tight truncate bg-[var(--surface)] text-[var(--foreground)] border-[var(--border)] flex items-center justify-center pointer-events-none"
       style={{ boxShadow: "var(--shadow-md)" }}
-      role="tablist"
-      aria-label="Erweiterungen"
-      onClick={(e) => e.stopPropagation()}
+      title={expansionNames}
+      aria-label={expansionAvailableLabel(count)}
     >
-      {!onBaseView && (
-        <button
-          type="button"
-          role="tab"
-          aria-selected={false}
-          className={tabClass(false)}
-          onClick={onSelectBase}
-        >
-          Basis
-        </button>
-      )}
-      <button
-        type="button"
-        role="tab"
-        aria-selected={!onBaseView}
-        title={expansionNames}
-        className={tabClass(!onBaseView)}
-        onClick={onCycleExpansions}
-      >
-        {expansionCountLabel(ownedExpansions.length)}
-      </button>
-    </div>
+      {expansionCountLabel(count)}
+    </span>
   );
 }
 
@@ -226,7 +210,7 @@ function useDisplayedGame(game: GameCardGame, ownedExpansions: GameCardGame[]) {
       ? (ownedExpansions.find((e) => e.id === viewExpansionId) ?? game)
       : game;
 
-  const showExpansionTabs =
+  const showExpansionBadge =
     !game.isExpansion && ownedExpansions.length > 0;
 
   const showFirstExpansion = () => {
@@ -234,28 +218,13 @@ function useDisplayedGame(game: GameCardGame, ownedExpansions: GameCardGame[]) {
     setViewExpansionId(ownedExpansions[0].id);
   };
 
-  const cycleExpansions = () => {
-    if (ownedExpansions.length === 0) return;
-    if (viewExpansionId == null) {
-      setViewExpansionId(ownedExpansions[0].id);
-      return;
-    }
-    if (ownedExpansions.length === 1) {
-      setViewExpansionId(null);
-      return;
-    }
-    const idx = ownedExpansions.findIndex((e) => e.id === viewExpansionId);
-    const next = ownedExpansions[(idx + 1) % ownedExpansions.length];
-    setViewExpansionId(next.id);
-  };
-
   return {
     displayedGame,
     viewExpansionId,
-    showExpansionTabs,
+    showExpansionBadge,
     selectBase: () => setViewExpansionId(null),
     showFirstExpansion,
-    cycleExpansions,
+    expansionNames: ownedExpansions.map((e) => e.name).join(", "),
   };
 }
 
@@ -276,10 +245,10 @@ export function GameCard(props: ButtonProps | LinkProps) {
   const {
     displayedGame,
     viewExpansionId,
-    showExpansionTabs,
+    showExpansionBadge,
     selectBase,
     showFirstExpansion,
-    cycleExpansions,
+    expansionNames,
   } = useDisplayedGame(game, ownedExpansions);
 
   const cardClass = `card card-game w-full ${selected ? "card-game-selected" : ""} ${
@@ -292,14 +261,13 @@ export function GameCard(props: ButtonProps | LinkProps) {
     ownedExpansions,
     viewExpansionId,
     onShowExpansions: showFirstExpansion,
+    onSelectBase: selectBase,
   };
 
-  const expansionTabs = showExpansionTabs ? (
-    <ExpansionTabs
-      ownedExpansions={ownedExpansions}
-      viewExpansionId={viewExpansionId}
-      onSelectBase={selectBase}
-      onCycleExpansions={cycleExpansions}
+  const expansionBadge = showExpansionBadge ? (
+    <ExpansionCountBadge
+      count={ownedExpansions.length}
+      expansionNames={expansionNames}
     />
   ) : null;
 
@@ -308,7 +276,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
       <Link href={props.href} className={`${cardClass} hover:shadow-md relative`}>
         <CardCover game={displayedGame} />
         <CardBody {...bodyProps} />
-        {expansionTabs}
+        {expansionBadge}
         {points > 0 && <StarsBadge points={points} />}
       </Link>
     );
@@ -327,7 +295,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
           <CardBody {...bodyProps} />
         </button>
         <DetailsButton onClick={onDetailsClick} />
-        {expansionTabs}
+        {expansionBadge}
         {points > 0 && <StarsBadge points={points} />}
       </div>
     );
@@ -342,7 +310,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
     >
       <CardCover game={displayedGame} />
       <CardBody {...bodyProps} />
-      {expansionTabs}
+      {expansionBadge}
       {points > 0 && <StarsBadge points={points} />}
     </button>
   );
