@@ -201,6 +201,13 @@ function weightLevelWhere(level: WeightLevel): Prisma.GameWhereInput {
   }
 }
 
+export interface GameFilterContext {
+  /** Base game ids playable at the filtered count only via an owned expansion. */
+  expansionPlayableBaseIds?: number[];
+  /** Base game ids with a best-player count on an owned expansion but not on the base. */
+  expansionBestBaseIds?: number[];
+}
+
 export function buildGameOrderBy(sort: GameSort): Prisma.GameOrderByWithRelationInput[] {
   switch (sort) {
     case "rating-desc":
@@ -212,7 +219,12 @@ export function buildGameOrderBy(sort: GameSort): Prisma.GameOrderByWithRelation
   }
 }
 
-export function buildGameWhere(filters: GameFilters): Prisma.GameWhereInput {
+export function buildGameWhere(
+  filters: GameFilters,
+  ctx: GameFilterContext = {},
+): Prisma.GameWhereInput {
+  const expansionPlayableBaseIds = ctx.expansionPlayableBaseIds ?? [];
+  const expansionBestBaseIds = ctx.expansionBestBaseIds ?? [];
   const clauses: Prisma.GameWhereInput[] = [{ listedInCollection: true }];
 
   if (!filters.includeExpansions) {
@@ -228,10 +240,18 @@ export function buildGameWhere(filters: GameFilters): Prisma.GameWhereInput {
     clauses.push({ mechanics: { has: filters.mechanic } });
   }
   if (filters.players != null) {
+    const n = filters.players;
     clauses.push({
-      AND: [
-        { minPlayers: { lte: filters.players } },
-        { maxPlayers: { gte: filters.players } },
+      OR: [
+        {
+          AND: [
+            { minPlayers: { lte: n } },
+            { maxPlayers: { gte: n } },
+          ],
+        },
+        ...(expansionPlayableBaseIds.length > 0
+          ? [{ isExpansion: false, id: { in: expansionPlayableBaseIds } }]
+          : []),
       ],
     });
   }
@@ -256,7 +276,14 @@ export function buildGameWhere(filters: GameFilters): Prisma.GameWhereInput {
     clauses.push(ratingBlockWhere(filters.rating));
   }
   if (filters.best != null) {
-    clauses.push({ bestPlayerCounts: { has: filters.best } });
+    clauses.push({
+      OR: [
+        { bestPlayerCounts: { has: filters.best } },
+        ...(expansionBestBaseIds.length > 0
+          ? [{ isExpansion: false, id: { in: expansionBestBaseIds } }]
+          : []),
+      ],
+    });
   }
 
   if (clauses.length === 0) return {};

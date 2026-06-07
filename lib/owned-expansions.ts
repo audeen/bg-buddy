@@ -65,9 +65,29 @@ export function serializeExpansionsByBaseId(
 export async function loadOwnedExpansionsByBaseGame(): Promise<
   Map<number, GameCardGame[]>
 > {
-  const expansions = await prisma.game.findMany({
-    where: { isExpansion: true, expandsGameIds: { isEmpty: false } },
-    select: { ...gameCardSelect, expandsGameIds: true },
-  });
+  const expansions = await loadOwnedExpansionRows();
   return buildOwnedExpansionsByBaseGame(expansions);
+}
+
+export const expansionPlayerCountSelect = {
+  minPlayers: true,
+  maxPlayers: true,
+  expandsGameIds: true,
+  bestPlayerCounts: true,
+} as const;
+
+export type OwnedExpansionPlayerRow = {
+  minPlayers: number | null;
+  maxPlayers: number | null;
+  expandsGameIds: number[];
+  bestPlayerCounts: number[];
+};
+
+export async function loadOwnedExpansionRows(): Promise<
+  (ExpansionRow & OwnedExpansionPlayerRow)[]
+> {
+  return prisma.game.findMany({
+    where: { isExpansion: true, expandsGameIds: { isEmpty: false } },
+    select: { ...gameCardSelect, ...expansionPlayerCountSelect },
+  });
 }

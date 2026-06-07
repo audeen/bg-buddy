@@ -8,6 +8,10 @@ import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameDetailData } from "@/components/GameDetailView";
 import { setPickPointsAction } from "@/app/actions";
 import { resolveDetailGameView } from "@/lib/expansion-detail";
+import {
+  effectivePlayerRange,
+  isPlayableWithOwnedExpansions,
+} from "@/lib/effective-player-count";
 import type { PickPhaseSummary } from "@/lib/pick-phase";
 import { nextPickPoints } from "@/lib/pick-points";
 import { MAX_PICK_POINTS, MAX_POINTS_PER_GAME } from "@/lib/vote-limits";
@@ -19,10 +23,8 @@ type DetailState = {
   baseGame: PickGame;
 };
 
-function eligible(g: PickGame, n: number): boolean {
-  const min = g.minPlayers ?? 1;
-  const max = g.maxPlayers ?? 99;
-  return min <= n && n <= max;
+function eligible(g: PickGame, n: number, expansions: GameCardGame[]): boolean {
+  return isPlayableWithOwnedExpansions(g, expansions, n);
 }
 
 function pointsKey(gameId: number, playerCount: number): string {
@@ -103,23 +105,38 @@ export function PickClient({
   const progressPct = (usedPoints / MAX_PICK_POINTS) * 100;
 
   const availableCounts = useMemo(() => {
-    const maxP = games.reduce((m, g) => Math.max(m, g.maxPlayers ?? 0), 0);
+    let maxP = 0;
+    for (const g of games) {
+      const exps = expansionsByBaseId[String(g.id)] ?? [];
+      const range =
+        exps.length > 0 ? effectivePlayerRange(g, exps) : { max: g.maxPlayers };
+      maxP = Math.max(maxP, range.max ?? 0);
+    }
     const counts: number[] = [];
     for (let n = 1; n <= Math.max(maxP, expected); n++) {
-      if (n === expected || games.some((g) => eligible(g, n))) counts.push(n);
+      if (
+        n === expected ||
+        games.some((g) =>
+          eligible(g, n, expansionsByBaseId[String(g.id)] ?? []),
+        )
+      ) {
+        counts.push(n);
+      }
     }
     return counts;
-  }, [games, expected]);
+  }, [games, expected, expansionsByBaseId]);
 
   const visible = useMemo(() => {
-    const filtered = games.filter((g) => eligible(g, selected));
+    const filtered = games.filter((g) =>
+      eligible(g, selected, expansionsByBaseId[String(g.id)] ?? []),
+    );
     return filtered.sort((a, b) => {
       const aGuest = guestIdSet.has(a.id);
       const bGuest = guestIdSet.has(b.id);
       if (aGuest !== bGuest) return aGuest ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
-  }, [games, selected, guestIdSet]);
+  }, [games, selected, guestIdSet, expansionsByBaseId]);
 
   const expectedLocked = picksLocked && selected === expected;
 

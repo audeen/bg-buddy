@@ -51,16 +51,25 @@ type LinkProps = BaseProps & {
 
 function TagRows({
   game,
+  baseGame,
   playerCount,
   activeFilters,
   filterMode,
+  ownedExpansions,
+  onBaseView,
 }: {
   game: GameCardGame;
+  baseGame: GameCardGame;
   playerCount?: number;
   activeFilters?: GameFilters;
   filterMode?: boolean;
+  ownedExpansions: GameCardGame[];
+  onBaseView: boolean;
 }) {
-  const tags = buildGameTags(game, { playerCount });
+  const tags = buildGameTags(game, {
+    playerCount,
+    ownedExpansions: onBaseView ? ownedExpansions : undefined,
+  });
   const { meta, content } = groupGameTags(tags);
 
   if (tags.length === 0) return null;
@@ -138,9 +147,12 @@ function CardBody({
       </span>
       <TagRows
         game={game}
+        baseGame={baseGame}
         playerCount={playerCount}
         activeFilters={activeFilters}
         filterMode={filterMode}
+        ownedExpansions={ownedExpansions}
+        onBaseView={viewExpansionId == null}
       />
       {ownedExpansions.length > 0 && (
         <ExpansionFamilyNav

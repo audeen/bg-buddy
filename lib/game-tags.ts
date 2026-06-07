@@ -1,4 +1,9 @@
 import { playerRange, playtime, weightChipLabel } from "@/lib/format";
+import type { PlayerCountFields } from "@/lib/effective-player-count";
+import {
+  effectivePlayerRange,
+  mergedBestPlayerCounts,
+} from "@/lib/effective-player-count";
 import type { GameFilter } from "@/lib/game-filters";
 import {
   playerRangeFilterValue,
@@ -33,11 +38,23 @@ const MAX_TAGS = 8;
 
 export function buildGameTags(
   game: GameTagSource,
-  options?: { playerCount?: number },
+  options?: {
+    playerCount?: number;
+    ownedExpansions?: readonly (PlayerCountFields & Pick<GameTagSource, "bestPlayerCounts">)[];
+  },
 ): GameTag[] {
   const tags: GameTag[] = [];
   const seen = new Set<string>();
   const playerCount = options?.playerCount;
+  const ownedExpansions = options?.ownedExpansions ?? [];
+  const range =
+    ownedExpansions.length > 0
+      ? effectivePlayerRange(game, ownedExpansions)
+      : { min: game.minPlayers, max: game.maxPlayers };
+  const bestCounts =
+    ownedExpansions.length > 0
+      ? mergedBestPlayerCounts(game, ownedExpansions)
+      : game.bestPlayerCounts;
 
   function add(label: string, variant: GameTagVariant, filter?: GameFilter) {
     const key = label.toLowerCase();
@@ -46,9 +63,9 @@ export function buildGameTags(
     tags.push({ label, variant, filter });
   }
 
-  const players = playerRange(game.minPlayers, game.maxPlayers);
+  const players = playerRange(range.min, range.max);
   if (players !== "? Spieler") {
-    const rangeValue = playerRangeFilterValue(game.minPlayers, game.maxPlayers);
+    const rangeValue = playerRangeFilterValue(range.min, range.max);
     add(players, "meta", rangeValue ? { kind: "playerRange", value: rangeValue } : undefined);
   }
 
@@ -77,7 +94,7 @@ export function buildGameTags(
     });
   }
 
-  if (playerCount != null && game.bestPlayerCounts.includes(playerCount)) {
+  if (playerCount != null && bestCounts.includes(playerCount)) {
     add(`Best · ${playerCount}P`, "accent", {
       kind: "best",
       value: String(playerCount),

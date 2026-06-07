@@ -3,8 +3,12 @@ import { Suspense } from "react";
 import { GamesClient } from "@/components/GamesClient";
 import { GamesFilterBar } from "@/components/GamesFilterBar";
 import { ScrollToTopButton } from "@/components/ScrollToTopButton";
-import { loadOwnedExpansionsByBaseGame, serializeExpansionsByBaseId } from "@/lib/owned-expansions";
+import { loadOwnedExpansionsByBaseGame, loadOwnedExpansionRows, serializeExpansionsByBaseId } from "@/lib/owned-expansions";
 import { buildGameOrderBy, buildGameWhere, parseGameFilters, parseGameSort, ratingBlocksFromRatings, type RatingBlock } from "@/lib/game-filters";
+import {
+  baseGameIdsBestViaExpansion,
+  baseGameIdsPlayableViaExpansion,
+} from "@/lib/effective-player-count";
 
 export const dynamic = "force-dynamic";
 
@@ -40,21 +44,35 @@ export default async function GamesPage({
   const sp = await searchParams;
   const filters = parseGameFilters(sp);
   const sort = parseGameSort(sp);
-  const where = buildGameWhere(filters);
-  const orderBy = buildGameOrderBy(sort);
 
-  const [games, allForFilters, expansionsByBase] = await Promise.all([
-    prisma.game.findMany({
-      where,
-      select: gameSelect,
-      orderBy,
-    }),
+  const [expansionRows, allForFilters, expansionsByBase] = await Promise.all([
+    loadOwnedExpansionRows(),
     prisma.game.findMany({
       where: { isExpansion: false, listedInCollection: true },
       select: { categories: true, bggRating: true },
     }),
     loadOwnedExpansionsByBaseGame(),
   ]);
+
+  const filterCtx = {
+    expansionPlayableBaseIds:
+      filters.players != null
+        ? baseGameIdsPlayableViaExpansion(expansionRows, filters.players)
+        : [],
+    expansionBestBaseIds:
+      filters.best != null
+        ? baseGameIdsBestViaExpansion(expansionRows, filters.best)
+        : [],
+  };
+
+  const where = buildGameWhere(filters, filterCtx);
+  const orderBy = buildGameOrderBy(sort);
+
+  const games = await prisma.game.findMany({
+    where,
+    select: gameSelect,
+    orderBy,
+  });
 
   const genres = Array.from(
     new Set(allForFilters.flatMap((g) => g.categories)),

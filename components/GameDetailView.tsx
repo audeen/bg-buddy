@@ -4,6 +4,11 @@ import { FilterChipButton } from "@/components/FilterChipButton";
 import { GameCover } from "@/components/GameCover";
 import type { GameCardGame } from "@/components/GameCard";
 import { playerRange, playtime, weightLabel } from "@/lib/format";
+import {
+  effectivePlayerRange,
+  expansionNamesForPlayerCount,
+  mergedBestPlayerCounts,
+} from "@/lib/effective-player-count";
 import { bggBoardgameUrl } from "@/lib/bgg-url";
 import type { GameFilters } from "@/lib/game-filters";
 import { buildGameTags, categoryTag, mechanicTag } from "@/lib/game-tags";
@@ -61,13 +66,28 @@ export function GameDetailView({
 }: GameDetailViewProps) {
   const time = playtime(game.minPlaytime, game.maxPlaytime, game.playingTime);
   const weight = weightLabel(game.weight);
-  const filterTags = buildGameTags(game, { playerCount });
+  const onBaseView = !game.isExpansion;
+  const tagExpansions = onBaseView ? ownedExpansions : undefined;
+  const filterTags = buildGameTags(game, { playerCount, ownedExpansions: tagExpansions });
   const detailMetaTags = filterTags.filter((t) => t.variant !== "default");
+  const displayRange =
+    onBaseView && ownedExpansions && ownedExpansions.length > 0
+      ? effectivePlayerRange(game, ownedExpansions)
+      : { min: game.minPlayers, max: game.maxPlayers };
+  const bestCounts =
+    onBaseView && ownedExpansions && ownedExpansions.length > 0
+      ? mergedBestPlayerCounts(game, ownedExpansions)
+      : game.bestPlayerCounts;
 
   const showPlayerCountHint =
     playerCount != null &&
-    (game.bestPlayerCounts.includes(playerCount) ||
+    (bestCounts.includes(playerCount) ||
       game.recommendedPlayerCounts.includes(playerCount));
+
+  const expansionHint =
+    playerCount != null && ownedExpansions && ownedExpansions.length > 0
+      ? expansionNamesForPlayerCount(game, ownedExpansions, playerCount)
+      : [];
 
   const showExpansionNav =
     ownedExpansions &&
@@ -122,7 +142,7 @@ export function GameDetailView({
             ) : (
               <>
                 <span className="chip chip-meta">
-                  {playerRange(game.minPlayers, game.maxPlayers)}
+                  {playerRange(displayRange.min, displayRange.max)}
                 </span>
                 {time && <span className="chip chip-meta">{time}</span>}
                 {weight && <span className="chip chip-meta">{weight}</span>}
@@ -152,7 +172,7 @@ export function GameDetailView({
 
           {showPlayerCountHint && (
             <p className="text-sm text-[var(--accent)]">
-              {game.bestPlayerCounts.includes(playerCount!) ? (
+              {bestCounts.includes(playerCount!) ? (
                 <>
                   <span className="font-semibold">Best · {playerCount}P</span> — beste
                   Spieleranzahl laut BGG-Community
@@ -166,10 +186,16 @@ export function GameDetailView({
             </p>
           )}
 
-          {game.bestPlayerCounts.length > 0 && (
+          {expansionHint.length > 0 && (
+            <p className="text-sm text-[var(--muted)]">
+              {playerCount} Spieler mit Erweiterung: {expansionHint.join(", ")}
+            </p>
+          )}
+
+          {bestCounts.length > 0 && (
             <p className="text-sm">
               <span className="font-semibold">Beste Spieleranzahl: </span>
-              {game.bestPlayerCounts.join(", ")}
+              {bestCounts.join(", ")}
               {game.recommendedPlayerCounts.length > 0 && (
                 <span className="text-[var(--muted)]">
                   {" "}
