@@ -8,7 +8,7 @@ import {
   filtersToSearchParams,
   parseGameFilters,
   parseGameSort,
-  RATING_TIER_OPTIONS,
+  ratingTierOptions,
   SORT_OPTIONS,
   TIME_BUCKET_OPTIONS,
   WEIGHT_LEVEL_OPTIONS,
@@ -20,6 +20,7 @@ import {
 
 type GamesFilterBarProps = {
   genres: string[];
+  ratingBlocks: RatingBlock[];
 };
 
 const EMPTY_FILTERS: GameFilters = {
@@ -36,7 +37,7 @@ const EMPTY_FILTERS: GameFilters = {
   includeExpansions: false,
 };
 
-export function GamesFilterBar({ genres }: GamesFilterBarProps) {
+export function GamesFilterBar({ genres, ratingBlocks }: GamesFilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
@@ -69,6 +70,7 @@ export function GamesFilterBar({ genres }: GamesFilterBarProps) {
   };
 
   const activeLabels = activeFilterLabels(filters);
+  const ratingOptions = ratingTierOptions(ratingBlocks);
 
   return (
     <div className="flex flex-col gap-3">
@@ -205,7 +207,7 @@ export function GamesFilterBar({ genres }: GamesFilterBarProps) {
             className="input"
           >
             <option value="">egal</option>
-            {RATING_TIER_OPTIONS.map((opt) => (
+            {ratingOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>

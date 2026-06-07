@@ -93,6 +93,27 @@ export function ratingBlockLabel(block: RatingBlock): string {
   return block >= 10 ? "★ 10" : `★ ${block}+`;
 }
 
+export function ratingBlocksFromRatings(
+  ratings: readonly (number | null | undefined)[],
+): RatingBlock[] {
+  const blocks = new Set<RatingBlock>();
+  for (const rating of ratings) {
+    if (rating != null && Number.isFinite(rating) && rating > 0) {
+      blocks.add(ratingBlockFromValue(rating));
+    }
+  }
+  return Array.from(blocks).sort((a, b) => a - b);
+}
+
+export function ratingTierOptions(
+  blocks: readonly RatingBlock[],
+): { value: RatingBlock; label: string }[] {
+  return blocks.map((block) => ({
+    value: block,
+    label: ratingBlockLabel(block),
+  }));
+}
+
 export function parseGameSort(sp: GameFilterSearchParams): GameSort {
   return parseGameSortValue(paramValue(sp, "sort"));
 }
@@ -498,12 +519,6 @@ export const WEIGHT_LEVEL_OPTIONS: { value: WeightLevel; label: string }[] = [
   { value: "mittel", label: "Mittel" },
   { value: "schwer", label: "Schwer" },
   { value: "experte", label: "Experte" },
-];
-
-export const RATING_TIER_OPTIONS: { value: RatingBlock; label: string }[] = [
-  { value: 7, label: "★ 7+" },
-  { value: 8, label: "★ 8+" },
-  { value: 9, label: "★ 9+" },
 ];
 
 export const SORT_OPTIONS: { value: GameSort; label: string }[] = [

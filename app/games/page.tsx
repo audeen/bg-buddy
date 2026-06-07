@@ -4,7 +4,7 @@ import { GamesClient } from "@/components/GamesClient";
 import { GamesFilterBar } from "@/components/GamesFilterBar";
 import { ScrollToTopButton } from "@/components/ScrollToTopButton";
 import { loadOwnedExpansionsByBaseGame, serializeExpansionsByBaseId } from "@/lib/owned-expansions";
-import { buildGameOrderBy, buildGameWhere, parseGameFilters, parseGameSort } from "@/lib/game-filters";
+import { buildGameOrderBy, buildGameWhere, parseGameFilters, parseGameSort, ratingBlocksFromRatings, type RatingBlock } from "@/lib/game-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -43,19 +43,31 @@ export default async function GamesPage({
   const where = buildGameWhere(filters);
   const orderBy = buildGameOrderBy(sort);
 
-  const [games, allForGenres, expansionsByBase] = await Promise.all([
+  const [games, allForFilters, expansionsByBase] = await Promise.all([
     prisma.game.findMany({
       where,
       select: gameSelect,
       orderBy,
     }),
-    prisma.game.findMany({ select: { categories: true } }),
+    prisma.game.findMany({
+      where: { isExpansion: false },
+      select: { categories: true, bggRating: true },
+    }),
     loadOwnedExpansionsByBaseGame(),
   ]);
 
   const genres = Array.from(
-    new Set(allForGenres.flatMap((g) => g.categories)),
+    new Set(allForFilters.flatMap((g) => g.categories)),
   ).sort((a, b) => a.localeCompare(b));
+
+  const ratingBlocks: RatingBlock[] = (() => {
+    const blocks = ratingBlocksFromRatings(allForFilters.map((g) => g.bggRating));
+    const active = filters.rating;
+    if (active != null && !blocks.includes(active)) {
+      return [...blocks, active].sort((a, b) => a - b);
+    }
+    return blocks;
+  })();
 
   const playerCount =
     filters.players != null && Number.isFinite(filters.players)
@@ -75,7 +87,7 @@ export default async function GamesPage({
       </div>
 
       <Suspense fallback={<div className="filter-dropdown h-12 animate-pulse rounded-xl" />}>
-        <GamesFilterBar genres={genres} />
+        <GamesFilterBar genres={genres} ratingBlocks={ratingBlocks} />
       </Suspense>
 
       <GamesClient

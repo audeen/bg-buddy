@@ -18,6 +18,8 @@ import {
   playtimeFilterValue,
   ratingBlockFromValue,
   ratingBlockLabel,
+  ratingBlocksFromRatings,
+  ratingTierOptions,
   toggleGameFilter,
   weightLevelFromValue,
 } from "../lib/game-filters";
@@ -59,6 +61,12 @@ function testRatingBlocks() {
   assert.equal(ratingBlockLabel(8), "★ 8+");
   assert.equal(ratingBlockLabel(10), "★ 10");
   assert.equal(parseGameFilters({ rating: "8.2" }).rating, 8);
+  assert.deepEqual(ratingBlocksFromRatings([7.2, 8.1, 8.9, null, 10]), [7, 8, 10]);
+  assert.deepEqual(ratingTierOptions([7, 8, 10]), [
+    { value: 7, label: "★ 7+" },
+    { value: 8, label: "★ 8+" },
+    { value: 10, label: "★ 10" },
+  ]);
 }
 
 function testBuildGameWhere() {
