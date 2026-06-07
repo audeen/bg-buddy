@@ -1,5 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
-import { getDuelProgressForCount } from "@/lib/duel-pairs";
+import { getDuelProgressForCount, parseDuelFrozenData } from "@/lib/duel-pairs";
 import { buildGameTieMetaMap } from "@/lib/duel-tiebreaker";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
@@ -83,7 +83,11 @@ export async function getPickPhaseState(
   expectedPlayerCount: number,
   db: PrismaClient,
 ): Promise<PickPhaseState> {
-  const [groupPicks, duelVotes] = await Promise.all([
+  const [meetup, groupPicks, duelVotes] = await Promise.all([
+    db.meetup.findUnique({
+      where: { id: meetupId },
+      select: { duelFrozenData: true },
+    }),
     db.vote.findMany({
       where: {
         meetupId,
@@ -108,7 +112,11 @@ export async function getPickPhaseState(
   ]);
 
   const pickCounts = buildPickCounts(groupPicks);
-  const poolIds = poolGameIds(pickCounts);
+  const frozen = parseDuelFrozenData(
+    meetup?.duelFrozenData,
+    expectedPlayerCount,
+  );
+  const poolIds = frozen?.poolGameIds ?? poolGameIds(pickCounts);
   const tieBreak =
     poolIds.length >= 2
       ? {
@@ -136,6 +144,7 @@ export async function getPickPhaseState(
       picks: groupPicks,
       meetupId,
       tieBreak,
+      frozen,
     },
   );
 

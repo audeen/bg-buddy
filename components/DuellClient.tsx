@@ -6,7 +6,6 @@ import { GameCover } from "@/components/GameCover";
 import { duelVoteAction } from "@/app/actions";
 import { pairKey, type DuelPair, type DuelPhase } from "@/lib/duel-pairs";
 import { prefersReducedMotion, sleep } from "@/lib/motion";
-import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
 
 const VOTE_ANIMATION_MS = 400;
 
@@ -60,6 +59,19 @@ function DuelChoiceCard({
   );
 }
 
+function groupProgressText(
+  phase: DuelPhase,
+  groupDecidedPairs: number,
+  totalPairs: number,
+  finishedParticipants: number,
+  totalParticipants: number,
+): string {
+  if (phase === "GROUP") {
+    return `Matrix: ${groupDecidedPairs}/${totalPairs} abgestimmt · ${finishedParticipants}/${totalParticipants} Spieler fertig`;
+  }
+  return `${groupDecidedPairs} / ${totalPairs} mit allen Stimmen`;
+}
+
 export function DuellClient({
   meetupId,
   expected,
@@ -68,6 +80,8 @@ export function DuellClient({
   phase,
   totalPairs,
   groupDecidedPairs,
+  finishedParticipants,
+  totalParticipants,
   initialCompletedKeys,
 }: {
   meetupId: string;
@@ -77,6 +91,8 @@ export function DuellClient({
   phase: DuelPhase;
   totalPairs: number;
   groupDecidedPairs: number;
+  finishedParticipants: number;
+  totalParticipants: number;
   initialCompletedKeys: string[];
 }) {
   const gameMap = useMemo(
@@ -103,10 +119,16 @@ export function DuellClient({
   const finished = pendingPairs.length === 0;
   const current = pendingPairs[0] ?? null;
 
-  useMeetupPhaseRefresh(!finished);
-
   const gameA = current ? gameMap.get(current.a) : null;
   const gameB = current ? gameMap.get(current.b) : null;
+
+  const progressLabel = groupProgressText(
+    phase,
+    groupDecidedPairs,
+    totalPairs,
+    finishedParticipants,
+    totalParticipants,
+  );
 
   function outcomeFor(gameId: number): "winner" | "loser" | undefined {
     if (!voteOutcome) return undefined;
@@ -152,12 +174,9 @@ export function DuellClient({
       >
         <p className="text-lg font-bold">Deine Duelle sind erledigt!</p>
         <p className="text-[var(--muted)] text-sm">
-          Du hast alle {myDone} Vergleiche für {expected} Spieler ★ abgeschlossen.
+          Deine Queue: {myDone}/{myPairs.length} für {expected} Spieler ★.
         </p>
-        <p className="text-[var(--muted)] text-sm">
-          In der Gruppe sind {groupDecidedPairs} von {totalPairs} Vergleichen
-          vollständig abgestimmt.
-        </p>
+        <p className="text-[var(--muted)] text-sm">{progressLabel}</p>
         <Link
           href={`/meetups/${meetupId}`}
           className="btn btn-primary btn-lg w-full max-w-sm"
@@ -180,9 +199,7 @@ export function DuellClient({
             Duell {myDone + 1} / {myPairs.length}
           </span>
         </div>
-        <p className="text-xs text-[var(--muted)] tabular-nums">
-          {groupDecidedPairs} / {totalPairs} mit allen Stimmen
-        </p>
+        <p className="text-xs text-[var(--muted)] tabular-nums">{progressLabel}</p>
       </div>
 
       {voteError && (

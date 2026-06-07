@@ -10,6 +10,7 @@ import {
   buildUserPointsMap,
   duelParticipantIds,
   getDuelProgressForCount,
+  parseDuelFrozenData,
 } from "@/lib/duel-pairs";
 import { buildGameTieMetaMap } from "@/lib/duel-tiebreaker";
 import { completedPairKeysForUser } from "@/lib/copeland";
@@ -27,7 +28,14 @@ export default async function DuellPage({
   const user = await getCurrentUser();
   if (!user) redirect("/#login");
 
-  const meetup = await prisma.meetup.findUnique({ where: { id } });
+  const meetup = await prisma.meetup.findUnique({
+    where: { id },
+    select: {
+      title: true,
+      expectedPlayerCount: true,
+      duelFrozenData: true,
+    },
+  });
   if (!meetup) notFound();
 
   const expected = meetup.expectedPlayerCount;
@@ -54,7 +62,8 @@ export default async function DuellPage({
   ]);
 
   const pickCounts = buildPickCounts(groupPicks);
-  const ids = poolGameIds(pickCounts);
+  const frozen = parseDuelFrozenData(meetup.duelFrozenData, expected);
+  const ids = frozen?.poolGameIds ?? poolGameIds(pickCounts);
 
   const myPickSum = groupPicks
     .filter((p) => p.userId === user.id)
@@ -165,11 +174,12 @@ export default async function DuellPage({
 
   const plan = buildDuellPlan({
     poolGameIds: ids,
-    pickCounts,
+    pickCounts: frozen?.pickCounts ?? pickCounts,
     userPoints: buildUserPointsMap(groupPicks),
     userId: user.id,
     participantIds: duelParticipantIds(groupPicks),
     meetupId: id,
+    frozen,
   });
 
   const games = await prisma.game.findMany({
@@ -203,12 +213,16 @@ export default async function DuellPage({
         }
       : undefined;
 
-  const { decidedPairs: groupDecidedPairs } = getDuelProgressForCount(
-    ids,
-    duelRows,
-    expected,
-    { picks: groupPicks, meetupId: id, tieBreak },
-  );
+  const {
+    decidedPairs: groupDecidedPairs,
+    finishedParticipants,
+    totalParticipants,
+  } = getDuelProgressForCount(ids, duelRows, expected, {
+    picks: groupPicks,
+    meetupId: id,
+    tieBreak,
+    frozen,
+  });
   const completedKeys = [
     ...completedPairKeysForUser(duelRows, user.id, expected),
   ];
@@ -225,6 +239,8 @@ export default async function DuellPage({
         phase={plan.phase}
         totalPairs={plan.totalPairs}
         groupDecidedPairs={groupDecidedPairs}
+        finishedParticipants={finishedParticipants}
+        totalParticipants={totalParticipants}
         initialCompletedKeys={completedKeys}
       />
     </div>

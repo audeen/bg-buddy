@@ -15,7 +15,10 @@ import {
   playerCountsFromVotes,
 } from "@/lib/vote-aggregation";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
-import { getDuelProgressForCount } from "@/lib/duel-pairs";
+import {
+  getDuelProgressForCount,
+  parseDuelFrozenData,
+} from "@/lib/duel-pairs";
 import { buildGameTieMetaMap } from "@/lib/duel-tiebreaker";
 import { getPickPhaseState } from "@/lib/pick-phase";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
@@ -23,6 +26,7 @@ import {
   buildRegisteredPlayers,
   canLeaveMeetup,
   isUserRegistered,
+  sumPickPointsAtExpected,
 } from "@/lib/meetup-participants";
 
 export const dynamic = "force-dynamic";
@@ -88,7 +92,8 @@ export default async function MeetupDetail({
     (v) => v.mode === "PICK" && v.playerCount === expected,
   );
   const pickCounts = buildPickCounts(groupPicks);
-  const poolIds = poolGameIds(pickCounts);
+  const frozen = parseDuelFrozenData(meetup.duelFrozenData, expected);
+  const poolIds = frozen?.poolGameIds ?? poolGameIds(pickCounts);
   const pickPoolSize = poolIds.length;
 
   const duelRows = votes
@@ -128,13 +133,17 @@ export default async function MeetupDetail({
       : undefined;
 
   const {
+    phase: duelPhase,
     totalPairs,
     decidedPairs: groupDecidedPairs,
     duelComplete,
+    finishedParticipants,
+    totalParticipants,
   } = getDuelProgressForCount(poolIds, duelRows, expected, {
     picks: groupPicks,
     meetupId: id,
     tieBreak,
+    frozen,
   });
 
   const duelRoundComplete = duelComplete && totalPairs > 0;
@@ -170,6 +179,17 @@ export default async function MeetupDetail({
     meetup.createdBy,
     pickVoters,
     manualRegistrations,
+  );
+
+  const pickPointsAtExpected = sumPickPointsAtExpected(
+    votes
+      .filter((v) => v.mode === "PICK")
+      .map((v) => ({
+        userId: v.userId,
+        playerCount: v.playerCount,
+        points: v.points,
+      })),
+    meetup.expectedPlayerCount,
   );
 
   const duelVoteCount = votes.filter(
@@ -232,10 +252,12 @@ export default async function MeetupDetail({
             ),
           }
         : undefined;
+    const countFrozen = parseDuelFrozenData(meetup.duelFrozenData, pc);
     return getDuelProgressForCount(countPool, countDuels, pc, {
       picks: countPicks,
       meetupId: id,
       tieBreak: countTieBreak,
+      frozen: countFrozen,
     }).duelComplete;
   });
 
@@ -270,6 +292,7 @@ export default async function MeetupDetail({
         <MeetupParticipants
           expected={meetup.expectedPlayerCount}
           players={registeredPlayers}
+          pickPointsAtExpected={pickPointsAtExpected}
         />
         {user && (
           <JoinMeetupButton
@@ -299,8 +322,11 @@ export default async function MeetupDetail({
         combinedByCount={combinedByCount}
         duelComplete={duelComplete}
         completedCounts={completedCounts}
+        duelPhase={duelPhase}
         groupDecidedPairs={groupDecidedPairs}
         totalPairs={totalPairs}
+        finishedParticipants={finishedParticipants}
+        totalParticipants={totalParticipants}
       />
     </div>
   );

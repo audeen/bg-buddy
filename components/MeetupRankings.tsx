@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Ranking, type RankEntry } from "@/components/Ranking";
+import type { DuelPhase } from "@/lib/duel-pairs";
 import { sleep } from "@/lib/motion";
 
 const UNLOCK_FADE_MS = 250;
@@ -12,21 +13,26 @@ export function MeetupRankings({
   combinedByCount,
   duelComplete,
   completedCounts = [],
+  duelPhase = "FULL",
   groupDecidedPairs,
   totalPairs,
+  finishedParticipants = 0,
+  totalParticipants = 0,
 }: {
   expected: number;
   playerCounts: number[];
   combinedByCount: Record<number, RankEntry[]>;
   duelComplete: boolean;
   completedCounts?: number[];
+  duelPhase?: DuelPhase;
   groupDecidedPairs: number;
   totalPairs: number;
+  finishedParticipants?: number;
+  totalParticipants?: number;
 }) {
   const [userRevealed, setUserRevealed] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
 
-  // duelComplete is true when pool < 2 — only auto-reveal after real duels finished
   const revealed = userRevealed || (duelComplete && totalPairs > 0);
 
   useEffect(() => {
@@ -43,6 +49,13 @@ export function MeetupRankings({
 
   const openPairs = Math.max(0, totalPairs - groupDecidedPairs);
 
+  const statusText =
+    duelPhase === "GROUP" && totalPairs > 0
+      ? `Matrix: ${groupDecidedPairs}/${totalPairs} abgestimmt · ${finishedParticipants}/${totalParticipants} Spieler fertig`
+      : totalPairs > 0
+        ? `Noch ${openPairs} von ${totalPairs} Vergleichen ohne alle Stimmen.`
+        : `Ergebnisse für ${expected} Spieler ★ werden nach den Duellen freigegeben.`;
+
   return (
     <section id="ergebnisse" className="flex flex-col gap-3 scroll-mt-24">
       <h2 className="section-title">Ergebnisse</h2>
@@ -54,16 +67,7 @@ export function MeetupRankings({
           }`}
           style={{ padding: "var(--space-card)" }}
         >
-          {totalPairs > 0 ? (
-            <p className="text-sm text-[var(--muted)]">
-              Noch {openPairs} von {totalPairs} Vergleichen ohne alle Stimmen.
-            </p>
-          ) : (
-            <p className="text-sm text-[var(--muted)]">
-              Ergebnisse für {expected} Spieler ★ werden nach den Duellen
-              freigegeben.
-            </p>
-          )}
+          <p className="text-sm text-[var(--muted)]">{statusText}</p>
           <button
             type="button"
             onClick={() => void handleReveal()}

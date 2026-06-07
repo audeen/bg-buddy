@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import {
   completedPairKeysForUser,
   type DuelVoteRow,
@@ -11,6 +12,15 @@ export type DuelPickRow = { userId: string; gameId: number; points: number };
 export type DuelPair = { a: number; b: number };
 
 export type DuelPhase = "FULL" | "GROUP";
+
+export type DuelFrozenData = {
+  playerCount: number;
+  phase: DuelPhase;
+  poolGameIds: number[];
+  pickCounts: Record<number, number>;
+  participantIds: string[];
+  assignments?: Record<string, DuelPair[]>;
+};
 
 export function pairCount(n: number): number {
   return (n * (n - 1)) / 2;
@@ -113,6 +123,106 @@ export function shufflePairs(pairs: DuelPair[], seed: string): DuelPair[] {
   return out;
 }
 
+export function buildDuelFrozenSnapshot(opts: {
+  playerCount: number;
+  picks: DuelPickRow[];
+  poolGameIds: number[];
+}): DuelFrozenData {
+  const pickCounts = buildPickCounts(opts.picks);
+  const userPoints = buildUserPointsMap(opts.picks);
+  const participantIds = duelParticipantIds(opts.picks);
+  const totalPairs = pairCount(opts.poolGameIds.length);
+  const phase = duelPhaseForPairCount(totalPairs);
+  const sortedPairs = sortPairs(allPairs(opts.poolGameIds), pickCounts);
+
+  const snapshot: DuelFrozenData = {
+    playerCount: opts.playerCount,
+    phase,
+    poolGameIds: [...opts.poolGameIds],
+    pickCounts,
+    participantIds,
+  };
+
+  if (phase === "GROUP") {
+    snapshot.assignments = assignGroupPairs(
+      sortedPairs,
+      participantIds,
+      userPoints,
+    );
+  }
+
+  return snapshot;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseAssignments(
+  raw: unknown,
+): Record<string, DuelPair[]> | undefined {
+  if (!isRecord(raw)) return undefined;
+  const out: Record<string, DuelPair[]> = {};
+  for (const [userId, pairs] of Object.entries(raw)) {
+    if (!Array.isArray(pairs)) continue;
+    const parsed: DuelPair[] = [];
+    for (const item of pairs) {
+      if (!isRecord(item)) continue;
+      const a = Number(item.a);
+      const b = Number(item.b);
+      if (Number.isFinite(a) && Number.isFinite(b) && a !== b) {
+        parsed.push({ a, b });
+      }
+    }
+    out[userId] = parsed;
+  }
+  return out;
+}
+
+export function parseDuelFrozenData(
+  raw: Prisma.JsonValue | null | undefined,
+  playerCount: number,
+): DuelFrozenData | null {
+  if (!isRecord(raw)) return null;
+  if (Number(raw.playerCount) !== playerCount) return null;
+
+  const poolGameIds = Array.isArray(raw.poolGameIds)
+    ? raw.poolGameIds.map(Number).filter((n) => Number.isFinite(n))
+    : [];
+  if (poolGameIds.length < 2) return null;
+
+  const phase = raw.phase === "GROUP" ? "GROUP" : "FULL";
+  const participantIds = Array.isArray(raw.participantIds)
+    ? raw.participantIds.filter((id): id is string => typeof id === "string")
+    : [];
+
+  const pickCounts: Record<number, number> = {};
+  if (isRecord(raw.pickCounts)) {
+    for (const [key, value] of Object.entries(raw.pickCounts)) {
+      const gameId = Number(key);
+      const count = Number(value);
+      if (Number.isFinite(gameId) && Number.isFinite(count)) {
+        pickCounts[gameId] = count;
+      }
+    }
+  }
+
+  return {
+    playerCount,
+    phase,
+    poolGameIds,
+    pickCounts,
+    participantIds,
+    assignments: parseAssignments(raw.assignments),
+  };
+}
+
+export function duelFrozenToJson(
+  data: DuelFrozenData,
+): Prisma.InputJsonValue {
+  return data as unknown as Prisma.InputJsonValue;
+}
+
 export type DuellPlan = {
   phase: DuelPhase;
   totalPairs: number;
@@ -125,6 +235,8 @@ export type DuelProgress = {
   totalPairs: number;
   decidedPairs: number;
   duelComplete: boolean;
+  finishedParticipants: number;
+  totalParticipants: number;
 };
 
 export function duelPhaseForPairCount(totalPairs: number): DuelPhase {
@@ -135,6 +247,7 @@ export type DuelProgressOptions = {
   tieBreak?: DuelTieBreakContext;
   picks?: DuelPickRow[];
   meetupId?: string;
+  frozen?: DuelFrozenData | null;
 };
 
 type ParticipationContext = {
@@ -142,7 +255,12 @@ type ParticipationContext = {
   picks: DuelPickRow[];
   meetupId: string;
   playerCount: number;
+  frozen?: DuelFrozenData | null;
 };
+
+function effectivePool(ctx: ParticipationContext): number[] {
+  return ctx.frozen?.poolGameIds ?? ctx.poolGameIds;
+}
 
 /** Users with full ★ pick budget who must finish their duel queue. */
 export function duelParticipantIds(picks: DuelPickRow[]): string[] {
@@ -156,36 +274,71 @@ export function duelParticipantIds(picks: DuelPickRow[]): string[] {
     .sort();
 }
 
-export function allParticipantsFinishedDuels(
-  duelVotes: DuelVoteRow[],
+function myPairsForUser(
   ctx: ParticipationContext,
-): boolean {
-  const participantIds = duelParticipantIds(ctx.picks);
-  if (participantIds.length === 0) return false;
+  userId: string,
+): DuelPair[] {
+  const pool = effectivePool(ctx);
+  const totalPairs = pairCount(pool.length);
+  const phase = ctx.frozen?.phase ?? duelPhaseForPairCount(totalPairs);
+
+  if (ctx.frozen) {
+    if (phase === "FULL") {
+      const pairs = sortPairs(allPairs(pool), ctx.frozen.pickCounts);
+      return shufflePairs(pairs, `${ctx.meetupId}:${userId}`);
+    }
+    return shufflePairs(
+      ctx.frozen.assignments?.[userId] ?? [],
+      `${ctx.meetupId}:${userId}`,
+    );
+  }
 
   const pickCounts = buildPickCounts(ctx.picks);
   const userPoints = buildUserPointsMap(ctx.picks);
-  const roster = duelParticipantIds(ctx.picks);
+  const participantIds = duelParticipantIds(ctx.picks);
+  const plan = buildDuellPlan({
+    poolGameIds: pool,
+    pickCounts,
+    userPoints,
+    userId,
+    participantIds,
+    meetupId: ctx.meetupId,
+  });
+  return plan.myPairs;
+}
 
+export function countFinishedParticipants(
+  duelVotes: DuelVoteRow[],
+  ctx: ParticipationContext,
+): { finished: number; total: number } {
+  const participantIds =
+    ctx.frozen?.participantIds ?? duelParticipantIds(ctx.picks);
+  if (participantIds.length === 0) {
+    return { finished: 0, total: 0 };
+  }
+
+  let finished = 0;
   for (const userId of participantIds) {
-    const plan = buildDuellPlan({
-      poolGameIds: ctx.poolGameIds,
-      pickCounts,
-      userPoints,
-      userId,
-      participantIds: roster,
-      meetupId: ctx.meetupId,
-    });
+    const myPairs = myPairsForUser(ctx, userId);
     const completed = completedPairKeysForUser(
       duelVotes,
       userId,
       ctx.playerCount,
     );
-    for (const pair of plan.myPairs) {
-      if (!completed.has(pairKey(pair.a, pair.b))) return false;
+    if (myPairs.every((p) => completed.has(pairKey(p.a, p.b)))) {
+      finished += 1;
     }
   }
-  return true;
+
+  return { finished, total: participantIds.length };
+}
+
+export function allParticipantsFinishedDuels(
+  duelVotes: DuelVoteRow[],
+  ctx: ParticipationContext,
+): boolean {
+  const { finished, total } = countFinishedParticipants(duelVotes, ctx);
+  return total > 0 && finished >= total;
 }
 
 /** Pairs where every required participant has cast their duel vote. */
@@ -193,14 +346,16 @@ export function countFullyVotedPairs(
   duelVotes: DuelVoteRow[],
   ctx: ParticipationContext,
 ): number {
-  const participantIds = duelParticipantIds(ctx.picks);
+  const participantIds =
+    ctx.frozen?.participantIds ?? duelParticipantIds(ctx.picks);
   if (participantIds.length === 0) return 0;
 
-  const totalPairs = pairCount(ctx.poolGameIds.length);
-  const phase = duelPhaseForPairCount(totalPairs);
+  const pool = effectivePool(ctx);
+  const totalPairs = pairCount(pool.length);
+  const phase = ctx.frozen?.phase ?? duelPhaseForPairCount(totalPairs);
 
   if (phase === "FULL") {
-    const pairs = allPairs(ctx.poolGameIds);
+    const pairs = allPairs(pool);
     let count = 0;
     for (const pair of pairs) {
       const key = pairKey(pair.a, pair.b);
@@ -219,22 +374,37 @@ export function countFullyVotedPairs(
     return count;
   }
 
+  const assignments = ctx.frozen?.assignments;
+  if (assignments) {
+    let count = 0;
+    for (const userId of participantIds) {
+      const completed = completedPairKeysForUser(
+        duelVotes,
+        userId,
+        ctx.playerCount,
+      );
+      for (const pair of assignments[userId] ?? []) {
+        if (completed.has(pairKey(pair.a, pair.b))) count++;
+      }
+    }
+    return count;
+  }
+
   const userPoints = buildUserPointsMap(ctx.picks);
-  const roster = duelParticipantIds(ctx.picks);
-  const assignments = assignGroupPairs(
-    allPairs(ctx.poolGameIds),
-    roster,
+  const liveAssignments = assignGroupPairs(
+    allPairs(pool),
+    participantIds,
     userPoints,
   );
 
   let count = 0;
-  for (const userId of roster) {
+  for (const userId of participantIds) {
     const completed = completedPairKeysForUser(
       duelVotes,
       userId,
       ctx.playerCount,
     );
-    for (const pair of assignments[userId] ?? []) {
+    for (const pair of liveAssignments[userId] ?? []) {
       if (completed.has(pairKey(pair.a, pair.b))) count++;
     }
   }
@@ -247,7 +417,7 @@ export function getDuelProgressForCount(
   playerCount: number,
   options?: DuelProgressOptions,
 ): DuelProgress {
-  const poolSize = poolGameIds.length;
+  const poolSize = (options?.frozen?.poolGameIds ?? poolGameIds).length;
   const totalPairs = pairCount(poolSize);
   if (poolSize < 2) {
     return {
@@ -255,9 +425,12 @@ export function getDuelProgressForCount(
       totalPairs: 0,
       decidedPairs: 0,
       duelComplete: true,
+      finishedParticipants: 0,
+      totalParticipants: 0,
     };
   }
-  const phase = duelPhaseForPairCount(totalPairs);
+  const phase =
+    options?.frozen?.phase ?? duelPhaseForPairCount(totalPairs);
 
   const participation: ParticipationContext | undefined =
     options?.picks && options?.meetupId
@@ -266,20 +439,29 @@ export function getDuelProgressForCount(
           picks: options.picks,
           meetupId: options.meetupId,
           playerCount,
+          frozen: options.frozen,
         }
       : undefined;
 
   if (participation) {
     const decidedPairs = countFullyVotedPairs(duelVotes, participation);
-    const allFinished = allParticipantsFinishedDuels(
+    const allFinished = allParticipantsFinishedDuels(duelVotes, participation);
+    const { finished, total } = countFinishedParticipants(
       duelVotes,
       participation,
     );
+    const duelComplete =
+      phase === "GROUP"
+        ? allFinished && decidedPairs >= totalPairs
+        : allFinished;
+
     return {
       phase,
       totalPairs,
       decidedPairs,
-      duelComplete: allFinished && decidedPairs >= totalPairs,
+      duelComplete,
+      finishedParticipants: finished,
+      totalParticipants: total,
     };
   }
 
@@ -288,6 +470,8 @@ export function getDuelProgressForCount(
     totalPairs,
     decidedPairs: 0,
     duelComplete: false,
+    finishedParticipants: 0,
+    totalParticipants: 0,
   };
 }
 
@@ -322,14 +506,27 @@ export function buildDuellPlan(opts: {
   userId: string;
   participantIds: string[];
   meetupId: string;
+  frozen?: DuelFrozenData | null;
 }): DuellPlan {
-  const { poolGameIds, pickCounts, userPoints, userId, participantIds, meetupId } =
-    opts;
-  const pairs = allPairs(poolGameIds);
-  const totalPairs = pairs.length;
-  const sortedForWeight = sortPairs(pairs, pickCounts);
+  const {
+    poolGameIds,
+    pickCounts,
+    userPoints,
+    userId,
+    participantIds,
+    meetupId,
+    frozen,
+  } = opts;
 
-  if (totalPairs <= FULL_THRESHOLD) {
+  const pool = frozen?.poolGameIds ?? poolGameIds;
+  const counts = frozen?.pickCounts ?? pickCounts;
+  const roster = frozen?.participantIds ?? participantIds;
+  const pairs = allPairs(pool);
+  const totalPairs = pairs.length;
+  const sortedForWeight = sortPairs(pairs, counts);
+  const phase = frozen?.phase ?? duelPhaseForPairCount(totalPairs);
+
+  if (phase === "FULL") {
     const myPairs = shufflePairs(sortedForWeight, `${meetupId}:${userId}`);
     return {
       phase: "FULL",
@@ -339,22 +536,19 @@ export function buildDuellPlan(opts: {
     };
   }
 
-  const assignments = assignGroupPairs(
-    sortedForWeight,
-    participantIds,
-    userPoints,
-  );
+  const assignments =
+    frozen?.assignments ??
+    assignGroupPairs(sortedForWeight, roster, userPoints);
   const myPairs = shufflePairs(
     assignments[userId] ?? [],
     `${meetupId}:${userId}`,
   );
-  const myTotal = myPairs.length;
 
   return {
     phase: "GROUP",
     totalPairs,
     myPairs,
-    myTotal,
+    myTotal: myPairs.length,
   };
 }
 
