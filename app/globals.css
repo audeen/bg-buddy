@@ -220,11 +220,11 @@ body {
   }
 
   .pb-sticky-picker {
-    padding-bottom: 11rem;
+    padding-bottom: 7rem;
   }
 
   .pb-sticky-picker-at-limit {
-    padding-bottom: 15rem;
+    padding-bottom: 11rem;
   }
 
   @media (min-width: 768px) {
@@ -283,6 +283,39 @@ body {
   @media (min-width: 768px) {
     .sticky-above-nav {
       position: static;
+    }
+  }
+
+  .picker-sticky-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 767px) {
+    .picker-sticky-bar {
+      margin-inline: -1.25rem;
+      width: calc(100% + 2.5rem);
+      border-radius: 0;
+      box-shadow: none;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .picker-sticky-bar {
+      margin-inline: 0;
+      width: auto;
+      gap: 0.75rem;
+      padding: var(--space-card);
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-sm);
     }
   }
 
@@ -927,13 +960,13 @@ body {
 
   .scroll-to-top-above-picker {
     bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 10rem
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 6.5rem
     );
   }
 
   .scroll-to-top-above-picker-at-limit {
     bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 14rem
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 10.5rem
     );
   }
 

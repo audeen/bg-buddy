@@ -292,68 +292,66 @@ export function PickClient({
         </button>
       )}
 
-      <div className="sticky-above-nav -mx-4 px-4 py-3 bg-[var(--background)] border-t border-[var(--border)] sm:static sm:border-0 sm:mx-0 sm:px-0">
-        <div className="-mx-1 filter-bar flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-semibold">Spieleranzahl</span>
-            <span className="text-sm font-bold tabular-nums">
-              {usedPoints} / {MAX_PICK_POINTS} Stimmen
-            </span>
-          </div>
-          <div
-            className="progress-bar"
-            role="progressbar"
-            aria-valuenow={usedPoints}
-            aria-valuemin={0}
-            aria-valuemax={MAX_PICK_POINTS}
-            aria-label="Stimmen vergeben"
-          >
-            <div
-              className="progress-bar-fill"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-          <div className="tabs-scroll">
-            {availableCounts.map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => {
-                  setSelected(n);
-                  setLimitMsg(null);
-                }}
-                className={`btn btn-tab ${selected === n ? "btn-primary" : "btn-ghost"} ${
-                  n === expected ? "btn-tab-expected" : ""
-                }`}
-              >
-                {n}
-                {n === expected ? " ★" : ""}
-              </button>
-            ))}
-          </div>
-          {limitMsg && (
-            <p className="text-sm text-[var(--accent)]" role="alert">
-              {limitMsg}
-            </p>
-          )}
-          {atLimit && (
-            <div className="flex flex-col items-center gap-2 pt-1">
-              <p className="text-sm text-[var(--muted)] text-center">
-                {MAX_PICK_POINTS} Stimmen für {selected} Spieler vergeben
-                {selected === expected ? " ★" : ""}.
-                {selected === expected && readyForDuels && !picksLocked
-                  ? " Duell-Modus ist frei."
-                  : null}
-              </p>
-              <Link
-                href={`/meetups/${meetupId}`}
-                className="btn btn-primary btn-lg w-full sm:w-auto text-center"
-              >
-                Fertig
-              </Link>
-            </div>
-          )}
+      <div className="sticky-above-nav picker-sticky-bar">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-semibold">Spieleranzahl</span>
+          <span className="text-xs font-bold tabular-nums text-[var(--muted)]">
+            {usedPoints} / {MAX_PICK_POINTS} Stimmen
+          </span>
         </div>
+        <div
+          className="progress-bar"
+          role="progressbar"
+          aria-valuenow={usedPoints}
+          aria-valuemin={0}
+          aria-valuemax={MAX_PICK_POINTS}
+          aria-label="Stimmen vergeben"
+        >
+          <div
+            className="progress-bar-fill"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+        <div className="tabs-scroll">
+          {availableCounts.map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => {
+                setSelected(n);
+                setLimitMsg(null);
+              }}
+              className={`btn btn-tab ${selected === n ? "btn-primary" : "btn-ghost"} ${
+                n === expected ? "btn-tab-expected" : ""
+              }`}
+            >
+              {n}
+              {n === expected ? " ★" : ""}
+            </button>
+          ))}
+        </div>
+        {limitMsg && (
+          <p className="text-xs text-[var(--accent)]" role="alert">
+            {limitMsg}
+          </p>
+        )}
+        {atLimit && (
+          <div className="flex flex-col gap-1.5 sm:items-center sm:gap-2">
+            <p className="text-xs text-[var(--muted)] sm:text-center">
+              {MAX_PICK_POINTS} Stimmen für {selected} Spieler vergeben
+              {selected === expected ? " ★" : ""}.
+              {selected === expected && readyForDuels && !picksLocked
+                ? " Duell-Modus ist frei."
+                : null}
+            </p>
+            <Link
+              href={`/meetups/${meetupId}`}
+              className="btn btn-primary w-full sm:w-auto text-center"
+            >
+              Fertig
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
