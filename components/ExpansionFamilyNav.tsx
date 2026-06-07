@@ -13,9 +13,14 @@ type ExpansionFamilyNavProps = {
   variant?: "card" | "detail";
 };
 
-function stopCardClick(e: React.MouseEvent) {
+function stopCardActivation(e: React.MouseEvent | React.PointerEvent) {
   e.stopPropagation();
 }
+
+const chipPointerGuard = {
+  onPointerDown: stopCardActivation,
+  onPointerUp: stopCardActivation,
+};
 
 function expansionChipLabel(name: string, variant: "card" | "detail"): string {
   if (variant === "detail") return name;
@@ -38,9 +43,10 @@ function SiblingNav({
     >
       <button
         type="button"
+        {...chipPointerGuard}
         className={`chip chip-meta chip-interactive ${activeId == null ? "chip-active" : ""}`}
         onClick={(e) => {
-          stopCardClick(e);
+          stopCardActivation(e);
           onSelectBase();
         }}
       >
@@ -50,10 +56,11 @@ function SiblingNav({
         <button
           key={exp.id}
           type="button"
+          {...chipPointerGuard}
           className={`chip chip-interactive ${activeId === exp.id ? "chip-active" : ""}`}
           title={exp.name}
           onClick={(e) => {
-            stopCardClick(e);
+            stopCardActivation(e);
             onSelectExpansion(exp.id);
           }}
         >
@@ -98,9 +105,10 @@ export function ExpansionFamilyNav({
     return (
       <button
         type="button"
+        {...chipPointerGuard}
         className="chip chip-meta chip-interactive w-fit text-left"
         onClick={(e) => {
-          stopCardClick(e);
+          stopCardActivation(e);
           onSelectExpansion(exp.id);
         }}
       >
@@ -116,10 +124,11 @@ export function ExpansionFamilyNav({
       )}
       <button
         type="button"
+        {...chipPointerGuard}
         className="chip chip-meta chip-interactive w-fit text-left"
         aria-expanded={expanded}
         onClick={(e) => {
-          stopCardClick(e);
+          stopCardActivation(e);
           setExpanded((v) => !v);
         }}
       >
@@ -134,10 +143,11 @@ export function ExpansionFamilyNav({
             <button
               key={exp.id}
               type="button"
+              {...chipPointerGuard}
               className="chip chip-interactive"
               title={exp.name}
               onClick={(e) => {
-                stopCardClick(e);
+                stopCardActivation(e);
                 onSelectExpansion(exp.id);
                 setExpanded(false);
               }}

@@ -367,6 +367,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
         onPointerUp: (e: PointerEvent<HTMLButtonElement>) => {
           if (disabled || e.button !== 0) return;
           if (pickMode && !onBaseView) return;
+          if ((e.target as HTMLElement).closest(".chip-interactive")) return;
           e.preventDefault();
           onActivate();
         },
