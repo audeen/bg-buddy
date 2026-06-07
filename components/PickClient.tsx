@@ -9,6 +9,7 @@ import type { GameDetailData } from "@/components/GameDetailView";
 import { setPickPointsAction } from "@/app/actions";
 import { resolveDetailGameView } from "@/lib/expansion-detail";
 import type { PickPhaseSummary } from "@/lib/pick-phase";
+import { nextPickPoints } from "@/lib/pick-points";
 import { MAX_PICK_POINTS, MAX_POINTS_PER_GAME } from "@/lib/vote-limits";
 
 export type PickGame = GameDetailData;
@@ -126,7 +127,9 @@ export function PickClient({
     if (expectedLocked) return;
     const key = pointsKey(gameId, selected);
     const current = points[key] ?? 0;
-    setGamePoints(gameId, (current + 1) % 4);
+    const next = nextPickPoints(current, budgetLeft);
+    if (next === current) return;
+    setGamePoints(gameId, next);
   }
 
   function setGamePoints(gameId: number, next: number) {
@@ -242,8 +245,9 @@ export function PickClient({
           ))}
         </div>
         <p className="text-xs text-[var(--muted)] leading-relaxed">
-          Karte antippen für 1–3 Sterne (★ = vom Host festgelegte Spieleranzahl).
-          ℹ für Details.
+          Karte antippen: Stimmen vergeben (1–3). Bei vollem Budget entfernt ein
+          Klick auf ein bewertetes Spiel alle Stimmen dort. ★ = vom Host
+          festgelegte Spieleranzahl. ℹ für Details.
           {suggestFallbackCount !== null && selected === expected && (
             <>
               {" "}
