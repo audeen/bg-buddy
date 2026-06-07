@@ -24,6 +24,7 @@ export default async function CollectionAdminPage() {
   }
 
   const games = await prisma.game.findMany({
+    where: { listedInCollection: true },
     orderBy: { name: "asc" },
     select: {
       id: true,

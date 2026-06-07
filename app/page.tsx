@@ -24,7 +24,9 @@ export default async function Home() {
         _count: { select: { votes: true } },
       },
     }),
-    prisma.game.count({ where: { isExpansion: false } }),
+    prisma.game.count({
+      where: { isExpansion: false, listedInCollection: true },
+    }),
   ]);
 
   const meetupIds = meetups.map((m) => m.id);

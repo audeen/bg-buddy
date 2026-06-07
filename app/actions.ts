@@ -768,10 +768,14 @@ export async function updateGameMetadataAction(gameId: number, formData: FormDat
   return { ok: true, changedFields };
 }
 
+export type AddGameActionResult =
+  | { ok: true; name: string; bggId: number; created?: boolean; alreadyExists?: boolean }
+  | { error: string };
+
 export async function addGameByBggIdAction(
   bggId: number,
   options?: { barcode?: string | null; name?: string | null },
-) {
+): Promise<AddGameActionResult> {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
@@ -789,7 +793,7 @@ export async function addGameByBggIdAction(
   });
   if (existing) {
     return {
-      ok: true,
+      ok: true as const,
       alreadyExists: true,
       name: existing.name,
       bggId: existing.id,
@@ -825,7 +829,176 @@ export async function addGameByBggIdAction(
   revalidatePath("/admin/collection");
   revalidatePath(`/games/${bggId}`);
 
-  return { ok: true, created, name, bggId };
+  return { ok: true as const, created, name, bggId };
+}
+
+async function assertMeetupHost(meetupId: string, userId: string) {
+  const meetup = await prisma.meetup.findUnique({
+    where: { id: meetupId },
+    select: { createdById: true, expectedPlayerCount: true },
+  });
+  if (!meetup) return { error: "Treffen nicht gefunden." as const };
+  if (meetup.createdById !== userId) {
+    return { error: "Nur der Host kann temporäre Spiele verwalten." as const };
+  }
+  return { meetup };
+}
+
+function revalidateMeetupPaths(meetupId: string) {
+  revalidatePath(`/meetups/${meetupId}`);
+  revalidatePath(`/meetups/${meetupId}/pick`);
+  revalidatePath(`/meetups/${meetupId}/duell`);
+}
+
+export async function addGuestGameToMeetupAction(
+  meetupId: string,
+  bggId: number,
+  options?: { barcode?: string | null; name?: string | null },
+): Promise<AddGameActionResult> {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  if (!Number.isFinite(bggId) || bggId <= 0) {
+    return { error: "Ungültige BGG-ID." };
+  }
+
+  const hostCheck = await assertMeetupHost(meetupId, user.id);
+  if ("error" in hostCheck && hostCheck.error) {
+    return { error: hostCheck.error };
+  }
+
+  const existingLink = await prisma.meetupGuestGame.findUnique({
+    where: { meetupId_gameId: { meetupId, gameId: bggId } },
+    select: { id: true },
+  });
+  if (existingLink) {
+    return { error: "Spiel ist bereits für dieses Treffen hinzugefügt." };
+  }
+
+  const normalizedBarcode = options?.barcode?.trim()
+    ? options.barcode.replace(/\D/g, "") || null
+    : null;
+
+  const existing = await prisma.game.findUnique({
+    where: { id: bggId },
+    select: { id: true, name: true, isExpansion: true, listedInCollection: true },
+  });
+
+  if (existing?.isExpansion) {
+    return { error: "Erweiterungen können nicht als temporäres Spiel hinzugefügt werden." };
+  }
+
+  if (!existing) {
+    if (normalizedBarcode) {
+      const barcodeTaken = await prisma.game.findUnique({
+        where: { barcode: normalizedBarcode },
+        select: { id: true, name: true },
+      });
+      if (barcodeTaken) {
+        return {
+          error: `Barcode ist bereits „${barcodeTaken.name}" zugeordnet (BGG ${barcodeTaken.id}).`,
+        };
+      }
+    }
+
+    const { base, enrichment } = await loadGameMetadata(bggId);
+    if (base.isExpansion) {
+      return { error: "Erweiterungen können nicht als temporäres Spiel hinzugefügt werden." };
+    }
+
+    const { name } = await upsertGameRecord(
+      {
+        ...base,
+        bggId,
+        name: options?.name?.trim() || base.name,
+        barcode: normalizedBarcode,
+        listedInCollection: false,
+      },
+      enrichment,
+    );
+
+    await prisma.meetupGuestGame.create({
+      data: { meetupId, gameId: bggId, addedById: user.id },
+    });
+
+    revalidateMeetupPaths(meetupId);
+    return { ok: true as const, name, bggId, created: true };
+  }
+
+  await prisma.meetupGuestGame.create({
+    data: { meetupId, gameId: bggId, addedById: user.id },
+  });
+
+  revalidateMeetupPaths(meetupId);
+  return {
+    ok: true as const,
+    name: existing.name,
+    bggId: existing.id,
+    alreadyExists: existing.listedInCollection,
+  };
+}
+
+export async function removeAllGuestGamesFromMeetupAction(meetupId: string) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const hostCheck = await assertMeetupHost(meetupId, user.id);
+  if ("error" in hostCheck && hostCheck.error) {
+    return { error: hostCheck.error };
+  }
+  const { meetup } = hostCheck;
+
+  const guestLinks = await prisma.meetupGuestGame.findMany({
+    where: { meetupId },
+    select: { gameId: true },
+  });
+  const gameIds = guestLinks.map((g) => g.gameId);
+  if (gameIds.length === 0) {
+    return { ok: true, removed: 0 };
+  }
+
+  const phase = await getPickPhaseState(
+    meetupId,
+    meetup.expectedPlayerCount,
+    prisma,
+  );
+
+  await prisma.$transaction(async (tx) => {
+    await tx.vote.deleteMany({
+      where: {
+        meetupId,
+        OR: [
+          { gameId: { in: gameIds } },
+          { opponentGameId: { in: gameIds } },
+        ],
+      },
+    });
+    await tx.meetupGuestGame.deleteMany({ where: { meetupId } });
+
+    const orphanCandidates = await tx.game.findMany({
+      where: {
+        id: { in: gameIds },
+        listedInCollection: false,
+        meetupGuestGames: { none: {} },
+        votesAsWinner: { none: {} },
+        votesAsOpponent: { none: {} },
+      },
+      select: { id: true },
+    });
+    if (orphanCandidates.length > 0) {
+      await tx.game.deleteMany({
+        where: { id: { in: orphanCandidates.map((g) => g.id) } },
+      });
+    }
+  });
+
+  if (phase.picksLocked) {
+    await cancelActiveDuel(meetupId, meetup.expectedPlayerCount, prisma);
+  }
+
+  revalidateMeetupPaths(meetupId);
+  revalidatePath("/games");
+  return { ok: true, removed: gameIds.length };
 }
 
 export async function removeGameFromCollectionAction(gameId: number) {

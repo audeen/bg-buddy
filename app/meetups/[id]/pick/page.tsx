@@ -5,6 +5,7 @@ import { PickClient } from "@/components/PickClient";
 import { PageHeader } from "@/components/PageHeader";
 import { loadPickPhaseSummary } from "@/lib/pick-phase";
 import { loadOwnedExpansionsByBaseGame, serializeExpansionsByBaseId } from "@/lib/owned-expansions";
+import { pickGamesWhere } from "@/lib/meetup-guest-games";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +21,9 @@ export default async function PickPage({
   const meetup = await prisma.meetup.findUnique({ where: { id } });
   if (!meetup) notFound();
 
-  const [games, myVotes, { phase, summary }, expansionsByBase] = await Promise.all([
+  const [games, guestGameIds, myVotes, { phase, summary }, expansionsByBase] = await Promise.all([
     prisma.game.findMany({
-      where: { isExpansion: false },
+      where: pickGamesWhere(id),
       select: {
         id: true,
         name: true,
@@ -46,6 +47,10 @@ export default async function PickPage({
       },
       orderBy: { name: "asc" },
     }),
+    prisma.meetupGuestGame.findMany({
+      where: { meetupId: id },
+      select: { gameId: true },
+    }).then((rows) => rows.map((r) => r.gameId)),
     prisma.vote.findMany({
       where: { meetupId: id, userId: user.id, mode: "PICK" },
       select: { gameId: true, playerCount: true, points: true },
@@ -73,6 +78,7 @@ export default async function PickPage({
         readyForDuels={phase.readyForDuels}
         pickPhaseSummary={summary}
         expansionsByBaseId={serializeExpansionsByBaseId(expansionsByBase)}
+        guestGameIds={guestGameIds}
       />
     </div>
   );

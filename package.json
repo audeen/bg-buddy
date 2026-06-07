@@ -26,7 +26,8 @@
     "test:pick-phase": "tsx scripts/test-pick-phase.ts",
     "test:dummy-meetups": "tsx scripts/test-dummy-meetups.ts",
     "test:game-filters": "tsx scripts/test-game-filters.ts",
-    "test:barcode-lookup": "tsx scripts/test-barcode-lookup.ts"
+    "test:barcode-lookup": "tsx scripts/test-barcode-lookup.ts",
+    "test:meetup-guest-games": "tsx scripts/test-meetup-guest-games.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

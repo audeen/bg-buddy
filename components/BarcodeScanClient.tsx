@@ -11,7 +11,10 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
-import { addGameByBggIdAction } from "@/app/actions";
+import {
+  addGameByBggIdAction,
+  type AddGameActionResult,
+} from "@/app/actions";
 import type { BarcodeLookupCandidate } from "@/lib/barcode-lookup";
 
 const DRAG_CLOSE_THRESHOLD = 100;
@@ -102,12 +105,16 @@ function ScanLockPanel({
   pending,
   onConfirmAdd,
   onSelectCandidate,
+  variant = "collection",
 }: {
   scanLock: ScanLock;
   pending: boolean;
   onConfirmAdd: () => void;
   onSelectCandidate: (item: BarcodeLookupCandidate) => void;
+  variant?: "collection" | "meetup";
 }) {
+  const confirmLabel =
+    variant === "meetup" ? "Zum Treffen hinzufügen" : "Zur Sammlung hinzufügen";
   return (
     <div
       className="rounded-lg border border-[var(--border)] p-4 flex flex-col gap-3"
@@ -140,7 +147,7 @@ function ScanLockPanel({
             disabled={pending}
             onClick={onConfirmAdd}
           >
-            {pending ? "Hinzufügen …" : "Zur Sammlung hinzufügen"}
+            {pending ? "Hinzufügen …" : confirmLabel}
           </button>
         </>
       )}
@@ -177,12 +184,29 @@ function ScanLockPanel({
       {scanLock.phase === "alreadyInCollection" && (
         <>
           <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
-          <p className="text-sm">
-            „{scanLock.name}" ist bereits in der Sammlung.{" "}
-            <Link href={`/games/${scanLock.bggId}`} className="underline">
-              Zum Spiel
-            </Link>
-          </p>
+          {variant === "meetup" ? (
+            <>
+              <p className="text-sm font-semibold">{scanLock.name}</p>
+              <p className="text-sm text-[var(--muted)]">
+                Spiel ist in der Sammlung — trotzdem zum Treffen hinzufügen?
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary w-fit"
+                disabled={pending}
+                onClick={onConfirmAdd}
+              >
+                {pending ? "Hinzufügen …" : confirmLabel}
+              </button>
+            </>
+          ) : (
+            <p className="text-sm">
+              „{scanLock.name}" ist bereits in der Sammlung.{" "}
+              <Link href={`/games/${scanLock.bggId}`} className="underline">
+                Zum Spiel
+              </Link>
+            </p>
+          )}
         </>
       )}
 
@@ -205,10 +229,16 @@ function ScanLockPanel({
       {scanLock.phase === "added" && (
         <>
           <p className="text-sm text-green-700 dark:text-green-400">
-            „{scanLock.name}" wurde hinzugefügt.{" "}
-            <Link href={`/games/${scanLock.bggId}`} className="underline">
-              Zum Spiel
-            </Link>
+            {variant === "meetup" ? (
+              <>„{scanLock.name}" wurde zum Treffen hinzugefügt.</>
+            ) : (
+              <>
+                „{scanLock.name}" wurde hinzugefügt.{" "}
+                <Link href={`/games/${scanLock.bggId}`} className="underline">
+                  Zum Spiel
+                </Link>
+              </>
+            )}
           </p>
         </>
       )}
@@ -219,10 +249,24 @@ function ScanLockPanel({
 export function AddGameModal({
   open,
   onOpenChange,
+  title = "Spiel hinzufügen",
+  hint = "Barcode scannen oder BGG-ID eingeben.",
+  variant = "collection",
+  onAdd,
+  onSuccess,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  title?: string;
+  hint?: string;
+  variant?: "collection" | "meetup";
+  onAdd?: (
+    bggId: number,
+    options?: { barcode?: string | null; name?: string | null },
+  ) => Promise<AddGameActionResult>;
+  onSuccess?: () => void;
 }) {
+  const addHandler = onAdd ?? addGameByBggIdAction;
   const router = useRouter();
   const modalTitleId = useId();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -322,64 +366,72 @@ export function AddGameModal({
     [pauseCamera],
   );
 
-  const confirmAdd = useCallback(() => {
-    if (scanLock?.phase !== "found") return;
-
-    const { bggId, barcode, name } = scanLock;
-    startTransition(async () => {
-      const res = await addGameByBggIdAction(bggId, { barcode, name });
-      if (res && "error" in res && res.error) {
-        applyScanLock({ phase: "error", barcode, message: res.error });
+  const handleAddResult = useCallback(
+    (
+      res: AddGameActionResult,
+      ctx: { bggId: number; barcode: string; name?: string },
+    ) => {
+      const { bggId, barcode, name } = ctx;
+      if ("error" in res) {
+        if (scanLockRef.current) {
+          applyScanLock({ phase: "error", barcode, message: res.error });
+        } else {
+          setCameraError(res.error);
+        }
         return;
       }
-      if (res && "alreadyExists" in res && res.alreadyExists) {
+      if (res.alreadyExists && variant === "collection") {
         applyScanLock({
           phase: "alreadyInCollection",
           barcode,
           bggId: res.bggId ?? bggId,
           name: res.name,
         });
-      } else if (res && "name" in res && res.name) {
+        return;
+      }
+      if (res.name) {
         applyScanLock({
           phase: "added",
           barcode,
-          bggId,
+          bggId: res.bggId ?? bggId,
           name: res.name,
         });
         setBarcodeInput("");
+        setBggIdInput("");
       }
+      onSuccess?.();
       router.refresh();
+    },
+    [applyScanLock, onSuccess, router, variant],
+  );
+
+  const confirmAdd = useCallback(() => {
+    if (
+      scanLock?.phase !== "found" &&
+      !(variant === "meetup" && scanLock?.phase === "alreadyInCollection")
+    ) {
+      return;
+    }
+
+    const { bggId, barcode } = scanLock;
+    const name = scanLock.phase === "found" ? scanLock.name : undefined;
+    startTransition(async () => {
+      const res = await addHandler(bggId, { barcode, name });
+      handleAddResult(res, { bggId, barcode, name });
     });
-  }, [scanLock, applyScanLock, router]);
+  }, [scanLock, addHandler, handleAddResult, variant]);
 
   const addByBggId = useCallback(
     (bggId: number, barcode?: string | null) => {
       startTransition(async () => {
-        const res = await addGameByBggIdAction(bggId, { barcode });
-        if (res && "error" in res && res.error) {
-          setCameraError(res.error);
-          return;
-        }
-        if (res && "alreadyExists" in res && res.alreadyExists) {
-          applyScanLock({
-            phase: "alreadyInCollection",
-            barcode: barcode ?? String(bggId),
-            bggId: res.bggId ?? bggId,
-            name: res.name,
-          });
-        } else if (res && "name" in res && res.name) {
-          applyScanLock({
-            phase: "added",
-            barcode: barcode ?? String(bggId),
-            bggId,
-            name: res.name,
-          });
-          setBggIdInput("");
-        }
-        router.refresh();
+        const res = await addHandler(bggId, { barcode });
+        handleAddResult(res, {
+          bggId,
+          barcode: barcode ?? String(bggId),
+        });
       });
     },
-    [applyScanLock, router],
+    [addHandler, handleAddResult],
   );
 
   useEffect(() => {
@@ -606,14 +658,12 @@ export function AddGameModal({
         >
           <div className="modal-handle" aria-hidden />
           <h2 id={modalTitleId} className="text-sm font-semibold text-[var(--muted)]">
-            Spiel hinzufügen
+            {title}
           </h2>
         </div>
 
         <div className="modal-body flex flex-col gap-3 safe-bottom max-h-[min(85vh,40rem)] overflow-y-auto">
-          <p className="text-sm text-[var(--muted)]">
-            Barcode scannen oder BGG-ID eingeben.
-          </p>
+          <p className="text-sm text-[var(--muted)]">{hint}</p>
 
           {!scanLock && (
             <>
@@ -698,6 +748,7 @@ export function AddGameModal({
               pending={pending}
               onConfirmAdd={confirmAdd}
               onSelectCandidate={selectCandidate}
+              variant={variant}
             />
           )}
 

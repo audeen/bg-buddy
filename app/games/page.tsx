@@ -50,7 +50,7 @@ export default async function GamesPage({
       orderBy,
     }),
     prisma.game.findMany({
-      where: { isExpansion: false },
+      where: { isExpansion: false, listedInCollection: true },
       select: { categories: true, bggRating: true },
     }),
     loadOwnedExpansionsByBaseGame(),

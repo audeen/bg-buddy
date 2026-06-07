@@ -49,6 +49,7 @@ export function PickClient({
   readyForDuels,
   pickPhaseSummary,
   expansionsByBaseId,
+  guestGameIds = [],
 }: {
   meetupId: string;
   expected: number;
@@ -59,7 +60,9 @@ export function PickClient({
   readyForDuels: boolean;
   pickPhaseSummary: PickPhaseSummary;
   expansionsByBaseId: Record<string, GameCardGame[]>;
+  guestGameIds?: number[];
 }) {
+  const guestIdSet = useMemo(() => new Set(guestGameIds), [guestGameIds]);
   const [selected, setSelected] = useState(expected);
   const [points, setPoints] = useState<Record<string, number>>(() => {
     const m: Record<string, number> = {};
@@ -107,13 +110,15 @@ export function PickClient({
     return counts;
   }, [games, expected]);
 
-  const visible = useMemo(
-    () =>
-      games
-        .filter((g) => eligible(g, selected))
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [games, selected],
-  );
+  const visible = useMemo(() => {
+    const filtered = games.filter((g) => eligible(g, selected));
+    return filtered.sort((a, b) => {
+      const aGuest = guestIdSet.has(a.id);
+      const bGuest = guestIdSet.has(b.id);
+      if (aGuest !== bGuest) return aGuest ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [games, selected, guestIdSet]);
 
   const expectedLocked = picksLocked && selected === expected;
 
@@ -262,8 +267,14 @@ export function PickClient({
           {visible.map((g) => {
             const key = pointsKey(g.id, selected);
             const gamePoints = points[key] ?? 0;
+            const isGuest = guestIdSet.has(g.id);
             return (
-              <li key={g.id}>
+              <li key={g.id} className="flex flex-col gap-1">
+                {isGuest && (
+                  <span className="text-xs font-semibold text-[var(--accent)] px-0.5">
+                    Temporär
+                  </span>
+                )}
                 <GameCard
                   game={g}
                   playerCount={selected}

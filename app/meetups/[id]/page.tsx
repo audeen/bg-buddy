@@ -9,6 +9,7 @@ import { MeetupVoteActions } from "@/components/MeetupVoteActions";
 import { MeetupRankings } from "@/components/MeetupRankings";
 import { MeetupParticipants } from "@/components/MeetupParticipants";
 import { JoinMeetupButton } from "@/components/JoinMeetupButton";
+import { MeetupGuestGamesClient } from "@/components/MeetupGuestGamesClient";
 import { PageHeader } from "@/components/PageHeader";
 import {
   buildCombinedByCount,
@@ -58,9 +59,24 @@ export default async function MeetupDetail({
       registrations: {
         include: { user: { select: { id: true, name: true } } },
       },
+      guestGames: {
+        include: {
+          game: {
+            select: {
+              id: true,
+              name: true,
+              thumbnail: true,
+              image: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
   if (!meetup) notFound();
+
+  const guestGames = meetup.guestGames.map((g) => g.game);
 
   const votes = await prisma.vote.findMany({
     where: { meetupId: id },
@@ -281,11 +297,17 @@ export default async function MeetupDetail({
 
       <div className="card flex flex-col gap-4" style={{ padding: "var(--space-card)" }}>
         {isHost ? (
-          <ExpectedCountControl
-            key={meetup.expectedPlayerCount}
-            meetupId={meetup.id}
-            value={meetup.expectedPlayerCount}
-          />
+          <>
+            <ExpectedCountControl
+              key={meetup.expectedPlayerCount}
+              meetupId={meetup.id}
+              value={meetup.expectedPlayerCount}
+            />
+            <MeetupGuestGamesClient
+              meetupId={meetup.id}
+              guestGames={guestGames}
+            />
+          </>
         ) : (
           <ExpectedCountReadOnly count={meetup.expectedPlayerCount} />
         )}

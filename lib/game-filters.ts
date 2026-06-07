@@ -213,7 +213,7 @@ export function buildGameOrderBy(sort: GameSort): Prisma.GameOrderByWithRelation
 }
 
 export function buildGameWhere(filters: GameFilters): Prisma.GameWhereInput {
-  const clauses: Prisma.GameWhereInput[] = [];
+  const clauses: Prisma.GameWhereInput[] = [{ listedInCollection: true }];
 
   if (!filters.includeExpansions) {
     clauses.push({ isExpansion: false });

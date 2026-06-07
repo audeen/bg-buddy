@@ -21,6 +21,7 @@ export type SingleGameInput = {
   rank?: number | null;
   isExpansion?: boolean;
   barcode?: string | null;
+  listedInCollection?: boolean;
 };
 
 function thingToPartialFields(d: ThingDetails): Omit<SingleGameInput, "bggId"> {
@@ -134,6 +135,7 @@ export async function upsertGameRecord(
       data: {
         id: bggId,
         enriched: enrichment?.enriched ?? false,
+        listedInCollection: rest.listedInCollection ?? true,
         bestPlayerCounts: [],
         recommendedPlayerCounts: [],
         categories: enrichment?.categories ?? [],

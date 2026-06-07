@@ -15,6 +15,7 @@ model User {
   meetups              Meetup[]
   votes                Vote[]
   meetupRegistrations  MeetupRegistration[]
+  guestGamesAdded      MeetupGuestGame[]
 }
 
 model Game {
@@ -41,12 +42,14 @@ model Game {
   bestPlayerCounts        Int[]
   recommendedPlayerCounts Int[]
   enriched                Boolean  @default(false)
+  listedInCollection      Boolean  @default(true)
   barcode                String?  @unique
   manuallyEditedFields    String[] @default([])
   updatedAt               DateTime @updatedAt
 
-  votesAsWinner   Vote[] @relation("VoteWinner")
-  votesAsOpponent Vote[] @relation("VoteOpponent")
+  votesAsWinner    Vote[]             @relation("VoteWinner")
+  votesAsOpponent  Vote[]             @relation("VoteOpponent")
+  meetupGuestGames MeetupGuestGame[]
 }
 
 enum VoteMode {
@@ -71,6 +74,21 @@ model Meetup {
 
   votes         Vote[]
   registrations MeetupRegistration[]
+  guestGames    MeetupGuestGame[]
+}
+
+model MeetupGuestGame {
+  id        String   @id @default(cuid())
+  meetupId  String
+  meetup    Meetup   @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  gameId    Int
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  addedById String
+  addedBy   User     @relation(fields: [addedById], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([meetupId, gameId])
+  @@index([meetupId])
 }
 
 model MeetupRegistration {
