@@ -3,6 +3,10 @@ import {
   pairKey,
   parsePairKey,
 } from "@/lib/duel-pairs";
+import {
+  breakDuelTie,
+  type DuelTieBreakContext,
+} from "@/lib/duel-tiebreaker";
 
 export type DuelVoteRow = {
   gameId: number;
@@ -16,6 +20,10 @@ export type CopelandResult = {
   decidedPairs: number;
   totalPairs: number;
   tiedPairs: number;
+};
+
+export type CopelandOptions = {
+  tieBreak?: DuelTieBreakContext;
 };
 
 function tallyPairVotes(
@@ -47,6 +55,7 @@ export function buildCopelandForCount(
   playerCount: number,
   phase: DuelPhase,
   totalPairs: number,
+  options?: CopelandOptions,
 ): CopelandResult {
   const filtered = votes.filter(
     (v) =>
@@ -67,7 +76,7 @@ export function buildCopelandForCount(
   let decidedPairs = 0;
   let tiedPairs = 0;
 
-  for (const [, pairVotes] of byPair) {
+  for (const [key, pairVotes] of byPair) {
     if (phase === "GROUP") {
       const v = pairVotes[0];
       if (!v) continue;
@@ -79,6 +88,12 @@ export function buildCopelandForCount(
     const { winnerId, tied } = tallyPairVotes(pairVotes);
     if (tied) {
       tiedPairs++;
+      if (options?.tieBreak) {
+        const { a, b } = parsePairKey(key);
+        const resolved = breakDuelTie(a, b, key, options.tieBreak);
+        decidedPairs++;
+        winsByGame[resolved] = (winsByGame[resolved] ?? 0) + 1;
+      }
       continue;
     }
     if (winnerId != null) {

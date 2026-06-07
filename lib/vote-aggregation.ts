@@ -1,6 +1,10 @@
 import type { RankEntry } from "@/components/Ranking";
 import { buildCopelandForCount } from "@/lib/copeland";
 import { pairCount } from "@/lib/duel-pairs";
+import {
+  buildGameTieMetaMap,
+  type DuelTieBreakContext,
+} from "@/lib/duel-tiebreaker";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import { FULL_THRESHOLD } from "@/lib/vote-limits";
 import { isDuelMode, isPickMode } from "@/lib/vote-mode";
@@ -17,6 +21,9 @@ type VoteRow = {
     name: string;
     thumbnail: string | null;
     image: string | null;
+    bestPlayerCounts?: number[];
+    rank?: number | null;
+    bggRating?: number | null;
   };
 };
 
@@ -65,6 +72,7 @@ export function buildRankingByCount(
 
 export function buildDuelCopelandByCount(
   votes: VoteRow[],
+  meetupId?: string,
 ): Record<number, RankEntry[]> {
   const picksByCount = new Map<number, { gameId: number; points: number }[]>();
   for (const v of votes) {
@@ -87,12 +95,21 @@ export function buildDuelCopelandByCount(
 
   const gameMeta = new Map<
     number,
-    { name: string; thumbnail: string | null }
+    {
+      name: string;
+      thumbnail: string | null;
+      bestPlayerCounts: number[];
+      rank: number | null;
+      bggRating: number | null;
+    }
   >();
   for (const v of votes) {
     gameMeta.set(v.gameId, {
       name: v.game.name,
       thumbnail: v.game.thumbnail ?? v.game.image,
+      bestPlayerCounts: v.game.bestPlayerCounts ?? [],
+      rank: v.game.rank ?? null,
+      bggRating: v.game.bggRating ?? null,
     });
   }
 
@@ -104,16 +121,34 @@ export function buildDuelCopelandByCount(
   const out: Record<number, RankEntry[]> = {};
 
   for (const pc of playerCounts) {
-    const pool = poolGameIds(
-      buildPickCounts(picksByCount.get(pc) ?? []),
-    );
+    const pickCounts = buildPickCounts(picksByCount.get(pc) ?? []);
+    const pool = poolGameIds(pickCounts);
     const totalPairs = pairCount(pool.length);
     const phase = totalPairs <= FULL_THRESHOLD ? "FULL" : "GROUP";
+    const tieBreak: DuelTieBreakContext | undefined =
+      meetupId && phase === "FULL"
+        ? {
+            meetupId,
+            expectedPlayerCount: pc,
+            pickCounts,
+            games: buildGameTieMetaMap(
+              [...gameMeta.entries()]
+                .filter(([id]) => pool.includes(id))
+                .map(([id, meta]) => ({
+                  id,
+                  bestPlayerCounts: meta.bestPlayerCounts,
+                  rank: meta.rank,
+                  bggRating: meta.bggRating,
+                })),
+            ),
+          }
+        : undefined;
     const { winsByGame } = buildCopelandForCount(
       duelVotes,
       pc,
       phase,
       totalPairs,
+      tieBreak ? { tieBreak } : undefined,
     );
 
     const entries: RankEntry[] = [];
@@ -141,6 +176,7 @@ export function buildDuelCopelandByCount(
 /** pickCount (Stimmen-Summe) + Copeland-Siege */
 export function buildCombinedByCount(
   votes: VoteRow[],
+  meetupId?: string,
 ): Record<number, RankEntry[]> {
   const picksByCount = new Map<number, Record<number, number>>();
   for (const v of votes) {
@@ -152,7 +188,7 @@ export function buildCombinedByCount(
     c[v.gameId] = (c[v.gameId] ?? 0) + v.points;
   }
 
-  const duelByCount = buildDuelCopelandByCount(votes);
+  const duelByCount = buildDuelCopelandByCount(votes, meetupId);
 
   const playerCounts = new Set([
     ...picksByCount.keys(),

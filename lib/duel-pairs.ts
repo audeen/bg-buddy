@@ -1,7 +1,9 @@
 import {
   buildCopelandForCount,
+  type CopelandOptions,
   type DuelVoteRow,
 } from "@/lib/copeland";
+import type { DuelTieBreakContext } from "@/lib/duel-tiebreaker";
 import { FULL_THRESHOLD } from "@/lib/vote-limits";
 
 export type DuelPair = { a: number; b: number };
@@ -127,10 +129,15 @@ export function duelPhaseForPairCount(totalPairs: number): DuelPhase {
   return totalPairs <= FULL_THRESHOLD ? "FULL" : "GROUP";
 }
 
+export type DuelProgressOptions = {
+  tieBreak?: DuelTieBreakContext;
+};
+
 export function getDuelProgressForCount(
   poolGameIds: number[],
   duelVotes: DuelVoteRow[],
   playerCount: number,
+  options?: DuelProgressOptions,
 ): DuelProgress {
   const poolSize = poolGameIds.length;
   const totalPairs = pairCount(poolSize);
@@ -143,11 +150,15 @@ export function getDuelProgressForCount(
     };
   }
   const phase = duelPhaseForPairCount(totalPairs);
+  const copelandOptions: CopelandOptions | undefined = options?.tieBreak
+    ? { tieBreak: options.tieBreak }
+    : undefined;
   const { decidedPairs } = buildCopelandForCount(
     duelVotes,
     playerCount,
     phase,
     totalPairs,
+    copelandOptions,
   );
   return {
     phase,

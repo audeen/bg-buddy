@@ -13,6 +13,7 @@ import {
 } from "@/lib/vote-aggregation";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import { getDuelProgressForCount } from "@/lib/duel-pairs";
+import { buildGameTieMetaMap } from "@/lib/duel-tiebreaker";
 import { getPickPhaseState } from "@/lib/pick-phase";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
@@ -47,12 +48,22 @@ export default async function MeetupDetail({
   const votes = await prisma.vote.findMany({
     where: { meetupId: id },
     include: {
-      game: { select: { id: true, name: true, thumbnail: true, image: true } },
+      game: {
+        select: {
+          id: true,
+          name: true,
+          thumbnail: true,
+          image: true,
+          bestPlayerCounts: true,
+          rank: true,
+          bggRating: true,
+        },
+      },
       user: { select: { name: true } },
     },
   });
 
-  const combinedByCount = buildCombinedByCount(votes);
+  const combinedByCount = buildCombinedByCount(votes, id);
   const playerCounts = playerCountsFromVotes(
     meetup.expectedPlayerCount,
     votes,
@@ -80,11 +91,39 @@ export default async function MeetupDetail({
       playerCount: v.playerCount,
     }));
 
+  const tieBreak =
+    poolIds.length >= 2
+      ? {
+          meetupId: id,
+          expectedPlayerCount: expected,
+          pickCounts,
+          games: buildGameTieMetaMap(
+            poolIds.map((gameId) => {
+              const vote = votes.find(
+                (v) => v.gameId === gameId && v.mode === "PICK",
+              );
+              const g = vote?.game;
+              return {
+                id: gameId,
+                bestPlayerCounts: g?.bestPlayerCounts ?? [],
+                rank: g?.rank ?? null,
+                bggRating: g?.bggRating ?? null,
+              };
+            }),
+          ),
+        }
+      : undefined;
+
   const {
     totalPairs,
     decidedPairs: groupDecidedPairs,
     duelComplete,
-  } = getDuelProgressForCount(poolIds, duelRows, expected);
+  } = getDuelProgressForCount(
+    poolIds,
+    duelRows,
+    expected,
+    tieBreak ? { tieBreak } : undefined,
+  );
 
   const duelRoundComplete = duelComplete && totalPairs > 0;
 
@@ -116,7 +155,38 @@ export default async function MeetupDetail({
         playerCount: v.playerCount,
       }));
     if (countDuels.length === 0) return false;
-    return getDuelProgressForCount(countPool, countDuels, pc).duelComplete;
+    const countPickCounts = buildPickCounts(countPicks);
+    const countTieBreak =
+      countPool.length >= 2
+        ? {
+            meetupId: id,
+            expectedPlayerCount: pc,
+            pickCounts: countPickCounts,
+            games: buildGameTieMetaMap(
+              countPool.map((gameId) => {
+                const vote = votes.find(
+                  (v) =>
+                    v.gameId === gameId &&
+                    v.mode === "PICK" &&
+                    v.playerCount === pc,
+                );
+                const g = vote?.game;
+                return {
+                  id: gameId,
+                  bestPlayerCounts: g?.bestPlayerCounts ?? [],
+                  rank: g?.rank ?? null,
+                  bggRating: g?.bggRating ?? null,
+                };
+              }),
+            ),
+          }
+        : undefined;
+    return getDuelProgressForCount(
+      countPool,
+      countDuels,
+      pc,
+      countTieBreak ? { tieBreak: countTieBreak } : undefined,
+    ).duelComplete;
   });
 
   return (

@@ -56,7 +56,7 @@ export function MeetupRankings({
         >
           {totalPairs > 0 ? (
             <p className="text-sm text-[var(--muted)]">
-              Noch {openPairs} von {totalPairs} Vergleichen offen.
+              Noch {openPairs} von {totalPairs} Vergleichen ohne alle Stimmen.
             </p>
           ) : (
             <p className="text-sm text-[var(--muted)]">

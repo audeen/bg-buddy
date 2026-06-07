@@ -11,6 +11,7 @@ import {
   participantIdsFromPicks,
   getDuelProgressForCount,
 } from "@/lib/duel-pairs";
+import { buildGameTieMetaMap } from "@/lib/duel-tiebreaker";
 import { completedPairKeysForUser } from "@/lib/copeland";
 import { loadPickPhaseSummary } from "@/lib/pick-phase";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
@@ -178,6 +179,9 @@ export default async function DuellPage({
       name: true,
       thumbnail: true,
       image: true,
+      bestPlayerCounts: true,
+      rank: true,
+      bggRating: true,
     },
     orderBy: { name: "asc" },
   });
@@ -189,10 +193,21 @@ export default async function DuellPage({
     playerCount: v.playerCount,
   }));
 
+  const tieBreak =
+    ids.length >= 2
+      ? {
+          meetupId: id,
+          expectedPlayerCount: expected,
+          pickCounts,
+          games: buildGameTieMetaMap(games),
+        }
+      : undefined;
+
   const { decidedPairs: groupDecidedPairs } = getDuelProgressForCount(
     ids,
     duelRows,
     expected,
+    tieBreak ? { tieBreak } : undefined,
   );
   const completedKeys = [
     ...completedPairKeysForUser(duelRows, user.id, expected),

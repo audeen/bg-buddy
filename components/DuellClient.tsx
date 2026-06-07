@@ -151,12 +151,10 @@ export function DuellClient({
         <p className="text-[var(--muted)] text-sm">
           Du hast alle {myDone} Vergleiche für {expected} Spieler ★ abgeschlossen.
         </p>
-        {phase === "GROUP" && (
-          <p className="text-[var(--muted)] text-sm">
-            In der Gruppe sind {groupDecidedPairs} von {totalPairs} Vergleichen
-            entschieden.
-          </p>
-        )}
+        <p className="text-[var(--muted)] text-sm">
+          In der Gruppe sind {groupDecidedPairs} von {totalPairs} Vergleichen
+          entschieden.
+        </p>
         <Link
           href={`/meetups/${meetupId}`}
           className="btn btn-primary btn-lg w-full max-w-sm"
@@ -179,11 +177,9 @@ export function DuellClient({
             Duell {myDone + 1} / {myPairs.length}
           </span>
         </div>
-        {phase === "GROUP" && (
-          <p className="text-xs text-[var(--muted)] tabular-nums">
-            {groupDecidedPairs} / {totalPairs} entschieden
-          </p>
-        )}
+        <p className="text-xs text-[var(--muted)] tabular-nums">
+          {groupDecidedPairs} / {totalPairs} entschieden
+        </p>
       </div>
 
       {voteError && (
