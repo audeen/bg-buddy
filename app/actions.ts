@@ -1,5 +1,6 @@
 "use server";
 
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -149,7 +150,7 @@ export async function updateExpectedCountAction(
     data: {
       expectedPlayerCount: Math.max(1, Math.round(count)),
       duelFrozenAt: null,
-      duelFrozenData: null,
+      duelFrozenData: Prisma.DbNull,
     },
   });
   revalidatePath(`/meetups/${meetupId}`);
