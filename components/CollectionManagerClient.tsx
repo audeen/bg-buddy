@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { removeGameFromCollectionAction } from "@/app/actions";
+import { CameraIcon } from "@/components/BarcodeScanClient";
 
 export type CollectionGameRow = {
   id: number;
@@ -13,7 +14,13 @@ export type CollectionGameRow = {
   manuallyEditedFields: string[];
 };
 
-export function CollectionManagerClient({ games }: { games: CollectionGameRow[] }) {
+export function CollectionManagerClient({
+  games,
+  onAddGame,
+}: {
+  games: CollectionGameRow[];
+  onAddGame?: () => void;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
@@ -72,19 +79,33 @@ export function CollectionManagerClient({ games }: { games: CollectionGameRow[] 
         </p>
       )}
 
-      <div className="filter-bar flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex-1">
-          <label className="label" htmlFor="collection-search">Suche</label>
+      <div className="filter-bar flex flex-wrap gap-2 items-center">
+        {onAddGame && (
+          <button
+            type="button"
+            className="btn btn-ghost shrink-0"
+            style={{ width: "2.75rem", height: "2.75rem", padding: 0 }}
+            aria-label="Spiel hinzufügen"
+            title="Spiel hinzufügen"
+            onClick={onAddGame}
+          >
+            <CameraIcon />
+          </button>
+        )}
+        <div className="flex-1 min-w-[10rem]">
+          <label className="sr-only" htmlFor="collection-search">
+            Suche
+          </label>
           <input
             id="collection-search"
             type="search"
-            className="input"
+            className="input w-full"
             placeholder="Spielname…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <label className="flex items-center gap-2 text-sm pb-2 sm:pb-3">
+        <label className="flex items-center gap-2 text-sm shrink-0">
           <input
             type="checkbox"
             checked={onlyBase}

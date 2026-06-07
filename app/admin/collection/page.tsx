@@ -2,8 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { LoginForm } from "@/components/LoginForm";
-import { CollectionManagerClient } from "@/components/CollectionManagerClient";
-import { BarcodeScanClient } from "@/components/BarcodeScanClient";
+import { CollectionAdminClient } from "@/components/CollectionAdminClient";
 
 export const dynamic = "force-dynamic";
 
@@ -44,9 +43,7 @@ export default async function CollectionAdminPage() {
         </p>
       </div>
 
-      <BarcodeScanClient />
-
-      <CollectionManagerClient games={games} />
+      <CollectionAdminClient games={games} />
 
       <div className="flex flex-wrap gap-3">
         <Link href="/games" className="btn btn-ghost w-fit">

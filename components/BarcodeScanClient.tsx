@@ -40,8 +40,6 @@ type ScanLock =
   | { phase: "error"; barcode: string; message: string }
   | { phase: "added"; barcode: string; bggId: number; name: string };
 
-type ScanLockOrigin = "camera" | "manual";
-
 function lookupToScanLock(data: LookupResponse, barcode: string): ScanLock | null {
   if ("error" in data) {
     return { phase: "error", barcode, message: data.error };
@@ -80,7 +78,7 @@ function lookupToScanLock(data: LookupResponse, barcode: string): ScanLock | nul
   }
 }
 
-function CameraIcon() {
+export function CameraIcon() {
   return (
     <svg
       width="18"
@@ -218,7 +216,13 @@ function ScanLockPanel({
   );
 }
 
-export function BarcodeScanClient() {
+export function AddGameModal({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const router = useRouter();
   const modalTitleId = useId();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -230,11 +234,9 @@ export function BarcodeScanClient() {
   const draggingRef = useRef(false);
   const pointerIdRef = useRef<number | null>(null);
 
-  const [scannerOpen, setScannerOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [cameraStarting, setCameraStarting] = useState(false);
   const [scanLock, setScanLock] = useState<ScanLock | null>(null);
-  const [scanLockOrigin, setScanLockOrigin] = useState<ScanLockOrigin | null>(null);
   const [barcodeInput, setBarcodeInput] = useState("");
   const [bggIdInput, setBggIdInput] = useState("");
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -247,7 +249,6 @@ export function BarcodeScanClient() {
 
   const clearScanLock = useCallback(() => {
     applyScanLock(null);
-    setScanLockOrigin(null);
   }, [applyScanLock]);
 
   const pauseCamera = useCallback(() => {
@@ -272,11 +273,13 @@ export function BarcodeScanClient() {
     dragStartYRef.current = 0;
   }, []);
 
-  const closeScanner = useCallback(() => {
+  const closeModal = useCallback(() => {
     pauseCamera();
     clearDragVisuals();
-    setScannerOpen(false);
-  }, [pauseCamera, clearDragVisuals]);
+    clearScanLock();
+    setCameraError(null);
+    onOpenChange(false);
+  }, [pauseCamera, clearDragVisuals, clearScanLock, onOpenChange]);
 
   const resolveBarcode = useCallback(
     async (raw: string) => {
@@ -313,7 +316,6 @@ export function BarcodeScanClient() {
   const lockFromScan = useCallback(
     (raw: string) => {
       if (scanLockRef.current) return;
-      setScanLockOrigin("camera");
       pauseCamera();
       void resolveBarcodeRef.current(raw);
     },
@@ -381,7 +383,26 @@ export function BarcodeScanClient() {
   );
 
   useEffect(() => {
-    if (!scanning) return;
+    if (!open) {
+      pauseCamera();
+      clearScanLock();
+      setCameraError(null);
+      return;
+    }
+
+    setCameraError(null);
+    clearScanLock();
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraError("Kamera wird in diesem Browser nicht unterstützt.");
+      return;
+    }
+
+    setScanning(true);
+  }, [open, pauseCamera, clearScanLock]);
+
+  useEffect(() => {
+    if (!scanning || !open) return;
 
     let cancelled = false;
     setCameraStarting(true);
@@ -446,18 +467,18 @@ export function BarcodeScanClient() {
       controlsRef.current = null;
       setCameraStarting(false);
     };
-  }, [scanning, lockFromScan]);
+  }, [scanning, open, lockFromScan]);
 
   useEffect(() => {
-    if (!scannerOpen) return;
+    if (!open) return;
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") closeScanner();
+      if (event.key === "Escape") closeModal();
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [scannerOpen, closeScanner]);
+  }, [open, closeModal]);
 
   const applyDragVisuals = useCallback((delta: number) => {
     const panel = panelRef.current;
@@ -507,26 +528,13 @@ export function BarcodeScanClient() {
       }
 
       if (delta >= DRAG_CLOSE_THRESHOLD) {
-        closeScanner();
+        closeModal();
       } else {
         clearDragVisuals();
       }
     },
-    [closeScanner, clearDragVisuals],
+    [closeModal, clearDragVisuals],
   );
-
-  function openScanner() {
-    setCameraError(null);
-    clearScanLock();
-
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setCameraError("Kamera wird in diesem Browser nicht unterstützt.");
-      return;
-    }
-
-    setScannerOpen(true);
-    setScanning(true);
-  }
 
   function continueScanning() {
     setCameraError(null);
@@ -538,8 +546,7 @@ export function BarcodeScanClient() {
     e.preventDefault();
     const raw = barcodeInput.trim();
     if (!raw) return;
-    closeScanner();
-    setScanLockOrigin("manual");
+    pauseCamera();
     void resolveBarcode(raw);
   }
 
@@ -571,187 +578,151 @@ export function BarcodeScanClient() {
   const lockedBarcode =
     scanLock && scanLock.phase !== "lookingUp" ? scanLock.barcode : null;
 
-  const showLockInline =
-    scanLock && (scanLockOrigin === "manual" || !scannerOpen);
-  const showLockInModal =
-    scanLock && scannerOpen && scanLockOrigin === "camera";
+  if (!open) return null;
 
   return (
-    <>
-      <div className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
-        <h2 className="text-lg font-semibold">Spiel hinzufügen</h2>
-
-        <form onSubmit={handleBarcodeSearch}>
-          <div className="flex gap-2 items-center">
-            <button
-              type="button"
-              className="btn btn-ghost shrink-0"
-              style={{ width: "2.75rem", height: "2.75rem", padding: 0 }}
-              aria-label="Barcode scannen"
-              title="Barcode scannen"
-              onClick={openScanner}
-            >
-              <CameraIcon />
-            </button>
-            <label className="sr-only" htmlFor="barcode-input">
-              Barcode
-            </label>
-            <input
-              id="barcode-input"
-              type="text"
-              inputMode="numeric"
-              className="input flex-1 min-w-0"
-              placeholder="EAN / UPC …"
-              value={barcodeInput}
-              onChange={(e) => setBarcodeInput(e.target.value)}
-              disabled={scanLock?.phase === "lookingUp"}
-            />
-            <button
-              type="submit"
-              className="btn btn-primary shrink-0"
-              disabled={pending || scanLock?.phase === "lookingUp"}
-            >
-              Suchen
-            </button>
-          </div>
-        </form>
-
-        {showLockInline && (
-          <ScanLockPanel
-            scanLock={scanLock}
-            pending={pending}
-            onConfirmAdd={confirmAdd}
-            onSelectCandidate={selectCandidate}
-          />
-        )}
-
-        <p className="text-center text-sm text-[var(--muted)]">oder</p>
-
-        <form onSubmit={handleBggAdd}>
-          <div className="flex gap-2 items-center">
-            <label className="sr-only" htmlFor="bgg-id-input">
-              BGG-ID
-            </label>
-            <input
-              id="bgg-id-input"
-              type="number"
-              min={1}
-              className="input flex-1 min-w-0"
-              placeholder="BGG-ID, z. B. 148228"
-              value={bggIdInput}
-              onChange={(e) => setBggIdInput(e.target.value)}
-            />
-            <button type="submit" className="btn btn-primary shrink-0" disabled={pending}>
-              {pending ? "Hinzufügen …" : "Hinzufügen"}
-            </button>
-          </div>
-        </form>
-
-        {cameraError && !scannerOpen && (
-          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-            {cameraError}
-          </p>
-        )}
-
-        {lockedBarcode && scanLock?.phase === "notFound" && showLockInline && (
-          <p className="text-xs text-[var(--muted)]">
-            Barcode {lockedBarcode} wird beim Hinzufügen gespeichert.
-          </p>
-        )}
-      </div>
-
-      {scannerOpen && (
+    <div
+      ref={overlayRef}
+      className="modal-overlay"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) closeModal();
+      }}
+    >
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={modalTitleId}
+        className="modal-panel"
+        style={{ maxWidth: "28rem" }}
+        tabIndex={-1}
+      >
         <div
-          ref={overlayRef}
-          className="modal-overlay"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) closeScanner();
-          }}
+          className="modal-drag-zone"
+          onPointerDown={onDragPointerDown}
+          onPointerMove={onDragPointerMove}
+          onPointerUp={onDragPointerEnd}
+          onPointerCancel={onDragPointerEnd}
         >
-          <div
-            ref={panelRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={modalTitleId}
-            className="modal-panel"
-            style={{ maxWidth: "24rem" }}
-            tabIndex={-1}
-          >
-            <div
-              className="modal-drag-zone"
-              onPointerDown={onDragPointerDown}
-              onPointerMove={onDragPointerMove}
-              onPointerUp={onDragPointerEnd}
-              onPointerCancel={onDragPointerEnd}
-            >
-              <div className="modal-handle" aria-hidden />
-              <h2 id={modalTitleId} className="text-sm font-semibold text-[var(--muted)]">
-                Barcode scannen
-              </h2>
-            </div>
+          <div className="modal-handle" aria-hidden />
+          <h2 id={modalTitleId} className="text-sm font-semibold text-[var(--muted)]">
+            Spiel hinzufügen
+          </h2>
+        </div>
 
-            <div className="modal-body flex flex-col gap-4 safe-bottom">
-              {!scanLock && (
+        <div className="modal-body flex flex-col gap-3 safe-bottom max-h-[min(85vh,40rem)] overflow-y-auto">
+          <p className="text-sm text-[var(--muted)]">
+            Barcode scannen oder BGG-ID eingeben.
+          </p>
+
+          {!scanLock && (
+            <>
+              {cameraError ? (
+                <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+                  {cameraError}
+                </p>
+              ) : (
                 <>
-                  {cameraError ? (
-                    <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-                      {cameraError}
-                    </p>
-                  ) : (
-                    <>
-                      <div className="overflow-hidden rounded-lg bg-black aspect-video w-full relative">
-                        <video
-                          ref={videoRef}
-                          className="h-full w-full object-cover"
-                          muted
-                          playsInline
-                          autoPlay
-                        />
-                        {cameraStarting && (
-                          <p className="absolute inset-0 flex items-center justify-center text-sm text-white bg-black/50">
-                            Kamera wird gestartet …
-                          </p>
-                        )}
-                      </div>
-                      <p className="text-sm text-center text-[var(--muted)]">
-                        Barcode vor die Kamera halten
+                  <div className="overflow-hidden rounded-lg bg-black aspect-video w-full relative">
+                    <video
+                      ref={videoRef}
+                      className="h-full w-full object-cover"
+                      muted
+                      playsInline
+                      autoPlay
+                    />
+                    {cameraStarting && (
+                      <p className="absolute inset-0 flex items-center justify-center text-sm text-white bg-black/50">
+                        Kamera wird gestartet …
                       </p>
-                    </>
-                  )}
+                    )}
+                  </div>
+                  <p className="text-sm text-center text-[var(--muted)]">
+                    Barcode vor die Kamera halten
+                  </p>
                 </>
               )}
+            </>
+          )}
 
-              {showLockInModal && (
-                <ScanLockPanel
-                  scanLock={scanLock}
-                  pending={pending}
-                  onConfirmAdd={confirmAdd}
-                  onSelectCandidate={selectCandidate}
-                />
-              )}
-
-              <div className="flex flex-col gap-2 w-full">
-                {showLockInModal && (
-                  <button
-                    type="button"
-                    className="btn btn-primary w-full"
-                    onClick={continueScanning}
-                  >
-                    Weiter scannen
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className="btn btn-ghost w-full"
-                  onClick={closeScanner}
-                >
-                  Schließen
-                </button>
-              </div>
+          <form onSubmit={handleBarcodeSearch}>
+            <div className="flex gap-2 items-center">
+              <label className="sr-only" htmlFor="modal-barcode-input">
+                Barcode
+              </label>
+              <input
+                id="modal-barcode-input"
+                type="text"
+                inputMode="numeric"
+                className="input flex-1 min-w-0"
+                placeholder="EAN / UPC …"
+                value={barcodeInput}
+                onChange={(e) => setBarcodeInput(e.target.value)}
+                disabled={scanLock?.phase === "lookingUp"}
+              />
+              <button
+                type="submit"
+                className="btn btn-primary shrink-0"
+                disabled={pending || scanLock?.phase === "lookingUp"}
+              >
+                Suchen
+              </button>
             </div>
+          </form>
+
+          <p className="text-center text-sm text-[var(--muted)]">oder</p>
+
+          <form onSubmit={handleBggAdd}>
+            <div className="flex gap-2 items-center">
+              <label className="sr-only" htmlFor="modal-bgg-id-input">
+                BGG-ID
+              </label>
+              <input
+                id="modal-bgg-id-input"
+                type="number"
+                min={1}
+                className="input flex-1 min-w-0"
+                placeholder="BGG-ID, z. B. 148228"
+                value={bggIdInput}
+                onChange={(e) => setBggIdInput(e.target.value)}
+              />
+              <button type="submit" className="btn btn-primary shrink-0" disabled={pending}>
+                {pending ? "Hinzufügen …" : "Hinzufügen"}
+              </button>
+            </div>
+          </form>
+
+          {scanLock && (
+            <ScanLockPanel
+              scanLock={scanLock}
+              pending={pending}
+              onConfirmAdd={confirmAdd}
+              onSelectCandidate={selectCandidate}
+            />
+          )}
+
+          {lockedBarcode && scanLock?.phase === "notFound" && (
+            <p className="text-xs text-[var(--muted)]">
+              Barcode {lockedBarcode} wird beim Hinzufügen gespeichert.
+            </p>
+          )}
+
+          <div className="flex flex-col gap-2 w-full pt-1">
+            {scanLock && (
+              <button
+                type="button"
+                className="btn btn-primary w-full"
+                onClick={continueScanning}
+              >
+                Weiter scannen
+              </button>
+            )}
+            <button type="button" className="btn btn-ghost w-full" onClick={closeModal}>
+              Schließen
+            </button>
           </div>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 }
