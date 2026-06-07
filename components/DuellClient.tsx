@@ -72,6 +72,35 @@ function groupProgressText(
   return `${groupDecidedPairs} / ${totalPairs} mit allen Stimmen`;
 }
 
+function DuelProgressBar({
+  done,
+  total,
+  complete = false,
+}: {
+  done: number;
+  total: number;
+  complete?: boolean;
+}) {
+  const pct = total > 0 ? (done / total) * 100 : 0;
+  const isFull = complete || (total > 0 && done >= total);
+
+  return (
+    <div
+      className="progress-bar w-full"
+      role="progressbar"
+      aria-valuenow={done}
+      aria-valuemin={0}
+      aria-valuemax={total}
+      aria-label="Eigener Duell-Fortschritt"
+    >
+      <div
+        className={`progress-bar-fill ${isFull ? "bg-[var(--accent)]" : ""}`}
+        style={{ width: `${pct}%` }}
+      />
+    </div>
+  );
+}
+
 export function DuellClient({
   meetupId,
   expected,
@@ -175,9 +204,16 @@ export function DuellClient({
         style={{ padding: "1.5rem" }}
       >
         <p className="text-lg font-bold">Deine Duelle sind erledigt!</p>
-        <p className="text-[var(--muted)] text-sm">
-          Deine Queue: {myDone}/{myPairs.length} für {expected} Spieler ★.
-        </p>
+        <div className="w-full max-w-sm flex flex-col gap-2">
+          <p className="text-[var(--muted)] text-sm tabular-nums">
+            Duell {myDone} von {myPairs.length} · {expected} Spieler ★
+          </p>
+          <DuelProgressBar
+            done={myDone}
+            total={myPairs.length}
+            complete
+          />
+        </div>
         {isHost && (
           <p className="text-[var(--muted)] text-sm">{progressLabel}</p>
         )}
@@ -196,13 +232,14 @@ export function DuellClient({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="sticky-below-header -mx-1 filter-bar flex flex-col gap-1 sm:gap-2">
+      <div className="sticky-below-header -mx-1 filter-bar flex flex-col gap-2">
         <div className="flex items-center justify-between gap-3">
           <span className="chip chip-accent">{expected} Spieler ★</span>
           <span className="text-sm font-semibold tabular-nums">
-            Duell {myDone + 1} / {myPairs.length}
+            Duell {myDone + 1} von {myPairs.length}
           </span>
         </div>
+        <DuelProgressBar done={myDone} total={myPairs.length} />
         {isHost && (
           <p className="text-xs text-[var(--muted)] tabular-nums">
             {progressLabel}
