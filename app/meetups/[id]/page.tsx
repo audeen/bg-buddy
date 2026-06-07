@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { ExpectedCountControl } from "@/components/ExpectedCountControl";
 import { ExpectedCountReadOnly } from "@/components/ExpectedCountReadOnly";
 import { MeetupActionsMenu } from "@/components/MeetupActionsMenu";
+import { MeetupShareQr } from "@/components/MeetupShareQr";
 import { MeetupVoteActions } from "@/components/MeetupVoteActions";
 import { MeetupRankings } from "@/components/MeetupRankings";
 import { PageHeader } from "@/components/PageHeader";
@@ -190,15 +191,18 @@ export default async function MeetupDetail({
   return (
     <div className="container-app flex flex-col gap-6">
       <PageHeader id="meetup-page-top" eyebrow="Treffen" title={meetup.title}>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start justify-between gap-2">
           <p className="text-sm text-[var(--muted)]">
             {formatDate(meetup.scheduledAt)}
             {meetup.location ? ` · ${meetup.location}` : ""} · von{" "}
             {meetup.createdBy.name}
           </p>
-          {user && (
-            <MeetupActionsMenu meetupId={meetup.id} title={meetup.title} />
-          )}
+          <div className="flex shrink-0 items-center gap-1">
+            <MeetupShareQr meetupId={meetup.id} title={meetup.title} />
+            {user && (
+              <MeetupActionsMenu meetupId={meetup.id} title={meetup.title} />
+            )}
+          </div>
         </div>
       </PageHeader>
 
