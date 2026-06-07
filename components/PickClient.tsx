@@ -278,6 +278,11 @@ export function PickClient({
         game={detailGame}
         onClose={() => setDetailGame(null)}
         playerCount={selected}
+        ownedExpansions={
+          detailGame && !detailGame.isExpansion
+            ? (expansionsByBaseId[String(detailGame.id)] ?? [])
+            : []
+        }
       />
 
       {showScrollTop && (

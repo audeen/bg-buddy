@@ -44,6 +44,11 @@ export function GamesClient({
         game={detailGame}
         onClose={() => setDetailGame(null)}
         playerCount={playerCount}
+        ownedExpansions={
+          detailGame && !detailGame.isExpansion
+            ? (expansionsByBaseId[String(detailGame.id)] ?? [])
+            : []
+        }
       />
     </>
   );

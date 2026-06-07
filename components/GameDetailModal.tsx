@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { GameDetailView, type GameDetailData } from "@/components/GameDetailView";
+import type { GameCardGame } from "@/components/GameCard";
 
 const DRAG_CLOSE_THRESHOLD = 100;
 
@@ -9,14 +10,17 @@ type GameDetailModalProps = {
   game: GameDetailData | null;
   onClose: () => void;
   playerCount?: number;
+  ownedExpansions?: GameCardGame[];
 };
 
 export function GameDetailModal({
   game,
   onClose,
   playerCount,
+  ownedExpansions = [],
 }: GameDetailModalProps) {
   const titleId = useId();
+  const [viewGame, setViewGame] = useState<GameDetailData | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const historyPushedRef = useRef(false);
@@ -24,6 +28,10 @@ export function GameDetailModal({
   const dragStartYRef = useRef(0);
   const draggingRef = useRef(false);
   const pointerIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setViewGame(game);
+  }, [game]);
 
   const dismiss = useCallback(() => {
     if (historyPushedRef.current) {
@@ -167,7 +175,13 @@ export function GameDetailModal({
     [dismiss, clearDragVisuals],
   );
 
-  if (!game) return null;
+  if (!game || !viewGame) return null;
+
+  const baseGame = game;
+  const modalExpansions =
+    !baseGame.isExpansion && ownedExpansions.length > 0
+      ? ownedExpansions
+      : undefined;
 
   return (
     <div
@@ -200,10 +214,17 @@ export function GameDetailModal({
 
         <div className="modal-body safe-bottom">
           <GameDetailView
-            game={game}
+            game={viewGame}
             titleId={titleId}
             compact
             playerCount={playerCount}
+            ownedExpansions={modalExpansions}
+            onSelectExpansion={(id) => {
+              const exp = ownedExpansions.find((e) => e.id === id);
+              if (exp) setViewGame(exp as GameDetailData);
+            }}
+            onSelectBase={() => setViewGame(baseGame)}
+            baseGameName={baseGame.name}
           />
         </div>
       </div>

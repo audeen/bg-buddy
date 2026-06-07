@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { GameCover } from "@/components/GameCover";
 import {
+  expansionAvailableLabel,
+  expansionCountLabel,
+} from "@/lib/expansion-label";
+import {
   buildGameTags,
   chipClassForVariant,
   groupGameTags,
@@ -39,12 +43,6 @@ type LinkProps = BaseProps & {
   onClick?: undefined;
   disabled?: undefined;
 };
-
-function expansionTabLabel(name: string): string {
-  const sep = name.indexOf(": ");
-  if (sep >= 0) return name.slice(sep + 2).trim() || name;
-  return name.length > 18 ? `${name.slice(0, 16)}…` : name;
-}
 
 function TagRows({ game, playerCount }: { game: GameCardGame; playerCount?: number }) {
   const tags = buildGameTags(game, { playerCount });
@@ -91,10 +89,21 @@ function CardCover({ game }: { game: GameCardGame }) {
 function CardBody({
   game,
   playerCount,
+  ownedExpansions,
+  viewExpansionId,
+  onShowExpansions,
 }: {
   game: GameCardGame;
   playerCount?: number;
+  ownedExpansions: GameCardGame[];
+  viewExpansionId: number | null;
+  onShowExpansions: () => void;
 }) {
+  const showExpansionHint =
+    !game.isExpansion &&
+    ownedExpansions.length > 0 &&
+    viewExpansionId == null;
+
   return (
     <div
       className="flex flex-col gap-2.5 flex-1"
@@ -104,6 +113,18 @@ function CardBody({
         {game.name}
       </span>
       <TagRows game={game} playerCount={playerCount} />
+      {showExpansionHint && (
+        <button
+          type="button"
+          className="chip chip-meta w-fit text-left"
+          onClick={(e) => {
+            e.stopPropagation();
+            onShowExpansions();
+          }}
+        >
+          {expansionAvailableLabel(ownedExpansions.length)}
+        </button>
+      )}
       {game.isExpansion && <span className="chip w-fit">Erweiterung</span>}
     </div>
   );
@@ -126,19 +147,22 @@ function ExpansionTabs({
   ownedExpansions,
   viewExpansionId,
   onSelectBase,
-  onSelectExpansion,
+  onCycleExpansions,
 }: {
   ownedExpansions: GameCardGame[];
   viewExpansionId: number | null;
   onSelectBase: () => void;
-  onSelectExpansion: (id: number) => void;
+  onCycleExpansions: () => void;
 }) {
   const tabClass = (active: boolean) =>
-    `shrink-0 h-7 max-w-[5.5rem] px-2 rounded-full text-[10px] font-bold border tracking-tight truncate ${
+    `shrink-0 h-7 max-w-[8rem] px-2 rounded-full text-[10px] font-bold border tracking-tight truncate ${
       active
         ? "bg-[var(--accent)] text-white border-[var(--accent)]"
         : "bg-[var(--surface)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--surface-2)]"
     }`;
+
+  const expansionNames = ownedExpansions.map((e) => e.name).join(", ");
+  const onBaseView = viewExpansionId == null;
 
   return (
     <div
@@ -148,7 +172,7 @@ function ExpansionTabs({
       aria-label="Erweiterungen"
       onClick={(e) => e.stopPropagation()}
     >
-      {viewExpansionId != null && (
+      {!onBaseView && (
         <button
           type="button"
           role="tab"
@@ -159,26 +183,16 @@ function ExpansionTabs({
           Basis
         </button>
       )}
-      {ownedExpansions.map((exp) => {
-        const active = viewExpansionId === exp.id;
-        return (
-          <button
-            key={exp.id}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            title={exp.name}
-            className={tabClass(active)}
-            onClick={() =>
-              active && viewExpansionId != null
-                ? onSelectBase()
-                : onSelectExpansion(exp.id)
-            }
-          >
-            {expansionTabLabel(exp.name)}
-          </button>
-        );
-      })}
+      <button
+        type="button"
+        role="tab"
+        aria-selected={!onBaseView}
+        title={expansionNames}
+        className={tabClass(!onBaseView)}
+        onClick={onCycleExpansions}
+      >
+        {expansionCountLabel(ownedExpansions.length)}
+      </button>
     </div>
   );
 }
@@ -215,12 +229,33 @@ function useDisplayedGame(game: GameCardGame, ownedExpansions: GameCardGame[]) {
   const showExpansionTabs =
     !game.isExpansion && ownedExpansions.length > 0;
 
+  const showFirstExpansion = () => {
+    if (ownedExpansions.length === 0) return;
+    setViewExpansionId(ownedExpansions[0].id);
+  };
+
+  const cycleExpansions = () => {
+    if (ownedExpansions.length === 0) return;
+    if (viewExpansionId == null) {
+      setViewExpansionId(ownedExpansions[0].id);
+      return;
+    }
+    if (ownedExpansions.length === 1) {
+      setViewExpansionId(null);
+      return;
+    }
+    const idx = ownedExpansions.findIndex((e) => e.id === viewExpansionId);
+    const next = ownedExpansions[(idx + 1) % ownedExpansions.length];
+    setViewExpansionId(next.id);
+  };
+
   return {
     displayedGame,
     viewExpansionId,
     showExpansionTabs,
     selectBase: () => setViewExpansionId(null),
-    selectExpansion: (id: number) => setViewExpansionId(id),
+    showFirstExpansion,
+    cycleExpansions,
   };
 }
 
@@ -243,19 +278,28 @@ export function GameCard(props: ButtonProps | LinkProps) {
     viewExpansionId,
     showExpansionTabs,
     selectBase,
-    selectExpansion,
+    showFirstExpansion,
+    cycleExpansions,
   } = useDisplayedGame(game, ownedExpansions);
 
   const cardClass = `card card-game w-full ${selected ? "card-game-selected" : ""} ${
     disabled ? "card-game-disabled opacity-50 cursor-not-allowed" : ""
   } ${className}`;
 
+  const bodyProps = {
+    game: displayedGame,
+    playerCount,
+    ownedExpansions,
+    viewExpansionId,
+    onShowExpansions: showFirstExpansion,
+  };
+
   const expansionTabs = showExpansionTabs ? (
     <ExpansionTabs
       ownedExpansions={ownedExpansions}
       viewExpansionId={viewExpansionId}
       onSelectBase={selectBase}
-      onSelectExpansion={selectExpansion}
+      onCycleExpansions={cycleExpansions}
     />
   ) : null;
 
@@ -263,7 +307,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
     return (
       <Link href={props.href} className={`${cardClass} hover:shadow-md relative`}>
         <CardCover game={displayedGame} />
-        <CardBody game={displayedGame} playerCount={playerCount} />
+        <CardBody {...bodyProps} />
         {expansionTabs}
         {points > 0 && <StarsBadge points={points} />}
       </Link>
@@ -280,7 +324,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
           className="flex flex-col w-full h-full text-left"
         >
           <CardCover game={displayedGame} />
-          <CardBody game={displayedGame} playerCount={playerCount} />
+          <CardBody {...bodyProps} />
         </button>
         <DetailsButton onClick={onDetailsClick} />
         {expansionTabs}
@@ -297,7 +341,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
       className={`${cardClass} relative`}
     >
       <CardCover game={displayedGame} />
-      <CardBody game={displayedGame} playerCount={playerCount} />
+      <CardBody {...bodyProps} />
       {expansionTabs}
       {points > 0 && <StarsBadge points={points} />}
     </button>
