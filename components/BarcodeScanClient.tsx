@@ -22,125 +22,202 @@ type LookupResponse =
   | { status: "error"; message: string }
   | { error: string };
 
+type ScanLock =
+  | { phase: "lookingUp"; barcode: string }
+  | {
+      phase: "found";
+      barcode: string;
+      bggId: number;
+      name: string;
+      thumbnailUrl?: string | null;
+    }
+  | { phase: "candidates"; barcode: string; items: BarcodeLookupCandidate[] }
+  | { phase: "alreadyInCollection"; barcode: string; bggId: number; name: string }
+  | { phase: "notFound"; barcode: string }
+  | { phase: "error"; barcode: string; message: string }
+  | { phase: "added"; barcode: string; bggId: number; name: string };
+
+function lookupToScanLock(data: LookupResponse, barcode: string): ScanLock | null {
+  if ("error" in data) {
+    return { phase: "error", barcode, message: data.error };
+  }
+
+  switch (data.status) {
+    case "found":
+      return {
+        phase: "found",
+        barcode: data.barcode,
+        bggId: data.bggId,
+        name: data.name,
+      };
+    case "candidates":
+      return { phase: "candidates", barcode: data.barcode, items: data.items };
+    case "alreadyInCollection":
+      return {
+        phase: "alreadyInCollection",
+        barcode: data.barcode,
+        bggId: data.bggId,
+        name: data.name,
+      };
+    case "notFound":
+      return { phase: "notFound", barcode: data.barcode };
+    case "notConfigured":
+      return {
+        phase: "error",
+        barcode,
+        message:
+          "Barcode-Lookup nicht konfiguriert. BGG-ID eingeben oder GAMEUPC_API_KEY setzen.",
+      };
+    case "error":
+      return { phase: "error", barcode, message: data.message };
+    default:
+      return null;
+  }
+}
+
 export function BarcodeScanClient() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
-  const lastScanRef = useRef<{ code: string; at: number } | null>(null);
+  const scanLockRef = useRef<ScanLock | null>(null);
 
   const [scanning, setScanning] = useState(false);
   const [cameraStarting, setCameraStarting] = useState(false);
+  const [scanLock, setScanLock] = useState<ScanLock | null>(null);
   const [barcodeInput, setBarcodeInput] = useState("");
   const [bggIdInput, setBggIdInput] = useState("");
-  const [lookupLoading, setLookupLoading] = useState(false);
-  const [candidates, setCandidates] = useState<BarcodeLookupCandidate[] | null>(null);
-  const [pendingBarcode, setPendingBarcode] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const stopScanning = useCallback(() => {
+  const applyScanLock = useCallback((lock: ScanLock | null) => {
+    scanLockRef.current = lock;
+    setScanLock(lock);
+  }, []);
+
+  const clearScanLock = useCallback(() => {
+    applyScanLock(null);
+  }, [applyScanLock]);
+
+  const pauseCamera = useCallback(() => {
     controlsRef.current?.stop();
     controlsRef.current = null;
     setScanning(false);
     setCameraStarting(false);
   }, []);
 
-  const lookupBarcode = useCallback(async (raw: string) => {
-    setLookupLoading(true);
-    setError(null);
-    setMessage(null);
-    setCandidates(null);
-    setPendingBarcode(null);
+  const stopScanning = useCallback(() => {
+    pauseCamera();
+  }, [pauseCamera]);
 
-    try {
-      const res = await fetch("/api/barcode/lookup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ barcode: raw }),
-      });
-      const data = (await res.json()) as LookupResponse;
+  const resolveBarcode = useCallback(
+    async (raw: string) => {
+      const barcode = raw.trim();
+      if (!barcode) return;
 
-      if ("error" in data) {
-        setError(data.error);
+      applyScanLock({ phase: "lookingUp", barcode });
+
+      try {
+        const res = await fetch("/api/barcode/lookup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ barcode: raw }),
+        });
+        const data = (await res.json()) as LookupResponse;
+        const lock = lookupToScanLock(data, barcode);
+        if (lock) {
+          applyScanLock(lock);
+        }
+      } catch {
+        applyScanLock({
+          phase: "error",
+          barcode,
+          message: "Barcode-Suche fehlgeschlagen.",
+        });
+      }
+    },
+    [applyScanLock],
+  );
+
+  const resolveBarcodeRef = useRef(resolveBarcode);
+  resolveBarcodeRef.current = resolveBarcode;
+
+  const lockFromScan = useCallback(
+    (raw: string) => {
+      if (scanLockRef.current) return;
+      pauseCamera();
+      void resolveBarcodeRef.current(raw);
+    },
+    [pauseCamera],
+  );
+
+  const confirmAdd = useCallback(() => {
+    if (scanLock?.phase !== "found") return;
+
+    const { bggId, barcode, name } = scanLock;
+    startTransition(async () => {
+      const res = await addGameByBggIdAction(bggId, { barcode, name });
+      if (res && "error" in res && res.error) {
+        applyScanLock({ phase: "error", barcode, message: res.error });
         return;
       }
-
-      if (data.status === "notConfigured") {
-        setError(
-          "Barcode-Lookup nicht konfiguriert. BGG-ID eingeben oder GAMEUPC_API_KEY setzen.",
-        );
-        return;
+      if (res && "alreadyExists" in res && res.alreadyExists) {
+        applyScanLock({
+          phase: "alreadyInCollection",
+          barcode,
+          bggId: res.bggId ?? bggId,
+          name: res.name,
+        });
+      } else if (res && "name" in res && res.name) {
+        applyScanLock({
+          phase: "added",
+          barcode,
+          bggId,
+          name: res.name,
+        });
+        setBarcodeInput("");
       }
+      router.refresh();
+    });
+  }, [scanLock, applyScanLock, router]);
 
-      if (data.status === "error") {
-        setError(data.message);
-        return;
-      }
-
-      if (data.status === "alreadyInCollection") {
-        setMessage(`„${data.name}" ist bereits in der Sammlung.`);
-        return;
-      }
-
-      if (data.status === "found") {
-        return { action: "add" as const, bggId: data.bggId, barcode: data.barcode, name: data.name };
-      }
-
-      if (data.status === "candidates") {
-        setPendingBarcode(data.barcode);
-        setCandidates(data.items);
-        return;
-      }
-
-      setError(
-        `Kein Spiel für Barcode ${data.barcode} gefunden. Bitte BGG-ID eingeben.`,
-      );
-    } catch {
-      setError("Barcode-Suche fehlgeschlagen.");
-    } finally {
-      setLookupLoading(false);
-    }
-  }, []);
-
-  const lookupBarcodeRef = useRef(lookupBarcode);
-  lookupBarcodeRef.current = lookupBarcode;
-
-  const addGame = useCallback(
-    (bggId: number, barcode?: string | null, name?: string | null) => {
+  const addByBggId = useCallback(
+    (bggId: number, barcode?: string | null) => {
       startTransition(async () => {
-        setError(null);
-        setMessage(null);
-        const res = await addGameByBggIdAction(bggId, { barcode, name });
+        const res = await addGameByBggIdAction(bggId, { barcode });
         if (res && "error" in res && res.error) {
-          setError(res.error);
+          setCameraError(res.error);
           return;
         }
         if (res && "alreadyExists" in res && res.alreadyExists) {
-          setMessage(`„${res.name}" ist bereits in der Sammlung.`);
+          applyScanLock({
+            phase: "alreadyInCollection",
+            barcode: barcode ?? String(bggId),
+            bggId: res.bggId ?? bggId,
+            name: res.name,
+          });
         } else if (res && "name" in res && res.name) {
-          setMessage(`„${res.name}" wurde hinzugefügt.`);
-          setCandidates(null);
-          setBarcodeInput("");
-          stopScanning();
+          applyScanLock({
+            phase: "added",
+            barcode: barcode ?? String(bggId),
+            bggId,
+            name: res.name,
+          });
+          setBggIdInput("");
         }
         router.refresh();
       });
     },
-    [router, stopScanning],
+    [applyScanLock, router],
   );
-
-  const addGameRef = useRef(addGame);
-  addGameRef.current = addGame;
 
   useEffect(() => {
     if (!scanning) return;
 
     let cancelled = false;
     setCameraStarting(true);
+    setCameraError(null);
 
     async function startCamera() {
-      // Wait until React has mounted the <video> element (fixes blank preview on mobile).
       for (let i = 0; i < 20; i += 1) {
         if (cancelled) return;
         if (videoRef.current) break;
@@ -152,7 +229,7 @@ export function BarcodeScanClient() {
         if (!cancelled) {
           setScanning(false);
           setCameraStarting(false);
-          setError("Kamera-Vorschau konnte nicht gestartet werden.");
+          setCameraError("Kamera-Vorschau konnte nicht gestartet werden.");
         }
         return;
       }
@@ -164,20 +241,8 @@ export function BarcodeScanClient() {
           undefined,
           video,
           (result) => {
-            if (!result || cancelled) return;
-            const code = result.getText();
-            const now = Date.now();
-            const last = lastScanRef.current;
-            if (last && last.code === code && now - last.at < 2500) {
-              return;
-            }
-            lastScanRef.current = { code, at: now };
-
-            void lookupBarcodeRef.current(code).then((out) => {
-              if (out?.action === "add") {
-                addGameRef.current(out.bggId, out.barcode, out.name);
-              }
-            });
+            if (!result || cancelled || scanLockRef.current) return;
+            lockFromScan(result.getText());
           },
         );
 
@@ -189,17 +254,16 @@ export function BarcodeScanClient() {
         controlsRef.current = controls;
         setCameraStarting(false);
 
-        // iOS requires an explicit play() after the stream is attached.
         try {
           await video.play();
         } catch {
-          // Autoplay may still work via muted + playsInline.
+          // muted + playsInline usually sufficient on iOS
         }
       } catch {
         if (!cancelled) {
           setScanning(false);
           setCameraStarting(false);
-          setError("Kamera-Zugriff verweigert oder nicht verfügbar.");
+          setCameraError("Kamera-Zugriff verweigert oder nicht verfügbar.");
         }
       }
     }
@@ -212,17 +276,23 @@ export function BarcodeScanClient() {
       controlsRef.current = null;
       setCameraStarting(false);
     };
-  }, [scanning]);
+  }, [scanning, lockFromScan]);
 
   function requestScanning() {
-    setError(null);
-    setMessage(null);
+    setCameraError(null);
+    clearScanLock();
 
     if (!navigator.mediaDevices?.getUserMedia) {
-      setError("Kamera wird in diesem Browser nicht unterstützt.");
+      setCameraError("Kamera wird in diesem Browser nicht unterstützt.");
       return;
     }
 
+    setScanning(true);
+  }
+
+  function continueScanning() {
+    setCameraError(null);
+    clearScanLock();
     setScanning(true);
   }
 
@@ -230,22 +300,37 @@ export function BarcodeScanClient() {
     e.preventDefault();
     const raw = barcodeInput.trim();
     if (!raw) return;
-    void lookupBarcode(raw).then((out) => {
-      if (out?.action === "add") {
-        addGame(out.bggId, out.barcode, out.name);
-      }
-    });
+    pauseCamera();
+    void resolveBarcode(raw);
   }
 
   function handleBggAdd(e: React.FormEvent) {
     e.preventDefault();
     const id = parseInt(bggIdInput.trim(), 10);
     if (!Number.isFinite(id) || id <= 0) {
-      setError("Ungültige BGG-ID.");
+      setCameraError("Ungültige BGG-ID.");
       return;
     }
-    addGame(id, pendingBarcode);
+    const barcode =
+      scanLock?.phase === "notFound" || scanLock?.phase === "error"
+        ? scanLock.barcode
+        : null;
+    addByBggId(id, barcode);
   }
+
+  function selectCandidate(item: BarcodeLookupCandidate) {
+    if (scanLock?.phase !== "candidates") return;
+    applyScanLock({
+      phase: "found",
+      barcode: scanLock.barcode,
+      bggId: item.bggId,
+      name: item.name,
+      thumbnailUrl: item.thumbnailUrl,
+    });
+  }
+
+  const lockedBarcode =
+    scanLock && scanLock.phase !== "lookingUp" ? scanLock.barcode : null;
 
   return (
     <div className="card flex flex-col gap-4" style={{ padding: "var(--space-card)" }}>
@@ -257,7 +342,11 @@ export function BarcodeScanClient() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {scanning ? (
+        {scanLock ? (
+          <button type="button" className="btn btn-primary" onClick={continueScanning}>
+            Weiter scannen
+          </button>
+        ) : scanning ? (
           <button type="button" className="btn btn-ghost" onClick={stopScanning}>
             Kamera stoppen
           </button>
@@ -285,6 +374,113 @@ export function BarcodeScanClient() {
         </div>
       )}
 
+      {scanLock && (
+        <div
+          className="rounded-lg border border-[var(--border)] p-4 flex flex-col gap-3"
+          role="status"
+        >
+          {scanLock.phase === "lookingUp" && (
+            <>
+              <p className="text-sm font-medium">Suche Spiel …</p>
+              <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+            </>
+          )}
+
+          {scanLock.phase === "found" && (
+            <>
+              <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+              <div className="flex items-center gap-3">
+                {scanLock.thumbnailUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={scanLock.thumbnailUrl}
+                    alt=""
+                    className="h-16 w-12 object-cover rounded shrink-0"
+                  />
+                )}
+                <p className="font-semibold">{scanLock.name}</p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary w-fit"
+                disabled={pending}
+                onClick={confirmAdd}
+              >
+                {pending ? "Hinzufügen …" : "Zur Sammlung hinzufügen"}
+              </button>
+            </>
+          )}
+
+          {scanLock.phase === "candidates" && (
+            <>
+              <p className="text-sm text-[var(--muted)]">
+                Mehrere Treffer für {scanLock.barcode} — bitte auswählen:
+              </p>
+              <ul className="flex flex-col gap-2">
+                {scanLock.items.map((item) => (
+                  <li key={item.bggId}>
+                    <button
+                      type="button"
+                      className="btn btn-ghost w-full justify-start gap-3 h-auto py-2"
+                      onClick={() => selectCandidate(item)}
+                    >
+                      {item.thumbnailUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.thumbnailUrl}
+                          alt=""
+                          className="h-12 w-9 object-cover rounded shrink-0"
+                        />
+                      )}
+                      <span>{item.name}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {scanLock.phase === "alreadyInCollection" && (
+            <>
+              <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+              <p className="text-sm">
+                „{scanLock.name}" ist bereits in der Sammlung.{" "}
+                <Link href={`/games/${scanLock.bggId}`} className="underline">
+                  Zum Spiel
+                </Link>
+              </p>
+            </>
+          )}
+
+          {scanLock.phase === "notFound" && (
+            <>
+              <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+              <p className="text-sm">
+                Kein Spiel für diesen Barcode gefunden. Bitte BGG-ID unten eingeben.
+              </p>
+            </>
+          )}
+
+          {scanLock.phase === "error" && (
+            <>
+              <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+              <p className="text-sm text-red-600 dark:text-red-400">{scanLock.message}</p>
+            </>
+          )}
+
+          {scanLock.phase === "added" && (
+            <>
+              <p className="text-sm text-green-700 dark:text-green-400">
+                „{scanLock.name}" wurde hinzugefügt.{" "}
+                <Link href={`/games/${scanLock.bggId}`} className="underline">
+                  Zum Spiel
+                </Link>
+              </p>
+            </>
+          )}
+        </div>
+      )}
+
       <form onSubmit={handleBarcodeSearch} className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <div className="flex-1">
           <label className="label" htmlFor="barcode-input">Barcode</label>
@@ -296,44 +492,17 @@ export function BarcodeScanClient() {
             placeholder="EAN / UPC …"
             value={barcodeInput}
             onChange={(e) => setBarcodeInput(e.target.value)}
+            disabled={scanLock?.phase === "lookingUp"}
           />
         </div>
         <button
           type="submit"
           className="btn btn-primary sm:mb-0"
-          disabled={lookupLoading || pending}
+          disabled={pending || scanLock?.phase === "lookingUp"}
         >
-          {lookupLoading ? "Suche …" : "Suchen"}
+          Suchen
         </button>
       </form>
-
-      {candidates && candidates.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm text-[var(--muted)]">Mehrere Treffer — bitte auswählen:</p>
-          <ul className="flex flex-col gap-2">
-            {candidates.map((item) => (
-              <li key={item.bggId}>
-                <button
-                  type="button"
-                  className="btn btn-ghost w-full justify-start gap-3 h-auto py-2"
-                  disabled={pending}
-                  onClick={() => addGame(item.bggId, pendingBarcode, item.name)}
-                >
-                  {item.thumbnailUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={item.thumbnailUrl}
-                      alt=""
-                      className="h-12 w-9 object-cover rounded shrink-0"
-                    />
-                  )}
-                  <span>{item.name}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       <div className="text-center text-sm text-[var(--muted)]">oder</div>
 
@@ -355,17 +524,15 @@ export function BarcodeScanClient() {
         </button>
       </form>
 
-      {message && (
-        <p className="text-sm text-green-700 dark:text-green-400" role="status">
-          {message}{" "}
-          <Link href="/games" className="underline">
-            Zur Sammlung
-          </Link>
+      {cameraError && (
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+          {cameraError}
         </p>
       )}
-      {error && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-          {error}
+
+      {lockedBarcode && scanLock?.phase === "notFound" && (
+        <p className="text-xs text-[var(--muted)]">
+          Barcode {lockedBarcode} wird beim Hinzufügen gespeichert.
         </p>
       )}
     </div>
