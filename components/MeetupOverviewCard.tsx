@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MeetupParticipants } from "@/components/MeetupParticipants";
 import { JoinMeetupButton } from "@/components/JoinMeetupButton";
-import type { RegisteredPlayer } from "@/lib/meetup-participants";
+import type { PickPointsAtExpected, RegisteredPlayer } from "@/lib/meetup-participants";
 import { canLeaveMeetup, isUserRegistered } from "@/lib/meetup-participants";
 
 function formatDate(d: Date | null): string {
@@ -25,6 +25,7 @@ export function MeetupOverviewCard({
   hostName,
   voteCount,
   players,
+  pickPointsAtExpected,
   duelsStarted,
   currentUserId,
   isLoggedIn,
@@ -37,6 +38,7 @@ export function MeetupOverviewCard({
   hostName: string;
   voteCount: number;
   players: RegisteredPlayer[];
+  pickPointsAtExpected: PickPointsAtExpected;
   duelsStarted: boolean;
   currentUserId?: string;
   isLoggedIn: boolean;
@@ -72,7 +74,12 @@ export function MeetupOverviewCard({
         </span>
       </Link>
 
-      <MeetupParticipants expected={expected} players={players} compact />
+      <MeetupParticipants
+        expected={expected}
+        players={players}
+        compact
+        pickPointsAtExpected={pickPointsAtExpected}
+      />
 
       <div className="flex items-center justify-between gap-2 mt-auto pt-1">
         <span className="text-xs text-[var(--muted)]">

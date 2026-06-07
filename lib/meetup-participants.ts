@@ -1,10 +1,13 @@
 import type { PrismaClient } from "@prisma/client";
+import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
 export type RegisteredPlayer = {
   userId: string;
   name: string;
   isHost: boolean;
 };
+
+export type PickPointsAtExpected = Map<string, number>;
 
 export function buildRegisteredPlayers(
   host: { id: string; name: string },
@@ -179,4 +182,51 @@ export function groupPickVotersByMeetup(
     );
   }
   return result;
+}
+
+type PickVoteRow = {
+  userId: string;
+  playerCount: number;
+  points: number;
+};
+
+export function sumPickPointsAtExpected(
+  picks: PickVoteRow[],
+  expectedPlayerCount: number,
+): PickPointsAtExpected {
+  const sums = new Map<string, number>();
+  for (const p of picks) {
+    if (p.playerCount !== expectedPlayerCount) continue;
+    sums.set(p.userId, (sums.get(p.userId) ?? 0) + p.points);
+  }
+  return sums;
+}
+
+export function groupPickPointsByMeetup(
+  picks: (PickVoteRow & { meetupId: string })[],
+  expectedByMeetup: Map<string, number>,
+): Map<string, PickPointsAtExpected> {
+  const byMeetup = new Map<string, PickVoteRow[]>();
+  for (const p of picks) {
+    const list = byMeetup.get(p.meetupId) ?? [];
+    list.push(p);
+    byMeetup.set(p.meetupId, list);
+  }
+
+  const result = new Map<string, PickPointsAtExpected>();
+  for (const [meetupId, rows] of byMeetup) {
+    const expected = expectedByMeetup.get(meetupId);
+    if (expected == null) continue;
+    result.set(meetupId, sumPickPointsAtExpected(rows, expected));
+  }
+  return result;
+}
+
+export function countFullPickers(
+  players: RegisteredPlayer[],
+  pickPoints: PickPointsAtExpected,
+): number {
+  return players.filter(
+    (p) => (pickPoints.get(p.userId) ?? 0) >= MAX_PICK_POINTS,
+  ).length;
 }

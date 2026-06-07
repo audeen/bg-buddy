@@ -5,6 +5,7 @@ import { LoginForm } from "@/components/LoginForm";
 import { MeetupOverviewCard } from "@/components/MeetupOverviewCard";
 import {
   buildRegisteredPlayers,
+  groupPickPointsByMeetup,
   groupPickVotersByMeetup,
 } from "@/lib/meetup-participants";
 
@@ -35,11 +36,17 @@ export default async function Home() {
           select: {
             meetupId: true,
             userId: true,
+            playerCount: true,
+            points: true,
             user: { select: { name: true } },
           },
         })
       : [];
 
+  const expectedByMeetup = new Map(
+    meetups.map((m) => [m.id, m.expectedPlayerCount]),
+  );
+  const pickPointsByMeetup = groupPickPointsByMeetup(pickVotes, expectedByMeetup);
   const pickVotersByMeetup = groupPickVotersByMeetup(pickVotes);
 
   const duelCounts =
@@ -129,6 +136,9 @@ export default async function Home() {
                     hostName={m.createdBy.name}
                     voteCount={m._count.votes}
                     players={players}
+                    pickPointsAtExpected={
+                      pickPointsByMeetup.get(m.id) ?? new Map()
+                    }
                     duelsStarted={duelsStartedByMeetup.get(m.id) ?? false}
                     currentUserId={user?.id}
                     isLoggedIn={!!user}
