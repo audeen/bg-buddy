@@ -72,6 +72,18 @@ export function GamesFilterBar({ genres }: GamesFilterBarProps) {
 
   return (
     <div className="flex flex-col gap-3">
+      <details className="filter-dropdown">
+        <summary className="filter-dropdown-summary">
+          <span className="font-semibold text-sm">Filter</span>
+          {activeLabels.length > 0 && (
+            <span className="filter-dropdown-badge">{activeLabels.length}</span>
+          )}
+          <span className="filter-dropdown-chevron" aria-hidden="true">
+            ▼
+          </span>
+        </summary>
+
+        <div className="filter-dropdown-body flex flex-col gap-3">
       <div className="filter-bar grid gap-3 sm:grid-cols-4 items-end">
         <div className="sm:col-span-2">
           <label className="label" htmlFor="games-q">
@@ -226,6 +238,8 @@ export function GamesFilterBar({ genres }: GamesFilterBarProps) {
           Erweiterungen anzeigen
         </label>
       </div>
+        </div>
+      </details>
 
       {activeLabels.length > 0 && (
         <div className="active-filters">

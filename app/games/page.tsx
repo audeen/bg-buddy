@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Suspense } from "react";
 import { GamesClient } from "@/components/GamesClient";
 import { GamesFilterBar } from "@/components/GamesFilterBar";
+import { ScrollToTopButton } from "@/components/ScrollToTopButton";
 import { loadOwnedExpansionsByBaseGame, serializeExpansionsByBaseId } from "@/lib/owned-expansions";
 import { buildGameOrderBy, buildGameWhere, parseGameFilters, parseGameSort } from "@/lib/game-filters";
 
@@ -63,14 +64,17 @@ export default async function GamesPage({
 
   return (
     <div className="container-app flex flex-col gap-6">
-      <div className="flex items-end justify-between gap-3 flex-wrap">
+      <div
+        id="games-page-top"
+        className="flex items-end justify-between gap-3 flex-wrap"
+      >
         <h1 className="page-title">Spielesammlung</h1>
         <span className="text-sm text-[var(--muted)]">
           {games.length} {games.length === 1 ? "Spiel" : "Spiele"}
         </span>
       </div>
 
-      <Suspense fallback={<div className="filter-bar h-24 animate-pulse rounded-xl" />}>
+      <Suspense fallback={<div className="filter-dropdown h-12 animate-pulse rounded-xl" />}>
         <GamesFilterBar genres={genres} />
       </Suspense>
 
@@ -80,6 +84,8 @@ export default async function GamesPage({
         activeFilters={filters}
         expansionsByBaseId={serializeExpansionsByBaseId(expansionsByBase)}
       />
+
+      <ScrollToTopButton scrollTargetId="games-page-top" title="Nach oben" />
     </div>
   );
 }
