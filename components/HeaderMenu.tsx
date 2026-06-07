@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
+  completeDummyDuelsAction,
   countDummyMeetupsAction,
   createDummyMeetupsAction,
   purgeDummyMeetupsAction,
 } from "@/app/actions";
+
+function meetupIdFromPath(pathname: string): string | null {
+  const match = pathname.match(/^\/meetups\/([^/]+)/);
+  return match?.[1] ?? null;
+}
 
 const MOBILE_NAV = [
   { href: "/games", label: "Spiele" },
@@ -18,6 +24,8 @@ const MOBILE_NAV = [
 
 export function HeaderMenu({ userName }: { userName: string }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const meetupId = useMemo(() => meetupIdFromPath(pathname), [pathname]);
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
@@ -47,6 +55,30 @@ export function HeaderMenu({ userName }: { userName: string }) {
       }
       const count = res && "count" in res ? res.count : 6;
       setMessage(`${count} Dummy-Treffen erstellt.`);
+      router.refresh();
+    });
+  }
+
+  function handleCompleteDuels() {
+    if (!meetupId) return;
+    setOpen(false);
+    setMessage(null);
+    setError(null);
+    startTransition(async () => {
+      const res = await completeDummyDuelsAction(meetupId);
+      if (res && "error" in res && res.error) {
+        setError(res.error);
+        return;
+      }
+      const added =
+        res && "votesAdded" in res && res.votesAdded != null
+          ? res.votesAdded
+          : 0;
+      setMessage(
+        added > 0
+          ? `${added} Dummy-Duell-Stimmen gesetzt.`
+          : "Alle Dummy-Duelle waren bereits fertig.",
+      );
       router.refresh();
     });
   }
@@ -143,6 +175,17 @@ export function HeaderMenu({ userName }: { userName: string }) {
             >
               Dummy-Treffen löschen
             </button>
+            {meetupId && (
+              <button
+                type="button"
+                role="menuitem"
+                className="btn btn-ghost w-full justify-start rounded-none"
+                disabled={pending}
+                onClick={handleCompleteDuels}
+              >
+                {pending ? "Bitte warten…" : "Dummy-Duelle abschließen"}
+              </button>
+            )}
           </div>
         </div>
       )}

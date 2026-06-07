@@ -31,6 +31,7 @@ import {
   MAX_POINTS_PER_GAME,
 } from "@/lib/vote-limits";
 import {
+  completeDummyDuelsForMeetup,
   countDummyMeetups,
   createAllDummyMeetups,
   DUMMY_MEETUP_PREFIX,
@@ -578,4 +579,19 @@ export async function purgeDummyMeetupsAction() {
   revalidatePath("/meetups", "layout");
 
   return { ok: true, deleted };
+}
+
+export async function completeDummyDuelsAction(meetupId: string) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const result = await completeDummyDuelsForMeetup(meetupId);
+  if ("error" in result) return { error: result.error };
+
+  revalidatePath(`/meetups/${meetupId}`);
+  revalidatePath(`/meetups/${meetupId}/pick`);
+  revalidatePath(`/meetups/${meetupId}/duell`);
+  revalidatePath("/");
+
+  return { ok: true, votesAdded: result.votesAdded };
 }

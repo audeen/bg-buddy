@@ -1,9 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import {
+  completeDummyDuelsForMeetup,
   createAllDummyMeetups,
   creatorPickSum,
   DUMMY_MEETUP_PREFIX,
   DUMMY_SCENARIO_COUNT,
+  ensureDummyUsers,
   expectedDuelPhase,
   isDummyMeetupTitle,
   poolSizeFromPicks,
@@ -48,6 +50,13 @@ async function main() {
 
   await purgeDummyMeetups(prisma);
 
+  const dummyUsers = await ensureDummyUsers(prisma);
+  const dummyPickerIds = new Set([
+    dummyUsers.alice,
+    dummyUsers.bob,
+    dummyUsers.carol,
+  ]);
+
   const { meetupIds, count } = await createAllDummyMeetups(user.id, prisma);
   assert(count === DUMMY_SCENARIO_COUNT, `expected ${DUMMY_SCENARIO_COUNT} meetups`);
   assert(meetupIds.length === DUMMY_SCENARIO_COUNT, "meetup ids length");
@@ -82,11 +91,11 @@ async function main() {
     const picks = meetup!.votes;
     const poolSize = poolSizeFromPicks(picks);
 
-    if (label === "Duell bereit · 4/4") {
-      const phase = assessPickPhase(picks, 4, 0);
-      assert(phase.readyForDuels, `${label}: should be duell-ready`);
-      assert(poolSize === 6, `${label}: pool 6, got ${poolSize}`);
-      continue;
+    for (const pickerId of dummyPickerIds) {
+      const sum = picks
+        .filter((p) => p.userId === pickerId)
+        .reduce((s, p) => s + p.points, 0);
+      assert(sum === 3, `${label}: dummy picker ${pickerId} has ${sum}/3 picks`);
     }
 
     const creatorSum = creatorPickSum(picks, user.id);
@@ -106,6 +115,50 @@ async function main() {
       assert(poolSize === 8, `${label}: pool 8, got ${poolSize}`);
     }
   }
+
+  const allReadyMeetup = await prisma.meetup.findFirst({
+    where: { title: `${DUMMY_MEETUP_PREFIX}Duell bereit · 4/4` },
+    include: {
+      votes: {
+        where: { mode: "PICK", playerCount: 4 },
+        select: { userId: true, gameId: true, points: true },
+      },
+    },
+  });
+  assert(!!allReadyMeetup, "missing Duell bereit · 4/4");
+  const allReadyPicks = allReadyMeetup!.votes;
+  const allReadyPhase = assessPickPhase(allReadyPicks, 4, 0);
+  assert(allReadyPhase.readyForDuels, "Duell bereit · 4/4: should be duell-ready");
+  assert(
+    poolSizeFromPicks(allReadyPicks) === 6,
+    "Duell bereit · 4/4: pool 6",
+  );
+  for (const dummyId of dummyUsers.all) {
+    const sum = allReadyPicks
+      .filter((p) => p.userId === dummyId)
+      .reduce((s, p) => s + p.points, 0);
+    assert(sum === 3, `Duell bereit · 4/4: ${dummyId} has ${sum}/3 picks`);
+  }
+
+  const completeRes = await completeDummyDuelsForMeetup(
+    allReadyMeetup!.id,
+    prisma,
+  );
+  assert(!("error" in completeRes), "complete dummy duels should succeed");
+  if ("error" in completeRes) throw new Error(completeRes.error);
+  assert(
+    completeRes.votesAdded > 0,
+    `expected duel votes added, got ${completeRes.votesAdded}`,
+  );
+
+  const dummyDuelVotes = await prisma.vote.count({
+    where: {
+      meetupId: allReadyMeetup!.id,
+      mode: "DUEL",
+      userId: { in: [...dummyUsers.all] },
+    },
+  });
+  assert(dummyDuelVotes > 0, "dummy users should have duel votes");
 
   const realMeetup = await prisma.meetup.create({
     data: {
