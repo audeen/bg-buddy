@@ -6,6 +6,7 @@ import { GameCover } from "@/components/GameCover";
 import {
   expansionAvailableLabel,
   expansionCountLabel,
+  expansionViewLabel,
 } from "@/lib/expansion-label";
 import { FilterChipButton } from "@/components/FilterChipButton";
 import type { GameFilters } from "@/lib/game-filters";
@@ -125,14 +126,10 @@ function CardBody({
   onSelectBase: () => void;
 }) {
   const showExpansionHint =
-    !game.isExpansion &&
-    ownedExpansions.length > 0 &&
-    viewExpansionId == null;
+    ownedExpansions.length > 0 && viewExpansionId == null;
 
   const showBackToBase =
-    !game.isExpansion &&
-    ownedExpansions.length > 0 &&
-    viewExpansionId != null;
+    ownedExpansions.length > 0 && viewExpansionId != null;
 
   return (
     <div
@@ -169,7 +166,7 @@ function CardBody({
             onSelectBase();
           }}
         >
-          Basis
+          Basisspiel
         </button>
       )}
       {game.isExpansion && <span className="chip w-fit">Erweiterung</span>}
@@ -193,18 +190,31 @@ function StarsBadge({ points }: { points: number }) {
 function ExpansionCountBadge({
   count,
   expansionNames,
+  baseGameName,
+  viewExpansionId,
 }: {
   count: number;
   expansionNames: string;
+  baseGameName: string;
+  viewExpansionId: number | null;
 }) {
+  const onExpansionView = viewExpansionId != null;
+  const label = onExpansionView
+    ? expansionViewLabel(baseGameName)
+    : expansionCountLabel(count);
+
   return (
     <span
-      className="absolute top-2.5 left-1/2 -translate-x-1/2 z-[1] shrink-0 h-7 max-w-[8rem] px-2 rounded-full text-[10px] font-bold border tracking-tight truncate bg-[var(--surface)] text-[var(--foreground)] border-[var(--border)] flex items-center justify-center pointer-events-none"
+      className="absolute top-2.5 left-1/2 -translate-x-1/2 z-[1] shrink-0 h-7 max-w-[10rem] px-2 rounded-full text-[10px] font-bold border tracking-tight truncate bg-[var(--surface)] text-[var(--foreground)] border-[var(--border)] flex items-center justify-center pointer-events-none"
       style={{ boxShadow: "var(--shadow-md)" }}
-      title={expansionNames}
-      aria-label={expansionAvailableLabel(count)}
+      title={onExpansionView ? baseGameName : expansionNames}
+      aria-label={
+        onExpansionView
+          ? expansionViewLabel(baseGameName)
+          : expansionAvailableLabel(count)
+      }
     >
-      {expansionCountLabel(count)}
+      {label}
     </span>
   );
 }
@@ -300,6 +310,8 @@ export function GameCard(props: ButtonProps | LinkProps) {
     <ExpansionCountBadge
       count={ownedExpansions.length}
       expansionNames={expansionNames}
+      baseGameName={game.name}
+      viewExpansionId={viewExpansionId}
     />
   ) : null;
 

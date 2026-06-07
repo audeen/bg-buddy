@@ -1,11 +1,12 @@
 /**
- * Tests für expansionCountLabel / expansionAvailableLabel.
+ * Tests für expansionCountLabel / expansionAvailableLabel / expansionViewLabel.
  * Nutzung: npm run test:expansion-label
  */
 import assert from "node:assert/strict";
 import {
   expansionAvailableLabel,
   expansionCountLabel,
+  expansionViewLabel,
 } from "../lib/expansion-label";
 
 function testSingular() {
@@ -19,7 +20,18 @@ function testPlural() {
   assert.equal(expansionAvailableLabel(3), "3 Erweiterungen verfügbar");
 }
 
-const tests = [testSingular, testPlural];
+function testExpansionViewLabelShort() {
+  assert.equal(expansionViewLabel("Catan"), "Erweitert: Catan");
+}
+
+function testExpansionViewLabelTruncated() {
+  assert.equal(
+    expansionViewLabel("The Starfarers of Catan"),
+    "Erweitert: The Starfarers…",
+  );
+}
+
+const tests = [testSingular, testPlural, testExpansionViewLabelShort, testExpansionViewLabelTruncated];
 
 let failed = 0;
 for (const t of tests) {

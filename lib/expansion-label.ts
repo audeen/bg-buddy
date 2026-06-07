@@ -6,3 +6,11 @@ export function expansionCountLabel(count: number): string {
 export function expansionAvailableLabel(count: number): string {
   return `${expansionCountLabel(count)} verfügbar`;
 }
+
+export function expansionViewLabel(baseGameName: string): string {
+  const short =
+    baseGameName.length > 16
+      ? `${baseGameName.slice(0, 14)}…`
+      : baseGameName;
+  return `Erweitert: ${short}`;
+}
