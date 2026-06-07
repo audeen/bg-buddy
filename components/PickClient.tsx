@@ -19,7 +19,6 @@ import {
   pointsKey,
 } from "@/lib/pick-points";
 import { enqueuePickTap } from "@/lib/pick-tap-queue";
-import { useScrollChromeHidden } from "@/lib/scroll-chrome";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
 export type PickGame = GameDetailData;
@@ -70,12 +69,16 @@ export function PickClient({
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const [detail, setDetail] = useState<DetailState | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const chromeHidden = useScrollChromeHidden();
   const persistChainRef = useRef(Promise.resolve());
   const tapQueueRef = useRef<Array<() => void>>([]);
   const tapFlushScheduledRef = useRef(false);
 
   useMeetupPhaseRefresh(true);
+
+  useEffect(() => {
+    document.documentElement.classList.add("pick-page");
+    return () => document.documentElement.classList.remove("pick-page");
+  }, []);
 
   useEffect(() => {
     const el = document.getElementById(scrollTargetId);
@@ -293,9 +296,7 @@ export function PickClient({
         </button>
       )}
 
-      <div
-        className={`sticky-above-nav picker-sticky-bar${chromeHidden ? " chrome-hidden" : ""}`}
-      >
+      <div className="sticky-above-nav picker-sticky-bar">
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold">Spieleranzahl</span>
           <span
