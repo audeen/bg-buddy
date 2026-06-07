@@ -12,8 +12,9 @@ model User {
   name      String   @unique
   createdAt DateTime @default(now())
 
-  meetups Meetup[]
-  votes   Vote[]
+  meetups              Meetup[]
+  votes                Vote[]
+  meetupRegistrations  MeetupRegistration[]
 }
 
 model Game {
@@ -53,16 +54,31 @@ enum VoteMode {
 }
 
 model Meetup {
-  id                  String    @id @default(cuid())
-  title               String
-  scheduledAt         DateTime?
-  location            String?
-  expectedPlayerCount Int       @default(4)
-  createdById         String
-  createdBy           User      @relation(fields: [createdById], references: [id])
-  createdAt           DateTime  @default(now())
+  id                         String    @id @default(cuid())
+  title                      String
+  scheduledAt                DateTime?
+  location                   String?
+  expectedPlayerCount        Int       @default(4)
+  initialExpectedPlayerCount Int       @default(4)
+  registrationPeakCount      Int       @default(1)
+  createdById                String
+  createdBy                  User      @relation(fields: [createdById], references: [id])
+  createdAt                  DateTime  @default(now())
 
-  votes Vote[]
+  votes         Vote[]
+  registrations MeetupRegistration[]
+}
+
+model MeetupRegistration {
+  id        String   @id @default(cuid())
+  meetupId  String
+  meetup    Meetup   @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([meetupId, userId])
+  @@index([meetupId])
 }
 
 model Vote {

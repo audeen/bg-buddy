@@ -7,6 +7,8 @@ import { MeetupActionsMenu } from "@/components/MeetupActionsMenu";
 import { MeetupShareQr } from "@/components/MeetupShareQr";
 import { MeetupVoteActions } from "@/components/MeetupVoteActions";
 import { MeetupRankings } from "@/components/MeetupRankings";
+import { MeetupParticipants } from "@/components/MeetupParticipants";
+import { JoinMeetupButton } from "@/components/JoinMeetupButton";
 import { PageHeader } from "@/components/PageHeader";
 import {
   buildCombinedByCount,
@@ -17,6 +19,11 @@ import { getDuelProgressForCount } from "@/lib/duel-pairs";
 import { buildGameTieMetaMap } from "@/lib/duel-tiebreaker";
 import { getPickPhaseState } from "@/lib/pick-phase";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
+import {
+  buildRegisteredPlayers,
+  canLeaveMeetup,
+  isUserRegistered,
+} from "@/lib/meetup-participants";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +49,12 @@ export default async function MeetupDetail({
 
   const meetup = await prisma.meetup.findUnique({
     where: { id },
-    include: { createdBy: { select: { id: true, name: true } } },
+    include: {
+      createdBy: { select: { id: true, name: true } },
+      registrations: {
+        include: { user: { select: { id: true, name: true } } },
+      },
+    },
   });
   if (!meetup) notFound();
 
@@ -137,6 +149,45 @@ export default async function MeetupDetail({
 
   const isHost = user?.id === meetup.createdBy.id;
 
+  const pickVoters = votes
+    .filter((v) => v.mode === "PICK")
+    .reduce(
+      (acc, v) => {
+        if (!acc.some((p) => p.userId === v.userId)) {
+          acc.push({ userId: v.userId, name: v.user.name });
+        }
+        return acc;
+      },
+      [] as { userId: string; name: string }[],
+    );
+
+  const manualRegistrations = meetup.registrations.map((r) => ({
+    userId: r.userId,
+    name: r.user.name,
+  }));
+
+  const registeredPlayers = buildRegisteredPlayers(
+    meetup.createdBy,
+    pickVoters,
+    manualRegistrations,
+  );
+
+  const duelVoteCount = votes.filter(
+    (v) => v.mode === "DUEL" || v.mode === "TINDER",
+  ).length;
+  const duelsStarted = duelVoteCount > 0;
+
+  const isRegistered = user
+    ? isUserRegistered(user.id, registeredPlayers)
+    : false;
+  const leaveAllowed = user
+    ? canLeaveMeetup({
+        isHost,
+        isRegistered,
+        duelsStarted,
+      })
+    : false;
+
   const completedCounts = playerCounts.filter((pc) => {
     if (pc === expected && !duelRoundComplete) return false;
     const countPicks = votes.filter(
@@ -215,6 +266,18 @@ export default async function MeetupDetail({
           />
         ) : (
           <ExpectedCountReadOnly count={meetup.expectedPlayerCount} />
+        )}
+        <MeetupParticipants
+          expected={meetup.expectedPlayerCount}
+          players={registeredPlayers}
+        />
+        {user && (
+          <JoinMeetupButton
+            meetupId={meetup.id}
+            isLoggedIn
+            isRegistered={isRegistered}
+            canLeave={leaveAllowed}
+          />
         )}
         <MeetupVoteActions
           meetupId={meetup.id}

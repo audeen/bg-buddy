@@ -172,6 +172,8 @@ async function createMeetup(
     data: {
       title: `${DUMMY_MEETUP_PREFIX}${label}`,
       expectedPlayerCount: EXPECTED,
+      initialExpectedPlayerCount: EXPECTED,
+      registrationPeakCount: 1,
       createdById,
     },
   });

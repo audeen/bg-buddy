@@ -2,20 +2,13 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { LoginForm } from "@/components/LoginForm";
+import { MeetupOverviewCard } from "@/components/MeetupOverviewCard";
+import {
+  buildRegisteredPlayers,
+  groupPickVotersByMeetup,
+} from "@/lib/meetup-participants";
 
 export const dynamic = "force-dynamic";
-
-function formatDate(d: Date | null): string {
-  if (!d) return "Termin offen";
-  return new Intl.DateTimeFormat("de-DE", {
-    weekday: "short",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(d);
-}
 
 export default async function Home() {
   const user = await getCurrentUser();
@@ -24,12 +17,46 @@ export default async function Home() {
     prisma.meetup.findMany({
       orderBy: [{ scheduledAt: "asc" }, { createdAt: "desc" }],
       include: {
-        createdBy: { select: { name: true } },
+        createdBy: { select: { id: true, name: true } },
+        registrations: {
+          include: { user: { select: { id: true, name: true } } },
+        },
         _count: { select: { votes: true } },
       },
     }),
     prisma.game.count({ where: { isExpansion: false } }),
   ]);
+
+  const meetupIds = meetups.map((m) => m.id);
+  const pickVotes =
+    meetupIds.length > 0
+      ? await prisma.vote.findMany({
+          where: { meetupId: { in: meetupIds }, mode: "PICK" },
+          select: {
+            meetupId: true,
+            userId: true,
+            user: { select: { name: true } },
+          },
+        })
+      : [];
+
+  const pickVotersByMeetup = groupPickVotersByMeetup(pickVotes);
+
+  const duelCounts =
+    meetupIds.length > 0
+      ? await prisma.vote.groupBy({
+          by: ["meetupId"],
+          where: {
+            meetupId: { in: meetupIds },
+            mode: { in: ["DUEL", "TINDER"] },
+          },
+          _count: { _all: true },
+        })
+      : [];
+
+  const duelsStartedByMeetup = new Map(
+    duelCounts.map((d) => [d.meetupId, d._count._all > 0]),
+  );
 
   return (
     <div className="container-app flex flex-col gap-8">
@@ -79,29 +106,36 @@ export default async function Home() {
           </p>
         ) : (
           <ul className="grid gap-3 grid-cols-1 sm:grid-cols-2">
-            {meetups.map((m) => (
-              <li key={m.id}>
-                <Link
-                  href={`/meetups/${m.id}`}
-                  className="card flex flex-col gap-2 hover:shadow-md transition-shadow h-full"
-                  style={{ padding: "var(--space-card)" }}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="font-bold text-lg">{m.title}</span>
-                    <span className="chip chip-accent shrink-0">
-                      {m.expectedPlayerCount} Spieler
-                    </span>
-                  </div>
-                  <span className="text-sm text-[var(--muted)]">
-                    📅 {formatDate(m.scheduledAt)}
-                    {m.location ? ` · ${m.location}` : ""}
-                  </span>
-                  <span className="text-xs text-[var(--muted)]">
-                    von {m.createdBy.name} · {m._count.votes} Stimmen
-                  </span>
-                </Link>
-              </li>
-            ))}
+            {meetups.map((m) => {
+              const pickVoters = pickVotersByMeetup.get(m.id) ?? [];
+              const manualRegistrations = m.registrations.map((r) => ({
+                userId: r.userId,
+                name: r.user.name,
+              }));
+              const players = buildRegisteredPlayers(
+                m.createdBy,
+                pickVoters,
+                manualRegistrations,
+              );
+
+              return (
+                <li key={m.id}>
+                  <MeetupOverviewCard
+                    meetupId={m.id}
+                    title={m.title}
+                    scheduledAt={m.scheduledAt}
+                    location={m.location}
+                    expected={m.expectedPlayerCount}
+                    hostName={m.createdBy.name}
+                    voteCount={m._count.votes}
+                    players={players}
+                    duelsStarted={duelsStartedByMeetup.get(m.id) ?? false}
+                    currentUserId={user?.id}
+                    isLoggedIn={!!user}
+                  />
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
