@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
 import { GameCard, type GameCardGame } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
@@ -13,8 +13,12 @@ import {
   isPlayableWithOwnedExpansions,
 } from "@/lib/effective-player-count";
 import type { PickPhaseSummary } from "@/lib/pick-phase";
-import { nextPickPoints } from "@/lib/pick-points";
-import { MAX_PICK_POINTS, MAX_POINTS_PER_GAME } from "@/lib/vote-limits";
+import {
+  applyPickTap,
+  pointsForCount,
+  pointsKey,
+} from "@/lib/pick-points";
+import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
 export type PickGame = GameDetailData;
 
@@ -25,21 +29,6 @@ type DetailState = {
 
 function eligible(g: PickGame, n: number, expansions: GameCardGame[]): boolean {
   return isPlayableWithOwnedExpansions(g, expansions, n);
-}
-
-function pointsKey(gameId: number, playerCount: number): string {
-  return `${gameId}:${playerCount}`;
-}
-
-function pointsForCount(
-  points: Record<string, number>,
-  playerCount: number,
-): number {
-  let sum = 0;
-  for (const [key, val] of Object.entries(points)) {
-    if (key.endsWith(`:${playerCount}`)) sum += val;
-  }
-  return sum;
 }
 
 export function PickClient({
@@ -77,7 +66,9 @@ export function PickClient({
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const [detail, setDetail] = useState<DetailState | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [, startTransition] = useTransition();
+  const pointsRef = useRef(points);
+  pointsRef.current = points;
+  const persistChainRef = useRef(Promise.resolve());
 
   useMeetupPhaseRefresh(true);
 
@@ -140,51 +131,51 @@ export function PickClient({
 
   const expectedLocked = picksLocked && selected === expected;
 
-  function cycleGamePoints(gameId: number) {
-    if (expectedLocked) return;
-    const key = pointsKey(gameId, selected);
-    const current = points[key] ?? 0;
-    const next = nextPickPoints(current, budgetLeft);
-    if (next === current) return;
-    setGamePoints(gameId, next);
-  }
+  function persistPick(
+    gameId: number,
+    playerCount: number,
+    attemptedPoints: number,
+    snapshotBefore: Record<string, number>,
+  ) {
+    const key = pointsKey(gameId, playerCount);
+    const prev = snapshotBefore[key] ?? 0;
 
-  function setGamePoints(gameId: number, next: number) {
-    if (expectedLocked) return;
-    const key = pointsKey(gameId, selected);
-    const prev = points[key] ?? 0;
-    const clamped = Math.max(0, Math.min(MAX_POINTS_PER_GAME, next));
-    const newUsed = usedPoints - prev + clamped;
-    if (newUsed > MAX_PICK_POINTS) {
-      setLimitMsg(
-        `Maximal ${MAX_PICK_POINTS} Stimmen für diese Spieleranzahl.`,
-      );
-      return;
-    }
-    setLimitMsg(null);
-    setPoints((p) => {
-      const copy = { ...p };
-      if (clamped === 0) delete copy[key];
-      else copy[key] = clamped;
-      return copy;
-    });
-    startTransition(async () => {
-      const res = await setPickPointsAction(
-        meetupId,
-        gameId,
-        selected,
-        clamped,
-      );
-      if (res && "error" in res && res.error) {
-        setLimitMsg(res.error);
-        setPoints((p) => {
-          const copy = { ...p };
+    persistChainRef.current = persistChainRef.current
+      .then(async () => {
+        const res = await setPickPointsAction(
+          meetupId,
+          gameId,
+          playerCount,
+          attemptedPoints,
+        );
+        if (res && "error" in res && res.error) {
+          if ((pointsRef.current[key] ?? 0) !== attemptedPoints) return;
+          setLimitMsg(res.error);
+          const copy = { ...pointsRef.current };
           if (prev === 0) delete copy[key];
           else copy[key] = prev;
-          return copy;
-        });
-      }
-    });
+          pointsRef.current = copy;
+          setPoints(copy);
+        }
+      })
+      .catch(() => {});
+  }
+
+  function cycleGamePoints(gameId: number) {
+    if (expectedLocked) return;
+    const snapshotBefore = pointsRef.current;
+    const key = pointsKey(gameId, selected);
+    const before = snapshotBefore[key] ?? 0;
+    const result = applyPickTap(snapshotBefore, gameId, selected);
+    if ("error" in result) {
+      setLimitMsg(result.error);
+      return;
+    }
+    if (result.gamePoints === before) return;
+    setLimitMsg(null);
+    pointsRef.current = result.nextPoints;
+    setPoints(result.nextPoints);
+    persistPick(gameId, selected, result.gamePoints, snapshotBefore);
   }
 
   const maxAvailableCount = availableCounts[availableCounts.length - 1] ?? expected;
