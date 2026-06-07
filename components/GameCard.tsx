@@ -38,8 +38,8 @@ type BaseProps = {
 
 type ButtonProps = BaseProps & {
   href?: undefined;
-  onClick: () => void;
-  onDetailsClick?: () => void;
+  onClick: (displayedGame: GameCardGame) => void;
+  onDetailsClick?: (displayedGame: GameCardGame) => void;
   disabled?: boolean;
 };
 
@@ -305,19 +305,21 @@ export function GameCard(props: ButtonProps | LinkProps) {
     );
   }
 
+  const { onClick: cardOnClick } = props as ButtonProps;
+
   if (onDetailsClick) {
     return (
       <div className={`${cardClass} relative`}>
         <button
           type="button"
-          onClick={props.onClick}
+          onClick={() => cardOnClick(displayedGame)}
           disabled={disabled}
           className="flex flex-col w-full h-full text-left"
         >
           <CardCover game={displayedGame} />
           <CardBody {...bodyProps} />
         </button>
-        <DetailsButton onClick={onDetailsClick} />
+        <DetailsButton onClick={() => onDetailsClick(displayedGame)} />
         {expansionBadge}
         {points > 0 && <StarsBadge points={points} />}
       </div>
@@ -327,7 +329,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
   return (
     <button
       type="button"
-      onClick={props.onClick}
+      onClick={() => cardOnClick(displayedGame)}
       disabled={disabled}
       className={`${cardClass} relative`}
     >

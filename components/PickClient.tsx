@@ -7,10 +7,16 @@ import { GameCard, type GameCardGame } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameDetailData } from "@/components/GameDetailView";
 import { setPickPointsAction } from "@/app/actions";
+import { resolveDetailGameView } from "@/lib/expansion-detail";
 import type { PickPhaseSummary } from "@/lib/pick-phase";
 import { MAX_PICK_POINTS, MAX_POINTS_PER_GAME } from "@/lib/vote-limits";
 
 export type PickGame = GameDetailData;
+
+type DetailState = {
+  viewGame: PickGame;
+  baseGame: PickGame;
+};
 
 function eligible(g: PickGame, n: number): boolean {
   const min = g.minPlayers ?? 1;
@@ -63,7 +69,7 @@ export function PickClient({
     return m;
   });
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
-  const [detailGame, setDetailGame] = useState<PickGame | null>(null);
+  const [detail, setDetail] = useState<DetailState | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [, startTransition] = useTransition();
 
@@ -266,7 +272,13 @@ export function PickClient({
                   ownedExpansions={expansionsByBaseId[String(g.id)] ?? []}
                   disabled={expectedLocked}
                   onClick={() => cycleGamePoints(g.id)}
-                  onDetailsClick={() => setDetailGame(g)}
+                  onDetailsClick={(displayed) => {
+                    const expansions = expansionsByBaseId[String(g.id)] ?? [];
+                    setDetail({
+                      baseGame: g,
+                      viewGame: resolveDetailGameView(g, displayed, expansions),
+                    });
+                  }}
                 />
               </li>
             );
@@ -275,12 +287,13 @@ export function PickClient({
       )}
 
       <GameDetailModal
-        game={detailGame}
-        onClose={() => setDetailGame(null)}
+        game={detail?.viewGame ?? null}
+        baseGame={detail?.baseGame}
+        onClose={() => setDetail(null)}
         playerCount={selected}
         ownedExpansions={
-          detailGame && !detailGame.isExpansion
-            ? (expansionsByBaseId[String(detailGame.id)] ?? [])
+          detail
+            ? (expansionsByBaseId[String(detail.baseGame.id)] ?? [])
             : []
         }
       />

@@ -9,6 +9,7 @@ const DRAG_CLOSE_THRESHOLD = 100;
 
 type GameDetailModalProps = {
   game: GameDetailData | null;
+  baseGame?: GameDetailData;
   onClose: () => void;
   playerCount?: number;
   activeFilters?: GameFilters;
@@ -18,6 +19,7 @@ type GameDetailModalProps = {
 
 export function GameDetailModal({
   game,
+  baseGame,
   onClose,
   playerCount,
   activeFilters,
@@ -182,9 +184,9 @@ export function GameDetailModal({
 
   if (!game || !viewGame) return null;
 
-  const baseGame = game;
+  const effectiveBase = baseGame ?? game;
   const modalExpansions =
-    !baseGame.isExpansion && ownedExpansions.length > 0
+    effectiveBase && !effectiveBase.isExpansion && ownedExpansions.length > 0
       ? ownedExpansions
       : undefined;
 
@@ -231,9 +233,9 @@ export function GameDetailModal({
               const exp = ownedExpansions.find((e) => e.id === id);
               if (exp) setViewGame(exp as GameDetailData);
             }}
-            onSelectBase={() => setViewGame(baseGame)}
-            baseGameId={baseGame.id}
-            baseGameName={baseGame.name}
+            onSelectBase={() => setViewGame(effectiveBase)}
+            baseGameId={effectiveBase.id}
+            baseGameName={effectiveBase.name}
           />
         </div>
       </div>

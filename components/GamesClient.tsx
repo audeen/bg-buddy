@@ -4,7 +4,13 @@ import { useState } from "react";
 import { GameCard, type GameCardGame } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameDetailData } from "@/components/GameDetailView";
+import { resolveDetailGameView } from "@/lib/expansion-detail";
 import type { GameFilters } from "@/lib/game-filters";
+
+type DetailState = {
+  viewGame: GameDetailData;
+  baseGame: GameDetailData;
+};
 
 export function GamesClient({
   games,
@@ -17,7 +23,7 @@ export function GamesClient({
   activeFilters: GameFilters;
   expansionsByBaseId: Record<string, GameCardGame[]>;
 }) {
-  const [detailGame, setDetailGame] = useState<GameDetailData | null>(null);
+  const [detail, setDetail] = useState<DetailState | null>(null);
 
   if (games.length === 0) {
     return (
@@ -39,21 +45,28 @@ export function GamesClient({
               activeFilters={activeFilters}
               filterMode
               ownedExpansions={expansionsByBaseId[String(g.id)] ?? []}
-              onClick={() => setDetailGame(g)}
+              onClick={(displayed) => {
+                const expansions = expansionsByBaseId[String(g.id)] ?? [];
+                setDetail({
+                  baseGame: g,
+                  viewGame: resolveDetailGameView(g, displayed, expansions),
+                });
+              }}
             />
           </li>
         ))}
       </ul>
 
       <GameDetailModal
-        game={detailGame}
-        onClose={() => setDetailGame(null)}
+        game={detail?.viewGame ?? null}
+        baseGame={detail?.baseGame}
+        onClose={() => setDetail(null)}
         playerCount={playerCount}
         activeFilters={activeFilters}
         filterMode
         ownedExpansions={
-          detailGame && !detailGame.isExpansion
-            ? (expansionsByBaseId[String(detailGame.id)] ?? [])
+          detail
+            ? (expansionsByBaseId[String(detail.baseGame.id)] ?? [])
             : []
         }
       />
