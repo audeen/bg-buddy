@@ -4,6 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import { Ranking, type RankEntry } from "@/components/Ranking";
 import type { DuelPhase } from "@/lib/duel-pairs";
 import { sleep } from "@/lib/motion";
+import {
+  retryScrollToErgebnisseElement,
+  retryScrollToErgebnisseIfNeeded,
+  shouldScrollToErgebnisse,
+} from "@/lib/scroll-ergebnisse";
 
 const UNLOCK_FADE_MS = 250;
 
@@ -36,16 +41,18 @@ export function MeetupRankings({
   const revealed = userRevealed || (duelComplete && totalPairs > 0);
 
   useEffect(() => {
-    const scrollIfErgebnisse = () => {
-      if (window.location.hash !== "#ergebnisse") return;
-      document
-        .getElementById("ergebnisse")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const cleanupMount = retryScrollToErgebnisseIfNeeded();
+
+    const onHashChange = () => {
+      if (!shouldScrollToErgebnisse()) return;
+      retryScrollToErgebnisseElement();
     };
 
-    scrollIfErgebnisse();
-    window.addEventListener("hashchange", scrollIfErgebnisse);
-    return () => window.removeEventListener("hashchange", scrollIfErgebnisse);
+    window.addEventListener("hashchange", onHashChange);
+    return () => {
+      cleanupMount();
+      window.removeEventListener("hashchange", onHashChange);
+    };
   }, []);
 
   const handleReveal = useCallback(async () => {

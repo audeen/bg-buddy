@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { navigateToErgebnisse } from "@/lib/scroll-ergebnisse";
 
 const LAST_MEETUP_KEY = "bg-buddy:last-meetup-id";
 
@@ -90,19 +91,7 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
 
   const handleErgebnisseClick = useCallback(() => {
     if (!meetupId) return;
-
-    const url = `/meetups/${meetupId}#ergebnisse`;
-
-    if (!isMeetupDetailPage(pathname)) {
-      router.push(url);
-      return;
-    }
-
-    window.history.replaceState(null, "", url);
-    setHash("#ergebnisse");
-    document
-      .getElementById("ergebnisse")
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    navigateToErgebnisse(meetupId, pathname, router, () => setHash("#ergebnisse"));
   }, [pathname, meetupId, router]);
 
   const items = useMemo(
