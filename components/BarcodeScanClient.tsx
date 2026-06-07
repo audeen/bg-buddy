@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   useCallback,
   useEffect,
+  useId,
   useRef,
   useState,
   useTransition,
@@ -12,6 +13,8 @@ import { useRouter } from "next/navigation";
 import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
 import { addGameByBggIdAction } from "@/app/actions";
 import type { BarcodeLookupCandidate } from "@/lib/barcode-lookup";
+
+const DRAG_CLOSE_THRESHOLD = 100;
 
 type LookupResponse =
   | { status: "found"; barcode: string; bggId: number; name: string; verified: boolean }
@@ -36,6 +39,8 @@ type ScanLock =
   | { phase: "notFound"; barcode: string }
   | { phase: "error"; barcode: string; message: string }
   | { phase: "added"; barcode: string; bggId: number; name: string };
+
+type ScanLockOrigin = "camera" | "manual";
 
 function lookupToScanLock(data: LookupResponse, barcode: string): ScanLock | null {
   if ("error" in data) {
@@ -75,15 +80,161 @@ function lookupToScanLock(data: LookupResponse, barcode: string): ScanLock | nul
   }
 }
 
+function CameraIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+      <circle cx="12" cy="13" r="3" />
+    </svg>
+  );
+}
+
+function ScanLockPanel({
+  scanLock,
+  pending,
+  onConfirmAdd,
+  onSelectCandidate,
+}: {
+  scanLock: ScanLock;
+  pending: boolean;
+  onConfirmAdd: () => void;
+  onSelectCandidate: (item: BarcodeLookupCandidate) => void;
+}) {
+  return (
+    <div
+      className="rounded-lg border border-[var(--border)] p-4 flex flex-col gap-3"
+      role="status"
+    >
+      {scanLock.phase === "lookingUp" && (
+        <>
+          <p className="text-sm font-medium">Suche Spiel …</p>
+          <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+        </>
+      )}
+
+      {scanLock.phase === "found" && (
+        <>
+          <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+          <div className="flex items-center gap-3">
+            {scanLock.thumbnailUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={scanLock.thumbnailUrl}
+                alt=""
+                className="h-16 w-12 object-cover rounded shrink-0"
+              />
+            )}
+            <p className="font-semibold">{scanLock.name}</p>
+          </div>
+          <button
+            type="button"
+            className="btn btn-primary w-fit"
+            disabled={pending}
+            onClick={onConfirmAdd}
+          >
+            {pending ? "Hinzufügen …" : "Zur Sammlung hinzufügen"}
+          </button>
+        </>
+      )}
+
+      {scanLock.phase === "candidates" && (
+        <>
+          <p className="text-sm text-[var(--muted)]">
+            Mehrere Treffer für {scanLock.barcode} — bitte auswählen:
+          </p>
+          <ul className="flex flex-col gap-2">
+            {scanLock.items.map((item) => (
+              <li key={item.bggId}>
+                <button
+                  type="button"
+                  className="btn btn-ghost w-full justify-start gap-3 h-auto py-2"
+                  onClick={() => onSelectCandidate(item)}
+                >
+                  {item.thumbnailUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.thumbnailUrl}
+                      alt=""
+                      className="h-12 w-9 object-cover rounded shrink-0"
+                    />
+                  )}
+                  <span>{item.name}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {scanLock.phase === "alreadyInCollection" && (
+        <>
+          <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+          <p className="text-sm">
+            „{scanLock.name}" ist bereits in der Sammlung.{" "}
+            <Link href={`/games/${scanLock.bggId}`} className="underline">
+              Zum Spiel
+            </Link>
+          </p>
+        </>
+      )}
+
+      {scanLock.phase === "notFound" && (
+        <>
+          <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+          <p className="text-sm">
+            Kein Spiel für diesen Barcode gefunden. Bitte BGG-ID unten eingeben.
+          </p>
+        </>
+      )}
+
+      {scanLock.phase === "error" && (
+        <>
+          <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+          <p className="text-sm text-red-600 dark:text-red-400">{scanLock.message}</p>
+        </>
+      )}
+
+      {scanLock.phase === "added" && (
+        <>
+          <p className="text-sm text-green-700 dark:text-green-400">
+            „{scanLock.name}" wurde hinzugefügt.{" "}
+            <Link href={`/games/${scanLock.bggId}`} className="underline">
+              Zum Spiel
+            </Link>
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function BarcodeScanClient() {
   const router = useRouter();
+  const modalTitleId = useId();
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   const scanLockRef = useRef<ScanLock | null>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const dragStartYRef = useRef(0);
+  const draggingRef = useRef(false);
+  const pointerIdRef = useRef<number | null>(null);
 
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [cameraStarting, setCameraStarting] = useState(false);
   const [scanLock, setScanLock] = useState<ScanLock | null>(null);
+  const [scanLockOrigin, setScanLockOrigin] = useState<ScanLockOrigin | null>(null);
   const [barcodeInput, setBarcodeInput] = useState("");
   const [bggIdInput, setBggIdInput] = useState("");
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -96,6 +247,7 @@ export function BarcodeScanClient() {
 
   const clearScanLock = useCallback(() => {
     applyScanLock(null);
+    setScanLockOrigin(null);
   }, [applyScanLock]);
 
   const pauseCamera = useCallback(() => {
@@ -105,9 +257,26 @@ export function BarcodeScanClient() {
     setCameraStarting(false);
   }, []);
 
-  const stopScanning = useCallback(() => {
+  const clearDragVisuals = useCallback(() => {
+    const panel = panelRef.current;
+    const overlay = overlayRef.current;
+    if (panel) {
+      panel.style.transform = "";
+      panel.classList.remove("modal-panel-dragging");
+    }
+    if (overlay) {
+      overlay.style.opacity = "";
+    }
+    draggingRef.current = false;
+    pointerIdRef.current = null;
+    dragStartYRef.current = 0;
+  }, []);
+
+  const closeScanner = useCallback(() => {
     pauseCamera();
-  }, [pauseCamera]);
+    clearDragVisuals();
+    setScannerOpen(false);
+  }, [pauseCamera, clearDragVisuals]);
 
   const resolveBarcode = useCallback(
     async (raw: string) => {
@@ -144,6 +313,7 @@ export function BarcodeScanClient() {
   const lockFromScan = useCallback(
     (raw: string) => {
       if (scanLockRef.current) return;
+      setScanLockOrigin("camera");
       pauseCamera();
       void resolveBarcodeRef.current(raw);
     },
@@ -278,7 +448,74 @@ export function BarcodeScanClient() {
     };
   }, [scanning, lockFromScan]);
 
-  function requestScanning() {
+  useEffect(() => {
+    if (!scannerOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") closeScanner();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [scannerOpen, closeScanner]);
+
+  const applyDragVisuals = useCallback((delta: number) => {
+    const panel = panelRef.current;
+    const overlay = overlayRef.current;
+    if (panel) {
+      panel.style.transform = delta > 0 ? `translateY(${delta}px)` : "";
+    }
+    if (overlay) {
+      overlay.style.opacity =
+        delta > 0 ? String(Math.max(0.35, 1 - delta / 400)) : "";
+    }
+  }, []);
+
+  const onDragPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.button !== 0) return;
+      if ((e.target as HTMLElement).closest("button, a")) return;
+      if (window.matchMedia("(min-width: 640px)").matches) return;
+
+      draggingRef.current = true;
+      pointerIdRef.current = e.pointerId;
+      dragStartYRef.current = e.clientY;
+      panelRef.current?.classList.add("modal-panel-dragging");
+      e.currentTarget.setPointerCapture(e.pointerId);
+    },
+    [],
+  );
+
+  const onDragPointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!draggingRef.current || e.pointerId !== pointerIdRef.current) return;
+
+      const delta = Math.max(0, e.clientY - dragStartYRef.current);
+      applyDragVisuals(delta);
+      if (delta > 0) e.preventDefault();
+    },
+    [applyDragVisuals],
+  );
+
+  const onDragPointerEnd = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!draggingRef.current || e.pointerId !== pointerIdRef.current) return;
+
+      const delta = Math.max(0, e.clientY - dragStartYRef.current);
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+
+      if (delta >= DRAG_CLOSE_THRESHOLD) {
+        closeScanner();
+      } else {
+        clearDragVisuals();
+      }
+    },
+    [closeScanner, clearDragVisuals],
+  );
+
+  function openScanner() {
     setCameraError(null);
     clearScanLock();
 
@@ -287,6 +524,7 @@ export function BarcodeScanClient() {
       return;
     }
 
+    setScannerOpen(true);
     setScanning(true);
   }
 
@@ -300,7 +538,8 @@ export function BarcodeScanClient() {
     e.preventDefault();
     const raw = barcodeInput.trim();
     if (!raw) return;
-    pauseCamera();
+    closeScanner();
+    setScanLockOrigin("manual");
     void resolveBarcode(raw);
   }
 
@@ -332,209 +571,187 @@ export function BarcodeScanClient() {
   const lockedBarcode =
     scanLock && scanLock.phase !== "lookingUp" ? scanLock.barcode : null;
 
-  return (
-    <div className="card flex flex-col gap-4" style={{ padding: "var(--space-card)" }}>
-      <div>
-        <h2 className="text-lg font-semibold">Spiel hinzufügen</h2>
-        <p className="text-sm text-[var(--muted)]">
-          Barcode scannen oder BGG-ID eingeben.
-        </p>
-      </div>
+  const showLockInline =
+    scanLock && (scanLockOrigin === "manual" || !scannerOpen);
+  const showLockInModal =
+    scanLock && scannerOpen && scanLockOrigin === "camera";
 
-      <div className="flex flex-wrap gap-2">
-        {scanLock ? (
-          <button type="button" className="btn btn-primary" onClick={continueScanning}>
-            Weiter scannen
-          </button>
-        ) : scanning ? (
-          <button type="button" className="btn btn-ghost" onClick={stopScanning}>
-            Kamera stoppen
-          </button>
-        ) : (
-          <button type="button" className="btn btn-primary" onClick={requestScanning}>
-            Kamera starten
-          </button>
+  return (
+    <>
+      <div className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
+        <h2 className="text-lg font-semibold">Spiel hinzufügen</h2>
+
+        <form onSubmit={handleBarcodeSearch}>
+          <div className="flex gap-2 items-center">
+            <button
+              type="button"
+              className="btn btn-ghost shrink-0"
+              style={{ width: "2.75rem", height: "2.75rem", padding: 0 }}
+              aria-label="Barcode scannen"
+              title="Barcode scannen"
+              onClick={openScanner}
+            >
+              <CameraIcon />
+            </button>
+            <label className="sr-only" htmlFor="barcode-input">
+              Barcode
+            </label>
+            <input
+              id="barcode-input"
+              type="text"
+              inputMode="numeric"
+              className="input flex-1 min-w-0"
+              placeholder="EAN / UPC …"
+              value={barcodeInput}
+              onChange={(e) => setBarcodeInput(e.target.value)}
+              disabled={scanLock?.phase === "lookingUp"}
+            />
+            <button
+              type="submit"
+              className="btn btn-primary shrink-0"
+              disabled={pending || scanLock?.phase === "lookingUp"}
+            >
+              Suchen
+            </button>
+          </div>
+        </form>
+
+        {showLockInline && (
+          <ScanLockPanel
+            scanLock={scanLock}
+            pending={pending}
+            onConfirmAdd={confirmAdd}
+            onSelectCandidate={selectCandidate}
+          />
+        )}
+
+        <p className="text-center text-sm text-[var(--muted)]">oder</p>
+
+        <form onSubmit={handleBggAdd}>
+          <div className="flex gap-2 items-center">
+            <label className="sr-only" htmlFor="bgg-id-input">
+              BGG-ID
+            </label>
+            <input
+              id="bgg-id-input"
+              type="number"
+              min={1}
+              className="input flex-1 min-w-0"
+              placeholder="BGG-ID, z. B. 148228"
+              value={bggIdInput}
+              onChange={(e) => setBggIdInput(e.target.value)}
+            />
+            <button type="submit" className="btn btn-primary shrink-0" disabled={pending}>
+              {pending ? "Hinzufügen …" : "Hinzufügen"}
+            </button>
+          </div>
+        </form>
+
+        {cameraError && !scannerOpen && (
+          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+            {cameraError}
+          </p>
+        )}
+
+        {lockedBarcode && scanLock?.phase === "notFound" && showLockInline && (
+          <p className="text-xs text-[var(--muted)]">
+            Barcode {lockedBarcode} wird beim Hinzufügen gespeichert.
+          </p>
         )}
       </div>
 
-      {scanning && (
-        <div className="overflow-hidden rounded-lg bg-black aspect-video max-h-64 relative">
-          <video
-            ref={videoRef}
-            className="h-full w-full object-cover"
-            muted
-            playsInline
-            autoPlay
-          />
-          {cameraStarting && (
-            <p className="absolute inset-0 flex items-center justify-center text-sm text-white bg-black/50">
-              Kamera wird gestartet …
-            </p>
-          )}
-        </div>
-      )}
-
-      {scanLock && (
+      {scannerOpen && (
         <div
-          className="rounded-lg border border-[var(--border)] p-4 flex flex-col gap-3"
-          role="status"
+          ref={overlayRef}
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeScanner();
+          }}
         >
-          {scanLock.phase === "lookingUp" && (
-            <>
-              <p className="text-sm font-medium">Suche Spiel …</p>
-              <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
-            </>
-          )}
+          <div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={modalTitleId}
+            className="modal-panel"
+            style={{ maxWidth: "24rem" }}
+            tabIndex={-1}
+          >
+            <div
+              className="modal-drag-zone"
+              onPointerDown={onDragPointerDown}
+              onPointerMove={onDragPointerMove}
+              onPointerUp={onDragPointerEnd}
+              onPointerCancel={onDragPointerEnd}
+            >
+              <div className="modal-handle" aria-hidden />
+              <h2 id={modalTitleId} className="text-sm font-semibold text-[var(--muted)]">
+                Barcode scannen
+              </h2>
+            </div>
 
-          {scanLock.phase === "found" && (
-            <>
-              <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
-              <div className="flex items-center gap-3">
-                {scanLock.thumbnailUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={scanLock.thumbnailUrl}
-                    alt=""
-                    className="h-16 w-12 object-cover rounded shrink-0"
-                  />
-                )}
-                <p className="font-semibold">{scanLock.name}</p>
-              </div>
-              <button
-                type="button"
-                className="btn btn-primary w-fit"
-                disabled={pending}
-                onClick={confirmAdd}
-              >
-                {pending ? "Hinzufügen …" : "Zur Sammlung hinzufügen"}
-              </button>
-            </>
-          )}
-
-          {scanLock.phase === "candidates" && (
-            <>
-              <p className="text-sm text-[var(--muted)]">
-                Mehrere Treffer für {scanLock.barcode} — bitte auswählen:
-              </p>
-              <ul className="flex flex-col gap-2">
-                {scanLock.items.map((item) => (
-                  <li key={item.bggId}>
-                    <button
-                      type="button"
-                      className="btn btn-ghost w-full justify-start gap-3 h-auto py-2"
-                      onClick={() => selectCandidate(item)}
-                    >
-                      {item.thumbnailUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={item.thumbnailUrl}
-                          alt=""
-                          className="h-12 w-9 object-cover rounded shrink-0"
+            <div className="modal-body flex flex-col gap-4 safe-bottom">
+              {!scanLock && (
+                <>
+                  {cameraError ? (
+                    <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+                      {cameraError}
+                    </p>
+                  ) : (
+                    <>
+                      <div className="overflow-hidden rounded-lg bg-black aspect-video w-full relative">
+                        <video
+                          ref={videoRef}
+                          className="h-full w-full object-cover"
+                          muted
+                          playsInline
+                          autoPlay
                         />
-                      )}
-                      <span>{item.name}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
+                        {cameraStarting && (
+                          <p className="absolute inset-0 flex items-center justify-center text-sm text-white bg-black/50">
+                            Kamera wird gestartet …
+                          </p>
+                        )}
+                      </div>
+                      <p className="text-sm text-center text-[var(--muted)]">
+                        Barcode vor die Kamera halten
+                      </p>
+                    </>
+                  )}
+                </>
+              )}
 
-          {scanLock.phase === "alreadyInCollection" && (
-            <>
-              <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
-              <p className="text-sm">
-                „{scanLock.name}" ist bereits in der Sammlung.{" "}
-                <Link href={`/games/${scanLock.bggId}`} className="underline">
-                  Zum Spiel
-                </Link>
-              </p>
-            </>
-          )}
+              {showLockInModal && (
+                <ScanLockPanel
+                  scanLock={scanLock}
+                  pending={pending}
+                  onConfirmAdd={confirmAdd}
+                  onSelectCandidate={selectCandidate}
+                />
+              )}
 
-          {scanLock.phase === "notFound" && (
-            <>
-              <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
-              <p className="text-sm">
-                Kein Spiel für diesen Barcode gefunden. Bitte BGG-ID unten eingeben.
-              </p>
-            </>
-          )}
-
-          {scanLock.phase === "error" && (
-            <>
-              <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
-              <p className="text-sm text-red-600 dark:text-red-400">{scanLock.message}</p>
-            </>
-          )}
-
-          {scanLock.phase === "added" && (
-            <>
-              <p className="text-sm text-green-700 dark:text-green-400">
-                „{scanLock.name}" wurde hinzugefügt.{" "}
-                <Link href={`/games/${scanLock.bggId}`} className="underline">
-                  Zum Spiel
-                </Link>
-              </p>
-            </>
-          )}
+              <div className="flex flex-col gap-2 w-full">
+                {showLockInModal && (
+                  <button
+                    type="button"
+                    className="btn btn-primary w-full"
+                    onClick={continueScanning}
+                  >
+                    Weiter scannen
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn btn-ghost w-full"
+                  onClick={closeScanner}
+                >
+                  Schließen
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
-
-      <form onSubmit={handleBarcodeSearch} className="flex flex-col gap-2 sm:flex-row sm:items-end">
-        <div className="flex-1">
-          <label className="label" htmlFor="barcode-input">Barcode</label>
-          <input
-            id="barcode-input"
-            type="text"
-            inputMode="numeric"
-            className="input"
-            placeholder="EAN / UPC …"
-            value={barcodeInput}
-            onChange={(e) => setBarcodeInput(e.target.value)}
-            disabled={scanLock?.phase === "lookingUp"}
-          />
-        </div>
-        <button
-          type="submit"
-          className="btn btn-primary sm:mb-0"
-          disabled={pending || scanLock?.phase === "lookingUp"}
-        >
-          Suchen
-        </button>
-      </form>
-
-      <div className="text-center text-sm text-[var(--muted)]">oder</div>
-
-      <form onSubmit={handleBggAdd} className="flex flex-col gap-2 sm:flex-row sm:items-end">
-        <div className="flex-1">
-          <label className="label" htmlFor="bgg-id-input">BGG-ID</label>
-          <input
-            id="bgg-id-input"
-            type="number"
-            min={1}
-            className="input"
-            placeholder="z. B. 148228"
-            value={bggIdInput}
-            onChange={(e) => setBggIdInput(e.target.value)}
-          />
-        </div>
-        <button type="submit" className="btn btn-primary" disabled={pending}>
-          {pending ? "Hinzufügen …" : "Hinzufügen"}
-        </button>
-      </form>
-
-      {cameraError && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-          {cameraError}
-        </p>
-      )}
-
-      {lockedBarcode && scanLock?.phase === "notFound" && (
-        <p className="text-xs text-[var(--muted)]">
-          Barcode {lockedBarcode} wird beim Hinzufügen gespeichert.
-        </p>
-      )}
-    </div>
+    </>
   );
 }
