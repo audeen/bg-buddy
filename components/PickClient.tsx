@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
-import { GameCard } from "@/components/GameCard";
+import { GameCard, type GameCardGame } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameDetailData } from "@/components/GameDetailView";
 import { setPickPointsAction } from "@/app/actions";
@@ -42,7 +42,7 @@ export function PickClient({
   picksLocked,
   readyForDuels,
   pickPhaseSummary,
-  expansionBaseIds,
+  expansionsByBaseId,
 }: {
   meetupId: string;
   expected: number;
@@ -52,12 +52,8 @@ export function PickClient({
   picksLocked: boolean;
   readyForDuels: boolean;
   pickPhaseSummary: PickPhaseSummary;
-  expansionBaseIds: number[];
+  expansionsByBaseId: Record<string, GameCardGame[]>;
 }) {
-  const expansionBaseSet = useMemo(
-    () => new Set(expansionBaseIds),
-    [expansionBaseIds],
-  );
   const [selected, setSelected] = useState(expected);
   const [points, setPoints] = useState<Record<string, number>>(() => {
     const m: Record<string, number> = {};
@@ -267,7 +263,7 @@ export function PickClient({
                   playerCount={selected}
                   selected={gamePoints > 0}
                   selectedPoints={gamePoints}
-                  hasOwnedExpansion={expansionBaseSet.has(g.id)}
+                  ownedExpansions={expansionsByBaseId[String(g.id)] ?? []}
                   disabled={expectedLocked}
                   onClick={() => cycleGamePoints(g.id)}
                   onDetailsClick={() => setDetailGame(g)}
