@@ -14,3 +14,12 @@ export function expansionViewLabel(baseGameName: string): string {
       : baseGameName;
   return `Erweitert: ${short}`;
 }
+
+export function expansionRequiredForCountLabel(
+  expansionNames: string[],
+  playerCount: number,
+): string {
+  const quoted = expansionNames.map((n) => `„${n}"`).join(", ");
+  const expWord = expansionNames.length === 1 ? "Erweiterung" : "Erweiterungen";
+  return `Nur mit ${expWord} ${quoted} für ${playerCount} Personen spielbar`;
+}

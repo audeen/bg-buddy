@@ -7,8 +7,11 @@ import { ExpansionFamilyNav } from "@/components/ExpansionFamilyNav";
 import {
   expansionAvailableLabel,
   expansionCountLabel,
+  expansionRequiredForCountLabel,
   expansionViewLabel,
 } from "@/lib/expansion-label";
+import { expansionNamesForPlayerCount } from "@/lib/effective-player-count";
+import { ExpansionRequiredBanner } from "@/components/ExpansionRequiredBanner";
 import { FilterChipButton } from "@/components/FilterChipButton";
 import type { GameFilters } from "@/lib/game-filters";
 import {
@@ -104,14 +107,39 @@ function TagRows({
   );
 }
 
-function CardCover({ game }: { game: GameCardGame }) {
+function CardCover({
+  game,
+  playerCount,
+  baseGame,
+  ownedExpansions,
+  showExpansionBanner,
+}: {
+  game: GameCardGame;
+  playerCount?: number;
+  baseGame: GameCardGame;
+  ownedExpansions: GameCardGame[];
+  showExpansionBanner: boolean;
+}) {
+  const requiredExpansions =
+    showExpansionBanner && playerCount != null
+      ? expansionNamesForPlayerCount(baseGame, ownedExpansions, playerCount)
+      : [];
+  const bannerLabel =
+    requiredExpansions.length > 0 && playerCount != null
+      ? expansionRequiredForCountLabel(requiredExpansions, playerCount)
+      : null;
+
   return (
-    <div className="relative shrink-0 card-game-cover overflow-hidden">
+    <div
+      className="relative shrink-0 card-game-cover overflow-hidden"
+      aria-label={bannerLabel ?? undefined}
+    >
       <GameCover
         src={game.thumbnail ?? game.image}
         alt={game.name}
         className="w-full aspect-square"
       />
+      {bannerLabel && <ExpansionRequiredBanner label={bannerLabel} />}
     </div>
   );
 }
@@ -173,7 +201,7 @@ function StarsBadge({ points }: { points: number }) {
   if (points <= 0) return null;
   return (
     <span
-      className="absolute top-2.5 right-2.5 z-[1] bg-[var(--accent)] text-white rounded-full min-w-7 h-7 px-1.5 flex items-center justify-center text-xs font-bold tracking-tight"
+      className="absolute top-2.5 right-2.5 z-[3] bg-[var(--accent)] text-white rounded-full min-w-7 h-7 px-1.5 flex items-center justify-center text-xs font-bold tracking-tight"
       style={{ boxShadow: "var(--shadow-md)" }}
       aria-label={`${points} ${points === 1 ? "Stern" : "Sterne"}`}
     >
@@ -200,7 +228,7 @@ function ExpansionCountBadge({
 
   return (
     <span
-      className="absolute top-2.5 left-1/2 -translate-x-1/2 z-[1] shrink-0 h-7 max-w-[10rem] px-2 rounded-full text-[10px] font-bold border tracking-tight truncate bg-[var(--surface)] text-[var(--foreground)] border-[var(--border)] flex items-center justify-center pointer-events-none"
+      className="absolute top-2.5 left-1/2 -translate-x-1/2 z-[3] shrink-0 h-7 max-w-[10rem] px-2 rounded-full text-[10px] font-bold border tracking-tight truncate bg-[var(--surface)] text-[var(--foreground)] border-[var(--border)] flex items-center justify-center pointer-events-none"
       style={{ boxShadow: "var(--shadow-md)" }}
       title={onExpansionView ? baseGameName : expansionNames}
       aria-label={
@@ -222,7 +250,7 @@ function DetailsButton({ onClick }: { onClick: () => void }) {
         e.stopPropagation();
         onClick();
       }}
-      className="absolute top-2.5 left-2.5 z-[1] bg-[var(--surface)] text-[var(--foreground)] rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold border border-[var(--border)] hover:bg-[var(--surface-2)]"
+      className="absolute top-2.5 left-2.5 z-[3] bg-[var(--surface)] text-[var(--foreground)] rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold border border-[var(--border)] hover:bg-[var(--surface-2)]"
       style={{ boxShadow: "var(--shadow-md)" }}
       aria-label="Details anzeigen"
     >
@@ -306,10 +334,20 @@ export function GameCard(props: ButtonProps | LinkProps) {
     />
   ) : null;
 
+  const showExpansionBanner = viewExpansionId == null && !game.isExpansion;
+
+  const coverProps = {
+    game: displayedGame,
+    playerCount,
+    baseGame: game,
+    ownedExpansions,
+    showExpansionBanner,
+  };
+
   if ("href" in props && props.href) {
     return (
       <Link href={props.href} className={`${cardClass} hover:shadow-md relative`}>
-        <CardCover game={displayedGame} />
+        <CardCover {...coverProps} />
         <CardBody {...bodyProps} />
         {expansionBadge}
         {points > 0 && <StarsBadge points={points} />}
@@ -328,7 +366,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
           disabled={disabled}
           className="flex flex-col w-full h-full text-left"
         >
-          <CardCover game={displayedGame} />
+          <CardCover {...coverProps} />
           <CardBody {...bodyProps} />
         </button>
         <DetailsButton onClick={() => onDetailsClick(displayedGame)} />
@@ -345,7 +383,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
       disabled={disabled}
       className={`${cardClass} relative`}
     >
-      <CardCover game={displayedGame} />
+      <CardCover {...coverProps} />
       <CardBody {...bodyProps} />
       {expansionBadge}
       {points > 0 && <StarsBadge points={points} />}

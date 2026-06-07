@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import {
   expansionAvailableLabel,
   expansionCountLabel,
+  expansionRequiredForCountLabel,
   expansionViewLabel,
 } from "../lib/expansion-label";
 
@@ -31,7 +32,28 @@ function testExpansionViewLabelTruncated() {
   );
 }
 
-const tests = [testSingular, testPlural, testExpansionViewLabelShort, testExpansionViewLabelTruncated];
+function testExpansionRequiredForCountLabelSingular() {
+  assert.equal(
+    expansionRequiredForCountLabel(["7 Wonders: Cities"], 8),
+    'Nur mit Erweiterung „7 Wonders: Cities" für 8 Personen spielbar',
+  );
+}
+
+function testExpansionRequiredForCountLabelPlural() {
+  assert.equal(
+    expansionRequiredForCountLabel(["Cities", "Leaders"], 8),
+    'Nur mit Erweiterungen „Cities", „Leaders" für 8 Personen spielbar',
+  );
+}
+
+const tests = [
+  testSingular,
+  testPlural,
+  testExpansionViewLabelShort,
+  testExpansionViewLabelTruncated,
+  testExpansionRequiredForCountLabelSingular,
+  testExpansionRequiredForCountLabelPlural,
+];
 
 let failed = 0;
 for (const t of tests) {

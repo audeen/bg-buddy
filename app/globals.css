@@ -502,6 +502,38 @@ body {
     border-radius: 0.9rem 0.9rem 0 0;
   }
 
+  .expansion-required-banner {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .expansion-required-banner::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgb(0 0 0 / 0.22);
+  }
+
+  .expansion-required-banner__band {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 160%;
+    transform: translate(-50%, -50%) rotate(-32deg);
+    background: color-mix(in srgb, var(--accent) 92%, black);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-align: center;
+    padding: 0.55rem 1rem;
+    line-height: 1.25;
+    box-shadow: 0 2px 12px rgb(0 0 0 / 0.35);
+  }
+
   .duel-arena {
     position: relative;
   }
