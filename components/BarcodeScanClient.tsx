@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useRouter } from "next/navigation";
 import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
 import { addGameByBggIdAction } from "@/app/actions";
@@ -19,11 +25,11 @@ type LookupResponse =
 export function BarcodeScanClient() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   const lastScanRef = useRef<{ code: string; at: number } | null>(null);
 
   const [scanning, setScanning] = useState(false);
+  const [cameraStarting, setCameraStarting] = useState(false);
   const [barcodeInput, setBarcodeInput] = useState("");
   const [bggIdInput, setBggIdInput] = useState("");
   const [lookupLoading, setLookupLoading] = useState(false);
@@ -36,13 +42,11 @@ export function BarcodeScanClient() {
   const stopScanning = useCallback(() => {
     controlsRef.current?.stop();
     controlsRef.current = null;
-    readerRef.current = null;
     setScanning(false);
+    setCameraStarting(false);
   }, []);
 
-  useEffect(() => () => stopScanning(), [stopScanning]);
-
-  async function lookupBarcode(raw: string) {
+  const lookupBarcode = useCallback(async (raw: string) => {
     setLookupLoading(true);
     setError(null);
     setMessage(null);
@@ -80,8 +84,7 @@ export function BarcodeScanClient() {
       }
 
       if (data.status === "found") {
-        await addGame(data.bggId, data.barcode, data.name);
-        return;
+        return { action: "add" as const, bggId: data.bggId, barcode: data.barcode, name: data.name };
       }
 
       if (data.status === "candidates") {
@@ -98,30 +101,120 @@ export function BarcodeScanClient() {
     } finally {
       setLookupLoading(false);
     }
-  }
+  }, []);
 
-  function addGame(bggId: number, barcode?: string | null, name?: string | null) {
-    startTransition(async () => {
-      setError(null);
-      setMessage(null);
-      const res = await addGameByBggIdAction(bggId, { barcode, name });
-      if (res && "error" in res && res.error) {
-        setError(res.error);
+  const lookupBarcodeRef = useRef(lookupBarcode);
+  lookupBarcodeRef.current = lookupBarcode;
+
+  const addGame = useCallback(
+    (bggId: number, barcode?: string | null, name?: string | null) => {
+      startTransition(async () => {
+        setError(null);
+        setMessage(null);
+        const res = await addGameByBggIdAction(bggId, { barcode, name });
+        if (res && "error" in res && res.error) {
+          setError(res.error);
+          return;
+        }
+        if (res && "alreadyExists" in res && res.alreadyExists) {
+          setMessage(`„${res.name}" ist bereits in der Sammlung.`);
+        } else if (res && "name" in res && res.name) {
+          setMessage(`„${res.name}" wurde hinzugefügt.`);
+          setCandidates(null);
+          setBarcodeInput("");
+          stopScanning();
+        }
+        router.refresh();
+      });
+    },
+    [router, stopScanning],
+  );
+
+  const addGameRef = useRef(addGame);
+  addGameRef.current = addGame;
+
+  useEffect(() => {
+    if (!scanning) return;
+
+    let cancelled = false;
+    setCameraStarting(true);
+
+    async function startCamera() {
+      // Wait until React has mounted the <video> element (fixes blank preview on mobile).
+      for (let i = 0; i < 20; i += 1) {
+        if (cancelled) return;
+        if (videoRef.current) break;
+        await new Promise((r) => requestAnimationFrame(r));
+      }
+
+      const video = videoRef.current;
+      if (cancelled || !video) {
+        if (!cancelled) {
+          setScanning(false);
+          setCameraStarting(false);
+          setError("Kamera-Vorschau konnte nicht gestartet werden.");
+        }
         return;
       }
-      if (res && "alreadyExists" in res && res.alreadyExists) {
-        setMessage(`„${res.name}" ist bereits in der Sammlung.`);
-      } else if (res && "name" in res && res.name) {
-        setMessage(`„${res.name}" wurde hinzugefügt.`);
-        setCandidates(null);
-        setBarcodeInput("");
-        stopScanning();
-      }
-      router.refresh();
-    });
-  }
 
-  async function startScanning() {
+      const reader = new BrowserMultiFormatReader();
+
+      try {
+        const controls = await reader.decodeFromVideoDevice(
+          undefined,
+          video,
+          (result) => {
+            if (!result || cancelled) return;
+            const code = result.getText();
+            const now = Date.now();
+            const last = lastScanRef.current;
+            if (last && last.code === code && now - last.at < 2500) {
+              return;
+            }
+            lastScanRef.current = { code, at: now };
+
+            void lookupBarcodeRef.current(code).then((out) => {
+              if (out?.action === "add") {
+                addGameRef.current(out.bggId, out.barcode, out.name);
+              }
+            });
+          },
+        );
+
+        if (cancelled) {
+          controls.stop();
+          return;
+        }
+
+        controlsRef.current = controls;
+        setCameraStarting(false);
+
+        // iOS requires an explicit play() after the stream is attached.
+        try {
+          await video.play();
+        } catch {
+          // Autoplay may still work via muted + playsInline.
+        }
+      } catch {
+        if (!cancelled) {
+          setScanning(false);
+          setCameraStarting(false);
+          setError("Kamera-Zugriff verweigert oder nicht verfügbar.");
+        }
+      }
+    }
+
+    void startCamera();
+
+    return () => {
+      cancelled = true;
+      controlsRef.current?.stop();
+      controlsRef.current = null;
+      setCameraStarting(false);
+    };
+  }, [scanning]);
+
+  function requestScanning() {
     setError(null);
     setMessage(null);
 
@@ -130,43 +223,18 @@ export function BarcodeScanClient() {
       return;
     }
 
-    stopScanning();
     setScanning(true);
-
-    const reader = new BrowserMultiFormatReader();
-    readerRef.current = reader;
-
-    try {
-      const controls = await reader.decodeFromVideoDevice(
-        undefined,
-        videoRef.current!,
-        (result, err) => {
-          if (!result) {
-            void err;
-            return;
-          }
-          const code = result.getText();
-          const now = Date.now();
-          const last = lastScanRef.current;
-          if (last && last.code === code && now - last.at < 2500) {
-            return;
-          }
-          lastScanRef.current = { code, at: now };
-          void lookupBarcode(code);
-        },
-      );
-      controlsRef.current = controls;
-    } catch {
-      setScanning(false);
-      setError("Kamera-Zugriff verweigert oder nicht verfügbar.");
-    }
   }
 
   function handleBarcodeSearch(e: React.FormEvent) {
     e.preventDefault();
     const raw = barcodeInput.trim();
     if (!raw) return;
-    void lookupBarcode(raw);
+    void lookupBarcode(raw).then((out) => {
+      if (out?.action === "add") {
+        addGame(out.bggId, out.barcode, out.name);
+      }
+    });
   }
 
   function handleBggAdd(e: React.FormEvent) {
@@ -194,15 +262,26 @@ export function BarcodeScanClient() {
             Kamera stoppen
           </button>
         ) : (
-          <button type="button" className="btn btn-primary" onClick={() => void startScanning()}>
+          <button type="button" className="btn btn-primary" onClick={requestScanning}>
             Kamera starten
           </button>
         )}
       </div>
 
       {scanning && (
-        <div className="overflow-hidden rounded-lg bg-black/10 aspect-video max-h-64">
-          <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
+        <div className="overflow-hidden rounded-lg bg-black aspect-video max-h-64 relative">
+          <video
+            ref={videoRef}
+            className="h-full w-full object-cover"
+            muted
+            playsInline
+            autoPlay
+          />
+          {cameraStarting && (
+            <p className="absolute inset-0 flex items-center justify-center text-sm text-white bg-black/50">
+              Kamera wird gestartet …
+            </p>
+          )}
         </div>
       )}
 
