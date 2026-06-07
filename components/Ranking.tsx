@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { GameCover } from "@/components/GameCover";
+import { estimateRankingListHeight } from "@/lib/ranking-layout";
 import { prefersReducedMotion, sleep } from "@/lib/motion";
 
 export interface RankEntry {
@@ -219,6 +220,7 @@ export function Ranking({
 
   const showPlayerCountTabs = playerCounts.length > 1;
   const label = scenarioLabel(selected, expected, completedCounts);
+  const reserveRevealHeight = animateReveal && !revealDone && entries.length > 0;
 
   return (
     <div className="flex flex-col gap-3">
@@ -247,18 +249,31 @@ export function Ranking({
           Für {selected} Spieler gibt es noch keine Stimmen.
         </p>
       ) : (
-        <ol className="flex flex-col gap-2">
+        <ol
+          className="flex flex-col gap-2"
+          style={
+            reserveRevealHeight
+              ? { minHeight: estimateRankingListHeight(entries.length) }
+              : undefined
+          }
+        >
           {entries.map((e, i) => {
-            if (
-              !isEntryVisible(
-                i,
-                entries.length,
-                podiumRevealed,
-                restRevealed,
-                revealDone,
-              )
-            ) {
-              return null;
+            const visible = isEntryVisible(
+              i,
+              entries.length,
+              podiumRevealed,
+              restRevealed,
+              revealDone,
+            );
+
+            if (!visible) {
+              return (
+                <li
+                  key={e.id}
+                  aria-hidden
+                  className="min-h-[44px] p-2.5 opacity-0 pointer-events-none"
+                />
+              );
             }
 
             const restStaggerIndex =

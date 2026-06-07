@@ -35,7 +35,10 @@ export function MeetupRankings({
   finishedParticipants?: number;
   totalParticipants?: number;
 }) {
-  const [userRevealed, setUserRevealed] = useState(false);
+  const [userRevealed, setUserRevealed] = useState(
+    () =>
+      typeof window !== "undefined" && shouldScrollToErgebnisse(),
+  );
   const [unlocking, setUnlocking] = useState(false);
 
   const revealed = userRevealed || (duelComplete && totalPairs > 0);

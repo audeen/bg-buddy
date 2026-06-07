@@ -5,6 +5,7 @@ export const SCROLL_ERGEBNISSE_KEY = "bg-buddy:scroll-ergebnisse";
 
 const ERGEBNISSE_HASH = "#ergebnisse";
 const MAX_RAF_ATTEMPTS = 24;
+const RESIZE_WATCH_MS = 3000;
 
 export function isMeetupDetailPath(pathname: string): boolean {
   return /^\/meetups\/[^/]+$/.test(pathname);
@@ -36,7 +37,7 @@ export function clearScrollToErgebnisseMark(): void {
   }
 }
 
-export function scrollToErgebnisseElement(): boolean {
+export function scrollErgebnisseIntoView(): boolean {
   if (typeof document === "undefined") return false;
 
   const el = document.getElementById("ergebnisse");
@@ -46,6 +47,11 @@ export function scrollToErgebnisseElement(): boolean {
     behavior: prefersReducedMotion() ? "auto" : "smooth",
     block: "start",
   });
+  return true;
+}
+
+export function scrollToErgebnisseElement(): boolean {
+  if (!scrollErgebnisseIntoView()) return false;
 
   const url = `${window.location.pathname}${ERGEBNISSE_HASH}`;
   if (`${window.location.pathname}${window.location.hash}` !== url) {
@@ -55,6 +61,28 @@ export function scrollToErgebnisseElement(): boolean {
 
   clearScrollToErgebnisseMark();
   return true;
+}
+
+function watchErgebnisseLayoutGrowth(): () => void {
+  if (typeof window === "undefined" || typeof ResizeObserver === "undefined") {
+    return () => {};
+  }
+
+  const el = document.getElementById("ergebnisse");
+  if (!el) return () => {};
+
+  const observer = new ResizeObserver(() => {
+    if (!shouldScrollToErgebnisse()) return;
+    scrollErgebnisseIntoView();
+  });
+
+  observer.observe(el);
+  const timeoutId = window.setTimeout(() => observer.disconnect(), RESIZE_WATCH_MS);
+
+  return () => {
+    observer.disconnect();
+    window.clearTimeout(timeoutId);
+  };
 }
 
 export function retryScrollToErgebnisseElement(
@@ -90,9 +118,13 @@ export function retryScrollToErgebnisseElement(
     timeoutIds.push(setTimeout(attempt, delay));
   }
 
+  const cleanupResizeWatch = watchErgebnisseLayoutGrowth();
+
   return () => {
+    done = true;
     cancelAnimationFrame(rafId);
     for (const id of timeoutIds) clearTimeout(id);
+    cleanupResizeWatch();
   };
 }
 
