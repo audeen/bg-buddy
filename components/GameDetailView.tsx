@@ -5,9 +5,8 @@ import { GameCover } from "@/components/GameCover";
 import type { GameCardGame } from "@/components/GameCard";
 import { playerRange, playtime, weightLabel } from "@/lib/format";
 import {
-  effectivePlayerRange,
+  displayPlayerRangeForBaseGame,
   expansionNamesForPlayerCount,
-  mergedBestPlayerCounts,
 } from "@/lib/effective-player-count";
 import { bggBoardgameUrl } from "@/lib/bgg-url";
 import type { GameFilters } from "@/lib/game-filters";
@@ -72,16 +71,12 @@ export function GameDetailView({
   const detailMetaTags = filterTags.filter((t) => t.variant !== "default");
   const displayRange =
     onBaseView && ownedExpansions && ownedExpansions.length > 0
-      ? effectivePlayerRange(game, ownedExpansions)
+      ? displayPlayerRangeForBaseGame(game, ownedExpansions, playerCount)
       : { min: game.minPlayers, max: game.maxPlayers };
-  const bestCounts =
-    onBaseView && ownedExpansions && ownedExpansions.length > 0
-      ? mergedBestPlayerCounts(game, ownedExpansions)
-      : game.bestPlayerCounts;
 
   const showPlayerCountHint =
     playerCount != null &&
-    (bestCounts.includes(playerCount) ||
+    (game.bestPlayerCounts.includes(playerCount) ||
       game.recommendedPlayerCounts.includes(playerCount));
 
   const expansionHint =
@@ -172,7 +167,7 @@ export function GameDetailView({
 
           {showPlayerCountHint && (
             <p className="text-sm text-[var(--accent)]">
-              {bestCounts.includes(playerCount!) ? (
+              {game.bestPlayerCounts.includes(playerCount!) ? (
                 <>
                   <span className="font-semibold">Best · {playerCount}P</span> — beste
                   Spieleranzahl laut BGG-Community
@@ -192,10 +187,10 @@ export function GameDetailView({
             </p>
           )}
 
-          {bestCounts.length > 0 && (
+          {game.bestPlayerCounts.length > 0 && (
             <p className="text-sm">
               <span className="font-semibold">Beste Spieleranzahl: </span>
-              {bestCounts.join(", ")}
+              {game.bestPlayerCounts.join(", ")}
               {game.recommendedPlayerCounts.length > 0 && (
                 <span className="text-[var(--muted)]">
                   {" "}

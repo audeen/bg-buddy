@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import {
   baseGameIdsBestViaExpansion,
   baseGameIdsPlayableViaExpansion,
+  displayPlayerRangeForBaseGame,
   effectivePlayerRange,
   expansionNamesForPlayerCount,
   isPlayableAtCount,
@@ -80,6 +81,24 @@ function testMergedBestPlayerCounts() {
   assert.deepEqual(baseGameIdsBestViaExpansion([cities], 8), [68448]);
 }
 
+function testDisplayPlayerRangeForBaseGame() {
+  assert.deepEqual(
+    displayPlayerRangeForBaseGame(
+      { minPlayers: 2, maxPlayers: 6 },
+      [{ minPlayers: 2, maxPlayers: 8 }],
+    ),
+    { min: 2, max: 6 },
+  );
+  assert.deepEqual(
+    displayPlayerRangeForBaseGame(
+      sevenWonders,
+      [cities],
+      8,
+    ),
+    { min: 2, max: 8 },
+  );
+}
+
 function testBuildGameWhereWithExpansionIds() {
   const where = buildGameWhere(parseGameFilters({ players: "8" }), {
     expansionPlayableBaseIds: [68448],
@@ -106,6 +125,7 @@ testIsPlayableAtCount();
 testSevenWondersWithCities();
 testCatanWithExpansion();
 testMergedBestPlayerCounts();
+testDisplayPlayerRangeForBaseGame();
 testBuildGameWhereWithExpansionIds();
 
 console.log("test-effective-player-count: all passed");

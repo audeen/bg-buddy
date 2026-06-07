@@ -1,9 +1,6 @@
 import { playerRange, playtime, weightChipLabel } from "@/lib/format";
 import type { PlayerCountFields } from "@/lib/effective-player-count";
-import {
-  effectivePlayerRange,
-  mergedBestPlayerCounts,
-} from "@/lib/effective-player-count";
+import { displayPlayerRangeForBaseGame } from "@/lib/effective-player-count";
 import type { GameFilter } from "@/lib/game-filters";
 import {
   playerRangeFilterValue,
@@ -47,14 +44,11 @@ export function buildGameTags(
   const seen = new Set<string>();
   const playerCount = options?.playerCount;
   const ownedExpansions = options?.ownedExpansions ?? [];
-  const range =
-    ownedExpansions.length > 0
-      ? effectivePlayerRange(game, ownedExpansions)
-      : { min: game.minPlayers, max: game.maxPlayers };
-  const bestCounts =
-    ownedExpansions.length > 0
-      ? mergedBestPlayerCounts(game, ownedExpansions)
-      : game.bestPlayerCounts;
+  const range = displayPlayerRangeForBaseGame(
+    game,
+    ownedExpansions,
+    playerCount,
+  );
 
   function add(label: string, variant: GameTagVariant, filter?: GameFilter) {
     const key = label.toLowerCase();
@@ -94,7 +88,7 @@ export function buildGameTags(
     });
   }
 
-  if (playerCount != null && bestCounts.includes(playerCount)) {
+  if (playerCount != null && game.bestPlayerCounts.includes(playerCount)) {
     add(`Best · ${playerCount}P`, "accent", {
       kind: "best",
       value: String(playerCount),

@@ -92,6 +92,24 @@ export function expansionNamesForPlayerCount(
     .map((exp) => exp.name);
 }
 
+/** Player range for UI: base only, or extended when active count needs an expansion. */
+export function displayPlayerRangeForBaseGame(
+  base: PlayerCountFields,
+  expansions: readonly PlayerCountFields[],
+  playerCount?: number,
+): { min: number | null; max: number | null } {
+  const needsExpansion =
+    playerCount != null &&
+    expansionNamesForPlayerCount(
+      base,
+      expansions as (PlayerCountFields & { name: string })[],
+      playerCount,
+    ).length > 0;
+
+  if (needsExpansion) return effectivePlayerRange(base, expansions);
+  return { min: base.minPlayers, max: base.maxPlayers };
+}
+
 /** Base game ids whose merged best counts include `n` but base alone does not. */
 export function baseGameIdsBestViaExpansion(
   expansions: readonly (ExpansionForPlayerCount & BestPlayerCountFields)[],

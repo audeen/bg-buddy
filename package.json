@@ -27,6 +27,7 @@
     "test:pick-points": "tsx scripts/test-pick-points.ts",
     "test:dummy-meetups": "tsx scripts/test-dummy-meetups.ts",
     "test:game-filters": "tsx scripts/test-game-filters.ts",
+    "test:game-tags": "tsx scripts/test-game-tags.ts",
     "test:effective-player-count": "tsx scripts/test-effective-player-count.ts",
     "test:barcode-lookup": "tsx scripts/test-barcode-lookup.ts",
     "test:meetup-guest-games": "tsx scripts/test-meetup-guest-games.ts"
