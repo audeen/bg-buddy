@@ -132,7 +132,11 @@ export async function getPickPhaseState(
     poolIds,
     duelVotes,
     expectedPlayerCount,
-    tieBreak ? { tieBreak } : undefined,
+    {
+      picks: groupPicks,
+      meetupId,
+      tieBreak,
+    },
   );
 
   return assessPickPhase(

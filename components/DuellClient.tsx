@@ -153,7 +153,7 @@ export function DuellClient({
         </p>
         <p className="text-[var(--muted)] text-sm">
           In der Gruppe sind {groupDecidedPairs} von {totalPairs} Vergleichen
-          entschieden.
+          vollständig abgestimmt.
         </p>
         <Link
           href={`/meetups/${meetupId}`}
@@ -178,7 +178,7 @@ export function DuellClient({
           </span>
         </div>
         <p className="text-xs text-[var(--muted)] tabular-nums">
-          {groupDecidedPairs} / {totalPairs} entschieden
+          {groupDecidedPairs} / {totalPairs} mit allen Stimmen
         </p>
       </div>
 

@@ -1,10 +1,12 @@
 import {
-  buildCopelandForCount,
-  type CopelandOptions,
+  completedPairKeysForUser,
   type DuelVoteRow,
 } from "@/lib/copeland";
 import type { DuelTieBreakContext } from "@/lib/duel-tiebreaker";
-import { FULL_THRESHOLD } from "@/lib/vote-limits";
+import { buildPickCounts } from "@/lib/pick-pool";
+import { FULL_THRESHOLD, MAX_PICK_POINTS } from "@/lib/vote-limits";
+
+export type DuelPickRow = { userId: string; gameId: number; points: number };
 
 export type DuelPair = { a: number; b: number };
 
@@ -131,7 +133,113 @@ export function duelPhaseForPairCount(totalPairs: number): DuelPhase {
 
 export type DuelProgressOptions = {
   tieBreak?: DuelTieBreakContext;
+  picks?: DuelPickRow[];
+  meetupId?: string;
 };
+
+type ParticipationContext = {
+  poolGameIds: number[];
+  picks: DuelPickRow[];
+  meetupId: string;
+  playerCount: number;
+};
+
+/** Users with full ★ pick budget who must finish their duel queue. */
+export function duelParticipantIds(picks: DuelPickRow[]): string[] {
+  const totals = new Map<string, number>();
+  for (const p of picks) {
+    totals.set(p.userId, (totals.get(p.userId) ?? 0) + p.points);
+  }
+  return [...totals.entries()]
+    .filter(([, sum]) => sum === MAX_PICK_POINTS)
+    .map(([id]) => id)
+    .sort();
+}
+
+export function allParticipantsFinishedDuels(
+  duelVotes: DuelVoteRow[],
+  ctx: ParticipationContext,
+): boolean {
+  const participantIds = duelParticipantIds(ctx.picks);
+  if (participantIds.length === 0) return false;
+
+  const pickCounts = buildPickCounts(ctx.picks);
+  const userPoints = buildUserPointsMap(ctx.picks);
+  const roster = participantIdsFromPicks(ctx.picks);
+
+  for (const userId of participantIds) {
+    const plan = buildDuellPlan({
+      poolGameIds: ctx.poolGameIds,
+      pickCounts,
+      userPoints,
+      userId,
+      participantIds: roster,
+      meetupId: ctx.meetupId,
+    });
+    const completed = completedPairKeysForUser(
+      duelVotes,
+      userId,
+      ctx.playerCount,
+    );
+    for (const pair of plan.myPairs) {
+      if (!completed.has(pairKey(pair.a, pair.b))) return false;
+    }
+  }
+  return true;
+}
+
+/** Pairs where every required participant has cast their duel vote. */
+export function countFullyVotedPairs(
+  duelVotes: DuelVoteRow[],
+  ctx: ParticipationContext,
+): number {
+  const participantIds = duelParticipantIds(ctx.picks);
+  if (participantIds.length === 0) return 0;
+
+  const totalPairs = pairCount(ctx.poolGameIds.length);
+  const phase = duelPhaseForPairCount(totalPairs);
+
+  if (phase === "FULL") {
+    const pairs = allPairs(ctx.poolGameIds);
+    let count = 0;
+    for (const pair of pairs) {
+      const key = pairKey(pair.a, pair.b);
+      const voterIds = new Set(
+        duelVotes
+          .filter(
+            (v) =>
+              v.playerCount === ctx.playerCount &&
+              v.opponentGameId != null &&
+              pairKey(v.gameId, v.opponentGameId) === key,
+          )
+          .map((v) => v.userId),
+      );
+      if (participantIds.every((id) => voterIds.has(id))) count++;
+    }
+    return count;
+  }
+
+  const userPoints = buildUserPointsMap(ctx.picks);
+  const roster = participantIdsFromPicks(ctx.picks);
+  const assignments = assignGroupPairs(
+    allPairs(ctx.poolGameIds),
+    roster,
+    userPoints,
+  );
+
+  let count = 0;
+  for (const userId of roster) {
+    const completed = completedPairKeysForUser(
+      duelVotes,
+      userId,
+      ctx.playerCount,
+    );
+    for (const pair of assignments[userId] ?? []) {
+      if (completed.has(pairKey(pair.a, pair.b))) count++;
+    }
+  }
+  return count;
+}
 
 export function getDuelProgressForCount(
   poolGameIds: number[],
@@ -150,21 +258,31 @@ export function getDuelProgressForCount(
     };
   }
   const phase = duelPhaseForPairCount(totalPairs);
-  const copelandOptions: CopelandOptions | undefined = options?.tieBreak
-    ? { tieBreak: options.tieBreak }
-    : undefined;
-  const { decidedPairs } = buildCopelandForCount(
-    duelVotes,
-    playerCount,
-    phase,
-    totalPairs,
-    copelandOptions,
-  );
+
+  const participation: ParticipationContext | undefined =
+    options?.picks && options?.meetupId
+      ? {
+          poolGameIds,
+          picks: options.picks,
+          meetupId: options.meetupId,
+          playerCount,
+        }
+      : undefined;
+
+  if (participation) {
+    return {
+      phase,
+      totalPairs,
+      decidedPairs: countFullyVotedPairs(duelVotes, participation),
+      duelComplete: allParticipantsFinishedDuels(duelVotes, participation),
+    };
+  }
+
   return {
     phase,
     totalPairs,
-    decidedPairs,
-    duelComplete: decidedPairs >= totalPairs,
+    decidedPairs: 0,
+    duelComplete: false,
   };
 }
 

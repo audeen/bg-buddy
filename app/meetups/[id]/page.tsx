@@ -118,12 +118,11 @@ export default async function MeetupDetail({
     totalPairs,
     decidedPairs: groupDecidedPairs,
     duelComplete,
-  } = getDuelProgressForCount(
-    poolIds,
-    duelRows,
-    expected,
-    tieBreak ? { tieBreak } : undefined,
-  );
+  } = getDuelProgressForCount(poolIds, duelRows, expected, {
+    picks: groupPicks,
+    meetupId: id,
+    tieBreak,
+  });
 
   const duelRoundComplete = duelComplete && totalPairs > 0;
 
@@ -181,12 +180,11 @@ export default async function MeetupDetail({
             ),
           }
         : undefined;
-    return getDuelProgressForCount(
-      countPool,
-      countDuels,
-      pc,
-      countTieBreak ? { tieBreak: countTieBreak } : undefined,
-    ).duelComplete;
+    return getDuelProgressForCount(countPool, countDuels, pc, {
+      picks: countPicks,
+      meetupId: id,
+      tieBreak: countTieBreak,
+    }).duelComplete;
   });
 
   return (

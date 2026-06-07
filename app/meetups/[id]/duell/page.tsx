@@ -207,7 +207,7 @@ export default async function DuellPage({
     ids,
     duelRows,
     expected,
-    tieBreak ? { tieBreak } : undefined,
+    { picks: groupPicks, meetupId: id, tieBreak },
   );
   const completedKeys = [
     ...completedPairKeysForUser(duelRows, user.id, expected),

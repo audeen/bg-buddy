@@ -149,9 +149,34 @@ for (let a = 0; a < pool6.length; a++) {
   }
 }
 
-const progress = getDuelProgressForCount(pool6, duelVotes, 2, { tieBreak });
-assert(progress.duelComplete, "all 15 pairs complete with tie-breakers");
-assert(progress.decidedPairs === 15, "15 decided pairs");
+const fullPicks = [
+  { userId: "u1", gameId: 1, points: 1 },
+  { userId: "u1", gameId: 2, points: 1 },
+  { userId: "u1", gameId: 3, points: 1 },
+  { userId: "u2", gameId: 4, points: 1 },
+  { userId: "u2", gameId: 5, points: 1 },
+  { userId: "u2", gameId: 6, points: 1 },
+];
+const progress = getDuelProgressForCount(pool6, duelVotes, 2, {
+  picks: fullPicks,
+  meetupId: "m1",
+  tieBreak,
+});
+assert(progress.duelComplete, "all participants finished");
+assert(progress.decidedPairs === 15, "15 fully voted pairs");
+
+// Partial participation must not complete early
+const partialVotes = duelVotes.slice(0, 23);
+const partialProgress = getDuelProgressForCount(pool6, partialVotes, 2, {
+  picks: fullPicks,
+  meetupId: "m1",
+  tieBreak,
+});
+assert(!partialProgress.duelComplete, "partial votes do not complete duels");
+assert(
+  partialProgress.decidedPairs < 15,
+  "not all pairs fully voted during partial play",
+);
 
 const copeland = buildCopelandForCount(duelVotes, 2, "FULL", 15, {
   tieBreak,
