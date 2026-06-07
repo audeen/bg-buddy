@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { GameCover } from "@/components/GameCover";
 import { estimateRankingListHeight } from "@/lib/ranking-layout";
+import { followErgebnisseLayoutGrowth } from "@/lib/scroll-ergebnisse";
 import { prefersReducedMotion, sleep } from "@/lib/motion";
 
 export interface RankEntry {
@@ -149,15 +150,25 @@ export function Ranking({
     : (playerCounts[0] ?? expected);
   const [selected, setSelected] = useState(initial);
 
-  const [hasAnimated, setHasAnimated] = useState(false);
+  const [lastAnimatedTab, setLastAnimatedTab] = useState<number | null>(
+    animateReveal ? null : initial,
+  );
   const [podiumRevealed, setPodiumRevealed] = useState(0);
   const [restRevealed, setRestRevealed] = useState(0);
   const [revealDone, setRevealDone] = useState(!animateReveal);
+  const layoutFollowCleanup = useRef<(() => void) | null>(null);
 
   const entries = rankingByCount[selected] ?? [];
 
   useEffect(() => {
-    if (!animateReveal || hasAnimated || entries.length === 0) return;
+    return () => {
+      layoutFollowCleanup.current?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!animateReveal || entries.length === 0) return;
+    if (lastAnimatedTab === selected) return;
 
     let cancelled = false;
 
@@ -171,7 +182,7 @@ export function Ranking({
           setPodiumRevealed(podiumSize);
           setRestRevealed(restCount);
           setRevealDone(true);
-          setHasAnimated(true);
+          setLastAnimatedTab(selected);
         }
         return;
       }
@@ -195,7 +206,7 @@ export function Ranking({
 
       if (!cancelled) {
         setRevealDone(true);
-        setHasAnimated(true);
+        setLastAnimatedTab(selected);
       }
     }
 
@@ -204,18 +215,39 @@ export function Ranking({
     return () => {
       cancelled = true;
     };
-  }, [animateReveal, hasAnimated, entries.length]);
+  }, [animateReveal, selected, lastAnimatedTab, entries.length]);
+
+  function startLayoutFollow() {
+    layoutFollowCleanup.current?.();
+    layoutFollowCleanup.current = followErgebnisseLayoutGrowth();
+  }
 
   function handleTabChange(pc: number) {
-    setSelected(pc);
-    if (!revealDone) {
-      const tabEntries = rankingByCount[pc] ?? [];
+    if (pc === selected) return;
+
+    if (!animateReveal) {
+      setSelected(pc);
+      return;
+    }
+
+    const tabEntries = rankingByCount[pc] ?? [];
+
+    if (prefersReducedMotion()) {
       const podiumSize = Math.min(3, tabEntries.length);
+      setSelected(pc);
       setPodiumRevealed(podiumSize);
       setRestRevealed(Math.max(0, tabEntries.length - podiumSize));
       setRevealDone(true);
-      setHasAnimated(true);
+      setLastAnimatedTab(pc);
+      startLayoutFollow();
+      return;
     }
+
+    setSelected(pc);
+    setPodiumRevealed(0);
+    setRestRevealed(0);
+    setRevealDone(false);
+    startLayoutFollow();
   }
 
   const showPlayerCountTabs = playerCounts.length > 1;

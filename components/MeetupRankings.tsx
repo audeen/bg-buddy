@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { Ranking, type RankEntry } from "@/components/Ranking";
 import type { DuelPhase } from "@/lib/duel-pairs";
+import { estimateRankingBlockHeight } from "@/lib/ranking-layout";
 import { sleep } from "@/lib/motion";
 import {
+  followErgebnisseLayoutGrowth,
   retryScrollToErgebnisseElement,
   retryScrollToErgebnisseIfNeeded,
   shouldScrollToErgebnisse,
@@ -68,6 +70,7 @@ export function MeetupRankings({
     await sleep(UNLOCK_FADE_MS);
     setUserRevealed(true);
     setUnlocking(false);
+    followErgebnisseLayoutGrowth();
   }, []);
 
   const openPairs = Math.max(0, totalPairs - groupDecidedPairs);
@@ -79,8 +82,23 @@ export function MeetupRankings({
         ? `Noch ${openPairs} von ${totalPairs} Vergleichen ohne alle Stimmen.`
         : `Ergebnisse für ${expected} Spieler ★ werden nach den Duellen freigegeben.`;
 
+  const expectedEntryCount = (combinedByCount[expected] ?? []).length;
+  const sectionReserveMinHeight = unlocking
+    ? estimateRankingBlockHeight(expectedEntryCount, {
+        withTabs: playerCounts.length > 1,
+      }) + 48
+    : undefined;
+
   return (
-    <section id="ergebnisse" className="flex flex-col gap-3 scroll-mt-24">
+    <section
+      id="ergebnisse"
+      className="flex flex-col gap-3 scroll-mt-24"
+      style={
+        sectionReserveMinHeight
+          ? { minHeight: sectionReserveMinHeight }
+          : undefined
+      }
+    >
       <h2 className="section-title">Ergebnisse</h2>
 
       {!revealed ? (

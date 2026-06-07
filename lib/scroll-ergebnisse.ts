@@ -63,7 +63,9 @@ export function scrollToErgebnisseElement(): boolean {
   return true;
 }
 
-function watchErgebnisseLayoutGrowth(): () => void {
+export function followErgebnisseLayoutGrowth(
+  durationMs = RESIZE_WATCH_MS,
+): () => void {
   if (typeof window === "undefined" || typeof ResizeObserver === "undefined") {
     return () => {};
   }
@@ -72,12 +74,11 @@ function watchErgebnisseLayoutGrowth(): () => void {
   if (!el) return () => {};
 
   const observer = new ResizeObserver(() => {
-    if (!shouldScrollToErgebnisse()) return;
     scrollErgebnisseIntoView();
   });
 
   observer.observe(el);
-  const timeoutId = window.setTimeout(() => observer.disconnect(), RESIZE_WATCH_MS);
+  const timeoutId = window.setTimeout(() => observer.disconnect(), durationMs);
 
   return () => {
     observer.disconnect();
@@ -118,7 +119,7 @@ export function retryScrollToErgebnisseElement(
     timeoutIds.push(setTimeout(attempt, delay));
   }
 
-  const cleanupResizeWatch = watchErgebnisseLayoutGrowth();
+  const cleanupResizeWatch = followErgebnisseLayoutGrowth();
 
   return () => {
     done = true;
