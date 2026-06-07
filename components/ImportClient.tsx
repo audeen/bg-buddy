@@ -5,8 +5,11 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { importCsvAction, importCsvPreviewAction } from "@/app/actions";
 import { SyncConflictDialog } from "@/components/SyncConflictDialog";
-import type { FieldChoice, GameSyncConflict } from "@/lib/game-sync";
-import { buildFieldResolutionsFromChoices } from "@/lib/csv-import";
+import {
+  buildFieldResolutionsFromChoices,
+  type FieldChoice,
+  type GameSyncConflict,
+} from "@/lib/game-sync";
 
 type ImportResult =
   | {

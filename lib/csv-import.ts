@@ -7,11 +7,8 @@ import {
 } from "@/lib/enrichment-cache";
 import {
   applyBaseGameCleanup,
-  applyExpansionCascade,
   buildResolvableUpdate,
-  choicesToFieldResolutionMap,
   CSV_SYNC_FIELDS,
-  defaultChoicesFromConflicts,
   diffGameFields,
   ENRICHMENT_SYNC_FIELDS,
   parsedGameToCsvFields,
@@ -188,14 +185,3 @@ export async function applyCsvImport(
 
   return { cacheApplied };
 }
-
-/** Merge UI choices (incl. cascade) into a field resolution map for apply. */
-export function buildFieldResolutionsFromChoices(
-  conflicts: GameSyncConflict[],
-  choices: Record<string, import("@/lib/game-sync").FieldChoice>,
-): FieldResolutionMap {
-  const { autoChoices } = applyExpansionCascade(conflicts, choices);
-  return choicesToFieldResolutionMap(conflicts, choices, autoChoices);
-}
-
-export { defaultChoicesFromConflicts };

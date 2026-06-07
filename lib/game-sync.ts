@@ -247,6 +247,15 @@ export function applyExpansionCascade(
   return { visible, autoChoices, cascadedCount };
 }
 
+/** Merge UI choices (incl. cascade) into a field resolution map for apply. */
+export function buildFieldResolutionsFromChoices(
+  conflicts: GameSyncConflict[],
+  choices: Record<string, FieldChoice>,
+): FieldResolutionMap {
+  const { autoChoices } = applyExpansionCascade(conflicts, choices);
+  return choicesToFieldResolutionMap(conflicts, choices, autoChoices);
+}
+
 function resolveFieldChoice(
   gameId: number,
   field: SyncFieldName,
