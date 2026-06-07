@@ -165,7 +165,7 @@ export function allParticipantsFinishedDuels(
 
   const pickCounts = buildPickCounts(ctx.picks);
   const userPoints = buildUserPointsMap(ctx.picks);
-  const roster = participantIdsFromPicks(ctx.picks);
+  const roster = duelParticipantIds(ctx.picks);
 
   for (const userId of participantIds) {
     const plan = buildDuellPlan({
@@ -220,7 +220,7 @@ export function countFullyVotedPairs(
   }
 
   const userPoints = buildUserPointsMap(ctx.picks);
-  const roster = participantIdsFromPicks(ctx.picks);
+  const roster = duelParticipantIds(ctx.picks);
   const assignments = assignGroupPairs(
     allPairs(ctx.poolGameIds),
     roster,
@@ -270,11 +270,16 @@ export function getDuelProgressForCount(
       : undefined;
 
   if (participation) {
+    const decidedPairs = countFullyVotedPairs(duelVotes, participation);
+    const allFinished = allParticipantsFinishedDuels(
+      duelVotes,
+      participation,
+    );
     return {
       phase,
       totalPairs,
-      decidedPairs: countFullyVotedPairs(duelVotes, participation),
-      duelComplete: allParticipantsFinishedDuels(duelVotes, participation),
+      decidedPairs,
+      duelComplete: allFinished && decidedPairs >= totalPairs,
     };
   }
 

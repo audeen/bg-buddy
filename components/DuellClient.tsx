@@ -6,6 +6,7 @@ import { GameCover } from "@/components/GameCover";
 import { duelVoteAction } from "@/app/actions";
 import { pairKey, type DuelPair, type DuelPhase } from "@/lib/duel-pairs";
 import { prefersReducedMotion, sleep } from "@/lib/motion";
+import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
 
 const VOTE_ANIMATION_MS = 400;
 
@@ -101,6 +102,8 @@ export function DuellClient({
   const myDone = myPairs.length - pendingPairs.length;
   const finished = pendingPairs.length === 0;
   const current = pendingPairs[0] ?? null;
+
+  useMeetupPhaseRefresh(!finished);
 
   const gameA = current ? gameMap.get(current.a) : null;
   const gameB = current ? gameMap.get(current.b) : null;

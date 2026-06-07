@@ -15,7 +15,7 @@ import {
   buildUserPointsMap,
   isPairInList,
   pairKey,
-  participantIdsFromPicks,
+  duelParticipantIds,
 } from "@/lib/duel-pairs";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import {
@@ -373,7 +373,7 @@ export async function duelVoteAction(
     pickCounts,
     userPoints: buildUserPointsMap(groupPicks),
     userId: user.id,
-    participantIds: participantIdsFromPicks(groupPicks),
+    participantIds: duelParticipantIds(groupPicks),
     meetupId,
   });
 

@@ -3,6 +3,8 @@ import {
   assignGroupPairs,
   buildDuellPlan,
   buildUserPointsMap,
+  duelParticipantIds,
+  getDuelProgressForCount,
   pairCount,
   participantIdsFromPicks,
 } from "../lib/duel-pairs";
@@ -82,5 +84,48 @@ const copeland = buildCopelandForCount(
 );
 assert(copeland.winsByGame[1] === 1, "majority picks game 1");
 assert(copeland.decidedPairs === 1, "one pair decided");
+
+// GROUP: only full pickers share the matrix; partial pickers are excluded
+const pool8 = Array.from({ length: 8 }, (_, i) => i + 1);
+const groupPicks = [
+  { userId: "a", gameId: 1, points: 1 },
+  { userId: "a", gameId: 2, points: 1 },
+  { userId: "a", gameId: 3, points: 1 },
+  { userId: "b", gameId: 4, points: 1 },
+  { userId: "b", gameId: 5, points: 1 },
+  { userId: "b", gameId: 6, points: 1 },
+  { userId: "c", gameId: 7, points: 1 },
+  { userId: "d", gameId: 8, points: 1 },
+];
+assert(duelParticipantIds(groupPicks).length === 2, "only full pickers duel");
+const groupRoster = duelParticipantIds(groupPicks);
+const groupAssignments = assignGroupPairs(
+  allPairs(pool8),
+  groupRoster,
+  buildUserPointsMap(groupPicks),
+);
+const groupAssignedTotal = Object.values(groupAssignments).reduce(
+  (s, arr) => s + arr.length,
+  0,
+);
+assert(groupAssignedTotal === 28, "all 28 pairs among full pickers only");
+
+const groupVotes = [];
+for (const userId of groupRoster) {
+  for (const pair of groupAssignments[userId] ?? []) {
+    groupVotes.push({
+      gameId: pair.a,
+      opponentGameId: pair.b,
+      userId,
+      playerCount: 4,
+    });
+  }
+}
+const groupProgress = getDuelProgressForCount(pool8, groupVotes, 4, {
+  picks: groupPicks,
+  meetupId: "m-group",
+});
+assert(groupProgress.duelComplete, "group matrix complete when full pickers done");
+assert(groupProgress.decidedPairs === 28, "28/28 pairs voted");
 
 console.log("test-duel-pairs: OK");

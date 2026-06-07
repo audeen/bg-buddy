@@ -8,7 +8,7 @@ import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import {
   buildDuellPlan,
   buildUserPointsMap,
-  participantIdsFromPicks,
+  duelParticipantIds,
   getDuelProgressForCount,
 } from "@/lib/duel-pairs";
 import { buildGameTieMetaMap } from "@/lib/duel-tiebreaker";
@@ -168,7 +168,7 @@ export default async function DuellPage({
     pickCounts,
     userPoints: buildUserPointsMap(groupPicks),
     userId: user.id,
-    participantIds: participantIdsFromPicks(groupPicks),
+    participantIds: duelParticipantIds(groupPicks),
     meetupId: id,
   });
 
