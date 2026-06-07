@@ -38,7 +38,9 @@ let pts: Record<string, number> = {};
 const chain = [1, 2, 3, 0];
 for (const expected of chain) {
   const result = applyPickTap(pts, gameId, playerCount);
-  assert(!("error" in result), `tap chain failed at ${expected}`);
+  if ("error" in result) {
+    throw new Error(`tap chain failed at ${expected}: ${result.error}`);
+  }
   assert(
     result.gamePoints === expected,
     `tap chain: expected ${expected}, got ${result.gamePoints}`,
@@ -47,16 +49,20 @@ for (const expected of chain) {
 }
 
 pts = { [key]: 1, [pointsKey(99, playerCount)]: 2 };
-let fullBudget = applyPickTap(pts, gameId, playerCount);
-assert(!("error" in fullBudget), "full budget tap should succeed");
+const fullBudget = applyPickTap(pts, gameId, playerCount);
+if ("error" in fullBudget) {
+  throw new Error(`full budget tap should succeed: ${fullBudget.error}`);
+}
 assert(
   fullBudget.gamePoints === 0,
   `full budget: expected 0, got ${fullBudget.gamePoints}`,
 );
 
 pts = { [key]: 1 };
-let freeBudget = applyPickTap(pts, gameId, playerCount);
-assert(!("error" in freeBudget), "free budget tap should succeed");
+const freeBudget = applyPickTap(pts, gameId, playerCount);
+if ("error" in freeBudget) {
+  throw new Error(`free budget tap should succeed: ${freeBudget.error}`);
+}
 assert(
   freeBudget.gamePoints === 2,
   `free budget: expected 2, got ${freeBudget.gamePoints}`,
