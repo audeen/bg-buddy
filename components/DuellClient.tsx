@@ -182,7 +182,7 @@ export function DuellClient({
           <p className="text-[var(--muted)] text-sm">{progressLabel}</p>
         )}
         <Link
-          href={`/meetups/${meetupId}`}
+          href={`/meetups/${meetupId}#ergebnisse`}
           className="btn btn-primary btn-lg w-full max-w-sm"
         >
           Zum Ranking
@@ -261,7 +261,7 @@ export function DuellClient({
 
       <div className="sticky-above-nav -mx-4 px-4 py-3 mt-2 bg-[var(--background)] border-t border-[var(--border)] flex justify-center sm:static sm:border-0 sm:mx-0 sm:px-0 sm:mt-0">
         <Link
-          href={`/meetups/${meetupId}`}
+          href={`/meetups/${meetupId}#ergebnisse`}
           className="btn btn-primary w-full sm:w-auto text-center"
         >
           Zum Ranking

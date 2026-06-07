@@ -70,7 +70,6 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
   }, [pathname]);
 
   const meetupId = pathMeetupId ?? storedMeetupId ?? fallbackMeetupId;
-  const ergebnisseHref = meetupId ? `/meetups/${meetupId}#ergebnisse` : "/";
   const voteHref = meetupId ? `/meetups/${meetupId}/pick` : "/";
 
   const handleTreffenClick = useCallback(() => {
@@ -87,6 +86,23 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
     }
 
     router.push("/");
+  }, [pathname, meetupId, router]);
+
+  const handleErgebnisseClick = useCallback(() => {
+    if (!meetupId) return;
+
+    const url = `/meetups/${meetupId}#ergebnisse`;
+
+    if (!isMeetupDetailPage(pathname)) {
+      router.push(url);
+      return;
+    }
+
+    window.history.replaceState(null, "", url);
+    setHash("#ergebnisse");
+    document
+      .getElementById("ergebnisse")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [pathname, meetupId, router]);
 
   const items = useMemo(
@@ -121,12 +137,12 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
         key: "ergebnisse",
         label: "Ergebnisse",
         icon: "🏆",
-        href: ergebnisseHref,
         active: isMeetupDetailPage(pathname) && hash === "#ergebnisse",
         disabled: !meetupId,
+        onClick: handleErgebnisseClick,
       },
     ],
-    [pathname, hash, ergebnisseHref, voteHref, meetupId, handleTreffenClick],
+    [pathname, hash, voteHref, meetupId, handleTreffenClick, handleErgebnisseClick],
   );
 
   return (

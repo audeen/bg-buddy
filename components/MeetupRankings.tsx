@@ -36,8 +36,16 @@ export function MeetupRankings({
   const revealed = userRevealed || (duelComplete && totalPairs > 0);
 
   useEffect(() => {
-    if (window.location.hash !== "#ergebnisse") return;
-    document.getElementById("ergebnisse")?.scrollIntoView({ behavior: "smooth" });
+    const scrollIfErgebnisse = () => {
+      if (window.location.hash !== "#ergebnisse") return;
+      document
+        .getElementById("ergebnisse")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
+    scrollIfErgebnisse();
+    window.addEventListener("hashchange", scrollIfErgebnisse);
+    return () => window.removeEventListener("hashchange", scrollIfErgebnisse);
   }, []);
 
   const handleReveal = useCallback(async () => {
