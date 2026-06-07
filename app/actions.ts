@@ -39,7 +39,9 @@ import {
   purgeDummyMeetups,
 } from "@/lib/dummy-meetups";
 import {
+  cancelActiveDuel,
   loadMeetupParticipantData,
+  removeUserFromMeetup,
   syncExpectedPlayerCount,
 } from "@/lib/meetup-participants";
 
@@ -209,20 +211,56 @@ export async function leaveMeetupAction(meetupId: string) {
     return { error: "Du bist für dieses Treffen nicht angemeldet." };
   }
 
-  await prisma.$transaction([
-    prisma.meetupRegistration.deleteMany({
-      where: { meetupId: id, userId: user.id },
-    }),
-    prisma.vote.deleteMany({
-      where: { meetupId: id, userId: user.id, mode: "PICK" },
-    }),
-  ]);
-
-  await syncExpectedPlayerCount(id, prisma, "down");
+  await removeUserFromMeetup(id, user.id, prisma);
 
   revalidatePath("/");
   revalidatePath(`/meetups/${id}`);
   revalidatePath(`/meetups/${id}/pick`);
+  return { ok: true };
+}
+
+export async function kickParticipantAction(
+  meetupId: string,
+  targetUserId: string,
+) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const id = meetupId.trim();
+  const targetId = targetUserId.trim();
+  if (!id || !targetId) return { error: "Ungültiges Treffen." };
+
+  const data = await loadMeetupParticipantData(id, prisma);
+  if (!data) return { error: "Treffen nicht gefunden." };
+
+  if (data.meetup.createdBy.id !== user.id) {
+    return { error: "Nur der Host kann Teilnehmer entfernen." };
+  }
+
+  if (targetId === data.meetup.createdBy.id) {
+    return { error: "Der Host kann nicht entfernt werden." };
+  }
+
+  if (!data.players.some((p) => p.userId === targetId)) {
+    return { error: "Teilnehmer nicht gefunden." };
+  }
+
+  const phase = await getPickPhaseState(
+    id,
+    data.meetup.expectedPlayerCount,
+    prisma,
+  );
+
+  await removeUserFromMeetup(id, targetId, prisma);
+
+  if (phase.picksLocked) {
+    await cancelActiveDuel(id, data.meetup.expectedPlayerCount, prisma);
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/meetups/${id}`);
+  revalidatePath(`/meetups/${id}/pick`);
+  revalidatePath(`/meetups/${id}/duell`);
   return { ok: true };
 }
 

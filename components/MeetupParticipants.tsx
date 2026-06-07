@@ -1,4 +1,6 @@
 import type { PickPointsAtExpected, RegisteredPlayer } from "@/lib/meetup-participants";
+import { canKickParticipant } from "@/lib/meetup-participants";
+import { KickParticipantButton } from "@/components/KickParticipantButton";
 import { ParticipantPickChip } from "@/components/ParticipantPickChip";
 
 export function MeetupParticipants({
@@ -6,11 +8,17 @@ export function MeetupParticipants({
   players,
   compact = false,
   pickPointsAtExpected,
+  meetupId,
+  kickEnabled = false,
+  duelActive = false,
 }: {
   expected: number;
   players: RegisteredPlayer[];
   compact?: boolean;
   pickPointsAtExpected?: PickPointsAtExpected;
+  meetupId?: string;
+  kickEnabled?: boolean;
+  duelActive?: boolean;
 }) {
   const registered = players.length;
   const fillPct = expected > 0 ? Math.min(100, (registered / expected) * 100) : 0;
@@ -57,21 +65,49 @@ export function MeetupParticipants({
 
       {players.length > 0 ? (
         <div className="chip-row">
-          {players.map((p) =>
-            showPickChips ? (
-              <ParticipantPickChip
-                key={p.userId}
-                name={p.name}
-                isHost={p.isHost}
-                points={pickPointsAtExpected.get(p.userId) ?? 0}
-              />
-            ) : (
-              <span key={p.userId} className="chip chip-meta">
-                {p.name}
-                {p.isHost ? " (Host)" : ""}
+          {players.map((p) => {
+            const showKick =
+              kickEnabled &&
+              meetupId != null &&
+              canKickParticipant({ isHost: true, targetIsHost: p.isHost });
+
+            if (showPickChips) {
+              return (
+                <span key={p.userId} className="inline-flex items-center gap-0.5">
+                  <ParticipantPickChip
+                    name={p.name}
+                    isHost={p.isHost}
+                    points={pickPointsAtExpected.get(p.userId) ?? 0}
+                  />
+                  {showKick && (
+                    <KickParticipantButton
+                      meetupId={meetupId}
+                      userId={p.userId}
+                      name={p.name}
+                      duelActive={duelActive}
+                    />
+                  )}
+                </span>
+              );
+            }
+
+            return (
+              <span key={p.userId} className="inline-flex items-center gap-0.5">
+                <span className="chip chip-meta">
+                  {p.name}
+                  {p.isHost ? " (Host)" : ""}
+                </span>
+                {showKick && (
+                  <KickParticipantButton
+                    meetupId={meetupId}
+                    userId={p.userId}
+                    name={p.name}
+                    duelActive={duelActive}
+                  />
+                )}
               </span>
-            ),
-          )}
+            );
+          })}
         </div>
       ) : (
         <p className={`text-[var(--muted)] ${compact ? "text-xs" : "text-sm"}`}>

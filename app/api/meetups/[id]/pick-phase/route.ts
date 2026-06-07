@@ -25,11 +25,18 @@ export async function GET(
   }
 
   const expected = meetup.expectedPlayerCount;
-  const [phase, picks] = await Promise.all([
+  const [phase, picks, duelVoteCount] = await Promise.all([
     getPickPhaseState(id, expected, prisma),
     prisma.vote.findMany({
       where: { meetupId: id, mode: "PICK", playerCount: expected },
       select: { userId: true, gameId: true, points: true },
+    }),
+    prisma.vote.count({
+      where: {
+        meetupId: id,
+        playerCount: expected,
+        mode: { in: ["DUEL", "TINDER"] },
+      },
     }),
   ]);
 
@@ -55,6 +62,7 @@ export async function GET(
   return NextResponse.json({
     meetup,
     phase,
+    duelVoteCount,
     pickers,
     hint: phase.readyForDuels
       ? "Duell frei (readyForDuels=true)"

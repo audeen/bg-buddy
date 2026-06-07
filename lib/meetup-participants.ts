@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@prisma/client";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
 export type RegisteredPlayer = {
@@ -63,6 +63,55 @@ export function canLeaveMeetup({
   duelsStarted: boolean;
 }): boolean {
   return isRegistered && !isHost && !duelsStarted;
+}
+
+export function canKickParticipant({
+  isHost,
+  targetIsHost,
+}: {
+  isHost: boolean;
+  targetIsHost: boolean;
+}): boolean {
+  return isHost && !targetIsHost;
+}
+
+export async function removeUserFromMeetup(
+  meetupId: string,
+  userId: string,
+  db: PrismaClient,
+): Promise<void> {
+  await db.$transaction([
+    db.meetupRegistration.deleteMany({
+      where: { meetupId, userId },
+    }),
+    db.vote.deleteMany({
+      where: { meetupId, userId, mode: "PICK" },
+    }),
+  ]);
+  await syncExpectedPlayerCount(meetupId, db, "down");
+}
+
+export async function cancelActiveDuel(
+  meetupId: string,
+  expectedPlayerCount: number,
+  db: PrismaClient,
+): Promise<void> {
+  await db.$transaction([
+    db.vote.deleteMany({
+      where: {
+        meetupId,
+        playerCount: expectedPlayerCount,
+        mode: { in: ["DUEL", "TINDER"] },
+      },
+    }),
+    db.meetup.update({
+      where: { id: meetupId },
+      data: {
+        duelFrozenAt: null,
+        duelFrozenData: Prisma.DbNull,
+      },
+    }),
+  ]);
 }
 
 const MAX_EXPECTED = 20;

@@ -293,6 +293,9 @@ export default async function MeetupDetail({
           expected={meetup.expectedPlayerCount}
           players={registeredPlayers}
           pickPointsAtExpected={pickPointsAtExpected}
+          meetupId={meetup.id}
+          kickEnabled={isHost}
+          duelActive={pickPhase.picksLocked}
         />
         {user && (
           <JoinMeetupButton

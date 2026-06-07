@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { DuellClient } from "@/components/DuellClient";
+import { DuellSessionGuard } from "@/components/DuellSessionGuard";
 import { PageHeader } from "@/components/PageHeader";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import {
@@ -64,13 +65,25 @@ export default async function DuellPage({
   const pickCounts = buildPickCounts(groupPicks);
   const frozen = parseDuelFrozenData(meetup.duelFrozenData, expected);
   const ids = frozen?.poolGameIds ?? poolGameIds(pickCounts);
+  const initialDuelVoteCount = duelVotes.length;
+
+  function withSessionGuard(content: React.ReactNode) {
+    return (
+      <DuellSessionGuard
+        meetupId={id}
+        initialDuelVoteCount={initialDuelVoteCount}
+      >
+        {content}
+      </DuellSessionGuard>
+    );
+  }
 
   const myPickSum = groupPicks
     .filter((p) => p.userId === user.id)
     .reduce((s, p) => s + p.points, 0);
 
   if (phase.poolSize < 2) {
-    return (
+    return withSessionGuard(
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
         <div
@@ -86,12 +99,12 @@ export default async function DuellPage({
             Stimmen setzen
           </Link>
         </div>
-      </div>
+      </div>,
     );
   }
 
   if (myPickSum <= 0) {
-    return (
+    return withSessionGuard(
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
         <div
@@ -107,12 +120,12 @@ export default async function DuellPage({
             Stimmen setzen
           </Link>
         </div>
-      </div>
+      </div>,
     );
   }
 
   if (myPickSum < MAX_PICK_POINTS) {
-    return (
+    return withSessionGuard(
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
         <div
@@ -133,12 +146,12 @@ export default async function DuellPage({
             Stimmen setzen
           </Link>
         </div>
-      </div>
+      </div>,
     );
   }
 
   if (!phase.readyForDuels) {
-    return (
+    return withSessionGuard(
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
         <div
@@ -168,7 +181,7 @@ export default async function DuellPage({
             Stimmen setzen
           </Link>
         </div>
-      </div>
+      </div>,
     );
   }
 
@@ -227,7 +240,7 @@ export default async function DuellPage({
     ...completedPairKeysForUser(duelRows, user.id, expected),
   ];
 
-  return (
+  return withSessionGuard(
     <div className="container-app flex flex-col gap-3 sm:gap-4">
       <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
 
@@ -243,6 +256,6 @@ export default async function DuellPage({
         totalParticipants={totalParticipants}
         initialCompletedKeys={completedKeys}
       />
-    </div>
+    </div>,
   );
 }
