@@ -96,7 +96,6 @@ export function PickClient({
   const usedPoints = pointsForCount(points, selected);
   const budgetLeft = MAX_PICK_POINTS - usedPoints;
   const atLimit = budgetLeft <= 0;
-  const progressPct = (usedPoints / MAX_PICK_POINTS) * 100;
 
   const availableCounts = useMemo(() => {
     let maxP = 0;
@@ -295,22 +294,13 @@ export function PickClient({
       <div className="sticky-above-nav picker-sticky-bar">
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold">Spieleranzahl</span>
-          <span className="text-xs font-bold tabular-nums text-[var(--muted)]">
+          <span
+            className="text-xs font-bold tabular-nums text-[var(--muted)]"
+            role="status"
+            aria-label={`${usedPoints} von ${MAX_PICK_POINTS} Stimmen vergeben`}
+          >
             {usedPoints} / {MAX_PICK_POINTS} Stimmen
           </span>
-        </div>
-        <div
-          className="progress-bar"
-          role="progressbar"
-          aria-valuenow={usedPoints}
-          aria-valuemin={0}
-          aria-valuemax={MAX_PICK_POINTS}
-          aria-label="Stimmen vergeben"
-        >
-          <div
-            className="progress-bar-fill"
-            style={{ width: `${progressPct}%` }}
-          />
         </div>
         <div className="tabs-scroll">
           {availableCounts.map((n) => (

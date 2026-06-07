@@ -220,11 +220,11 @@ body {
   }
 
   .pb-sticky-picker {
-    padding-bottom: 7rem;
+    padding-bottom: 6rem;
   }
 
   .pb-sticky-picker-at-limit {
-    padding-bottom: 11rem;
+    padding-bottom: 10rem;
   }
 
   @media (min-width: 768px) {
@@ -960,13 +960,13 @@ body {
 
   .scroll-to-top-above-picker {
     bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 6.5rem
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 5.5rem
     );
   }
 
   .scroll-to-top-above-picker-at-limit {
     bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 10.5rem
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 9.5rem
     );
   }
 
