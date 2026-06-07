@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { GamesClient } from "@/components/GamesClient";
 import { GamesFilterBar } from "@/components/GamesFilterBar";
 import { loadOwnedExpansionsByBaseGame, serializeExpansionsByBaseId } from "@/lib/owned-expansions";
-import { buildGameWhere, parseGameFilters } from "@/lib/game-filters";
+import { buildGameOrderBy, buildGameWhere, parseGameFilters, parseGameSort } from "@/lib/game-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -38,13 +38,15 @@ export default async function GamesPage({
 }) {
   const sp = await searchParams;
   const filters = parseGameFilters(sp);
+  const sort = parseGameSort(sp);
   const where = buildGameWhere(filters);
+  const orderBy = buildGameOrderBy(sort);
 
   const [games, allForGenres, expansionsByBase] = await Promise.all([
     prisma.game.findMany({
       where,
       select: gameSelect,
-      orderBy: { name: "asc" },
+      orderBy,
     }),
     prisma.game.findMany({ select: { categories: true } }),
     loadOwnedExpansionsByBaseGame(),

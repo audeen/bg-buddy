@@ -1,10 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { chipClassForVariant, type GameTag } from "@/lib/game-tags";
 import {
   filterUrl,
   isFilterActive,
+  parseGameSort,
   toggleGameFilter,
   type GameFilters,
 } from "@/lib/game-filters";
@@ -23,6 +24,10 @@ export function FilterChipButton({
   onNavigate,
 }: FilterChipButtonProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const sort = parseGameSort(
+    Object.fromEntries(searchParams.entries()) as Record<string, string>,
+  );
   const baseClass = chipClassForVariant(tag.variant);
   const canFilter = filterMode && tag.filter && activeFilters;
   const isActive = canFilter ? isFilterActive(activeFilters, tag.filter!) : false;
@@ -39,7 +44,7 @@ export function FilterChipButton({
         e.stopPropagation();
         onNavigate?.();
         const next = toggleGameFilter(activeFilters, tag.filter!);
-        router.push(filterUrl("/games", next), { scroll: false });
+        router.push(filterUrl("/games", next, sort), { scroll: false });
       }}
     >
       {tag.label}

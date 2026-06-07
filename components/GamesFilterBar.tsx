@@ -7,13 +7,33 @@ import {
   clearFilterKind,
   filtersToSearchParams,
   parseGameFilters,
+  parseGameSort,
+  RATING_TIER_OPTIONS,
+  SORT_OPTIONS,
   TIME_BUCKET_OPTIONS,
+  WEIGHT_LEVEL_OPTIONS,
   type GameFilterKind,
   type GameFilters,
+  type GameSort,
+  type RatingBlock,
 } from "@/lib/game-filters";
 
 type GamesFilterBarProps = {
   genres: string[];
+};
+
+const EMPTY_FILTERS: GameFilters = {
+  q: "",
+  players: null,
+  time: null,
+  genre: "",
+  mechanic: "",
+  playerRange: null,
+  playtime: null,
+  weight: null,
+  rating: null,
+  best: null,
+  includeExpansions: false,
 };
 
 export function GamesFilterBar({ genres }: GamesFilterBarProps) {
@@ -21,19 +41,19 @@ export function GamesFilterBar({ genres }: GamesFilterBarProps) {
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
 
-  const filters = parseGameFilters(
-    Object.fromEntries(searchParams.entries()) as Record<string, string>,
-  );
+  const sp = Object.fromEntries(searchParams.entries()) as Record<string, string>;
+  const filters = parseGameFilters(sp);
+  const sort = parseGameSort(sp);
 
   const navigate = useCallback(
-    (next: GameFilters) => {
-      const params = filtersToSearchParams(next);
+    (next: GameFilters, nextSort: GameSort = sort) => {
+      const params = filtersToSearchParams(next, nextSort);
       const qs = params.toString();
       startTransition(() => {
         router.push(qs ? `/games?${qs}` : "/games", { scroll: false });
       });
     },
-    [router, startTransition],
+    [router, sort, startTransition],
   );
 
   const updateField = (patch: Partial<GameFilters>) => {
@@ -44,11 +64,15 @@ export function GamesFilterBar({ genres }: GamesFilterBarProps) {
     navigate(clearFilterKind(filters, kind));
   };
 
+  const resetFilters = () => {
+    navigate(EMPTY_FILTERS, sort);
+  };
+
   const activeLabels = activeFilterLabels(filters);
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="filter-bar grid gap-3 sm:grid-cols-6 items-end">
+      <div className="filter-bar grid gap-3 sm:grid-cols-4 items-end">
         <div className="sm:col-span-2">
           <label className="label" htmlFor="games-q">
             Suche
@@ -125,7 +149,75 @@ export function GamesFilterBar({ genres }: GamesFilterBarProps) {
             ))}
           </select>
         </div>
-        <label className="flex items-center gap-2 text-sm sm:col-span-2">
+      </div>
+
+      <div className="filter-bar grid gap-3 sm:grid-cols-4 items-end">
+        <div>
+          <label className="label" htmlFor="games-weight">
+            Komplexität
+          </label>
+          <select
+            id="games-weight"
+            value={filters.weight ?? ""}
+            onChange={(e) =>
+              updateField({
+                weight: e.target.value
+                  ? (e.target.value as GameFilters["weight"])
+                  : null,
+              })
+            }
+            className="input"
+          >
+            <option value="">egal</option>
+            {WEIGHT_LEVEL_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label" htmlFor="games-rating">
+            Rating
+          </label>
+          <select
+            id="games-rating"
+            value={filters.rating ?? ""}
+            onChange={(e) =>
+              updateField({
+                rating: e.target.value
+                  ? (parseInt(e.target.value, 10) as RatingBlock)
+                  : null,
+              })
+            }
+            className="input"
+          >
+            <option value="">egal</option>
+            {RATING_TIER_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label" htmlFor="games-sort">
+            Sortierung
+          </label>
+          <select
+            id="games-sort"
+            value={sort}
+            onChange={(e) => navigate(filters, e.target.value as GameSort)}
+            className="input"
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <label className="flex items-center gap-2 text-sm min-h-[2.75rem]">
           <input
             type="checkbox"
             checked={filters.includeExpansions}
@@ -156,7 +248,7 @@ export function GamesFilterBar({ genres }: GamesFilterBarProps) {
             <button
               type="button"
               className="text-sm text-[var(--accent)] hover:underline shrink-0"
-              onClick={() => router.push("/games", { scroll: false })}
+              onClick={resetFilters}
             >
               Filter zurücksetzen
             </button>

@@ -3,6 +3,7 @@ import type { GameFilter } from "@/lib/game-filters";
 import {
   playerRangeFilterValue,
   playtimeFilterValue,
+  ratingBlockFromValue,
   weightLevelFromValue,
 } from "@/lib/game-filters";
 
@@ -72,7 +73,7 @@ export function buildGameTags(
   if (game.bggRating != null && game.bggRating > 0) {
     add(`★ ${game.bggRating.toFixed(1)}`, "rating", {
       kind: "rating",
-      value: game.bggRating.toFixed(1),
+      value: String(ratingBlockFromValue(game.bggRating)),
     });
   }
 

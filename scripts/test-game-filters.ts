@@ -6,14 +6,18 @@ import assert from "node:assert/strict";
 import {
   activeFilterLabels,
   applyGameFilter,
+  buildGameOrderBy,
   buildGameWhere,
   clearFilterKind,
   filtersToSearchParams,
   hasActiveFilters,
   isFilterActive,
   parseGameFilters,
+  parseGameSort,
   playerRangeFilterValue,
   playtimeFilterValue,
+  ratingBlockFromValue,
+  ratingBlockLabel,
   toggleGameFilter,
   weightLevelFromValue,
 } from "../lib/game-filters";
@@ -31,6 +35,7 @@ function testParseGameFilters() {
     rating: "8.2",
     best: "3",
     exp: "1",
+    sort: "rating-desc",
   });
 
   assert.equal(filters.q, "catan");
@@ -41,17 +46,33 @@ function testParseGameFilters() {
   assert.equal(filters.playerRange, "2-4");
   assert.equal(filters.playtime, "45");
   assert.equal(filters.weight, "mittel");
-  assert.equal(filters.rating, 8.2);
+  assert.equal(filters.rating, 8);
   assert.equal(filters.best, 3);
   assert.equal(filters.includeExpansions, true);
+  assert.equal(parseGameSort({ sort: "rating-desc" }), "rating-desc");
+}
+
+function testRatingBlocks() {
+  assert.equal(ratingBlockFromValue(8.1), 8);
+  assert.equal(ratingBlockFromValue(9.0), 9);
+  assert.equal(ratingBlockFromValue(10.2), 10);
+  assert.equal(ratingBlockLabel(8), "★ 8+");
+  assert.equal(ratingBlockLabel(10), "★ 10");
+  assert.equal(parseGameFilters({ rating: "8.2" }).rating, 8);
 }
 
 function testBuildGameWhere() {
   const where = buildGameWhere(
-    parseGameFilters({ players: "3", genre: "Euro", time: "short" }),
+    parseGameFilters({ players: "3", genre: "Euro", time: "short", rating: "8" }),
   );
   assert.ok(where.AND);
   assert.equal(Array.isArray(where.AND), true);
+}
+
+function testBuildGameOrderBy() {
+  assert.deepEqual(buildGameOrderBy("name"), [{ name: "asc" }]);
+  assert.equal(buildGameOrderBy("rating-desc").length, 2);
+  assert.equal(buildGameOrderBy("rating-asc").length, 2);
 }
 
 function testFiltersToSearchParamsRoundTrip() {
@@ -60,26 +81,28 @@ function testFiltersToSearchParamsRoundTrip() {
     players: "2",
     time: "long",
     genre: "Familie",
+    rating: "9",
     exp: "1",
   });
-  const params = filtersToSearchParams(original);
+  const sort = parseGameSort({ sort: "rating-desc" });
+  const params = filtersToSearchParams(original, sort);
   const roundTrip = parseGameFilters(Object.fromEntries(params.entries()));
   assert.deepEqual(roundTrip, original);
+  assert.equal(parseGameSort(Object.fromEntries(params.entries())), sort);
 }
 
 function testActiveFilterLabels() {
   const labels = activeFilterLabels(
-    parseGameFilters({ players: "4", time: "medium", genre: "Strategie" }),
+    parseGameFilters({ players: "4", time: "medium", rating: "8" }),
   );
   assert.equal(labels.length, 3);
-  assert.equal(labels[0].kind, "players");
-  assert.equal(labels[1].kind, "time");
-  assert.equal(labels[2].kind, "genre");
+  assert.equal(labels[2].label, "★ 8+");
 }
 
-function testHasActiveFilters() {
+function testHasActiveFiltersIgnoresSort() {
   assert.equal(hasActiveFilters(parseGameFilters({})), false);
   assert.equal(hasActiveFilters(parseGameFilters({ q: "x" })), true);
+  assert.equal(hasActiveFilters(parseGameFilters({})), false);
 }
 
 function testToggleGameFilter() {
@@ -90,10 +113,11 @@ function testToggleGameFilter() {
   assert.equal(toggledOff.genre, "");
 }
 
-function testIsFilterActive() {
-  const filters = parseGameFilters({ genre: "Euro" });
-  assert.equal(isFilterActive(filters, { kind: "genre", value: "Euro" }), true);
-  assert.equal(isFilterActive(filters, { kind: "genre", value: "Party" }), false);
+function testIsFilterActiveRatingBlock() {
+  const filters = parseGameFilters({ rating: "8" });
+  assert.equal(isFilterActive(filters, { kind: "rating", value: "8" }), true);
+  assert.equal(isFilterActive(filters, { kind: "rating", value: "8.1" }), true);
+  assert.equal(isFilterActive(filters, { kind: "rating", value: "9" }), false);
 }
 
 function testClearFilterKind() {
@@ -122,12 +146,14 @@ function testWeightLevelFromValue() {
 }
 
 testParseGameFilters();
+testRatingBlocks();
 testBuildGameWhere();
+testBuildGameOrderBy();
 testFiltersToSearchParamsRoundTrip();
 testActiveFilterLabels();
-testHasActiveFilters();
+testHasActiveFiltersIgnoresSort();
 testToggleGameFilter();
-testIsFilterActive();
+testIsFilterActiveRatingBlock();
 testClearFilterKind();
 testPlayerRangeFilterValue();
 testPlaytimeFilterValue();

@@ -2,6 +2,8 @@ import type { Prisma } from "@prisma/client";
 
 export type TimeBucket = "short" | "medium" | "long" | "epic";
 export type WeightLevel = "leicht" | "mittel" | "schwer" | "experte";
+export type GameSort = "name" | "rating-desc" | "rating-asc";
+export type RatingBlock = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 export type GameFilterKind =
   | "q"
@@ -30,7 +32,7 @@ export interface GameFilters {
   playerRange: string | null;
   playtime: string | null;
   weight: WeightLevel | null;
-  rating: number | null;
+  rating: RatingBlock | null;
   best: number | null;
   includeExpansions: boolean;
 }
@@ -64,13 +66,43 @@ function parseWeightLevel(value: string): WeightLevel | null {
   return WEIGHT_LEVELS.includes(lower as WeightLevel) ? (lower as WeightLevel) : null;
 }
 
+function parseGameSortValue(value: string): GameSort {
+  if (value === "rating-desc" || value === "rating-asc") return value;
+  return "name";
+}
+
+export function ratingBlockFromValue(rating: number): RatingBlock {
+  const block = Math.floor(rating);
+  return Math.min(10, Math.max(1, block)) as RatingBlock;
+}
+
+function parseRatingBlock(value: string): RatingBlock | null {
+  const parsed = parseFloat(value);
+  if (!Number.isFinite(parsed)) return null;
+  return ratingBlockFromValue(parsed);
+}
+
+export function ratingBlockWhere(block: RatingBlock): Prisma.GameWhereInput {
+  if (block >= 10) {
+    return { bggRating: { gte: 10 } };
+  }
+  return { bggRating: { gte: block, lt: block + 1 } };
+}
+
+export function ratingBlockLabel(block: RatingBlock): string {
+  return block >= 10 ? "★ 10" : `★ ${block}+`;
+}
+
+export function parseGameSort(sp: GameFilterSearchParams): GameSort {
+  return parseGameSortValue(paramValue(sp, "sort"));
+}
+
 export function parseGameFilters(sp: GameFilterSearchParams): GameFilters {
   const playersRaw = paramValue(sp, "players");
   const playersParsed = playersRaw ? parseInt(playersRaw, 10) : NaN;
   const bestRaw = paramValue(sp, "best");
   const bestParsed = bestRaw ? parseInt(bestRaw, 10) : NaN;
   const ratingRaw = paramValue(sp, "rating");
-  const ratingParsed = ratingRaw ? parseFloat(ratingRaw) : NaN;
 
   return {
     q: paramValue(sp, "q"),
@@ -81,7 +113,7 @@ export function parseGameFilters(sp: GameFilterSearchParams): GameFilters {
     playerRange: paramValue(sp, "playerRange") || null,
     playtime: paramValue(sp, "playtime") || null,
     weight: parseWeightLevel(paramValue(sp, "weight")),
-    rating: Number.isFinite(ratingParsed) ? ratingParsed : null,
+    rating: ratingRaw ? parseRatingBlock(ratingRaw) : null,
     best: Number.isFinite(bestParsed) ? bestParsed : null,
     includeExpansions: paramValue(sp, "exp") === "1",
   };
@@ -148,14 +180,15 @@ function weightLevelWhere(level: WeightLevel): Prisma.GameWhereInput {
   }
 }
 
-function ratingWhere(rating: number): Prisma.GameWhereInput {
-  const rounded = Math.round(rating * 10) / 10;
-  return {
-    bggRating: {
-      gte: rounded - 0.05,
-      lte: rounded + 0.05,
-    },
-  };
+export function buildGameOrderBy(sort: GameSort): Prisma.GameOrderByWithRelationInput[] {
+  switch (sort) {
+    case "rating-desc":
+      return [{ bggRating: { sort: "desc", nulls: "last" } }, { name: "asc" }];
+    case "rating-asc":
+      return [{ bggRating: { sort: "asc", nulls: "last" } }, { name: "asc" }];
+    default:
+      return [{ name: "asc" }];
+  }
 }
 
 export function buildGameWhere(filters: GameFilters): Prisma.GameWhereInput {
@@ -199,7 +232,7 @@ export function buildGameWhere(filters: GameFilters): Prisma.GameWhereInput {
     clauses.push(weightLevelWhere(filters.weight));
   }
   if (filters.rating != null) {
-    clauses.push(ratingWhere(filters.rating));
+    clauses.push(ratingBlockWhere(filters.rating));
   }
   if (filters.best != null) {
     clauses.push({ bestPlayerCounts: { has: filters.best } });
@@ -210,7 +243,10 @@ export function buildGameWhere(filters: GameFilters): Prisma.GameWhereInput {
   return { AND: clauses };
 }
 
-export function filtersToSearchParams(filters: GameFilters): URLSearchParams {
+export function filtersToSearchParams(
+  filters: GameFilters,
+  sort: GameSort = "name",
+): URLSearchParams {
   const params = new URLSearchParams();
   if (filters.q) params.set("q", filters.q);
   if (filters.players != null) params.set("players", String(filters.players));
@@ -220,14 +256,19 @@ export function filtersToSearchParams(filters: GameFilters): URLSearchParams {
   if (filters.playerRange) params.set("playerRange", filters.playerRange);
   if (filters.playtime) params.set("playtime", filters.playtime);
   if (filters.weight) params.set("weight", filters.weight);
-  if (filters.rating != null) params.set("rating", filters.rating.toFixed(1));
+  if (filters.rating != null) params.set("rating", String(filters.rating));
   if (filters.best != null) params.set("best", String(filters.best));
   if (filters.includeExpansions) params.set("exp", "1");
+  if (sort !== "name") params.set("sort", sort);
   return params;
 }
 
-export function filterUrl(path: string, filters: GameFilters): string {
-  const params = filtersToSearchParams(filters);
+export function filterUrl(
+  path: string,
+  filters: GameFilters,
+  sort: GameSort = "name",
+): string {
+  const params = filtersToSearchParams(filters, sort);
   const qs = params.toString();
   return qs ? `${path}?${qs}` : path;
 }
@@ -302,7 +343,7 @@ export function activeFilterLabels(filters: GameFilters): ActiveFilterLabel[] {
     labels.push({ kind: "weight", label: weightLabels[filters.weight] });
   }
   if (filters.rating != null) {
-    labels.push({ kind: "rating", label: `★ ${filters.rating.toFixed(1)}` });
+    labels.push({ kind: "rating", label: ratingBlockLabel(filters.rating) });
   }
   if (filters.best != null) {
     labels.push({ kind: "best", label: `Best · ${filters.best}P` });
@@ -368,7 +409,7 @@ export function applyGameFilter(filters: GameFilters, filter: GameFilter): GameF
       next.weight = parseWeightLevel(filter.value);
       break;
     case "rating":
-      next.rating = parseFloat(filter.value);
+      next.rating = parseRatingBlock(filter.value);
       break;
     case "best":
       next.best = parseInt(filter.value, 10);
@@ -398,8 +439,10 @@ export function isFilterActive(filters: GameFilters, filter: GameFilter): boolea
       return filters.playtime === filter.value;
     case "weight":
       return filters.weight === parseWeightLevel(filter.value);
-    case "rating":
-      return filters.rating === parseFloat(filter.value);
+    case "rating": {
+      const block = parseRatingBlock(filter.value);
+      return block != null && filters.rating === block;
+    }
     case "best":
       return filters.best === parseInt(filter.value, 10);
     case "exp":
@@ -448,4 +491,23 @@ export const TIME_BUCKET_OPTIONS: { value: TimeBucket; label: string }[] = [
   { value: "medium", label: "31–60 Min" },
   { value: "long", label: "61–120 Min" },
   { value: "epic", label: "120+ Min" },
+];
+
+export const WEIGHT_LEVEL_OPTIONS: { value: WeightLevel; label: string }[] = [
+  { value: "leicht", label: "Leicht" },
+  { value: "mittel", label: "Mittel" },
+  { value: "schwer", label: "Schwer" },
+  { value: "experte", label: "Experte" },
+];
+
+export const RATING_TIER_OPTIONS: { value: RatingBlock; label: string }[] = [
+  { value: 7, label: "★ 7+" },
+  { value: 8, label: "★ 8+" },
+  { value: 9, label: "★ 9+" },
+];
+
+export const SORT_OPTIONS: { value: GameSort; label: string }[] = [
+  { value: "name", label: "Name A–Z" },
+  { value: "rating-desc", label: "Rating ↓" },
+  { value: "rating-asc", label: "Rating ↑" },
 ];
