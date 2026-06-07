@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { GameDetailView, type GameDetailData } from "@/components/GameDetailView";
 import type { GameCardGame } from "@/components/GameCard";
+import type { GameFilters } from "@/lib/game-filters";
 
 const DRAG_CLOSE_THRESHOLD = 100;
 
@@ -10,6 +11,8 @@ type GameDetailModalProps = {
   game: GameDetailData | null;
   onClose: () => void;
   playerCount?: number;
+  activeFilters?: GameFilters;
+  filterMode?: boolean;
   ownedExpansions?: GameCardGame[];
 };
 
@@ -17,6 +20,8 @@ export function GameDetailModal({
   game,
   onClose,
   playerCount,
+  activeFilters,
+  filterMode,
   ownedExpansions = [],
 }: GameDetailModalProps) {
   const titleId = useId();
@@ -218,6 +223,9 @@ export function GameDetailModal({
             titleId={titleId}
             compact
             playerCount={playerCount}
+            activeFilters={activeFilters}
+            filterMode={filterMode}
+            onFilterNavigate={dismiss}
             ownedExpansions={modalExpansions}
             onSelectExpansion={(id) => {
               const exp = ownedExpansions.find((e) => e.id === id);

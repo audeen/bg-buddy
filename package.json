@@ -23,7 +23,8 @@
     "test:expansion-label": "tsx scripts/test-expansion-label.ts",
     "test:duel-pairs": "tsx scripts/test-duel-pairs.ts",
     "test:pick-phase": "tsx scripts/test-pick-phase.ts",
-    "test:dummy-meetups": "tsx scripts/test-dummy-meetups.ts"
+    "test:dummy-meetups": "tsx scripts/test-dummy-meetups.ts",
+    "test:game-filters": "tsx scripts/test-game-filters.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

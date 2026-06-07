@@ -7,9 +7,10 @@ import {
   expansionAvailableLabel,
   expansionCountLabel,
 } from "@/lib/expansion-label";
+import { FilterChipButton } from "@/components/FilterChipButton";
+import type { GameFilters } from "@/lib/game-filters";
 import {
   buildGameTags,
-  chipClassForVariant,
   groupGameTags,
   type GameTagSource,
 } from "@/lib/game-tags";
@@ -25,6 +26,8 @@ export interface GameCardGame extends GameTagSource {
 type BaseProps = {
   game: GameCardGame;
   playerCount?: number;
+  activeFilters?: GameFilters;
+  filterMode?: boolean;
   selected?: boolean;
   selectedPoints?: number;
   ownedExpansions?: GameCardGame[];
@@ -44,7 +47,17 @@ type LinkProps = BaseProps & {
   disabled?: undefined;
 };
 
-function TagRows({ game, playerCount }: { game: GameCardGame; playerCount?: number }) {
+function TagRows({
+  game,
+  playerCount,
+  activeFilters,
+  filterMode,
+}: {
+  game: GameCardGame;
+  playerCount?: number;
+  activeFilters?: GameFilters;
+  filterMode?: boolean;
+}) {
   const tags = buildGameTags(game, { playerCount });
   const { meta, content } = groupGameTags(tags);
 
@@ -55,18 +68,24 @@ function TagRows({ game, playerCount }: { game: GameCardGame; playerCount?: numb
       {meta.length > 0 && (
         <div className="chip-row">
           {meta.map((t) => (
-            <span key={t.label} className={chipClassForVariant(t.variant)}>
-              {t.label}
-            </span>
+            <FilterChipButton
+              key={t.label}
+              tag={t}
+              activeFilters={activeFilters}
+              filterMode={filterMode}
+            />
           ))}
         </div>
       )}
       {content.length > 0 && (
         <div className="chip-row">
           {content.map((t) => (
-            <span key={t.label} className={chipClassForVariant(t.variant)}>
-              {t.label}
-            </span>
+            <FilterChipButton
+              key={t.label}
+              tag={t}
+              activeFilters={activeFilters}
+              filterMode={filterMode}
+            />
           ))}
         </div>
       )}
@@ -89,6 +108,8 @@ function CardCover({ game }: { game: GameCardGame }) {
 function CardBody({
   game,
   playerCount,
+  activeFilters,
+  filterMode,
   ownedExpansions,
   viewExpansionId,
   onShowExpansions,
@@ -96,6 +117,8 @@ function CardBody({
 }: {
   game: GameCardGame;
   playerCount?: number;
+  activeFilters?: GameFilters;
+  filterMode?: boolean;
   ownedExpansions: GameCardGame[];
   viewExpansionId: number | null;
   onShowExpansions: () => void;
@@ -119,7 +142,12 @@ function CardBody({
       <span className="font-semibold text-base leading-snug line-clamp-2">
         {game.name}
       </span>
-      <TagRows game={game} playerCount={playerCount} />
+      <TagRows
+        game={game}
+        playerCount={playerCount}
+        activeFilters={activeFilters}
+        filterMode={filterMode}
+      />
       {showExpansionHint && (
         <button
           type="button"
@@ -232,6 +260,8 @@ export function GameCard(props: ButtonProps | LinkProps) {
   const {
     game,
     playerCount,
+    activeFilters,
+    filterMode,
     selected,
     selectedPoints,
     ownedExpansions = [],
@@ -258,6 +288,8 @@ export function GameCard(props: ButtonProps | LinkProps) {
   const bodyProps = {
     game: displayedGame,
     playerCount,
+    activeFilters,
+    filterMode,
     ownedExpansions,
     viewExpansionId,
     onShowExpansions: showFirstExpansion,

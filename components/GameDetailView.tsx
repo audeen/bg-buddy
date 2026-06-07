@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { FilterChipButton } from "@/components/FilterChipButton";
 import { GameCover } from "@/components/GameCover";
 import type { GameCardGame } from "@/components/GameCard";
 import { playerRange, playtime, weightLabel } from "@/lib/format";
 import { bggBoardgameUrl } from "@/lib/bgg-url";
+import type { GameFilters } from "@/lib/game-filters";
+import { buildGameTags, categoryTag, mechanicTag } from "@/lib/game-tags";
 
 export interface GameDetailData {
   id: number;
@@ -31,6 +34,9 @@ type GameDetailViewProps = {
   titleId?: string;
   compact?: boolean;
   playerCount?: number;
+  activeFilters?: GameFilters;
+  filterMode?: boolean;
+  onFilterNavigate?: () => void;
   ownedExpansions?: GameCardGame[];
   onSelectExpansion?: (id: number) => void;
   onSelectBase?: () => void;
@@ -42,6 +48,9 @@ export function GameDetailView({
   titleId,
   compact = false,
   playerCount,
+  activeFilters,
+  filterMode,
+  onFilterNavigate,
   ownedExpansions,
   onSelectExpansion,
   onSelectBase,
@@ -49,6 +58,8 @@ export function GameDetailView({
 }: GameDetailViewProps) {
   const time = playtime(game.minPlaytime, game.maxPlaytime, game.playingTime);
   const weight = weightLabel(game.weight);
+  const filterTags = buildGameTags(game, { playerCount });
+  const detailMetaTags = filterTags.filter((t) => t.variant !== "default");
 
   const showPlayerCountHint =
     playerCount != null &&
@@ -96,14 +107,30 @@ export function GameDetailView({
           </div>
 
           <div className="chip-row">
-            <span className="chip chip-meta">
-              {playerRange(game.minPlayers, game.maxPlayers)}
-            </span>
-            {time && <span className="chip chip-meta">{time}</span>}
-            {weight && <span className="chip chip-meta">{weight}</span>}
-            {game.bggRating ? (
-              <span className="chip chip-rating">★ {game.bggRating.toFixed(1)}</span>
-            ) : null}
+            {filterMode ? (
+              detailMetaTags.map((tag) => (
+                <FilterChipButton
+                  key={tag.label}
+                  tag={tag}
+                  activeFilters={activeFilters}
+                  filterMode={filterMode}
+                  onNavigate={onFilterNavigate}
+                />
+              ))
+            ) : (
+              <>
+                <span className="chip chip-meta">
+                  {playerRange(game.minPlayers, game.maxPlayers)}
+                </span>
+                {time && <span className="chip chip-meta">{time}</span>}
+                {weight && <span className="chip chip-meta">{weight}</span>}
+                {game.bggRating ? (
+                  <span className="chip chip-rating">
+                    ★ {game.bggRating.toFixed(1)}
+                  </span>
+                ) : null}
+              </>
+            )}
             {game.ageRange && (
               <span className="chip chip-meta">ab {game.ageRange}</span>
             )}
@@ -171,11 +198,21 @@ export function GameDetailView({
 
           {game.categories.length > 0 && (
             <div className="chip-row">
-              {game.categories.map((c) => (
-                <span key={c} className="chip">
-                  {c}
-                </span>
-              ))}
+              {game.categories.map((c) =>
+                filterMode ? (
+                  <FilterChipButton
+                    key={c}
+                    tag={categoryTag(c)}
+                    activeFilters={activeFilters}
+                    filterMode={filterMode}
+                    onNavigate={onFilterNavigate}
+                  />
+                ) : (
+                  <span key={c} className="chip">
+                    {c}
+                  </span>
+                ),
+              )}
             </div>
           )}
         </div>
@@ -202,11 +239,21 @@ export function GameDetailView({
         <section className="flex flex-col gap-2">
           <h2 className="section-title">Mechaniken</h2>
           <div className="chip-row">
-            {game.mechanics.map((m) => (
-              <span key={m} className="chip">
-                {m}
-              </span>
-            ))}
+            {game.mechanics.map((m) =>
+              filterMode ? (
+                <FilterChipButton
+                  key={m}
+                  tag={mechanicTag(m)}
+                  activeFilters={activeFilters}
+                  filterMode={filterMode}
+                  onNavigate={onFilterNavigate}
+                />
+              ) : (
+                <span key={m} className="chip">
+                  {m}
+                </span>
+              ),
+            )}
           </div>
         </section>
       )}

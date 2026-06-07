@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
+import { Suspense } from "react";
 import { GamesClient } from "@/components/GamesClient";
+import { GamesFilterBar } from "@/components/GamesFilterBar";
 import { loadOwnedExpansionsByBaseGame, serializeExpansionsByBaseId } from "@/lib/owned-expansions";
-import type { Prisma } from "@prisma/client";
+import { buildGameWhere, parseGameFilters } from "@/lib/game-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +29,7 @@ const gameSelect = {
   recommendedPlayerCounts: true,
 } as const;
 
-type SearchParams = Promise<{
-  q?: string;
-  players?: string;
-  genre?: string;
-  exp?: string;
-}>;
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function GamesPage({
   searchParams,
@@ -40,21 +37,8 @@ export default async function GamesPage({
   searchParams: SearchParams;
 }) {
   const sp = await searchParams;
-  const q = (sp.q ?? "").trim();
-  const players = sp.players ? parseInt(sp.players, 10) : null;
-  const genre = (sp.genre ?? "").trim();
-  const includeExpansions = sp.exp === "1";
-
-  const where: Prisma.GameWhereInput = {};
-  if (!includeExpansions) where.isExpansion = false;
-  if (q) where.name = { contains: q, mode: "insensitive" };
-  if (genre) where.categories = { has: genre };
-  if (players && Number.isFinite(players)) {
-    where.AND = [
-      { minPlayers: { lte: players } },
-      { maxPlayers: { gte: players } },
-    ];
-  }
+  const filters = parseGameFilters(sp);
+  const where = buildGameWhere(filters);
 
   const [games, allForGenres, expansionsByBase] = await Promise.all([
     prisma.game.findMany({
@@ -71,7 +55,9 @@ export default async function GamesPage({
   ).sort((a, b) => a.localeCompare(b));
 
   const playerCount =
-    players && Number.isFinite(players) ? players : undefined;
+    filters.players != null && Number.isFinite(filters.players)
+      ? filters.players
+      : undefined;
 
   return (
     <div className="container-app flex flex-col gap-6">
@@ -82,62 +68,14 @@ export default async function GamesPage({
         </span>
       </div>
 
-      <form className="filter-bar grid gap-3 sm:grid-cols-4 items-end">
-        <div className="sm:col-span-2">
-          <label className="label" htmlFor="games-q">
-            Suche
-          </label>
-          <input
-            id="games-q"
-            name="q"
-            defaultValue={q}
-            className="input"
-            placeholder="Spielname…"
-          />
-        </div>
-        <div>
-          <label className="label" htmlFor="games-players">
-            Spieleranzahl
-          </label>
-          <select id="games-players" name="players" defaultValue={sp.players ?? ""} className="input">
-            <option value="">egal</option>
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-              <option key={n} value={n}>
-                {n} Spieler
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="label" htmlFor="games-genre">
-            Genre
-          </label>
-          <select id="games-genre" name="genre" defaultValue={genre} className="input">
-            <option value="">alle</option>
-            {genres.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
-        </div>
-        <label className="flex items-center gap-2 text-sm sm:col-span-3">
-          <input
-            type="checkbox"
-            name="exp"
-            value="1"
-            defaultChecked={includeExpansions}
-          />
-          Erweiterungen anzeigen
-        </label>
-        <button type="submit" className="btn btn-primary btn-lg sm:col-span-1 sm:w-auto">
-          Filtern
-        </button>
-      </form>
+      <Suspense fallback={<div className="filter-bar h-24 animate-pulse rounded-xl" />}>
+        <GamesFilterBar genres={genres} />
+      </Suspense>
 
       <GamesClient
         games={games}
         playerCount={playerCount}
+        activeFilters={filters}
         expansionsByBaseId={serializeExpansionsByBaseId(expansionsByBase)}
       />
     </div>

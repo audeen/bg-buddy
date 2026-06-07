@@ -359,6 +359,42 @@ body {
     gap: 0.375rem;
   }
 
+  .chip-interactive {
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease,
+      transform 0.05s ease;
+  }
+
+  .chip-interactive:hover {
+    background: color-mix(in srgb, var(--accent) 10%, var(--surface-2));
+    border-color: color-mix(in srgb, var(--accent) 25%, var(--border));
+  }
+
+  .chip-interactive:active {
+    transform: scale(0.97);
+  }
+
+  .chip-active {
+    background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+    color: var(--accent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+
+  .chip-meta.chip-active,
+  .chip-rating.chip-active {
+    opacity: 1;
+  }
+
+  .active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+  }
+
   .nav-item-active {
     background: color-mix(in srgb, var(--primary) 14%, transparent);
     color: var(--primary);

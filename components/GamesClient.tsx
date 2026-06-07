@@ -4,14 +4,17 @@ import { useState } from "react";
 import { GameCard, type GameCardGame } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameDetailData } from "@/components/GameDetailView";
+import type { GameFilters } from "@/lib/game-filters";
 
 export function GamesClient({
   games,
   playerCount,
+  activeFilters,
   expansionsByBaseId,
 }: {
   games: GameDetailData[];
   playerCount?: number;
+  activeFilters: GameFilters;
   expansionsByBaseId: Record<string, GameCardGame[]>;
 }) {
   const [detailGame, setDetailGame] = useState<GameDetailData | null>(null);
@@ -33,6 +36,8 @@ export function GamesClient({
             <GameCard
               game={g}
               playerCount={playerCount}
+              activeFilters={activeFilters}
+              filterMode
               ownedExpansions={expansionsByBaseId[String(g.id)] ?? []}
               onClick={() => setDetailGame(g)}
             />
@@ -44,6 +49,8 @@ export function GamesClient({
         game={detailGame}
         onClose={() => setDetailGame(null)}
         playerCount={playerCount}
+        activeFilters={activeFilters}
+        filterMode
         ownedExpansions={
           detailGame && !detailGame.isExpansion
             ? (expansionsByBaseId[String(detailGame.id)] ?? [])
