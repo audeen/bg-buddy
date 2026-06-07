@@ -211,26 +211,42 @@ body {
     padding-bottom: calc(
       var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)
     );
+    transition: padding-bottom 0.25s ease;
   }
 
   @media (min-width: 768px) {
     .pb-nav {
       padding-bottom: 0;
+      transition: none;
     }
+  }
+
+  html.scroll-chrome-hidden .pb-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .pb-sticky-picker {
     padding-bottom: 6rem;
+    transition: padding-bottom 0.25s ease;
   }
 
   .pb-sticky-picker-at-limit {
     padding-bottom: 10rem;
+    transition: padding-bottom 0.25s ease;
   }
 
   @media (min-width: 768px) {
     .pb-sticky-picker,
     .pb-sticky-picker-at-limit {
       padding-bottom: 0;
+      transition: none;
+    }
+  }
+
+  @media (max-width: 767px) {
+    html.scroll-chrome-hidden .pb-sticky-picker,
+    html.scroll-chrome-hidden .pb-sticky-picker-at-limit {
+      padding-bottom: 1rem;
     }
   }
 
@@ -301,6 +317,13 @@ body {
       width: calc(100% + 2.5rem);
       border-radius: 0;
       box-shadow: none;
+      transition: transform 0.25s ease;
+    }
+
+    .picker-sticky-bar.chrome-hidden {
+      transform: translateY(
+        calc(100% + var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))
+      );
     }
   }
 
@@ -933,6 +956,25 @@ body {
     min-height: 0;
   }
 
+  .bottom-nav-chrome {
+    transition: transform 0.25s ease;
+  }
+
+  .bottom-nav-chrome.chrome-hidden {
+    transform: translateY(100%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bottom-nav-chrome,
+    .picker-sticky-bar,
+    .pb-nav,
+    .pb-sticky-picker,
+    .pb-sticky-picker-at-limit,
+    .scroll-to-top {
+      transition: none;
+    }
+  }
+
   .scroll-to-top {
     position: fixed;
     right: 1rem;
@@ -950,6 +992,16 @@ body {
     bottom: calc(
       var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 1rem
     );
+    transition: bottom 0.25s ease;
+  }
+
+  @media (max-width: 767px) {
+    html.scroll-chrome-hidden .scroll-to-top,
+    html.scroll-chrome-hidden .scroll-to-top-above-footer,
+    html.scroll-chrome-hidden .scroll-to-top-above-picker,
+    html.scroll-chrome-hidden .scroll-to-top-above-picker-at-limit {
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+    }
   }
 
   .scroll-to-top-above-footer {

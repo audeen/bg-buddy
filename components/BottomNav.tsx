@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { navigateToErgebnisse } from "@/lib/scroll-ergebnisse";
+import { useScrollChromeHidden } from "@/lib/scroll-chrome";
 
 const LAST_MEETUP_KEY = "bg-buddy:last-meetup-id";
 
@@ -70,6 +71,7 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
     return () => window.removeEventListener("hashchange", syncHash);
   }, [pathname]);
 
+  const chromeHidden = useScrollChromeHidden();
   const meetupId = pathMeetupId ?? storedMeetupId ?? fallbackMeetupId;
   const voteHref = meetupId ? `/meetups/${meetupId}/pick` : "/";
 
@@ -136,7 +138,7 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
 
   return (
     <nav
-      className="md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-[var(--surface)] safe-bottom header-shadow"
+      className={`md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-[var(--surface)] safe-bottom header-shadow bottom-nav-chrome${chromeHidden ? " chrome-hidden" : ""}`}
       aria-label="Hauptnavigation"
     >
       <ul className="flex items-stretch justify-around h-[var(--bottom-nav-height)] px-1">
