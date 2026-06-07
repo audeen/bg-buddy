@@ -1,7 +1,5 @@
 import type { Prisma } from "@prisma/client";
 import type { ParsedGame } from "@/lib/bgg";
-import { thingDetailsToDbFields } from "@/lib/enrichment-cache";
-import type { ThingDetails } from "@/lib/bgg";
 
 export type ConflictResolution = "keepManual" | "overwriteAll";
 
@@ -99,12 +97,6 @@ export function parsedGameToCsvFields(g: ParsedGame): Partial<Record<SyncFieldNa
     bestPlayerCounts: g.bestPlayerCounts,
     recommendedPlayerCounts: g.recommendedPlayerCounts,
   };
-}
-
-export function thingDetailsToEnrichmentFields(
-  d: ThingDetails,
-): Partial<Record<SyncFieldName, unknown>> {
-  return thingDetailsToDbFields(d);
 }
 
 export type GameSyncRecord = Partial<Record<SyncFieldName, unknown>> & {

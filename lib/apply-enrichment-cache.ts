@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { loadEnrichmentCache } from "@/lib/enrichment-cache";
+import {
+  loadEnrichmentCache,
+  thingDetailsToDbFields,
+} from "@/lib/enrichment-cache";
 import {
   buildResolvableUpdate,
   diffGameFields,
   ENRICHMENT_SYNC_FIELDS,
-  thingDetailsToEnrichmentFields,
   type ConflictResolution,
   type GameSyncConflict,
 } from "@/lib/game-sync";
@@ -47,7 +49,7 @@ export async function previewEnrichmentCacheConflicts(): Promise<{
       continue;
     }
 
-    const incoming = thingDetailsToEnrichmentFields(details);
+    const incoming = thingDetailsToDbFields(details);
     const fieldConflicts = diffGameFields(existing, incoming, ENRICHMENT_SYNC_FIELDS);
     if (fieldConflicts.length > 0) {
       conflicts.push({
@@ -89,7 +91,7 @@ export async function applyEnrichmentCacheToDb(
       continue;
     }
 
-    const incoming = thingDetailsToEnrichmentFields(details);
+    const incoming = thingDetailsToDbFields(details);
     const fieldConflicts = diffGameFields(existing, incoming, ENRICHMENT_SYNC_FIELDS);
     if (fieldConflicts.length > 0 && resolution === "keepManual") {
       conflictsSkipped += fieldConflicts.length;

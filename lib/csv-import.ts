@@ -11,7 +11,6 @@ import {
   diffGameFields,
   ENRICHMENT_SYNC_FIELDS,
   parsedGameToCsvFields,
-  thingDetailsToEnrichmentFields,
   type ConflictResolution,
   type GameSyncConflict,
 } from "@/lib/game-sync";
@@ -63,9 +62,7 @@ export async function previewCsvImport(games: ParsedGame[]): Promise<{
 
     const csvIncoming = parsedGameToCsvFields(g);
     const cached = cache.get(g.id);
-    const enrichmentIncoming = cached
-      ? thingDetailsToEnrichmentFields(cached)
-      : {};
+    const enrichmentIncoming = cached ? thingDetailsToDbFields(cached) : {};
     if (cached) cacheApplied += 1;
 
     if (!existing) {
@@ -107,12 +104,11 @@ export async function applyCsvImport(
 
     const csvIncoming = parsedGameToCsvFields(g);
     const cached = cache.get(g.id);
-    const enrichmentIncoming = cached
-      ? thingDetailsToEnrichmentFields(cached)
-      : {};
+    const enrichmentIncoming = cached ? thingDetailsToDbFields(cached) : {};
     if (cached) cacheApplied += 1;
 
     if (!existing) {
+      const enrichment = cached ? thingDetailsToDbFields(cached) : null;
       await prisma.game.create({
         data: {
           id: g.id,
@@ -131,13 +127,13 @@ export async function applyCsvImport(
           isExpansion: g.isExpansion,
           bestPlayerCounts: g.bestPlayerCounts,
           recommendedPlayerCounts: g.recommendedPlayerCounts,
-          enriched: cached ? !!(enrichmentIncoming.enriched) : false,
-          description: (enrichmentIncoming.description as string | null) ?? null,
-          image: (enrichmentIncoming.image as string | null) ?? null,
-          thumbnail: (enrichmentIncoming.thumbnail as string | null) ?? null,
-          categories: (enrichmentIncoming.categories as string[]) ?? [],
-          mechanics: (enrichmentIncoming.mechanics as string[]) ?? [],
-          expandsGameIds: (enrichmentIncoming.expandsGameIds as number[]) ?? [],
+          enriched: enrichment?.enriched ?? false,
+          description: enrichment?.description ?? null,
+          image: enrichment?.image ?? null,
+          thumbnail: enrichment?.thumbnail ?? null,
+          categories: enrichment?.categories ?? [],
+          mechanics: enrichment?.mechanics ?? [],
+          expandsGameIds: enrichment?.expandsGameIds ?? [],
         },
       });
       continue;
