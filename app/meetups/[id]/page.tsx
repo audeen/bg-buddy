@@ -352,6 +352,7 @@ export default async function MeetupDetail({
         totalPairs={totalPairs}
         finishedParticipants={finishedParticipants}
         totalParticipants={totalParticipants}
+        isHost={isHost}
       />
     </div>
   );

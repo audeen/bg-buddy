@@ -23,6 +23,7 @@ export function MeetupRankings({
   totalPairs,
   finishedParticipants = 0,
   totalParticipants = 0,
+  isHost = false,
 }: {
   expected: number;
   playerCounts: number[];
@@ -34,10 +35,14 @@ export function MeetupRankings({
   totalPairs: number;
   finishedParticipants?: number;
   totalParticipants?: number;
+  isHost?: boolean;
 }) {
   const [userRevealed, setUserRevealed] = useState(
     () =>
-      typeof window !== "undefined" && shouldScrollToErgebnisse(),
+      typeof window !== "undefined" &&
+      shouldScrollToErgebnisse() &&
+      duelComplete &&
+      totalPairs > 0,
   );
   const [unlocking, setUnlocking] = useState(false);
 
@@ -85,7 +90,9 @@ export function MeetupRankings({
           }`}
           style={{ padding: "var(--space-card)" }}
         >
-          <p className="text-sm text-[var(--muted)]">{statusText}</p>
+          {isHost && (
+            <p className="text-sm text-[var(--muted)]">{statusText}</p>
+          )}
           <button
             type="button"
             onClick={() => void handleReveal()}
