@@ -5,7 +5,8 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { importCsvAction, importCsvPreviewAction } from "@/app/actions";
 import { SyncConflictDialog } from "@/components/SyncConflictDialog";
-import type { GameSyncConflict } from "@/lib/game-sync";
+import type { FieldChoice, GameSyncConflict } from "@/lib/game-sync";
+import { buildFieldResolutionsFromChoices } from "@/lib/csv-import";
 
 type ImportResult =
   | {
@@ -31,7 +32,8 @@ export function ImportClient({
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [importing, setImporting] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [applyRunning, setApplyRunning] = useState(false);
   const [importState, setImportState] = useState<ImportResult | null>(null);
 
   const [enriching, setEnriching] = useState(false);
@@ -42,7 +44,7 @@ export function ImportClient({
   const [enrichError, setEnrichError] = useState<string | null>(null);
   const [enrichDone, setEnrichDone] = useState(false);
 
-  const [applyingCache, setApplyingCache] = useState(false);
+  const [cachePreviewLoading, setCachePreviewLoading] = useState(false);
   const [cacheApplyMsg, setCacheApplyMsg] = useState<string | null>(null);
   const [cacheApplyOk, setCacheApplyOk] = useState(false);
 
@@ -50,20 +52,24 @@ export function ImportClient({
   const [conflicts, setConflicts] = useState<GameSyncConflict[]>([]);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
-  async function runCsvImport(file: File, conflictResolution: "keepManual" | "overwriteAll") {
-    setImporting(true);
+  async function runCsvImport(
+    file: File,
+    choices: Record<string, FieldChoice>,
+  ) {
+    setApplyRunning(true);
     setImportState(null);
     try {
+      const fieldResolutions = buildFieldResolutionsFromChoices(conflicts, choices);
       const formData = new FormData();
       formData.set("file", file);
-      formData.set("conflictResolution", conflictResolution);
+      formData.set("fieldResolutions", JSON.stringify(fieldResolutions));
       const res = (await importCsvAction(formData)) ?? { error: "Unbekannter Fehler." };
       setImportState(res as ImportResult);
       if (res && "ok" in res) {
         router.refresh();
       }
     } finally {
-      setImporting(false);
+      setApplyRunning(false);
       setConflictMode(null);
       setConflicts([]);
       setPendingFile(null);
@@ -79,9 +85,8 @@ export function ImportClient({
       return;
     }
 
-    setImporting(true);
+    setPreviewLoading(true);
     setImportState(null);
-    let awaitingConflictChoice = false;
     try {
       const formData = new FormData();
       formData.set("file", file);
@@ -91,28 +96,28 @@ export function ImportClient({
         return;
       }
       if (preview && "ok" in preview && preview.conflicts.length > 0) {
-        awaitingConflictChoice = true;
         setPendingFile(file);
         setConflicts(preview.conflicts);
         setConflictMode("csv");
         return;
       }
-      await runCsvImport(file, "keepManual");
+      await runCsvImport(file, {});
     } finally {
-      if (!awaitingConflictChoice) setImporting(false);
+      setPreviewLoading(false);
     }
   }
 
-  async function runApplyCache(conflictResolution: "keepManual" | "overwriteAll") {
-    setApplyingCache(true);
+  async function runApplyCache(choices: Record<string, FieldChoice>) {
+    setApplyRunning(true);
     setCacheApplyMsg(null);
     setCacheApplyOk(false);
     setEnrichError(null);
     try {
+      const fieldResolutions = buildFieldResolutionsFromChoices(conflicts, choices);
       const res = await fetch("/api/apply-cache", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conflictResolution }),
+        body: JSON.stringify({ fieldResolutions }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -132,17 +137,16 @@ export function ImportClient({
     } catch {
       setCacheApplyMsg("Netzwerkfehler beim Anwenden des Caches.");
     } finally {
-      setApplyingCache(false);
+      setApplyRunning(false);
       setConflictMode(null);
       setConflicts([]);
     }
   }
 
   async function handleApplyCacheClick() {
-    setApplyingCache(true);
+    setCachePreviewLoading(true);
     setCacheApplyMsg(null);
     setCacheApplyOk(false);
-    let awaitingConflictChoice = false;
     try {
       const res = await fetch("/api/apply-cache?preview=1");
       const data = await res.json();
@@ -151,16 +155,15 @@ export function ImportClient({
         return;
       }
       if (data.conflicts?.length > 0) {
-        awaitingConflictChoice = true;
         setConflicts(data.conflicts);
         setConflictMode("cache");
         return;
       }
-      await runApplyCache("overwriteAll");
+      await runApplyCache({});
     } catch {
       setCacheApplyMsg("Netzwerkfehler bei der Cache-Vorschau.");
     } finally {
-      if (!awaitingConflictChoice) setApplyingCache(false);
+      setCachePreviewLoading(false);
     }
   }
 
@@ -195,7 +198,8 @@ export function ImportClient({
   const shownTotal = progress?.total ?? total;
   const pct = shownTotal > 0 ? Math.round((shownEnriched / shownTotal) * 100) : 0;
 
-  const conflictPending = importing || applyingCache;
+  const csvBusy = previewLoading || applyRunning;
+  const cacheBusy = cachePreviewLoading || applyRunning;
 
   return (
     <div className="flex flex-col gap-6">
@@ -208,31 +212,25 @@ export function ImportClient({
           }
           description={
             conflictMode === "csv"
-              ? "Die CSV-Datei würde manuell bearbeitete Felder ändern."
-              : "Der Offline-Cache würde manuell bearbeitete Felder ändern."
+              ? "Wähle pro Feld, ob deine manuelle Änderung bleibt oder der Import-Wert übernommen wird."
+              : "Wähle pro Feld, ob deine manuelle Änderung bleibt oder der Cache-Wert übernommen wird."
+          }
+          applyLabel={
+            conflictMode === "csv" ? "Import starten" : "Cache anwenden"
           }
           conflicts={conflicts}
-          pending={conflictPending}
-          onKeepManual={() => {
+          pending={applyRunning}
+          onApply={(choices) => {
             if (conflictMode === "csv" && pendingFile) {
-              void runCsvImport(pendingFile, "keepManual");
+              void runCsvImport(pendingFile, choices);
             } else if (conflictMode === "cache") {
-              void runApplyCache("keepManual");
-            }
-          }}
-          onOverwrite={() => {
-            if (conflictMode === "csv" && pendingFile) {
-              void runCsvImport(pendingFile, "overwriteAll");
-            } else if (conflictMode === "cache") {
-              void runApplyCache("overwriteAll");
+              void runApplyCache(choices);
             }
           }}
           onCancel={() => {
             setConflictMode(null);
             setConflicts([]);
             setPendingFile(null);
-            setImporting(false);
-            setApplyingCache(false);
           }}
         />
       )}
@@ -268,9 +266,9 @@ export function ImportClient({
           <button
             type="submit"
             className="btn btn-primary btn-lg sm:w-auto shrink-0"
-            disabled={importing}
+            disabled={csvBusy}
           >
-            {importing ? "Importiere…" : "Importieren"}
+            {previewLoading ? "Prüfe…" : applyRunning && conflictMode === "csv" ? "Importiere…" : "Importieren"}
           </button>
         </form>
         {importState && "ok" in importState && (
@@ -298,9 +296,13 @@ export function ImportClient({
           type="button"
           className="btn btn-primary btn-lg sm:w-fit"
           onClick={handleApplyCacheClick}
-          disabled={applyingCache || cacheEntries === 0 || total === 0}
+          disabled={cacheBusy || cacheEntries === 0 || total === 0}
         >
-          {applyingCache ? "Wird angewendet…" : "Offline-Cache jetzt anwenden"}
+          {cachePreviewLoading
+            ? "Prüfe…"
+            : applyRunning && conflictMode === "cache"
+              ? "Wird angewendet…"
+              : "Offline-Cache jetzt anwenden"}
         </button>
 
         {cacheEntries === 0 && (

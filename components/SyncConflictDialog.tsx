@@ -1,7 +1,11 @@
 "use client";
 
-import type { GameSyncConflict } from "@/lib/game-sync";
+import { useMemo, useState } from "react";
+import type { FieldChoice, GameSyncConflict, SyncFieldName } from "@/lib/game-sync";
 import {
+  applyExpansionCascade,
+  defaultChoicesFromConflicts,
+  fieldChoiceKey,
   formatFieldValue,
   SYNC_FIELD_LABELS,
 } from "@/lib/game-sync";
@@ -9,21 +13,49 @@ import {
 export function SyncConflictDialog({
   title,
   description,
+  applyLabel,
   conflicts,
   pending,
-  onKeepManual,
-  onOverwrite,
+  onApply,
   onCancel,
 }: {
   title: string;
   description: string;
+  applyLabel: string;
   conflicts: GameSyncConflict[];
   pending?: boolean;
-  onKeepManual: () => void;
-  onOverwrite: () => void;
+  onApply: (choices: Record<string, FieldChoice>) => void;
   onCancel: () => void;
 }) {
-  const fieldCount = conflicts.reduce((n, g) => n + g.conflicts.length, 0);
+  const [choices, setChoices] = useState<Record<string, FieldChoice>>(() =>
+    defaultChoicesFromConflicts(conflicts),
+  );
+
+  const { visible, cascadedCount } = useMemo(
+    () => applyExpansionCascade(conflicts, choices),
+    [conflicts, choices],
+  );
+
+  const visibleFieldCount = visible.reduce((n, g) => n + g.conflicts.length, 0);
+
+  function setChoice(gameId: number, field: SyncFieldName, choice: FieldChoice) {
+    setChoices((prev) => ({
+      ...prev,
+      [fieldChoiceKey(gameId, field)]: choice,
+    }));
+  }
+
+  function setAllVisible(choice: FieldChoice) {
+    setChoices((prev) => {
+      const next = { ...prev };
+      for (const game of visible) {
+        for (const c of game.conflicts) {
+          next[fieldChoiceKey(game.gameId, c.field)] = choice;
+        }
+      }
+      return next;
+    });
+  }
 
   return (
     <div
@@ -37,7 +69,7 @@ export function SyncConflictDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="sync-conflict-title"
-        className="modal-panel max-w-2xl w-full"
+        className="modal-panel max-w-3xl w-full"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-body flex flex-col gap-4 safe-bottom">
@@ -47,13 +79,13 @@ export function SyncConflictDialog({
             </h2>
             <p className="text-sm text-[var(--muted)] mt-1">{description}</p>
             <p className="text-sm mt-2">
-              {conflicts.length} {conflicts.length === 1 ? "Spiel" : "Spiele"} mit{" "}
-              {fieldCount} manuell bearbeiteten{" "}
-              {fieldCount === 1 ? "Feld" : "Feldern"} betroffen.
+              {visible.length} {visible.length === 1 ? "Spiel" : "Spiele"} ·{" "}
+              {visibleFieldCount} {visibleFieldCount === 1 ? "Feld" : "Felder"} zur
+              Entscheidung
             </p>
           </div>
 
-          <div className="max-h-64 overflow-y-auto border border-[var(--border)] rounded-lg">
+          <div className="max-h-72 overflow-y-auto border border-[var(--border)] rounded-lg">
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-[var(--card)]">
                 <tr className="text-left text-[var(--muted)]">
@@ -61,59 +93,115 @@ export function SyncConflictDialog({
                   <th className="p-2 font-medium">Feld</th>
                   <th className="p-2 font-medium">Aktuell</th>
                   <th className="p-2 font-medium">Neu</th>
+                  <th className="p-2 font-medium">Entscheidung</th>
                 </tr>
               </thead>
               <tbody>
-                {conflicts.flatMap((game) =>
-                  game.conflicts.map((c) => (
-                    <tr key={`${game.gameId}-${c.field}`} className="border-t border-[var(--border)]">
-                      <td className="p-2 align-top">
-                        <span className="font-medium">{game.name}</span>
-                        <span className="block text-xs text-[var(--muted)]">
-                          #{game.gameId}
-                        </span>
-                      </td>
-                      <td className="p-2 align-top">
-                        {SYNC_FIELD_LABELS[c.field]}
-                      </td>
-                      <td className="p-2 align-top text-[var(--muted)] break-all">
-                        {formatFieldValue(c.current)}
-                      </td>
-                      <td className="p-2 align-top break-all">
-                        {formatFieldValue(c.incoming)}
-                      </td>
-                    </tr>
-                  )),
+                {visible.flatMap((game) =>
+                  game.conflicts.map((c) => {
+                    const key = fieldChoiceKey(game.gameId, c.field);
+                    const choice = choices[key] ?? "keep";
+                    return (
+                      <tr
+                        key={key}
+                        className="border-t border-[var(--border)]"
+                      >
+                        <td className="p-2 align-top">
+                          <span className="font-medium">{game.name}</span>
+                          <span className="block text-xs text-[var(--muted)]">
+                            #{game.gameId}
+                          </span>
+                        </td>
+                        <td className="p-2 align-top">
+                          {SYNC_FIELD_LABELS[c.field]}
+                        </td>
+                        <td className="p-2 align-top text-[var(--muted)] break-all max-w-[8rem]">
+                          {formatFieldValue(c.current)}
+                        </td>
+                        <td className="p-2 align-top break-all max-w-[8rem]">
+                          {formatFieldValue(c.incoming)}
+                        </td>
+                        <td className="p-2 align-top">
+                          <div className="flex flex-col gap-1 min-w-[7rem]">
+                            <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                              <input
+                                type="radio"
+                                name={key}
+                                checked={choice === "keep"}
+                                disabled={pending}
+                                onChange={() =>
+                                  setChoice(game.gameId, c.field, "keep")
+                                }
+                              />
+                              Behalten
+                            </label>
+                            <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                              <input
+                                type="radio"
+                                name={key}
+                                checked={choice === "overwrite"}
+                                disabled={pending}
+                                onChange={() =>
+                                  setChoice(game.gameId, c.field, "overwrite")
+                                }
+                              />
+                              Übernehmen
+                            </label>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  }),
                 )}
               </tbody>
             </table>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <button
-              type="button"
-              className="btn btn-primary btn-lg sm:flex-1"
-              disabled={pending}
-              onClick={onKeepManual}
-            >
-              {pending ? "…" : "Manuelle Änderungen behalten"}
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-lg sm:flex-1 text-[var(--primary)]"
-              disabled={pending}
-              onClick={onOverwrite}
-            >
-              {pending ? "…" : "Trotzdem überschreiben"}
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-lg sm:w-auto"
-              disabled={pending}
-              onClick={onCancel}
-            >
-              Abbrechen
-            </button>
+          {cascadedCount > 0 && (
+            <p className="text-sm text-[var(--accent)]">
+              {cascadedCount}{" "}
+              {cascadedCount === 1 ? "Feld entfällt" : "Felder entfallen"}, weil das
+              Spiel als Basisspiel behalten wird.
+            </p>
+          )}
+
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="btn btn-ghost text-sm whitespace-normal"
+                disabled={pending}
+                onClick={() => setAllVisible("keep")}
+              >
+                Alle behalten
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost text-sm whitespace-normal"
+                disabled={pending}
+                onClick={() => setAllVisible("overwrite")}
+              >
+                Alle überschreiben
+              </button>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <button
+                type="button"
+                className="btn btn-primary btn-lg whitespace-normal"
+                disabled={pending || visibleFieldCount === 0}
+                onClick={() => onApply(choices)}
+              >
+                {pending ? "Wird angewendet…" : applyLabel}
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-lg whitespace-normal"
+                disabled={pending}
+                onClick={onCancel}
+              >
+                Abbrechen
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -7,7 +7,10 @@ import {
   previewEnrichmentCacheConflicts,
 } from "@/lib/apply-enrichment-cache";
 import { enrichmentCacheEntryCount } from "@/lib/enrichment-cache";
-import type { ConflictResolution } from "@/lib/game-sync";
+import {
+  parseFieldResolutionMap,
+  type ConflictResolution,
+} from "@/lib/game-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +20,15 @@ function parseResolution(body: unknown): ConflictResolution {
     if (v === "overwriteAll") return "overwriteAll";
   }
   return "keepManual";
+}
+
+function parseFieldResolutionsFromBody(body: unknown) {
+  if (body && typeof body === "object" && "fieldResolutions" in body) {
+    return parseFieldResolutionMap(
+      (body as { fieldResolutions?: unknown }).fieldResolutions,
+    );
+  }
+  return null;
 }
 
 export async function GET(request: Request) {
@@ -79,15 +91,19 @@ export async function POST(request: Request) {
   }
 
   let resolution: ConflictResolution = "overwriteAll";
+  let fieldResolutions = null;
   try {
     const body = await request.json();
     resolution = parseResolution(body);
+    fieldResolutions = parseFieldResolutionsFromBody(body);
   } catch {
-    // default overwriteAll for backwards compatibility when no body
     resolution = "overwriteAll";
   }
 
-  const result = await applyEnrichmentCacheToDb(resolution);
+  const result = await applyEnrichmentCacheToDb(
+    fieldResolutions ? "keepManual" : resolution,
+    fieldResolutions ?? undefined,
+  );
 
   revalidatePath("/games");
   revalidatePath("/admin/import");

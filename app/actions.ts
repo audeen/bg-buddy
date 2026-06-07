@@ -8,7 +8,10 @@ import { getSession } from "@/lib/session";
 import { getCurrentUser } from "@/lib/auth";
 import { parseCollectionCsv } from "@/lib/bgg";
 import { applyCsvImport, previewCsvImport } from "@/lib/csv-import";
-import type { ConflictResolution } from "@/lib/game-sync";
+import {
+  parseFieldResolutionMap,
+  type ConflictResolution,
+} from "@/lib/game-sync";
 import {
   buildDuelFrozenSnapshot,
   buildDuellPlan,
@@ -500,13 +503,27 @@ export async function importCsvAction(formData: FormData) {
     String(formData.get("conflictResolution") ?? ""),
   );
 
+  let fieldResolutions = null;
+  const fieldResolutionsRaw = String(formData.get("fieldResolutions") ?? "").trim();
+  if (fieldResolutionsRaw) {
+    try {
+      fieldResolutions = parseFieldResolutionMap(JSON.parse(fieldResolutionsRaw));
+    } catch {
+      return { error: "Ungültige Feld-Auswahl." };
+    }
+  }
+
   const text = await file.text();
   const games = parseCollectionCsv(text);
   if (games.length === 0) {
     return { error: "Keine Spiele in der CSV gefunden. Ist es ein BGG-Export?" };
   }
 
-  const { cacheApplied } = await applyCsvImport(games, resolution);
+  const { cacheApplied } = await applyCsvImport(
+    games,
+    resolution,
+    fieldResolutions ?? undefined,
+  );
 
   const expansions = games.filter((g) => g.isExpansion).length;
   revalidatePath("/games");

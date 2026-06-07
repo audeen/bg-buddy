@@ -4,16 +4,19 @@ import {
   thingDetailsToDbFields,
 } from "@/lib/enrichment-cache";
 import {
+  applyBaseGameCleanup,
   buildResolvableUpdate,
   diffGameFields,
   ENRICHMENT_SYNC_FIELDS,
   type ConflictResolution,
+  type FieldResolutionMap,
   type GameSyncConflict,
 } from "@/lib/game-sync";
 
 const gameSelect = {
   id: true,
   name: true,
+  isExpansion: true,
   description: true,
   image: true,
   thumbnail: true,
@@ -66,6 +69,7 @@ export async function previewEnrichmentCacheConflicts(): Promise<{
 
 export async function applyEnrichmentCacheToDb(
   resolution: ConflictResolution = "overwriteAll",
+  fieldResolutions?: FieldResolutionMap,
 ): Promise<{
   cacheSize: number;
   updated: number;
@@ -93,7 +97,13 @@ export async function applyEnrichmentCacheToDb(
 
     const incoming = thingDetailsToDbFields(details);
     const fieldConflicts = diffGameFields(existing, incoming, ENRICHMENT_SYNC_FIELDS);
-    if (fieldConflicts.length > 0 && resolution === "keepManual") {
+
+    if (fieldResolutions) {
+      for (const c of fieldConflicts) {
+        const choice = fieldResolutions[id]?.[c.field];
+        if (choice === "keep") conflictsSkipped += 1;
+      }
+    } else if (fieldConflicts.length > 0 && resolution === "keepManual") {
       conflictsSkipped += fieldConflicts.length;
     }
 
@@ -102,11 +112,14 @@ export async function applyEnrichmentCacheToDb(
       incoming,
       ENRICHMENT_SYNC_FIELDS,
       resolution,
+      { gameId: id, fieldResolutions },
     );
 
-    if (Object.keys(data).length === 0) continue;
+    const updateData = applyBaseGameCleanup(existing, data);
 
-    await prisma.game.update({ where: { id }, data });
+    if (Object.keys(updateData).length === 0) continue;
+
+    await prisma.game.update({ where: { id }, data: updateData });
     updated += 1;
   }
 

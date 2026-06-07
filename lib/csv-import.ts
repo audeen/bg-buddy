@@ -6,12 +6,17 @@ import {
   thingDetailsToDbFields,
 } from "@/lib/enrichment-cache";
 import {
+  applyBaseGameCleanup,
+  applyExpansionCascade,
   buildResolvableUpdate,
+  choicesToFieldResolutionMap,
   CSV_SYNC_FIELDS,
+  defaultChoicesFromConflicts,
   diffGameFields,
   ENRICHMENT_SYNC_FIELDS,
   parsedGameToCsvFields,
   type ConflictResolution,
+  type FieldResolutionMap,
   type GameSyncConflict,
 } from "@/lib/game-sync";
 
@@ -91,7 +96,8 @@ export async function previewCsvImport(games: ParsedGame[]): Promise<{
 
 export async function applyCsvImport(
   games: ParsedGame[],
-  resolution: ConflictResolution,
+  resolution: ConflictResolution = "keepManual",
+  fieldResolutions?: FieldResolutionMap,
 ): Promise<{ cacheApplied: number }> {
   const cache = loadEnrichmentCache();
   let cacheApplied = 0;
@@ -133,17 +139,23 @@ export async function applyCsvImport(
           thumbnail: enrichment?.thumbnail ?? null,
           categories: enrichment?.categories ?? [],
           mechanics: enrichment?.mechanics ?? [],
-          expandsGameIds: enrichment?.expandsGameIds ?? [],
+          expandsGameIds: g.isExpansion ? (enrichment?.expandsGameIds ?? []) : [],
         },
       });
       continue;
     }
+
+    const applyOptions = {
+      gameId: g.id,
+      fieldResolutions,
+    };
 
     const { data: csvData } = buildResolvableUpdate(
       existing,
       csvIncoming,
       CSV_SYNC_FIELDS,
       resolution,
+      applyOptions,
     );
     const csvManual =
       (csvData.manuallyEditedFields as string[] | undefined) ??
@@ -156,17 +168,18 @@ export async function applyCsvImport(
         enrichmentIncoming,
         ENRICHMENT_SYNC_FIELDS,
         resolution,
+        applyOptions,
       ).data;
     }
 
     const mergedManual =
       (enrichmentData.manuallyEditedFields as string[] | undefined) ?? csvManual;
 
-    const updateData: Prisma.GameUpdateInput = {
+    let updateData: Prisma.GameUpdateInput = applyBaseGameCleanup(existing, {
       ...csvData,
       ...enrichmentData,
       manuallyEditedFields: mergedManual,
-    };
+    });
 
     if (Object.keys(updateData).length > 0) {
       await prisma.game.update({ where: { id: g.id }, data: updateData });
@@ -175,3 +188,14 @@ export async function applyCsvImport(
 
   return { cacheApplied };
 }
+
+/** Merge UI choices (incl. cascade) into a field resolution map for apply. */
+export function buildFieldResolutionsFromChoices(
+  conflicts: GameSyncConflict[],
+  choices: Record<string, import("@/lib/game-sync").FieldChoice>,
+): FieldResolutionMap {
+  const { autoChoices } = applyExpansionCascade(conflicts, choices);
+  return choicesToFieldResolutionMap(conflicts, choices, autoChoices);
+}
+
+export { defaultChoicesFromConflicts };

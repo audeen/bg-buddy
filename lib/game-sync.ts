@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import type { ParsedGame } from "@/lib/bgg";
 
 export type ConflictResolution = "keepManual" | "overwriteAll";
+export type FieldChoice = "keep" | "overwrite";
 
 export type SyncFieldName =
   | "name"
@@ -55,6 +56,12 @@ export const ENRICHMENT_SYNC_FIELDS: SyncFieldName[] = [
   "enriched",
 ];
 
+/** Fields that only apply when isExpansion is true. */
+export const EXPANSION_DEPENDENT_FIELDS: SyncFieldName[] = [
+  "expandsGameIds",
+  "description",
+];
+
 export type FieldConflict = {
   field: SyncFieldName;
   current: unknown;
@@ -66,6 +73,74 @@ export type GameSyncConflict = {
   name: string;
   conflicts: FieldConflict[];
 };
+
+export type FieldResolutionMap = Record<
+  number,
+  Partial<Record<SyncFieldName, FieldChoice>>
+>;
+
+export function fieldChoiceKey(gameId: number, field: SyncFieldName): string {
+  return `${gameId}:${field}`;
+}
+
+export function defaultChoicesFromConflicts(
+  conflicts: GameSyncConflict[],
+): Record<string, FieldChoice> {
+  const choices: Record<string, FieldChoice> = {};
+  for (const game of conflicts) {
+    for (const c of game.conflicts) {
+      choices[fieldChoiceKey(game.gameId, c.field)] = "keep";
+    }
+  }
+  return choices;
+}
+
+export function choicesToFieldResolutionMap(
+  conflicts: GameSyncConflict[],
+  choices: Record<string, FieldChoice>,
+  autoChoices: Record<string, FieldChoice> = {},
+): FieldResolutionMap {
+  const map: FieldResolutionMap = {};
+  const merged = { ...choices, ...autoChoices };
+
+  for (const game of conflicts) {
+    for (const c of game.conflicts) {
+      const key = fieldChoiceKey(game.gameId, c.field);
+      const choice = merged[key] ?? "keep";
+      if (!map[game.gameId]) map[game.gameId] = {};
+      map[game.gameId]![c.field] = choice;
+    }
+  }
+
+  for (const [key, choice] of Object.entries(autoChoices)) {
+    const [gameIdRaw, field] = key.split(":");
+    const gameId = parseInt(gameIdRaw, 10);
+    if (!Number.isFinite(gameId) || !field) continue;
+    if (!map[gameId]) map[gameId] = {};
+    map[gameId]![field as SyncFieldName] = choice;
+  }
+
+  return map;
+}
+
+export function parseFieldResolutionMap(raw: unknown): FieldResolutionMap | null {
+  if (raw == null || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const map: FieldResolutionMap = {};
+  for (const [gameIdKey, fields] of Object.entries(raw as Record<string, unknown>)) {
+    const gameId = parseInt(gameIdKey, 10);
+    if (!Number.isFinite(gameId) || fields == null || typeof fields !== "object") {
+      continue;
+    }
+    const entry: Partial<Record<SyncFieldName, FieldChoice>> = {};
+    for (const [field, choice] of Object.entries(fields as Record<string, unknown>)) {
+      if (choice === "keep" || choice === "overwrite") {
+        entry[field as SyncFieldName] = choice;
+      }
+    }
+    if (Object.keys(entry).length > 0) map[gameId] = entry;
+  }
+  return Object.keys(map).length > 0 ? map : null;
+}
 
 function serializeValue(value: unknown): string {
   if (value == null) return "";
@@ -123,11 +198,75 @@ export function diffGameFields(
   return conflicts;
 }
 
+export function effectiveIsExpansion(
+  game: GameSyncConflict,
+  choices: Record<string, FieldChoice>,
+): boolean {
+  const expansionConflict = game.conflicts.find((c) => c.field === "isExpansion");
+  if (!expansionConflict) {
+    return true;
+  }
+  const key = fieldChoiceKey(game.gameId, "isExpansion");
+  const choice = choices[key] ?? "keep";
+  if (choice === "keep") {
+    return expansionConflict.current === true;
+  }
+  return expansionConflict.incoming === true;
+}
+
+export function applyExpansionCascade(
+  conflicts: GameSyncConflict[],
+  choices: Record<string, FieldChoice>,
+): {
+  visible: GameSyncConflict[];
+  autoChoices: Record<string, FieldChoice>;
+  cascadedCount: number;
+} {
+  const autoChoices: Record<string, FieldChoice> = {};
+  let cascadedCount = 0;
+
+  const visible = conflicts
+    .map((game) => {
+      if (effectiveIsExpansion(game, choices)) {
+        return game;
+      }
+
+      const filtered = game.conflicts.filter((c) => {
+        if (c.field === "isExpansion") return true;
+        if (!EXPANSION_DEPENDENT_FIELDS.includes(c.field)) return true;
+
+        autoChoices[fieldChoiceKey(game.gameId, c.field)] = "keep";
+        cascadedCount += 1;
+        return false;
+      });
+
+      return { ...game, conflicts: filtered };
+    })
+    .filter((g) => g.conflicts.length > 0);
+
+  return { visible, autoChoices, cascadedCount };
+}
+
+function resolveFieldChoice(
+  gameId: number,
+  field: SyncFieldName,
+  fieldResolutions: FieldResolutionMap | undefined,
+  fallback: ConflictResolution,
+): FieldChoice | ConflictResolution {
+  const perField = fieldResolutions?.[gameId]?.[field];
+  if (perField) return perField;
+  return fallback;
+}
+
 export function buildResolvableUpdate(
   existing: GameSyncRecord,
   incoming: Partial<Record<SyncFieldName, unknown>>,
   fields: SyncFieldName[],
-  resolution: ConflictResolution,
+  resolution: ConflictResolution = "keepManual",
+  options?: {
+    gameId?: number;
+    fieldResolutions?: FieldResolutionMap;
+  },
 ): {
   data: Prisma.GameUpdateInput;
   clearedManualFields: SyncFieldName[];
@@ -135,6 +274,8 @@ export function buildResolvableUpdate(
   const data: Prisma.GameUpdateInput = {};
   const clearedManualFields: SyncFieldName[] = [];
   const manual = new Set(existing.manuallyEditedFields);
+  const gameId = options?.gameId;
+  const fieldResolutions = options?.fieldResolutions;
 
   for (const field of fields) {
     if (!(field in incoming)) continue;
@@ -143,12 +284,17 @@ export function buildResolvableUpdate(
     const isManual = manual.has(field);
     const differs = valuesDiffer(currentVal, incomingVal);
 
-    if (isManual && differs && resolution === "keepManual") {
-      continue;
-    }
+    const choice = gameId != null
+      ? resolveFieldChoice(gameId, field, fieldResolutions, resolution)
+      : resolution;
 
-    if (isManual && differs && resolution === "overwriteAll") {
-      clearedManualFields.push(field);
+    if (isManual && differs) {
+      if (choice === "keep" || choice === "keepManual") {
+        continue;
+      }
+      if (choice === "overwrite" || choice === "overwriteAll") {
+        clearedManualFields.push(field);
+      }
     }
 
     (data as Record<string, unknown>)[field] = incomingVal;
@@ -162,6 +308,21 @@ export function buildResolvableUpdate(
   }
 
   return { data, clearedManualFields };
+}
+
+export function applyBaseGameCleanup(
+  existing: GameSyncRecord,
+  updateData: Prisma.GameUpdateInput,
+): Prisma.GameUpdateInput {
+  const isExpansion =
+    "isExpansion" in updateData
+      ? updateData.isExpansion === true
+      : existing.isExpansion === true;
+
+  if (!isExpansion) {
+    return { ...updateData, expandsGameIds: [] };
+  }
+  return updateData;
 }
 
 export function formatFieldValue(value: unknown): string {
