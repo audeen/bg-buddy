@@ -1160,4 +1160,46 @@ body {
       bottom: 1.5rem;
     }
   }
+
+  #app-main.swipe-back-transition {
+    transition: transform 0.25s ease;
+  }
+
+  html.swipe-back-dragging #app-main {
+    transition: none;
+    box-shadow: -6px 0 28px color-mix(in srgb, var(--foreground) 12%, transparent);
+  }
+
+  .swipe-back-edge-hint {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: var(--header-height);
+    bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+    width: 3px;
+    z-index: 5;
+    pointer-events: none;
+    background: linear-gradient(
+      to right,
+      color-mix(in srgb, var(--primary) 35%, transparent),
+      transparent
+    );
+    opacity: 0.55;
+  }
+
+  @media (max-width: 767px) {
+    html.swipe-back-active .swipe-back-edge-hint {
+      display: block;
+    }
+
+    html.swipe-back-active {
+      overscroll-behavior-x: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #app-main.swipe-back-transition {
+      transition: none;
+    }
+  }
 }

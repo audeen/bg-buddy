@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
+import { SwipeBackHandler } from "@/components/SwipeBackHandler";
 import { prisma } from "@/lib/prisma";
 
 const inter = Inter({
@@ -38,6 +39,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <Header />
         <main
+          id="app-main"
           className="flex-1 w-full pb-nav"
           style={{
             paddingBlock: "var(--space-section)",
@@ -49,6 +51,7 @@ export default async function RootLayout({
           BG Buddy · Daten von BoardGameGeek
         </footer>
         <BottomNav fallbackMeetupId={fallbackMeetup?.id ?? null} />
+        <SwipeBackHandler />
         <Analytics />
       </body>
     </html>
