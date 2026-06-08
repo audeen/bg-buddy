@@ -50,7 +50,7 @@ function DuelChoiceCard({
         <GameCover
           src={game.thumbnail ?? game.image}
           alt={game.name}
-          className="h-full w-full min-h-[8rem] object-cover card-game-cover sm:aspect-square sm:min-h-0"
+          className="h-full w-full min-h-[8rem] card-game-cover sm:aspect-square sm:min-h-0"
         />
       </div>
       <span className="p-2 sm:p-3 font-bold text-sm sm:text-base text-center leading-tight line-clamp-2 shrink-0">

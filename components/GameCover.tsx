@@ -20,11 +20,21 @@ export function GameCover({
     );
   }
   return (
-    <img
-      src={src}
-      alt={alt}
-      loading="lazy"
-      className={`object-cover bg-[var(--surface-2)] ${className}`}
-    />
+    <div
+      className={`relative overflow-hidden bg-[var(--surface-2)] ${className}`}
+    >
+      <img
+        src={src}
+        alt=""
+        aria-hidden
+        className="absolute inset-0 h-full w-full object-cover scale-110 blur-xl"
+      />
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        className="relative z-[1] h-full w-full object-contain"
+      />
+    </div>
   );
 }
