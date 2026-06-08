@@ -21,6 +21,8 @@ import {
 type GamesFilterBarProps = {
   genres: string[];
   ratingBlocks: RatingBlock[];
+  basePath?: string;
+  hideExpansions?: boolean;
 };
 
 const EMPTY_FILTERS: GameFilters = {
@@ -37,7 +39,12 @@ const EMPTY_FILTERS: GameFilters = {
   includeExpansions: false,
 };
 
-export function GamesFilterBar({ genres, ratingBlocks }: GamesFilterBarProps) {
+export function GamesFilterBar({
+  genres,
+  ratingBlocks,
+  basePath = "/games",
+  hideExpansions = false,
+}: GamesFilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
@@ -51,10 +58,10 @@ export function GamesFilterBar({ genres, ratingBlocks }: GamesFilterBarProps) {
       const params = filtersToSearchParams(next, nextSort);
       const qs = params.toString();
       startTransition(() => {
-        router.push(qs ? `/games?${qs}` : "/games", { scroll: false });
+        router.push(qs ? `${basePath}?${qs}` : basePath, { scroll: false });
       });
     },
-    [router, sort, startTransition],
+    [basePath, router, sort, startTransition],
   );
 
   const updateField = (patch: Partial<GameFilters>) => {
@@ -231,14 +238,16 @@ export function GamesFilterBar({ genres, ratingBlocks }: GamesFilterBarProps) {
             ))}
           </select>
         </div>
-        <label className="flex items-center gap-2 text-sm min-h-[2.75rem]">
-          <input
-            type="checkbox"
-            checked={filters.includeExpansions}
-            onChange={(e) => updateField({ includeExpansions: e.target.checked })}
-          />
-          Erweiterungen anzeigen
-        </label>
+        {!hideExpansions && (
+          <label className="flex items-center gap-2 text-sm min-h-[2.75rem]">
+            <input
+              type="checkbox"
+              checked={filters.includeExpansions}
+              onChange={(e) => updateField({ includeExpansions: e.target.checked })}
+            />
+            Erweiterungen anzeigen
+          </label>
+        )}
       </div>
         </div>
       </details>

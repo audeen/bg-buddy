@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
 import { GameCard, type GameCardGame } from "@/components/GameCard";
+import { GamesFilterBar } from "@/components/GamesFilterBar";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameDetailData } from "@/components/GameDetailView";
 import { setPickPointsAction } from "@/app/actions";
@@ -19,6 +21,15 @@ import {
   pointsKey,
 } from "@/lib/pick-points";
 import { enqueuePickTap } from "@/lib/pick-tap-queue";
+import {
+  hasActiveFilters,
+  matchesGameFilters,
+  parseGameFilters,
+  parseGameSort,
+  ratingBlocksFromRatings,
+  sortGames,
+  type RatingBlock,
+} from "@/lib/game-filters";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
 export type PickGame = GameDetailData & { lentOut?: boolean };
@@ -55,6 +66,40 @@ export function PickClient({
   expansionsByBaseId: Record<string, GameCardGame[]>;
   guestGameIds?: number[];
 }) {
+  const searchParams = useSearchParams();
+  const filters = useMemo(
+    () =>
+      parseGameFilters(
+        Object.fromEntries(searchParams.entries()) as Record<string, string>,
+      ),
+    [searchParams],
+  );
+  const sort = useMemo(
+    () =>
+      parseGameSort(
+        Object.fromEntries(searchParams.entries()) as Record<string, string>,
+      ),
+    [searchParams],
+  );
+  const filterBasePath = `/meetups/${meetupId}/pick`;
+
+  const genres = useMemo(
+    () =>
+      Array.from(new Set(games.flatMap((g) => g.categories))).sort((a, b) =>
+        a.localeCompare(b),
+      ),
+    [games],
+  );
+
+  const ratingBlocks = useMemo((): RatingBlock[] => {
+    const blocks = ratingBlocksFromRatings(games.map((g) => g.bggRating));
+    const active = filters.rating;
+    if (active != null && !blocks.includes(active)) {
+      return [...blocks, active].sort((a, b) => a - b);
+    }
+    return blocks;
+  }, [games, filters.rating]);
+
   const guestIdSet = useMemo(() => new Set(guestGameIds), [guestGameIds]);
   const [selected, setSelected] = useState(expected);
   const pointsRef = useRef<Record<string, number>>({});
@@ -125,17 +170,28 @@ export function PickClient({
     return counts;
   }, [games, expected, expansionsByBaseId]);
 
+  const eligibleGames = useMemo(
+    () =>
+      games.filter((g) =>
+        eligible(g, selected, expansionsByBaseId[String(g.id)] ?? []),
+      ),
+    [games, selected, expansionsByBaseId],
+  );
+
   const visible = useMemo(() => {
-    const filtered = games.filter((g) =>
-      eligible(g, selected, expansionsByBaseId[String(g.id)] ?? []),
+    const filtered = eligibleGames.filter((g) =>
+      matchesGameFilters(g, filters, {
+        expansions: expansionsByBaseId[String(g.id)] ?? [],
+      }),
     );
-    return filtered.sort((a, b) => {
+    const sorted = sortGames(filtered, sort);
+    return sorted.sort((a, b) => {
       const aGuest = guestIdSet.has(a.id);
       const bGuest = guestIdSet.has(b.id);
       if (aGuest !== bGuest) return aGuest ? -1 : 1;
-      return a.name.localeCompare(b.name);
+      return 0;
     });
-  }, [games, selected, guestIdSet, expansionsByBaseId]);
+  }, [eligibleGames, filters, sort, guestIdSet, expansionsByBaseId]);
 
   const expectedLocked = picksLocked && selected === expected;
 
@@ -231,11 +287,22 @@ export function PickClient({
         {phaseBanner}
       </p>
 
+      <GamesFilterBar
+        genres={genres}
+        ratingBlocks={ratingBlocks}
+        basePath={filterBasePath}
+        hideExpansions
+      />
+
       {visible.length === 0 ? (
         <p
           className={`text-[var(--muted)] ${atLimit ? "pb-sticky-picker-at-limit" : "pb-sticky-picker"}`}
         >
-          Keine Spiele für {selected} Spieler in der Sammlung.
+          {eligibleGames.length === 0
+            ? `Keine Spiele für ${selected} Spieler in der Sammlung.`
+            : hasActiveFilters(filters)
+              ? "Keine Spiele für die gewählten Filter."
+              : `Keine Spiele für ${selected} Spieler in der Sammlung.`}
         </p>
       ) : (
         <ul
@@ -256,6 +323,9 @@ export function PickClient({
                 <GameCard
                   game={g}
                   playerCount={selected}
+                  activeFilters={filters}
+                  filterMode
+                  filterBasePath={filterBasePath}
                   selected={gamePoints > 0}
                   selectedPoints={gamePoints}
                   ownedExpansions={expansionsByBaseId[String(g.id)] ?? []}
@@ -281,6 +351,9 @@ export function PickClient({
         baseGame={detail?.baseGame}
         onClose={closeDetail}
         playerCount={selected}
+        activeFilters={filters}
+        filterMode
+        filterBasePath={filterBasePath}
         ownedExpansions={
           detail
             ? (expansionsByBaseId[String(detail.baseGame.id)] ?? [])

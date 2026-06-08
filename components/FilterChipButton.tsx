@@ -14,6 +14,7 @@ type FilterChipButtonProps = {
   tag: GameTag;
   activeFilters?: GameFilters;
   filterMode?: boolean;
+  basePath?: string;
   onNavigate?: () => void;
 };
 
@@ -21,6 +22,7 @@ export function FilterChipButton({
   tag,
   activeFilters,
   filterMode,
+  basePath = "/games",
   onNavigate,
 }: FilterChipButtonProps) {
   const router = useRouter();
@@ -44,7 +46,7 @@ export function FilterChipButton({
         e.stopPropagation();
         onNavigate?.();
         const next = toggleGameFilter(activeFilters, tag.filter!);
-        router.push(filterUrl("/games", next, sort), { scroll: false });
+        router.push(filterUrl(basePath, next, sort), { scroll: false });
       }}
     >
       {tag.label}

@@ -35,6 +35,7 @@ type BaseProps = {
   playerCount?: number;
   activeFilters?: GameFilters;
   filterMode?: boolean;
+  filterBasePath?: string;
   selected?: boolean;
   selectedPoints?: number;
   ownedExpansions?: GameCardGame[];
@@ -63,6 +64,7 @@ function TagRows({
   playerCount,
   activeFilters,
   filterMode,
+  filterBasePath,
   ownedExpansions,
   onBaseView,
 }: {
@@ -71,6 +73,7 @@ function TagRows({
   playerCount?: number;
   activeFilters?: GameFilters;
   filterMode?: boolean;
+  filterBasePath?: string;
   ownedExpansions: GameCardGame[];
   onBaseView: boolean;
 }) {
@@ -92,6 +95,7 @@ function TagRows({
               tag={t}
               activeFilters={activeFilters}
               filterMode={filterMode}
+              basePath={filterBasePath}
             />
           ))}
         </div>
@@ -104,6 +108,7 @@ function TagRows({
               tag={t}
               activeFilters={activeFilters}
               filterMode={filterMode}
+              basePath={filterBasePath}
             />
           ))}
         </div>
@@ -164,6 +169,7 @@ function CardBody({
   playerCount,
   activeFilters,
   filterMode,
+  filterBasePath,
   ownedExpansions,
   viewExpansionId,
   onSelectBase,
@@ -174,6 +180,7 @@ function CardBody({
   playerCount?: number;
   activeFilters?: GameFilters;
   filterMode?: boolean;
+  filterBasePath?: string;
   ownedExpansions: GameCardGame[];
   viewExpansionId: number | null;
   onSelectBase: () => void;
@@ -193,6 +200,7 @@ function CardBody({
         playerCount={playerCount}
         activeFilters={activeFilters}
         filterMode={filterMode}
+        filterBasePath={filterBasePath}
         ownedExpansions={ownedExpansions}
         onBaseView={viewExpansionId == null}
       />
@@ -304,6 +312,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
     playerCount,
     activeFilters,
     filterMode,
+    filterBasePath,
     selected,
     selectedPoints,
     ownedExpansions = [],
@@ -339,6 +348,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
     playerCount,
     activeFilters,
     filterMode,
+    filterBasePath,
     ownedExpansions,
     viewExpansionId,
     onSelectBase: selectBase,

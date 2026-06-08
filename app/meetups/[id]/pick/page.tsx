@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { PickClient } from "@/components/PickClient";
@@ -68,19 +69,25 @@ export default async function PickPage({
         title="Stimmen vergeben"
       />
 
-      <PickClient
-        key={meetup.expectedPlayerCount}
-        meetupId={id}
-        expected={meetup.expectedPlayerCount}
-        games={games}
-        initialPicks={myVotes}
-        scrollTargetId="pick-page-top"
-        picksLocked={phase.picksLocked}
-        readyForDuels={phase.readyForDuels}
-        pickPhaseSummary={summary}
-        expansionsByBaseId={serializeExpansionsByBaseId(expansionsByBase)}
-        guestGameIds={guestGameIds}
-      />
+      <Suspense
+        fallback={
+          <div className="filter-dropdown h-12 animate-pulse rounded-xl" />
+        }
+      >
+        <PickClient
+          key={meetup.expectedPlayerCount}
+          meetupId={id}
+          expected={meetup.expectedPlayerCount}
+          games={games}
+          initialPicks={myVotes}
+          scrollTargetId="pick-page-top"
+          picksLocked={phase.picksLocked}
+          readyForDuels={phase.readyForDuels}
+          pickPhaseSummary={summary}
+          expansionsByBaseId={serializeExpansionsByBaseId(expansionsByBase)}
+          guestGameIds={guestGameIds}
+        />
+      </Suspense>
     </div>
   );
 }

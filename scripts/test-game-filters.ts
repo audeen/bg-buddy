@@ -22,6 +22,9 @@ import {
   ratingTierOptions,
   toggleGameFilter,
   weightLevelFromValue,
+  matchesGameFilters,
+  sortGames,
+  type GameFilterable,
 } from "../lib/game-filters";
 
 function testParseGameFilters() {
@@ -153,6 +156,82 @@ function testWeightLevelFromValue() {
   assert.equal(weightLevelFromValue(4.2), "experte");
 }
 
+const sampleGame: GameFilterable = {
+  id: 1,
+  name: "Catan",
+  categories: ["Strategie", "Familie"],
+  mechanics: ["Handel", "Würfeln"],
+  minPlayers: 3,
+  maxPlayers: 4,
+  minPlaytime: 60,
+  maxPlaytime: 90,
+  playingTime: 75,
+  weight: 2.3,
+  bggRating: 7.1,
+  bestPlayerCounts: [3, 4],
+};
+
+function testMatchesGameFilters() {
+  assert.equal(
+    matchesGameFilters(sampleGame, parseGameFilters({ genre: "Strategie" })),
+    true,
+  );
+  assert.equal(
+    matchesGameFilters(sampleGame, parseGameFilters({ genre: "Party" })),
+    false,
+  );
+  assert.equal(
+    matchesGameFilters(sampleGame, parseGameFilters({ rating: "7" })),
+    true,
+  );
+  assert.equal(
+    matchesGameFilters(sampleGame, parseGameFilters({ rating: "8" })),
+    false,
+  );
+  assert.equal(
+    matchesGameFilters(sampleGame, parseGameFilters({ players: "4" })),
+    true,
+  );
+  assert.equal(
+    matchesGameFilters(sampleGame, parseGameFilters({ players: "2" })),
+    false,
+  );
+  assert.equal(
+    matchesGameFilters(sampleGame, parseGameFilters({ players: "5" }), {
+      expansions: [{ minPlayers: 5, maxPlayers: 6, bestPlayerCounts: [5] }],
+    }),
+    true,
+  );
+  assert.equal(
+    matchesGameFilters(sampleGame, parseGameFilters({ best: "3" })),
+    true,
+  );
+  assert.equal(
+    matchesGameFilters(sampleGame, parseGameFilters({ mechanic: "Handel" })),
+    true,
+  );
+}
+
+function testSortGames() {
+  const games: GameFilterable[] = [
+    { ...sampleGame, id: 1, name: "Bravo", bggRating: 6 },
+    { ...sampleGame, id: 2, name: "Alpha", bggRating: 8 },
+    { ...sampleGame, id: 3, name: "Charlie", bggRating: 7 },
+  ];
+  assert.deepEqual(
+    sortGames(games, "name").map((g) => g.name),
+    ["Alpha", "Bravo", "Charlie"],
+  );
+  assert.deepEqual(
+    sortGames(games, "rating-desc").map((g) => g.name),
+    ["Alpha", "Charlie", "Bravo"],
+  );
+  assert.deepEqual(
+    sortGames(games, "rating-asc").map((g) => g.name),
+    ["Bravo", "Charlie", "Alpha"],
+  );
+}
+
 testParseGameFilters();
 testRatingBlocks();
 testBuildGameWhere();
@@ -166,5 +245,7 @@ testClearFilterKind();
 testPlayerRangeFilterValue();
 testPlaytimeFilterValue();
 testWeightLevelFromValue();
+testMatchesGameFilters();
+testSortGames();
 
 console.log("test-game-filters: all passed");

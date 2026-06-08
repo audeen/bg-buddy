@@ -68,6 +68,7 @@ type GameDetailModalProps = {
   playerCount?: number;
   activeFilters?: GameFilters;
   filterMode?: boolean;
+  filterBasePath?: string;
   ownedExpansions?: GameCardGame[];
 };
 
@@ -78,6 +79,7 @@ export function GameDetailModal({
   playerCount,
   activeFilters,
   filterMode,
+  filterBasePath,
   ownedExpansions = [],
 }: GameDetailModalProps) {
   const titleId = useId();
@@ -547,6 +549,7 @@ export function GameDetailModal({
             playerCount={playerCount}
             activeFilters={activeFilters}
             filterMode={filterMode}
+            filterBasePath={filterBasePath}
             onFilterNavigate={dismiss}
             ownedExpansions={modalExpansions}
             onSelectExpansion={(id) => {

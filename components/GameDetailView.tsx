@@ -41,6 +41,7 @@ type GameDetailViewProps = {
   playerCount?: number;
   activeFilters?: GameFilters;
   filterMode?: boolean;
+  filterBasePath?: string;
   onFilterNavigate?: () => void;
   ownedExpansions?: GameCardGame[];
   onSelectExpansion?: (id: number) => void;
@@ -56,6 +57,7 @@ export function GameDetailView({
   playerCount,
   activeFilters,
   filterMode,
+  filterBasePath,
   onFilterNavigate,
   ownedExpansions,
   onSelectExpansion,
@@ -131,6 +133,7 @@ export function GameDetailView({
                   tag={tag}
                   activeFilters={activeFilters}
                   filterMode={filterMode}
+                  basePath={filterBasePath}
                   onNavigate={onFilterNavigate}
                 />
               ))
@@ -209,6 +212,7 @@ export function GameDetailView({
                     tag={categoryTag(c)}
                     activeFilters={activeFilters}
                     filterMode={filterMode}
+                    basePath={filterBasePath}
                     onNavigate={onFilterNavigate}
                   />
                 ) : (
@@ -250,6 +254,7 @@ export function GameDetailView({
                   tag={mechanicTag(m)}
                   activeFilters={activeFilters}
                   filterMode={filterMode}
+                  basePath={filterBasePath}
                   onNavigate={onFilterNavigate}
                 />
               ) : (

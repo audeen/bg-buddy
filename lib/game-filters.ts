@@ -1,4 +1,10 @@
 import type { Prisma } from "@prisma/client";
+import {
+  isPlayableWithOwnedExpansions,
+  mergedBestPlayerCounts,
+  type BestPlayerCountFields,
+  type PlayerCountFields,
+} from "@/lib/effective-player-count";
 
 export type TimeBucket = "short" | "medium" | "long" | "epic";
 export type WeightLevel = "leicht" | "mittel" | "schwer" | "experte";
@@ -206,6 +212,180 @@ export interface GameFilterContext {
   expansionPlayableBaseIds?: number[];
   /** Base game ids with a best-player count on an owned expansion but not on the base. */
   expansionBestBaseIds?: number[];
+}
+
+export interface GameFilterable {
+  id: number;
+  name: string;
+  categories: string[];
+  mechanics: string[];
+  minPlayers: number | null;
+  maxPlayers: number | null;
+  minPlaytime: number | null;
+  maxPlaytime: number | null;
+  playingTime: number | null;
+  weight: number | null;
+  bggRating: number | null;
+  bestPlayerCounts: number[];
+  isExpansion?: boolean;
+}
+
+export interface GameFilterMatchContext {
+  expansions?: readonly (PlayerCountFields & BestPlayerCountFields)[];
+  expansionPlayableBaseIds?: number[];
+  expansionBestBaseIds?: number[];
+}
+
+function playtimeOverlapsBucket(
+  game: GameFilterable,
+  min: number,
+  max: number,
+): boolean {
+  const { playingTime, minPlaytime, maxPlaytime } = game;
+  if (playingTime != null && playingTime >= min && playingTime <= max) return true;
+  if (minPlaytime != null && minPlaytime >= min && minPlaytime <= max) return true;
+  if (maxPlaytime != null && maxPlaytime >= min && maxPlaytime <= max) return true;
+  if (
+    minPlaytime != null &&
+    maxPlaytime != null &&
+    minPlaytime <= max &&
+    maxPlaytime >= min
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function matchesExactPlaytime(game: GameFilterable, value: string): boolean {
+  const range = parseRange(value);
+  if (!range) return true;
+  const { playingTime, minPlaytime, maxPlaytime } = game;
+  if (range.min === range.max) {
+    const single = range.min;
+    return (
+      playingTime === single ||
+      (minPlaytime === single && maxPlaytime === single) ||
+      (minPlaytime == null && maxPlaytime == null && playingTime === single)
+    );
+  }
+  return minPlaytime === range.min && maxPlaytime === range.max;
+}
+
+function matchesWeightLevel(weight: number | null, level: WeightLevel): boolean {
+  if (weight == null) return false;
+  switch (level) {
+    case "leicht":
+      return weight > 0 && weight < 2;
+    case "mittel":
+      return weight >= 2 && weight < 3;
+    case "schwer":
+      return weight >= 3 && weight < 4;
+    case "experte":
+      return weight >= 4;
+  }
+}
+
+function matchesRatingBlock(rating: number | null, block: RatingBlock): boolean {
+  if (rating == null) return false;
+  if (block >= 10) return rating >= 10;
+  return rating >= block && rating < block + 1;
+}
+
+export function matchesGameFilters(
+  game: GameFilterable,
+  filters: GameFilters,
+  ctx: GameFilterMatchContext = {},
+): boolean {
+  const expansions = ctx.expansions ?? [];
+  const expansionPlayableBaseIds = ctx.expansionPlayableBaseIds ?? [];
+  const expansionBestBaseIds = ctx.expansionBestBaseIds ?? [];
+
+  if (filters.q) {
+    if (!game.name.toLowerCase().includes(filters.q.toLowerCase())) return false;
+  }
+  if (filters.genre && !game.categories.includes(filters.genre)) return false;
+  if (filters.mechanic && !game.mechanics.includes(filters.mechanic)) return false;
+
+  if (filters.players != null) {
+    const n = filters.players;
+    const playable =
+      isPlayableWithOwnedExpansions(game, expansions, n) ||
+      expansionPlayableBaseIds.includes(game.id);
+    if (!playable) return false;
+  }
+
+  if (filters.time) {
+    const bucket = TIME_BUCKETS[filters.time];
+    if (!playtimeOverlapsBucket(game, bucket.min, bucket.max)) return false;
+  }
+
+  if (filters.playerRange) {
+    const range = parseRange(filters.playerRange);
+    if (
+      range &&
+      (game.minPlayers !== range.min || game.maxPlayers !== range.max)
+    ) {
+      return false;
+    }
+  }
+
+  if (filters.playtime && !matchesExactPlaytime(game, filters.playtime)) {
+    return false;
+  }
+
+  if (filters.weight && !matchesWeightLevel(game.weight, filters.weight)) {
+    return false;
+  }
+
+  if (
+    filters.rating != null &&
+    !matchesRatingBlock(game.bggRating, filters.rating)
+  ) {
+    return false;
+  }
+
+  if (filters.best != null) {
+    const best =
+      mergedBestPlayerCounts(game, expansions).includes(filters.best) ||
+      expansionBestBaseIds.includes(game.id);
+    if (!best) return false;
+  }
+
+  return true;
+}
+
+export function sortGames<T extends GameFilterable>(
+  games: readonly T[],
+  sort: GameSort,
+): T[] {
+  const sorted = [...games];
+  switch (sort) {
+    case "rating-desc":
+      sorted.sort((a, b) => {
+        const ar = a.bggRating;
+        const br = b.bggRating;
+        if (ar == null && br == null) return a.name.localeCompare(b.name);
+        if (ar == null) return 1;
+        if (br == null) return -1;
+        if (ar !== br) return br - ar;
+        return a.name.localeCompare(b.name);
+      });
+      break;
+    case "rating-asc":
+      sorted.sort((a, b) => {
+        const ar = a.bggRating;
+        const br = b.bggRating;
+        if (ar == null && br == null) return a.name.localeCompare(b.name);
+        if (ar == null) return 1;
+        if (br == null) return -1;
+        if (ar !== br) return ar - br;
+        return a.name.localeCompare(b.name);
+      });
+      break;
+    default:
+      sorted.sort((a, b) => a.name.localeCompare(b.name));
+  }
+  return sorted;
 }
 
 export function buildGameOrderBy(sort: GameSort): Prisma.GameOrderByWithRelationInput[] {
