@@ -384,9 +384,9 @@ export function PickClient({
           <span
             className="text-xs font-bold tabular-nums text-[var(--muted)]"
             role="status"
-            aria-label={`${usedPoints} von ${MAX_PICK_POINTS} Stimmen vergeben`}
+            aria-label={`${usedPoints} von ${MAX_PICK_POINTS} Stimmen abgegeben`}
           >
-            {usedPoints} / {MAX_PICK_POINTS} Stimmen
+            {usedPoints} / {MAX_PICK_POINTS} Stimmen abgegeben
           </span>
         </div>
         <div className="tabs-scroll">
