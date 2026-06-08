@@ -7,6 +7,7 @@ import type { GameFilters } from "@/lib/game-filters";
 
 const DRAG_CLOSE_THRESHOLD = 100;
 const DRAG_MAXIMIZE_THRESHOLD = 80;
+const DRAG_CHAIN_DEADZONE = 5;
 const PARTIAL_HEIGHT_RATIO = 0.85;
 
 type SnapPoint = "partial" | "maximized";
@@ -15,6 +16,24 @@ type DragEndState = {
   height: number;
   translateY: number;
 };
+
+function isScrollAtTop(el: HTMLElement) {
+  return el.scrollTop <= 1;
+}
+
+function isScrollAtBottom(el: HTMLElement) {
+  return el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+}
+
+function safeReleasePointerCapture(el: Element, pointerId: number) {
+  try {
+    if (el.hasPointerCapture(pointerId)) {
+      el.releasePointerCapture(pointerId);
+    }
+  } catch {
+    // pointer already released by browser
+  }
+}
 
 function computeDragState(rawDelta: number, startSnap: SnapPoint): DragEndState {
   const vh = window.innerHeight;
@@ -71,7 +90,10 @@ export function GameDetailModal({
   const dragStartSnapRef = useRef<SnapPoint>("partial");
   const draggingRef = useRef(false);
   const sheetDragActiveRef = useRef(false);
+  const chainEligibleRef = useRef(false);
   const pointerIdRef = useRef<number | null>(null);
+  const pendingPointerIdRef = useRef<number | null>(null);
+  const captureTargetRef = useRef<Element | null>(null);
   const snapPointRef = useRef<SnapPoint>("partial");
 
   useEffect(() => {
@@ -105,7 +127,10 @@ export function GameDetailModal({
     }
     draggingRef.current = false;
     sheetDragActiveRef.current = false;
+    chainEligibleRef.current = false;
     pointerIdRef.current = null;
+    pendingPointerIdRef.current = null;
+    captureTargetRef.current = null;
     dragStartYRef.current = 0;
   }, []);
 
@@ -133,6 +158,21 @@ export function GameDetailModal({
       const maxH = vh;
       const mid = (partialH + maxH) / 2;
 
+      if (startSnap === "maximized" && rawDelta > 0) {
+        const heightTravel = maxH - partialH;
+
+        if (translateY === 0) {
+          const progress = rawDelta / heightTravel;
+          setSnapPoint(progress >= 0.5 ? "partial" : "maximized");
+        } else if (translateY >= DRAG_CLOSE_THRESHOLD) {
+          dismiss();
+        } else {
+          setSnapPoint("partial");
+        }
+        clearDragVisuals();
+        return;
+      }
+
       if (translateY >= DRAG_CLOSE_THRESHOLD) {
         dismiss();
         return;
@@ -141,19 +181,6 @@ export function GameDetailModal({
       if (startSnap === "partial" && rawDelta < 0) {
         if (-rawDelta >= DRAG_MAXIMIZE_THRESHOLD || height >= mid) {
           setSnapPoint("maximized");
-        } else {
-          setSnapPoint("partial");
-        }
-        clearDragVisuals();
-        return;
-      }
-
-      if (startSnap === "maximized" && rawDelta > 0) {
-        const heightTravel = maxH - partialH;
-
-        if (translateY === 0) {
-          const progress = rawDelta / heightTravel;
-          setSnapPoint(progress >= 0.5 ? "partial" : "maximized");
         } else {
           setSnapPoint("partial");
         }
@@ -252,6 +279,7 @@ export function GameDetailModal({
       dragStartYRef.current = e.clientY;
       dragStartSnapRef.current = snapPointRef.current;
       panelRef.current?.classList.add("modal-panel-dragging");
+      captureTargetRef.current = e.currentTarget;
       e.currentTarget.setPointerCapture(e.pointerId);
     },
     [isMobileSheet],
@@ -270,6 +298,19 @@ export function GameDetailModal({
     [applyDragVisuals],
   );
 
+  const endSheetDrag = useCallback(
+    (rawDelta: number) => {
+      if (captureTargetRef.current && pointerIdRef.current !== null) {
+        safeReleasePointerCapture(
+          captureTargetRef.current,
+          pointerIdRef.current,
+        );
+      }
+      resolveSnapOnRelease(rawDelta, dragStartSnapRef.current);
+    },
+    [resolveSnapOnRelease],
+  );
+
   const onHandlePointerEnd = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (!sheetDragActiveRef.current || e.pointerId !== pointerIdRef.current) {
@@ -277,13 +318,9 @@ export function GameDetailModal({
       }
 
       const rawDelta = e.clientY - dragStartYRef.current;
-      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-        e.currentTarget.releasePointerCapture(e.pointerId);
-      }
-
-      resolveSnapOnRelease(rawDelta, dragStartSnapRef.current);
+      endSheetDrag(rawDelta);
     },
-    [resolveSnapOnRelease],
+    [endSheetDrag],
   );
 
   const onBodyPointerDown = useCallback(
@@ -292,7 +329,10 @@ export function GameDetailModal({
       if ((e.target as HTMLElement).closest("button, a")) return;
       if (!isMobileSheet()) return;
 
-      pointerIdRef.current = e.pointerId;
+      const body = bodyRef.current;
+      chainEligibleRef.current =
+        body !== null && isScrollAtTop(body) && !isScrollAtBottom(body);
+      pendingPointerIdRef.current = e.pointerId;
       dragStartYRef.current = e.clientY;
       dragStartSnapRef.current = snapPointRef.current;
       sheetDragActiveRef.current = false;
@@ -303,20 +343,33 @@ export function GameDetailModal({
 
   const onBodyPointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (e.pointerId !== pointerIdRef.current) return;
+      if (e.pointerId !== pendingPointerIdRef.current) return;
 
-      const rawDelta = e.clientY - dragStartYRef.current;
+      const body = bodyRef.current;
+      if (!body) return;
 
       if (!sheetDragActiveRef.current) {
-        if ((bodyRef.current?.scrollTop ?? 0) > 0) return;
-        if (rawDelta <= 0) return;
+        if (!chainEligibleRef.current) return;
+        if (!isScrollAtTop(body)) return;
+        if (isScrollAtBottom(body)) return;
+
+        const rawDelta = e.clientY - dragStartYRef.current;
+        if (rawDelta <= DRAG_CHAIN_DEADZONE) return;
 
         sheetDragActiveRef.current = true;
         draggingRef.current = true;
+        pointerIdRef.current = e.pointerId;
         panelRef.current?.classList.add("modal-panel-dragging");
+        captureTargetRef.current = e.currentTarget;
         e.currentTarget.setPointerCapture(e.pointerId);
+      } else {
+        if (!isScrollAtTop(body) || isScrollAtBottom(body)) {
+          chainEligibleRef.current = false;
+          return;
+        }
       }
 
+      const rawDelta = e.clientY - dragStartYRef.current;
       applyDragVisuals(rawDelta, dragStartSnapRef.current);
       e.preventDefault();
     },
@@ -325,21 +378,19 @@ export function GameDetailModal({
 
   const onBodyPointerEnd = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (e.pointerId !== pointerIdRef.current) return;
+      if (e.pointerId !== pendingPointerIdRef.current) return;
 
       if (sheetDragActiveRef.current) {
         const rawDelta = e.clientY - dragStartYRef.current;
-        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-          e.currentTarget.releasePointerCapture(e.pointerId);
-        }
-        resolveSnapOnRelease(rawDelta, dragStartSnapRef.current);
+        endSheetDrag(rawDelta);
         return;
       }
 
-      pointerIdRef.current = null;
+      pendingPointerIdRef.current = null;
+      chainEligibleRef.current = false;
       dragStartYRef.current = 0;
     },
-    [resolveSnapOnRelease],
+    [endSheetDrag],
   );
 
   if (!game || !viewGame) return null;
