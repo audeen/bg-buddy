@@ -300,6 +300,7 @@ export async function setPickPointsAction(
     select: {
       isExpansion: true,
       listedInCollection: true,
+      lentOut: true,
       meetupGuestGames: {
         where: { meetupId },
         select: { id: true },
@@ -310,6 +311,9 @@ export async function setPickPointsAction(
   if (!game) return { error: "Spiel nicht gefunden." };
   if (game.isExpansion) {
     return { error: "Stimmen können nur für Basisspiele vergeben werden." };
+  }
+  if (game.lentOut) {
+    return { error: "Dieses Spiel ist verliehen." };
   }
   const inPickPool =
     game.listedInCollection || game.meetupGuestGames.length > 0;
@@ -1329,6 +1333,38 @@ export async function removeAllGuestGamesFromMeetupAction(meetupId: string) {
   revalidateMeetupPaths(meetupId);
   revalidatePath("/games");
   return { ok: true, removed: gameIds.length };
+}
+
+export async function setGameLentOutAction(gameId: number, lentOut: boolean) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  if (!Number.isFinite(gameId)) {
+    return { error: "Ungültige Spiel-ID." };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.game.update({
+        where: { id: gameId },
+        data: { lentOut },
+      });
+      if (lentOut) {
+        await tx.vote.deleteMany({
+          where: { gameId, mode: "PICK" },
+        });
+      }
+    });
+  } catch {
+    return { error: "Spiel nicht gefunden." };
+  }
+
+  revalidatePath("/games");
+  revalidatePath("/admin/collection");
+  revalidatePath(`/games/${gameId}`);
+  revalidatePath("/meetups", "layout");
+
+  return { ok: true };
 }
 
 export async function removeGameFromCollectionAction(gameId: number) {

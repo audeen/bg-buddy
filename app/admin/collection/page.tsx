@@ -32,6 +32,7 @@ export default async function CollectionAdminPage() {
       year: true,
       isExpansion: true,
       manuallyEditedFields: true,
+      lentOut: true,
     },
   });
 

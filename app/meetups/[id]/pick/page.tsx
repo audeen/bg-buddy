@@ -44,6 +44,7 @@ export default async function PickPage({
         mechanics: true,
         bestPlayerCounts: true,
         recommendedPlayerCounts: true,
+        lentOut: true,
       },
       orderBy: { name: "asc" },
     }),

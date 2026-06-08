@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   purgeCollectionAction,
   removeGameFromCollectionAction,
+  setGameLentOutAction,
 } from "@/app/actions";
 import { CameraIcon } from "@/components/BarcodeScanClient";
 
@@ -15,6 +16,7 @@ export type CollectionGameRow = {
   year: number | null;
   isExpansion: boolean;
   manuallyEditedFields: string[];
+  lentOut: boolean;
 };
 
 export function CollectionManagerClient({
@@ -69,6 +71,27 @@ export function CollectionManagerClient({
         deleted === 0
           ? "Sammlung ist bereits leer."
           : `${deleted} ${deleted === 1 ? "Spiel" : "Spiele"} aus der Sammlung entfernt.`,
+      );
+      router.refresh();
+    });
+  }
+
+  function toggleLentOut(game: CollectionGameRow) {
+    const nextLent = !game.lentOut;
+    const label = game.name;
+
+    setMessage(null);
+    setError(null);
+    startTransition(async () => {
+      const res = await setGameLentOutAction(game.id, nextLent);
+      if (res && "error" in res && res.error) {
+        setError(res.error);
+        return;
+      }
+      setMessage(
+        nextLent
+          ? `„${label}" als verliehen markiert.`
+          : `„${label}" wieder verfügbar.`,
       );
       router.refresh();
     });
@@ -175,6 +198,7 @@ export function CollectionManagerClient({
                   BGG #{g.id}
                   {g.year ? ` · ${g.year}` : ""}
                   {g.isExpansion ? " · Erweiterung" : ""}
+                  {g.lentOut ? " · Verliehen" : ""}
                   {g.manuallyEditedFields.length > 0 &&
                     ` · ${g.manuallyEditedFields.length} manuell`}
                 </span>
@@ -186,6 +210,16 @@ export function CollectionManagerClient({
                 >
                   Bearbeiten
                 </Link>
+                <button
+                  type="button"
+                  className={`btn w-full sm:w-auto min-h-[44px] ${
+                    g.lentOut ? "btn-primary" : "btn-ghost"
+                  }`}
+                  disabled={pending}
+                  onClick={() => toggleLentOut(g)}
+                >
+                  {pending ? "…" : g.lentOut ? "Zurückgegeben" : "Spiel verliehen"}
+                </button>
                 <button
                   type="button"
                   className="btn btn-ghost text-[var(--primary)] w-full sm:w-auto min-h-[44px]"

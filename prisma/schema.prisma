@@ -43,6 +43,7 @@ model Game {
   recommendedPlayerCounts Int[]
   enriched                Boolean  @default(false)
   listedInCollection      Boolean  @default(true)
+  lentOut                 Boolean  @default(false)
   barcode                String?  @unique
   manuallyEditedFields    String[] @default([])
   updatedAt               DateTime @updatedAt

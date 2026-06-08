@@ -21,7 +21,7 @@ import {
 import { enqueuePickTap } from "@/lib/pick-tap-queue";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
-export type PickGame = GameDetailData;
+export type PickGame = GameDetailData & { lentOut?: boolean };
 
 type DetailState = {
   viewGame: PickGame;
@@ -186,6 +186,7 @@ export function PickClient({
 
   function cycleGamePoints(gameId: number) {
     if (expectedLocked) return;
+    if (games.find((g) => g.id === gameId)?.lentOut) return;
     const playerCount = selected;
     enqueuePickTap(tapQueueRef, tapFlushScheduledRef, () => {
       applyPickTapForGame(gameId, playerCount);
@@ -243,11 +244,17 @@ export function PickClient({
             const key = pointsKey(g.id, selected);
             const gamePoints = points[key] ?? 0;
             const isGuest = guestIdSet.has(g.id);
+            const isLent = !!g.lentOut;
             return (
               <li key={g.id} className="flex flex-col gap-1">
                 {isGuest && (
                   <span className="text-xs font-semibold text-[var(--accent)] px-0.5">
                     Temporär
+                  </span>
+                )}
+                {isLent && (
+                  <span className="text-xs font-semibold text-[var(--muted)] px-0.5">
+                    Verliehen
                   </span>
                 )}
                 <GameCard
@@ -256,7 +263,7 @@ export function PickClient({
                   selected={gamePoints > 0}
                   selectedPoints={gamePoints}
                   ownedExpansions={expansionsByBaseId[String(g.id)] ?? []}
-                  disabled={expectedLocked}
+                  disabled={expectedLocked || isLent}
                   onActivate={() => cycleGamePoints(g.id)}
                   onDetailsClick={(displayed) => {
                     const expansions = expansionsByBaseId[String(g.id)] ?? [];

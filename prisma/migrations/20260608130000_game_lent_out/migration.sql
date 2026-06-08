@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Game" ADD COLUMN "lentOut" BOOLEAN NOT NULL DEFAULT false;
