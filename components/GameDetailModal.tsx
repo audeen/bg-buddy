@@ -100,6 +100,10 @@ export function GameDetailModal({
   const pointerIdRef = useRef<number | null>(null);
   const captureTargetRef = useRef<Element | null>(null);
   const snapPointRef = useRef<SnapPoint>("partial");
+  const onCloseRef = useRef(onClose);
+  const prevGameRef = useRef<GameDetailData | null>(null);
+
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     snapPointRef.current = snapPoint;
@@ -115,8 +119,8 @@ export function GameDetailModal({
       skipPopCloseRef.current = true;
       window.history.back();
     }
-    onClose();
-  }, [onClose]);
+    onCloseRef.current();
+  }, []);
 
   const clearDragVisuals = useCallback(() => {
     const panel = panelRef.current;
@@ -225,8 +229,34 @@ export function GameDetailModal({
     [dismiss, clearDragVisuals, demoteToPartial],
   );
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
+  useEffect(() => {
+    if (!game) {
+      prevGameRef.current = null;
+      return;
+    }
+
+    const isFreshOpen = prevGameRef.current === null;
+    prevGameRef.current = game;
+
+    if (isFreshOpen) {
+      setSnapPoint("partial");
+      snapPointRef.current = "partial";
+      scrolledToBottomRef.current = false;
+      window.history.pushState({ gameDetailModal: true }, "");
+      historyPushedRef.current = true;
+      clearDragVisuals();
+    }
+
+    const onPopState = () => {
+      if (skipPopCloseRef.current) {
+        skipPopCloseRef.current = false;
+        return;
+      }
+      historyPushedRef.current = false;
+      onCloseRef.current();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         dismiss();
         return;
@@ -248,27 +278,6 @@ export function GameDetailModal({
         e.preventDefault();
         first.focus();
       }
-    },
-    [dismiss],
-  );
-
-  useEffect(() => {
-    if (!game) return;
-
-    setSnapPoint("partial");
-    snapPointRef.current = "partial";
-    scrolledToBottomRef.current = false;
-    window.history.pushState({ gameDetailModal: true }, "");
-    historyPushedRef.current = true;
-    clearDragVisuals();
-
-    const onPopState = () => {
-      if (skipPopCloseRef.current) {
-        skipPopCloseRef.current = false;
-        return;
-      }
-      historyPushedRef.current = false;
-      onClose();
     };
 
     const prevOverflow = document.body.style.overflow;
@@ -282,13 +291,8 @@ export function GameDetailModal({
       document.body.style.overflow = prevOverflow;
       document.removeEventListener("keydown", handleKeyDown);
       clearDragVisuals();
-      if (historyPushedRef.current) {
-        historyPushedRef.current = false;
-        skipPopCloseRef.current = true;
-        window.history.back();
-      }
     };
-  }, [game, onClose, handleKeyDown, clearDragVisuals]);
+  }, [game, dismiss, clearDragVisuals]);
 
   const endSheetDrag = useCallback(
     (rawDelta: number) => {

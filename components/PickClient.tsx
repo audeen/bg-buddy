@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
 import { GameCard, type GameCardGame } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
@@ -68,6 +68,7 @@ export function PickClient({
   });
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const [detail, setDetail] = useState<DetailState | null>(null);
+  const closeDetail = useCallback(() => setDetail(null), []);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const persistChainRef = useRef(Promise.resolve());
   const tapQueueRef = useRef<Array<() => void>>([]);
@@ -278,7 +279,7 @@ export function PickClient({
       <GameDetailModal
         game={detail?.viewGame ?? null}
         baseGame={detail?.baseGame}
-        onClose={() => setDetail(null)}
+        onClose={closeDetail}
         playerCount={selected}
         ownedExpansions={
           detail

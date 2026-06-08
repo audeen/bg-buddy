@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { GameCard, type GameCardGame } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameDetailData } from "@/components/GameDetailView";
@@ -24,6 +24,7 @@ export function GamesClient({
   expansionsByBaseId: Record<string, GameCardGame[]>;
 }) {
   const [detail, setDetail] = useState<DetailState | null>(null);
+  const closeDetail = useCallback(() => setDetail(null), []);
 
   if (games.length === 0) {
     return (
@@ -62,7 +63,7 @@ export function GamesClient({
       <GameDetailModal
         game={detail?.viewGame ?? null}
         baseGame={detail?.baseGame}
-        onClose={() => setDetail(null)}
+        onClose={closeDetail}
         playerCount={playerCount}
         activeFilters={activeFilters}
         filterMode
