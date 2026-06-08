@@ -252,17 +252,13 @@ export function PickClient({
                     Temporär
                   </span>
                 )}
-                {isLent && (
-                  <span className="text-xs font-semibold text-[var(--muted)] px-0.5">
-                    Verliehen
-                  </span>
-                )}
                 <GameCard
                   game={g}
                   playerCount={selected}
                   selected={gamePoints > 0}
                   selectedPoints={gamePoints}
                   ownedExpansions={expansionsByBaseId[String(g.id)] ?? []}
+                  lentOut={isLent}
                   disabled={expectedLocked || isLent}
                   onActivate={() => cycleGamePoints(g.id)}
                   onDetailsClick={(displayed) => {

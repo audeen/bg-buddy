@@ -13,6 +13,7 @@ import {
 import { expansionNamesForPlayerCount } from "@/lib/effective-player-count";
 import { ExpansionRequiredBanner } from "@/components/ExpansionRequiredBanner";
 import { ExpansionVoteFollowsBanner } from "@/components/ExpansionVoteFollowsBanner";
+import { LentOutBanner } from "@/components/LentOutBanner";
 import { FilterChipButton } from "@/components/FilterChipButton";
 import type { GameFilters } from "@/lib/game-filters";
 import {
@@ -38,6 +39,7 @@ type BaseProps = {
   selectedPoints?: number;
   ownedExpansions?: GameCardGame[];
   className?: string;
+  lentOut?: boolean;
 };
 
 type ButtonProps = BaseProps & {
@@ -117,6 +119,7 @@ function CardCover({
   ownedExpansions,
   showExpansionBanner,
   showExpansionVoteFollows,
+  lentOut,
 }: {
   game: GameCardGame;
   playerCount?: number;
@@ -124,6 +127,7 @@ function CardCover({
   ownedExpansions: GameCardGame[];
   showExpansionBanner: boolean;
   showExpansionVoteFollows?: boolean;
+  lentOut?: boolean;
 }) {
   const requiredExpansions =
     showExpansionBanner && playerCount != null
@@ -133,11 +137,14 @@ function CardCover({
     requiredExpansions.length > 0 && playerCount != null
       ? expansionRequiredForCountLabel(requiredExpansions, playerCount)
       : null;
+  const coverAriaLabel = lentOut
+    ? "Verliehen"
+    : bannerLabel ?? undefined;
 
   return (
     <div
       className="relative shrink-0 card-game-cover overflow-hidden"
-      aria-label={bannerLabel ?? undefined}
+      aria-label={coverAriaLabel}
     >
       <GameCover
         src={game.thumbnail ?? game.image}
@@ -146,6 +153,7 @@ function CardCover({
       />
       {bannerLabel && <ExpansionRequiredBanner label={bannerLabel} />}
       {showExpansionVoteFollows && <ExpansionVoteFollowsBanner />}
+      {lentOut && <LentOutBanner />}
     </div>
   );
 }
@@ -300,6 +308,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
     selectedPoints,
     ownedExpansions = [],
     className = "",
+    lentOut,
   } = props;
   const disabled = "disabled" in props ? props.disabled : false;
   const onDetailsClick =
@@ -360,6 +369,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
     ownedExpansions,
     showExpansionBanner,
     showExpansionVoteFollows,
+    lentOut,
   };
 
   if ("href" in props && props.href) {
