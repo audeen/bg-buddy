@@ -1,14 +1,4 @@
-import Image from "next/image";
-
-const OPTIMIZABLE_HOST = "cf.geekdo-images.com";
-
-function canOptimize(src: string): boolean {
-  try {
-    return new URL(src).hostname === OPTIMIZABLE_HOST;
-  } catch {
-    return false;
-  }
-}
+/* eslint-disable @next/next/no-img-element */
 
 export function GameCover({
   src,
@@ -29,41 +19,16 @@ export function GameCover({
       </div>
     );
   }
-
-  if (canOptimize(src)) {
-    return (
-      <div
-        className={`relative overflow-hidden bg-[var(--surface-2)] ${className}`}
-      >
-        <Image
-          src={src}
-          alt=""
-          fill
-          sizes="(max-width: 640px) 120px, 200px"
-          aria-hidden
-          className="object-cover scale-110 blur-xl"
-        />
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          sizes="(max-width: 640px) 120px, 200px"
-          className="z-[1] object-contain"
-        />
-      </div>
-    );
-  }
-
   return (
     <div
       className={`relative overflow-hidden bg-[var(--surface-2)] ${className}`}
-      style={{
-        backgroundImage: `url("${src}")`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt=""
+        aria-hidden
+        className="absolute inset-0 h-full w-full object-cover scale-110 blur-xl"
+      />
       <img
         src={src}
         alt={alt}
