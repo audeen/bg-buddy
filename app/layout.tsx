@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
@@ -48,6 +49,7 @@ export default async function RootLayout({
           BG Buddy · Daten von BoardGameGeek
         </footer>
         <BottomNav fallbackMeetupId={fallbackMeetup?.id ?? null} />
+        <Analytics />
       </body>
     </html>
   );
