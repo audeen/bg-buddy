@@ -6,6 +6,7 @@ import {
   parseExpansionDuelFrozenData,
   type ExpansionConfigGame,
 } from "@/lib/expansion-duel";
+import { isPlayableAtCount } from "@/lib/effective-player-count";
 import { getDuelProgressForCount, parseDuelFrozenData } from "@/lib/duel-pairs";
 import { buildGameTieMetaMap } from "@/lib/duel-tiebreaker";
 import { duelParticipantIds } from "@/lib/duel-pairs";
@@ -22,6 +23,7 @@ export type ExpansionPhaseState = {
   expansionDuelStarted: boolean;
   expansionDuelComplete: boolean;
   optionalExpansionCount: number;
+  winnerHasExpansionsAtStar: boolean;
 };
 
 type VoteGameMeta = {
@@ -171,6 +173,7 @@ export async function loadExpansionPhaseState(
       expansionDuelStarted: !!meetup.expansionDuelStartedAt,
       expansionDuelComplete: false,
       optionalExpansionCount: 0,
+      winnerHasExpansionsAtStar: false,
     };
   }
 
@@ -203,10 +206,14 @@ export async function loadExpansionPhaseState(
       expansionDuelStarted: !!meetup.expansionDuelStartedAt,
       expansionDuelComplete: false,
       optionalExpansionCount: 0,
+      winnerHasExpansionsAtStar: false,
     };
   }
 
   const owned = ownedByBase.get(winner.id) ?? [];
+  const winnerHasExpansionsAtStar = owned.some((exp) =>
+    isPlayableAtCount(exp.minPlayers, exp.maxPlayers, expectedPlayerCount),
+  );
   const mandatory = mandatoryByBase.get(winner.id) ?? [];
   const configs = buildExpansionConfigs(
     baseGame,
@@ -249,6 +256,7 @@ export async function loadExpansionPhaseState(
     expansionDuelStarted,
     expansionDuelComplete,
     optionalExpansionCount,
+    winnerHasExpansionsAtStar,
   };
 }
 
@@ -261,6 +269,7 @@ function emptyExpansionPhase(): ExpansionPhaseState {
     expansionDuelStarted: false,
     expansionDuelComplete: false,
     optionalExpansionCount: 0,
+    winnerHasExpansionsAtStar: false,
   };
 }
 

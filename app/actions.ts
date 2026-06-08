@@ -32,6 +32,7 @@ import {
   type ExpansionDuelFrozenData,
 } from "@/lib/expansion-duel";
 import { loadExpansionPhaseState } from "@/lib/expansion-phase";
+import { isPlayableAtCount } from "@/lib/effective-player-count";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import {
   formatDuellNotReadyMessage,
@@ -557,12 +558,37 @@ export async function toggleMandatoryExpansionAction(
     return { error: "Nur der Host kann Pflicht-Erweiterungen festlegen." };
   }
 
+  const meetupFull = await prisma.meetup.findUnique({
+    where: { id: meetupId },
+    select: { expectedPlayerCount: true, expansionDuelStartedAt: true },
+  });
+  if (!meetupFull) return { error: "Treffen nicht gefunden." };
+  if (meetupFull.expansionDuelStartedAt) {
+    return {
+      error: "Pflicht-Erweiterungen können nach Start der Abstimmung nicht mehr geändert werden.",
+    };
+  }
+
+  const expansionPhase = await loadExpansionPhaseState(
+    meetupId,
+    meetupFull.expectedPlayerCount,
+    prisma,
+  );
+  if (!expansionPhase.mainDuelComplete || !expansionPhase.winnerGameId) {
+    return { error: "Pflicht-Erweiterungen erst nach dem Haupt-Duell." };
+  }
+  if (baseGameId !== expansionPhase.winnerGameId) {
+    return { error: "Pflicht-Erweiterungen nur für das Sieger-Spiel." };
+  }
+
   const expansion = await prisma.game.findUnique({
     where: { id: expansionGameId },
     select: {
       isExpansion: true,
       expandsGameIds: true,
       listedInCollection: true,
+      minPlayers: true,
+      maxPlayers: true,
     },
   });
   if (
@@ -571,6 +597,16 @@ export async function toggleMandatoryExpansionAction(
     !expansion.listedInCollection
   ) {
     return { error: "Ungültige Erweiterung für dieses Basisspiel." };
+  }
+
+  if (
+    !isPlayableAtCount(
+      expansion.minPlayers,
+      expansion.maxPlayers,
+      meetupFull.expectedPlayerCount,
+    )
+  ) {
+    return { error: "Erweiterung ist bei der erwarteten Spieleranzahl nicht spielbar." };
   }
 
   if (mandatory) {
@@ -626,6 +662,13 @@ export async function startExpansionDuelAction(meetupId: string) {
   if (expansionPhase.optionalExpansionCount === 0) {
     return { error: "Keine optionalen Erweiterungen zum Abstimmen." };
   }
+
+  await prisma.meetupMandatoryExpansion.deleteMany({
+    where: {
+      meetupId,
+      baseGameId: { not: expansionPhase.winnerGameId },
+    },
+  });
 
   const mandatory = meetup.mandatoryExpansions
     .filter((m) => m.baseGameId === expansionPhase.winnerGameId)

@@ -7,9 +7,6 @@ import { MeetupActionsMenu } from "@/components/MeetupActionsMenu";
 import { MeetupShareQr } from "@/components/MeetupShareQr";
 import { MeetupVoteActions } from "@/components/MeetupVoteActions";
 import { MeetupExpansionActions } from "@/components/MeetupExpansionActions";
-import {
-  MeetupMandatoryExpansions,
-} from "@/components/MeetupMandatoryExpansions";
 import { MeetupRankings } from "@/components/MeetupRankings";
 import { MeetupParticipants } from "@/components/MeetupParticipants";
 import { JoinMeetupButton } from "@/components/JoinMeetupButton";
@@ -35,8 +32,8 @@ import {
 } from "@/lib/meetup-participants";
 import { loadExpansionPhaseState } from "@/lib/expansion-phase";
 import {
-  loadMandatoryExpansionFamilies,
-  mandatoryExpansionKeys,
+  loadWinnerExpansionFamily,
+  mandatoryExpansionKeysForWinner,
 } from "@/lib/meetup-mandatory-data";
 import { resolveExpansionResultLabel } from "@/lib/expansion-result";
 
@@ -179,10 +176,17 @@ export default async function MeetupDetail({
   const isHost = user?.id === meetup.createdBy.id;
 
   const expansionPhase = await loadExpansionPhaseState(id, expected, prisma);
-  const mandatoryFamilies = isHost
-    ? await loadMandatoryExpansionFamilies()
-    : [];
-  const mandatoryKeys = mandatoryExpansionKeys(meetup.mandatoryExpansions);
+  const winnerFamily =
+    duelRoundComplete && expansionPhase.winnerGameId
+      ? await loadWinnerExpansionFamily(expansionPhase.winnerGameId, expected)
+      : null;
+  const mandatoryKeys =
+    expansionPhase.winnerGameId != null
+      ? mandatoryExpansionKeysForWinner(
+          meetup.mandatoryExpansions,
+          expansionPhase.winnerGameId,
+        )
+      : [];
 
   let expansionResultLabel: string | null = null;
   if (
@@ -388,11 +392,6 @@ export default async function MeetupDetail({
               meetupId={meetup.id}
               guestGames={guestGames}
             />
-            <MeetupMandatoryExpansions
-              meetupId={meetup.id}
-              families={mandatoryFamilies}
-              mandatoryKeys={mandatoryKeys}
-            />
           </>
         ) : (
           <ExpectedCountReadOnly count={meetup.expectedPlayerCount} />
@@ -432,8 +431,13 @@ export default async function MeetupDetail({
             expansionDuelStarted={expansionPhase.expansionDuelStarted}
             expansionDuelComplete={expansionPhase.expansionDuelComplete}
             winnerName={expansionPhase.winnerName}
+            winnerFamily={winnerFamily}
+            mandatoryKeys={mandatoryKeys}
             expansionResultLabel={expansionResultLabel}
             optionalExpansionCount={expansionPhase.optionalExpansionCount}
+            winnerHasExpansionsAtStar={
+              expansionPhase.winnerHasExpansionsAtStar
+            }
           />
         )}
       </div>

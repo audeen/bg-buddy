@@ -1,41 +1,57 @@
 import { prisma } from "@/lib/prisma";
-import {
-  buildOwnedExpansionsByBaseGame,
-  loadOwnedExpansionRows,
-} from "@/lib/owned-expansions";
+import { isPlayableAtCount } from "@/lib/effective-player-count";
 import type { MandatoryExpansionFamily } from "@/components/MeetupMandatoryExpansions";
 
-export async function loadMandatoryExpansionFamilies(): Promise<
-  MandatoryExpansionFamily[]
-> {
-  const expansions = await loadOwnedExpansionRows();
-  const byBase = buildOwnedExpansionsByBaseGame(expansions);
-  const baseIds = [...byBase.keys()];
-  if (baseIds.length === 0) return [];
+export async function loadWinnerExpansionFamily(
+  winnerGameId: number,
+  playerCount: number,
+): Promise<MandatoryExpansionFamily | null> {
+  const [baseGame, expansions] = await Promise.all([
+    prisma.game.findUnique({
+      where: { id: winnerGameId, isExpansion: false },
+      select: { id: true, name: true },
+    }),
+    prisma.game.findMany({
+      where: {
+        isExpansion: true,
+        listedInCollection: true,
+        expandsGameIds: { has: winnerGameId },
+      },
+      select: {
+        id: true,
+        name: true,
+        minPlayers: true,
+        maxPlayers: true,
+      },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
-  const baseGames = await prisma.game.findMany({
-    where: { id: { in: baseIds }, isExpansion: false },
-    select: { id: true, name: true },
-  });
-  const baseNameById = new Map(baseGames.map((g) => [g.id, g.name]));
+  if (!baseGame) return null;
 
-  const families: MandatoryExpansionFamily[] = [];
-  for (const [baseGameId, exps] of byBase) {
-    if (exps.length === 0) continue;
-    families.push({
-      baseGameId,
-      baseGameName: baseNameById.get(baseGameId) ?? "Basisspiel",
-      expansions: exps.map((e) => ({ id: e.id, name: e.name })),
-    });
-  }
-
-  return families.sort((a, b) =>
-    a.baseGameName.localeCompare(b.baseGameName, "de"),
+  const playable = expansions.filter((exp) =>
+    isPlayableAtCount(exp.minPlayers, exp.maxPlayers, playerCount),
   );
+  if (playable.length === 0) return null;
+
+  return {
+    baseGameId: baseGame.id,
+    baseGameName: baseGame.name,
+    expansions: playable.map((e) => ({ id: e.id, name: e.name })),
+  };
 }
 
 export function mandatoryExpansionKeys(
   rows: { baseGameId: number; expansionGameId: number }[],
 ): string[] {
   return rows.map((r) => `${r.baseGameId}:${r.expansionGameId}`);
+}
+
+export function mandatoryExpansionKeysForWinner(
+  rows: { baseGameId: number; expansionGameId: number }[],
+  winnerGameId: number,
+): string[] {
+  return mandatoryExpansionKeys(
+    rows.filter((r) => r.baseGameId === winnerGameId),
+  );
 }
