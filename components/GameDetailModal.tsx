@@ -389,12 +389,16 @@ export function GameDetailModal({
 
   useEffect(() => {
     if (!game) return;
-
-    const body = bodyRef.current;
-    if (!body) return;
     if (!window.matchMedia("(max-width: 639px)").matches) return;
 
-    function initBodyGesture(touchY: number, target: EventTarget | null) {
+    const scrollBody = bodyRef.current;
+    if (!scrollBody) return;
+
+    function initBodyGesture(
+      body: HTMLDivElement,
+      touchY: number,
+      target: EventTarget | null,
+    ) {
       if (!(target instanceof HTMLElement)) return false;
       if (target.closest("button, a")) return false;
 
@@ -415,12 +419,14 @@ export function GameDetailModal({
     }
 
     function onTouchStart(e: TouchEvent) {
-      if (e.touches.length !== 1) return;
-      initBodyGesture(e.touches[0].clientY, e.target);
+      const body = bodyRef.current;
+      if (!body || e.touches.length !== 1) return;
+      initBodyGesture(body, e.touches[0].clientY, e.target);
     }
 
     function onTouchMove(e: TouchEvent) {
-      if (e.touches.length !== 1) return;
+      const body = bodyRef.current;
+      if (!body || e.touches.length !== 1) return;
 
       const touchY = e.touches[0].clientY;
 
@@ -479,16 +485,16 @@ export function GameDetailModal({
       dragStartYRef.current = 0;
     }
 
-    body.addEventListener("touchstart", onTouchStart, { passive: true });
-    body.addEventListener("touchmove", onTouchMove, { passive: false });
-    body.addEventListener("touchend", onTouchEnd, { passive: true });
-    body.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    scrollBody.addEventListener("touchstart", onTouchStart, { passive: true });
+    scrollBody.addEventListener("touchmove", onTouchMove, { passive: false });
+    scrollBody.addEventListener("touchend", onTouchEnd, { passive: true });
+    scrollBody.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
     return () => {
-      body.removeEventListener("touchstart", onTouchStart);
-      body.removeEventListener("touchmove", onTouchMove);
-      body.removeEventListener("touchend", onTouchEnd);
-      body.removeEventListener("touchcancel", onTouchEnd);
+      scrollBody.removeEventListener("touchstart", onTouchStart);
+      scrollBody.removeEventListener("touchmove", onTouchMove);
+      scrollBody.removeEventListener("touchend", onTouchEnd);
+      scrollBody.removeEventListener("touchcancel", onTouchEnd);
     };
   }, [game, viewGame, applyDragVisuals, endSheetDrag]);
 
