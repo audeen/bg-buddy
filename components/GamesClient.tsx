@@ -18,7 +18,7 @@ export function GamesClient({
   activeFilters,
   expansionsByBaseId,
 }: {
-  games: GameDetailData[];
+  games: (GameDetailData & { lentOut?: boolean })[];
   playerCount?: number;
   activeFilters: GameFilters;
   expansionsByBaseId: Record<string, GameCardGame[]>;
@@ -38,13 +38,19 @@ export function GamesClient({
     <>
       <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {games.map((g) => (
-          <li key={g.id}>
+          <li key={g.id} className="flex flex-col gap-1">
+            {g.lentOut && (
+              <span className="text-xs font-semibold text-[var(--muted)] px-0.5">
+                Verliehen
+              </span>
+            )}
             <GameCard
               game={g}
               playerCount={playerCount}
               activeFilters={activeFilters}
               filterMode
               ownedExpansions={expansionsByBaseId[String(g.id)] ?? []}
+              className={g.lentOut ? "opacity-50" : ""}
               onClick={(displayed) => {
                 const expansions = expansionsByBaseId[String(g.id)] ?? [];
                 setDetail({

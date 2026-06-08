@@ -32,6 +32,7 @@ const gameSelect = {
   mechanics: true,
   bestPlayerCounts: true,
   recommendedPlayerCounts: true,
+  lentOut: true,
 } as const;
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
