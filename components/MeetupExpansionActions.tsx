@@ -18,7 +18,6 @@ export function MeetupExpansionActions({
   winnerName,
   winnerFamily,
   mandatoryKeys,
-  expansionResultLabel,
   optionalExpansionCount,
   winnerHasExpansionsAtStar,
 }: {
@@ -30,7 +29,6 @@ export function MeetupExpansionActions({
   winnerName: string | null;
   winnerFamily: MandatoryExpansionFamily | null;
   mandatoryKeys: string[];
-  expansionResultLabel: string | null;
   optionalExpansionCount: number;
   winnerHasExpansionsAtStar: boolean;
 }) {
@@ -40,13 +38,10 @@ export function MeetupExpansionActions({
 
   if (!winnerName || !winnerHasExpansionsAtStar || !winnerFamily) return null;
 
-  if (expansionDuelComplete && expansionResultLabel) {
+  if (expansionDuelComplete) {
     return (
       <p className="text-sm text-[var(--muted)] border-t border-[var(--border)] pt-4">
-        <span className="font-semibold text-[var(--foreground)]">
-          {expansionResultLabel}
-        </span>{" "}
-        — gewählte Variante für {winnerName}
+        Erweiterungs-Abstimmung abgeschlossen — Ergebnis im Varianten-Ranking.
       </p>
     );
   }

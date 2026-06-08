@@ -136,6 +136,8 @@ export function Ranking({
   pointsLabel = "Punkte",
   showPickDuelBreakdown = false,
   animateReveal = false,
+  subtitle,
+  hidePlayerCountTabs = false,
 }: {
   expected: number;
   playerCounts: number[];
@@ -144,6 +146,8 @@ export function Ranking({
   pointsLabel?: string;
   showPickDuelBreakdown?: boolean;
   animateReveal?: boolean;
+  subtitle?: string;
+  hidePlayerCountTabs?: boolean;
 }) {
   const initial = playerCounts.includes(expected)
     ? expected
@@ -250,12 +254,16 @@ export function Ranking({
     startLayoutFollow();
   }
 
-  const showPlayerCountTabs = playerCounts.length > 1;
+  const showPlayerCountTabs =
+    !hidePlayerCountTabs && playerCounts.length > 1;
   const label = scenarioLabel(selected, expected, completedCounts);
   const reserveRevealHeight = animateReveal && !revealDone && entries.length > 0;
 
   return (
     <div className="flex flex-col gap-3">
+      {subtitle && (
+        <p className="text-sm text-[var(--muted)]">{subtitle}</p>
+      )}
       {label && (
         <p className="text-sm text-[var(--muted)]">{label}</p>
       )}

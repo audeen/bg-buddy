@@ -35,7 +35,12 @@ import {
   loadWinnerExpansionFamily,
   mandatoryExpansionKeysForWinner,
 } from "@/lib/meetup-mandatory-data";
-import { resolveExpansionResultLabel } from "@/lib/expansion-result";
+import { parseExpansionDuelFrozenData } from "@/lib/expansion-duel";
+import {
+  buildExpansionRankingEntries,
+  coverByVoteGameIdForConfigs,
+} from "@/lib/expansion-ranking";
+import type { RankEntry } from "@/components/Ranking";
 
 export const dynamic = "force-dynamic";
 
@@ -188,17 +193,11 @@ export default async function MeetupDetail({
         )
       : [];
 
-  let expansionResultLabel: string | null = null;
-  if (
-    duelRoundComplete &&
-    expansionPhase.winnerGameId &&
-    (expansionPhase.expansionDuelComplete ||
-      expansionPhase.optionalExpansionCount === 0)
-  ) {
+  let expansionRanking: RankEntry[] = [];
+  let expansionRankingAvailable = false;
+
+  if (duelRoundComplete && expansionPhase.winnerGameId) {
     const winnerId = expansionPhase.winnerGameId;
-    const mandatoryIds = meetup.mandatoryExpansions
-      .filter((m) => m.baseGameId === winnerId)
-      .map((m) => m.expansionGameId);
     const [baseGame, ownedExpansions, expansionVotes] = await Promise.all([
       prisma.game.findUnique({
         where: { id: winnerId },
@@ -239,15 +238,34 @@ export default async function MeetupDetail({
         },
       }),
     ]);
+
     if (baseGame) {
-      expansionResultLabel = resolveExpansionResultLabel(
-        baseGame,
-        ownedExpansions,
-        mandatoryIds,
-        expected,
-        expansionVotes,
-        meetup.expansionDuelFrozenData,
-      );
+      if (expansionPhase.expansionDuelStarted) {
+        const frozen = parseExpansionDuelFrozenData(
+          meetup.expansionDuelFrozenData,
+          expected,
+        );
+        if (frozen && frozen.configs.length > 0) {
+          const gamesById = new Map([
+            [baseGame.id, baseGame],
+            ...ownedExpansions.map((e) => [e.id, e] as const),
+          ]);
+          const covers = coverByVoteGameIdForConfigs(
+            frozen.configs,
+            gamesById,
+            baseGame,
+          );
+          expansionRanking = buildExpansionRankingEntries(
+            frozen.configs,
+            expansionVotes,
+            covers,
+          );
+          expansionRankingAvailable =
+            expansionRanking.length >= 2 ||
+            (expansionPhase.expansionDuelComplete &&
+              expansionRanking.length >= 1);
+        }
+      }
     }
   }
 
@@ -433,7 +451,6 @@ export default async function MeetupDetail({
             winnerName={expansionPhase.winnerName}
             winnerFamily={winnerFamily}
             mandatoryKeys={mandatoryKeys}
-            expansionResultLabel={expansionResultLabel}
             optionalExpansionCount={expansionPhase.optionalExpansionCount}
             winnerHasExpansionsAtStar={
               expansionPhase.winnerHasExpansionsAtStar
@@ -455,6 +472,10 @@ export default async function MeetupDetail({
         finishedParticipants={finishedParticipants}
         totalParticipants={totalParticipants}
         isHost={isHost}
+        expansionRanking={expansionRanking}
+        expansionDuelComplete={expansionPhase.expansionDuelComplete}
+        expansionRankingAvailable={expansionRankingAvailable}
+        winnerName={expansionPhase.winnerName}
       />
     </div>
   );

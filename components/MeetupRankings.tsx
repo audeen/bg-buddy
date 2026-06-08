@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Ranking, type RankEntry } from "@/components/Ranking";
 import type { DuelPhase } from "@/lib/duel-pairs";
 import { estimateRankingBlockHeight } from "@/lib/ranking-layout";
@@ -14,6 +14,8 @@ import {
 
 const UNLOCK_FADE_MS = 250;
 
+type RankingView = "expansion" | "base";
+
 export function MeetupRankings({
   expected,
   playerCounts,
@@ -26,6 +28,10 @@ export function MeetupRankings({
   finishedParticipants = 0,
   totalParticipants = 0,
   isHost = false,
+  expansionRanking = [],
+  expansionDuelComplete = false,
+  expansionRankingAvailable = false,
+  winnerName = null,
 }: {
   expected: number;
   playerCounts: number[];
@@ -38,7 +44,15 @@ export function MeetupRankings({
   finishedParticipants?: number;
   totalParticipants?: number;
   isHost?: boolean;
+  expansionRanking?: RankEntry[];
+  expansionDuelComplete?: boolean;
+  expansionRankingAvailable?: boolean;
+  winnerName?: string | null;
 }) {
+  const defaultView: RankingView =
+    expansionDuelComplete && expansionRankingAvailable ? "expansion" : "base";
+
+  const [view, setView] = useState<RankingView>(defaultView);
   const [userRevealed, setUserRevealed] = useState(
     () =>
       typeof window !== "undefined" &&
@@ -49,6 +63,12 @@ export function MeetupRankings({
   const [unlocking, setUnlocking] = useState(false);
 
   const revealed = userRevealed || (duelComplete && totalPairs > 0);
+
+  useEffect(() => {
+    if (revealed && expansionDuelComplete && expansionRankingAvailable) {
+      setView("expansion");
+    }
+  }, [revealed, expansionDuelComplete, expansionRankingAvailable]);
 
   useEffect(() => {
     const cleanupMount = retryScrollToErgebnisseIfNeeded();
@@ -75,19 +95,35 @@ export function MeetupRankings({
 
   const openPairs = Math.max(0, totalPairs - groupDecidedPairs);
 
-  const statusText =
+  const baseStatusText =
     duelPhase === "GROUP" && totalPairs > 0
       ? `Matrix: ${groupDecidedPairs}/${totalPairs} abgestimmt · ${finishedParticipants}/${totalParticipants} Spieler fertig`
       : totalPairs > 0
         ? `Noch ${openPairs} von ${totalPairs} Vergleichen ohne alle Stimmen.`
         : `Ergebnisse für ${expected} Spieler ★ werden nach den Duellen freigegeben.`;
 
-  const expectedEntryCount = (combinedByCount[expected] ?? []).length;
+  const expansionRankingByCount = useMemo(
+    () => ({ [expected]: expansionRanking }),
+    [expected, expansionRanking],
+  );
+
+  const activeRankingByCount =
+    view === "expansion" && expansionRankingAvailable
+      ? expansionRankingByCount
+      : combinedByCount;
+
+  const activeEntryCount = (activeRankingByCount[expected] ?? []).length;
   const sectionReserveMinHeight = unlocking
-    ? estimateRankingBlockHeight(expectedEntryCount, {
-        withTabs: playerCounts.length > 1,
+    ? estimateRankingBlockHeight(activeEntryCount, {
+        withTabs:
+          view === "base" && playerCounts.length > 1,
       }) + 48
     : undefined;
+
+  const expansionSubtitle =
+    winnerName != null
+      ? `Erweiterungen für ${winnerName} bei ${expected} ★`
+      : `Erweiterungen bei ${expected} ★`;
 
   return (
     <section
@@ -99,7 +135,27 @@ export function MeetupRankings({
           : undefined
       }
     >
-      <h2 className="section-title">Ergebnisse</h2>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="section-title">Ergebnisse</h2>
+        {revealed && expansionRankingAvailable && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={`btn btn-tab ${view === "expansion" ? "btn-primary" : "btn-ghost"}`}
+              onClick={() => setView("expansion")}
+            >
+              Varianten
+            </button>
+            <button
+              type="button"
+              className={`btn btn-tab ${view === "base" ? "btn-primary" : "btn-ghost"}`}
+              onClick={() => setView("base")}
+            >
+              Basisspiele
+            </button>
+          </div>
+        )}
+      </div>
 
       {!revealed ? (
         <div
@@ -109,7 +165,7 @@ export function MeetupRankings({
           style={{ padding: "var(--space-card)" }}
         >
           {isHost && (
-            <p className="text-sm text-[var(--muted)]">{statusText}</p>
+            <p className="text-sm text-[var(--muted)]">{baseStatusText}</p>
           )}
           <button
             type="button"
@@ -122,13 +178,16 @@ export function MeetupRankings({
         </div>
       ) : (
         <Ranking
-          key={expected}
+          key={`${expected}-${view}`}
           expected={expected}
           playerCounts={playerCounts}
-          rankingByCount={combinedByCount}
+          rankingByCount={activeRankingByCount}
           completedCounts={completedCounts}
-          showPickDuelBreakdown
+          showPickDuelBreakdown={view === "base"}
+          pointsLabel={view === "expansion" ? "Siege" : "Punkte"}
           animateReveal={totalPairs > 0 && (duelComplete || userRevealed)}
+          subtitle={view === "expansion" ? expansionSubtitle : undefined}
+          hidePlayerCountTabs={view === "expansion"}
         />
       )}
     </section>
