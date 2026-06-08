@@ -16,8 +16,11 @@ import {
   type AddGameActionResult,
 } from "@/app/actions";
 import type { BarcodeLookupCandidate } from "@/lib/barcode-lookup";
+import type { BggSearchCandidate } from "@/lib/bgg-search";
 
 const DRAG_CLOSE_THRESHOLD = 100;
+
+type LookupKind = "barcode" | "name";
 
 type LookupResponse =
   | { status: "found"; barcode: string; bggId: number; name: string; verified: boolean }
@@ -28,24 +31,58 @@ type LookupResponse =
   | { status: "error"; message: string }
   | { error: string };
 
+type NameSearchResponse =
+  | {
+      status: "found";
+      query: string;
+      bggId: number;
+      name: string;
+      year: number | null;
+      isExpansion: boolean;
+    }
+  | { status: "candidates"; query: string; items: BggSearchCandidate[] }
+  | { status: "notFound"; query: string }
+  | { status: "alreadyInCollection"; query: string; bggId: number; name: string }
+  | { status: "error"; message: string }
+  | { error: string };
+
 type ScanLock =
-  | { phase: "lookingUp"; barcode: string }
+  | { phase: "lookingUp"; barcode: string; kind: LookupKind }
   | {
       phase: "found";
       barcode: string;
+      kind: LookupKind;
       bggId: number;
       name: string;
       thumbnailUrl?: string | null;
     }
-  | { phase: "candidates"; barcode: string; items: BarcodeLookupCandidate[] }
-  | { phase: "alreadyInCollection"; barcode: string; bggId: number; name: string }
-  | { phase: "notFound"; barcode: string }
-  | { phase: "error"; barcode: string; message: string }
-  | { phase: "added"; barcode: string; bggId: number; name: string };
+  | { phase: "candidates"; barcode: string; kind: LookupKind; items: BarcodeLookupCandidate[] }
+  | {
+      phase: "alreadyInCollection";
+      barcode: string;
+      kind: LookupKind;
+      bggId: number;
+      name: string;
+    }
+  | { phase: "notFound"; barcode: string; kind: LookupKind }
+  | { phase: "error"; barcode: string; kind: LookupKind; message: string }
+  | { phase: "added"; barcode: string; kind: LookupKind; bggId: number; name: string };
+
+function mapBggSearchCandidate(item: BggSearchCandidate): BarcodeLookupCandidate {
+  return {
+    bggId: item.bggId,
+    name: item.name,
+    thumbnailUrl: null,
+    confidence: null,
+    year: item.year,
+    isExpansion: item.isExpansion,
+  };
+}
 
 function lookupToScanLock(data: LookupResponse, barcode: string): ScanLock | null {
+  const kind: LookupKind = "barcode";
   if ("error" in data) {
-    return { phase: "error", barcode, message: data.error };
+    return { phase: "error", barcode, kind, message: data.error };
   }
 
   switch (data.status) {
@@ -53,29 +90,71 @@ function lookupToScanLock(data: LookupResponse, barcode: string): ScanLock | nul
       return {
         phase: "found",
         barcode: data.barcode,
+        kind,
         bggId: data.bggId,
         name: data.name,
       };
     case "candidates":
-      return { phase: "candidates", barcode: data.barcode, items: data.items };
+      return { phase: "candidates", barcode: data.barcode, kind, items: data.items };
     case "alreadyInCollection":
       return {
         phase: "alreadyInCollection",
         barcode: data.barcode,
+        kind,
         bggId: data.bggId,
         name: data.name,
       };
     case "notFound":
-      return { phase: "notFound", barcode: data.barcode };
+      return { phase: "notFound", barcode: data.barcode, kind };
     case "notConfigured":
       return {
         phase: "error",
         barcode,
+        kind,
         message:
           "Barcode-Lookup nicht konfiguriert. BGG-ID eingeben oder GAMEUPC_API_KEY setzen.",
       };
     case "error":
-      return { phase: "error", barcode, message: data.message };
+      return { phase: "error", barcode, kind, message: data.message };
+    default:
+      return null;
+  }
+}
+
+function nameSearchToScanLock(data: NameSearchResponse, query: string): ScanLock | null {
+  const kind: LookupKind = "name";
+  if ("error" in data) {
+    return { phase: "error", barcode: query, kind, message: data.error };
+  }
+
+  switch (data.status) {
+    case "found":
+      return {
+        phase: "found",
+        barcode: data.query,
+        kind,
+        bggId: data.bggId,
+        name: data.name,
+      };
+    case "candidates":
+      return {
+        phase: "candidates",
+        barcode: data.query,
+        kind,
+        items: data.items.map(mapBggSearchCandidate),
+      };
+    case "alreadyInCollection":
+      return {
+        phase: "alreadyInCollection",
+        barcode: data.query,
+        kind,
+        bggId: data.bggId,
+        name: data.name,
+      };
+    case "notFound":
+      return { phase: "notFound", barcode: data.query, kind };
+    case "error":
+      return { phase: "error", barcode: query, kind, message: data.message };
     default:
       return null;
   }
@@ -115,6 +194,7 @@ function ScanLockPanel({
 }) {
   const confirmLabel =
     variant === "meetup" ? "Zum Treffen hinzufügen" : "Zur Sammlung hinzufügen";
+  const isNameSearch = scanLock.kind === "name";
   return (
     <div
       className="rounded-lg border border-[var(--border)] p-4 flex flex-col gap-3"
@@ -122,14 +202,18 @@ function ScanLockPanel({
     >
       {scanLock.phase === "lookingUp" && (
         <>
-          <p className="text-sm font-medium">Suche Spiel …</p>
-          <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+          <p className="text-sm font-medium">
+            {isNameSearch ? "Suche auf BGG …" : "Suche Spiel …"}
+          </p>
+          <p className="text-sm text-[var(--muted)]">{scanLock.barcode}</p>
         </>
       )}
 
       {scanLock.phase === "found" && (
         <>
-          <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+          {!isNameSearch && (
+            <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+          )}
           <div className="flex items-center gap-3">
             {scanLock.thumbnailUrl && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -155,7 +239,7 @@ function ScanLockPanel({
       {scanLock.phase === "candidates" && (
         <>
           <p className="text-sm text-[var(--muted)]">
-            Mehrere Treffer für {scanLock.barcode} — bitte auswählen:
+            Mehrere Treffer für „{scanLock.barcode}" — bitte auswählen:
           </p>
           <ul className="flex flex-col gap-2">
             {scanLock.items.map((item) => (
@@ -173,7 +257,11 @@ function ScanLockPanel({
                       className="h-12 w-9 object-cover rounded shrink-0"
                     />
                   )}
-                  <span>{item.name}</span>
+                  <span>
+                    {item.name}
+                    {item.year ? ` (${item.year})` : ""}
+                    {item.isExpansion ? " · Erweiterung" : ""}
+                  </span>
                 </button>
               </li>
             ))}
@@ -183,7 +271,9 @@ function ScanLockPanel({
 
       {scanLock.phase === "alreadyInCollection" && (
         <>
-          <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+          {!isNameSearch && (
+            <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+          )}
           {variant === "meetup" ? (
             <>
               <p className="text-sm font-semibold">{scanLock.name}</p>
@@ -212,16 +302,20 @@ function ScanLockPanel({
 
       {scanLock.phase === "notFound" && (
         <>
-          <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+          {!isNameSearch && (
+            <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+          )}
           <p className="text-sm">
-            Kein Spiel für diesen Barcode gefunden. Bitte BGG-ID unten eingeben.
+            {isNameSearch
+              ? "Kein Spiel auf BGG gefunden. Bitte BGG-ID unten eingeben."
+              : "Kein Spiel für diesen Barcode gefunden. Bitte BGG-ID unten eingeben."}
           </p>
         </>
       )}
 
       {scanLock.phase === "error" && (
         <>
-          <p className="text-sm text-[var(--muted)] font-mono">{scanLock.barcode}</p>
+          <p className="text-sm text-[var(--muted)]">{scanLock.barcode}</p>
           <p className="text-sm text-red-600 dark:text-red-400">{scanLock.message}</p>
         </>
       )}
@@ -250,7 +344,7 @@ export function AddGameModal({
   open,
   onOpenChange,
   title = "Spiel hinzufügen",
-  hint = "Barcode scannen oder BGG-ID eingeben.",
+  hint = "Barcode scannen, Spielname suchen oder BGG-ID eingeben.",
   variant = "collection",
   onAdd,
   onSuccess,
@@ -282,6 +376,7 @@ export function AddGameModal({
   const [cameraStarting, setCameraStarting] = useState(false);
   const [scanLock, setScanLock] = useState<ScanLock | null>(null);
   const [barcodeInput, setBarcodeInput] = useState("");
+  const [nameInput, setNameInput] = useState("");
   const [bggIdInput, setBggIdInput] = useState("");
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -330,7 +425,7 @@ export function AddGameModal({
       const barcode = raw.trim();
       if (!barcode) return;
 
-      applyScanLock({ phase: "lookingUp", barcode });
+      applyScanLock({ phase: "lookingUp", barcode, kind: "barcode" });
 
       try {
         const res = await fetch("/api/barcode/lookup", {
@@ -347,7 +442,38 @@ export function AddGameModal({
         applyScanLock({
           phase: "error",
           barcode,
+          kind: "barcode",
           message: "Barcode-Suche fehlgeschlagen.",
+        });
+      }
+    },
+    [applyScanLock],
+  );
+
+  const resolveName = useCallback(
+    async (raw: string) => {
+      const query = raw.trim();
+      if (!query) return;
+
+      applyScanLock({ phase: "lookingUp", barcode: query, kind: "name" });
+
+      try {
+        const res = await fetch("/api/bgg/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query }),
+        });
+        const data = (await res.json()) as NameSearchResponse;
+        const lock = nameSearchToScanLock(data, query);
+        if (lock) {
+          applyScanLock(lock);
+        }
+      } catch {
+        applyScanLock({
+          phase: "error",
+          barcode: query,
+          kind: "name",
+          message: "BGG-Namensuche fehlgeschlagen.",
         });
       }
     },
@@ -374,7 +500,12 @@ export function AddGameModal({
       const { bggId, barcode, name } = ctx;
       if ("error" in res) {
         if (scanLockRef.current) {
-          applyScanLock({ phase: "error", barcode, message: res.error });
+          applyScanLock({
+            phase: "error",
+            barcode,
+            kind: scanLockRef.current.kind,
+            message: res.error,
+          });
         } else {
           setCameraError(res.error);
         }
@@ -384,6 +515,7 @@ export function AddGameModal({
         applyScanLock({
           phase: "alreadyInCollection",
           barcode,
+          kind: scanLockRef.current?.kind ?? "barcode",
           bggId: res.bggId ?? bggId,
           name: res.name,
         });
@@ -393,10 +525,12 @@ export function AddGameModal({
         applyScanLock({
           phase: "added",
           barcode,
+          kind: scanLockRef.current?.kind ?? "barcode",
           bggId: res.bggId ?? bggId,
           name: res.name,
         });
         setBarcodeInput("");
+        setNameInput("");
         setBggIdInput("");
       }
       onSuccess?.();
@@ -413,11 +547,16 @@ export function AddGameModal({
       return;
     }
 
-    const { bggId, barcode } = scanLock;
+    const { bggId } = scanLock;
+    const barcode = scanLock.kind === "barcode" ? scanLock.barcode : null;
     const name = scanLock.phase === "found" ? scanLock.name : undefined;
     startTransition(async () => {
       const res = await addHandler(bggId, { barcode, name });
-      handleAddResult(res, { bggId, barcode, name });
+      handleAddResult(res, {
+        bggId,
+        barcode: barcode ?? scanLock.barcode,
+        name,
+      });
     });
   }, [scanLock, addHandler, handleAddResult, variant]);
 
@@ -602,6 +741,14 @@ export function AddGameModal({
     void resolveBarcode(raw);
   }
 
+  function handleNameSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const raw = nameInput.trim();
+    if (!raw) return;
+    pauseCamera();
+    void resolveName(raw);
+  }
+
   function handleBggAdd(e: React.FormEvent) {
     e.preventDefault();
     const id = parseInt(bggIdInput.trim(), 10);
@@ -621,6 +768,7 @@ export function AddGameModal({
     applyScanLock({
       phase: "found",
       barcode: scanLock.barcode,
+      kind: scanLock.kind,
       bggId: item.bggId,
       name: item.name,
       thumbnailUrl: item.thumbnailUrl,
@@ -722,6 +870,32 @@ export function AddGameModal({
 
           <p className="text-center text-sm text-[var(--muted)]">oder</p>
 
+          <form onSubmit={handleNameSearch}>
+            <div className="flex gap-2 items-center">
+              <label className="sr-only" htmlFor="modal-name-input">
+                Spielname
+              </label>
+              <input
+                id="modal-name-input"
+                type="search"
+                className="input flex-1 min-w-0"
+                placeholder="Spielname, z. B. Splendor"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                disabled={scanLock?.phase === "lookingUp"}
+              />
+              <button
+                type="submit"
+                className="btn btn-primary shrink-0"
+                disabled={pending || scanLock?.phase === "lookingUp"}
+              >
+                Suchen
+              </button>
+            </div>
+          </form>
+
+          <p className="text-center text-sm text-[var(--muted)]">oder</p>
+
           <form onSubmit={handleBggAdd}>
             <div className="flex gap-2 items-center">
               <label className="sr-only" htmlFor="modal-bgg-id-input">
@@ -752,7 +926,9 @@ export function AddGameModal({
             />
           )}
 
-          {lockedBarcode && scanLock?.phase === "notFound" && (
+          {lockedBarcode &&
+            scanLock?.phase === "notFound" &&
+            scanLock.kind === "barcode" && (
             <p className="text-xs text-[var(--muted)]">
               Barcode {lockedBarcode} wird beim Hinzufügen gespeichert.
             </p>

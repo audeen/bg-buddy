@@ -124,7 +124,7 @@ export function MeetupGuestGamesClient({
         open={addOpen}
         onOpenChange={setAddOpen}
         title="Spiel zum Treffen hinzufügen"
-        hint="Barcode scannen oder BGG-ID eingeben. Das Spiel gilt nur für dieses Treffen."
+        hint="Barcode scannen, Spielname suchen oder BGG-ID eingeben. Das Spiel gilt nur für dieses Treffen."
         variant="meetup"
         onAdd={(bggId, options) => addGuestGameToMeetupAction(meetupId, bggId, options)}
         onSuccess={() => router.refresh()}

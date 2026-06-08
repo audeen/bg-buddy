@@ -252,10 +252,42 @@ function buildHeaders(): Record<string, string> {
  */
 export async function fetchThingBatch(ids: number[]): Promise<ThingDetails[]> {
   if (ids.length === 0) return [];
-  // Domain MUST be boardgamegeek.com WITHOUT a leading "www" for the token to work.
   const url = `https://boardgamegeek.com/xmlapi2/thing?id=${ids.join(",")}&stats=1`;
-  const headers = buildHeaders();
+  const xml = await fetchBggXml(url);
+  return parseThingXml(xml);
+}
 
+export type BggSearchItem = {
+  bggId: number;
+  name: string;
+  year: number | null;
+  isExpansion: boolean;
+};
+
+/** Parses the XML returned by the BGG "search" endpoint. */
+export function parseSearchXml(xml: string): BggSearchItem[] {
+  const parsed = xmlParser.parse(xml);
+  const items = asArray(parsed?.items?.item);
+
+  return items
+    .map((item: Record<string, unknown>): BggSearchItem | null => {
+      const bggId = toInt(item.id as string);
+      const name = primaryName(item);
+      if (bggId == null || !name) return null;
+
+      const itemType = String(item.type ?? "").toLowerCase();
+      return {
+        bggId,
+        name,
+        year: toInt(attrValue(item.yearpublished)),
+        isExpansion: itemType.includes("expansion"),
+      };
+    })
+    .filter((item): item is BggSearchItem => item != null);
+}
+
+async function fetchBggXml(url: string): Promise<string> {
+  const headers = buildHeaders();
   let attempt = 0;
   let xml = "";
   while (attempt < 5) {
@@ -264,17 +296,37 @@ export async function fetchThingBatch(ids: number[]): Promise<ThingDetails[]> {
       xml = await res.text();
       break;
     }
-    // 401/403 = missing/invalid token -> retrying won't help
     if (res.status === 401 || res.status === 403) {
       throw new BggBlockedError(res.status);
     }
-    // 202 = queued, anything else transient -> wait and retry
     attempt += 1;
     await new Promise((r) => setTimeout(r, 1500 * attempt));
   }
-  if (!xml) throw new Error("BGG thing API did not return data");
+  if (!xml) throw new Error("BGG search API did not return data");
+  return xml;
+}
 
-  return parseThingXml(xml);
+/**
+ * Searches BGG by game name via the XML search API.
+ * Requires BGG_TOKEN (see https://boardgamegeek.com/applications).
+ */
+export async function searchBggGames(
+  query: string,
+  options?: { types?: string[]; limit?: number },
+): Promise<BggSearchItem[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  const types = options?.types ?? ["boardgame", "boardgameexpansion"];
+  const params = new URLSearchParams({
+    query: trimmed,
+    type: types.join(","),
+  });
+  const url = `https://boardgamegeek.com/xmlapi2/search?${params.toString()}`;
+  const xml = await fetchBggXml(url);
+  const items = parseSearchXml(xml);
+  const limit = options?.limit ?? 20;
+  return items.slice(0, limit);
 }
 
 /** Splits an array into chunks of the given size. */

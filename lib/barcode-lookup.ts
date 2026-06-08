@@ -38,6 +38,8 @@ export type BarcodeLookupCandidate = {
   name: string;
   thumbnailUrl: string | null;
   confidence: number | null;
+  year?: number | null;
+  isExpansion?: boolean;
 };
 
 export type BarcodeLookupResult =
