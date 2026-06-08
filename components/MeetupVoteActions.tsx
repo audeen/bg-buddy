@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { HostChoiceMode } from "@prisma/client";
 import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
@@ -14,6 +15,9 @@ export function MeetupVoteActions({
   expectedPlayerCount,
   poolSize,
   duellLinkTitle,
+  hostForced = false,
+  hostForcedGameName = null,
+  hostChoiceMode = "NONE",
 }: {
   meetupId: string;
   readyForDuels: boolean;
@@ -24,13 +28,42 @@ export function MeetupVoteActions({
   expectedPlayerCount: number;
   poolSize: number;
   duellLinkTitle?: string;
+  hostForced?: boolean;
+  hostForcedGameName?: string | null;
+  hostChoiceMode?: HostChoiceMode;
 }) {
   useMeetupPhaseRefresh(true);
 
   const duellLinkDisabled = !readyForDuels || duelComplete;
 
+  if (hostForced && hostForcedGameName) {
+    return (
+      <div
+        className="rounded-lg border border-[var(--accent)] bg-[var(--surface-elevated)] px-4 py-3 text-center"
+        role="status"
+      >
+        <p className="text-sm font-semibold">Vom Host festgelegt</p>
+        <p className="text-base font-bold mt-1">{hostForcedGameName}</p>
+        <p className="text-xs text-[var(--muted)] mt-2">
+          Keine Abstimmung — das Spiel steht fest.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
+      {hostChoiceMode === "RESTRICT" && (
+        <p className="text-xs text-[var(--muted)] rounded-lg border border-[var(--border)] px-3 py-2">
+          Nur Host-Vorauswahl wählbar — auf der Pick-Seite sind nur die vom
+          Host ausgewählten Spiele verfügbar.
+        </p>
+      )}
+      {hostChoiceMode === "HIGHLIGHT" && (
+        <p className="text-xs text-[var(--muted)] rounded-lg border border-[var(--border)] px-3 py-2">
+          Host-Empfehlungen sind auf der Pick-Seite oben hervorgehoben.
+        </p>
+      )}
       <div className="flex flex-col sm:flex-row gap-2">
         <Link
           href={`/meetups/${meetupId}/pick`}

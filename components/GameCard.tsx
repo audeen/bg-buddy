@@ -13,6 +13,7 @@ import {
 import { expansionNamesForPlayerCount } from "@/lib/effective-player-count";
 import { ExpansionRequiredBanner } from "@/components/ExpansionRequiredBanner";
 import { ExpansionVoteFollowsBanner } from "@/components/ExpansionVoteFollowsBanner";
+import { HostRecommendationBanner } from "@/components/HostRecommendationBanner";
 import { LentOutBanner } from "@/components/LentOutBanner";
 import { FilterChipButton } from "@/components/FilterChipButton";
 import type { GameFilters, GameSort } from "@/lib/game-filters";
@@ -43,6 +44,7 @@ type BaseProps = {
   ownedExpansions?: GameCardGame[];
   className?: string;
   lentOut?: boolean;
+  hostRecommendation?: boolean;
 };
 
 type ButtonProps = BaseProps & {
@@ -135,6 +137,7 @@ function CardCover({
   showExpansionBanner,
   showExpansionVoteFollows,
   lentOut,
+  hostRecommendation,
 }: {
   game: GameCardGame;
   playerCount?: number;
@@ -143,6 +146,7 @@ function CardCover({
   showExpansionBanner: boolean;
   showExpansionVoteFollows?: boolean;
   lentOut?: boolean;
+  hostRecommendation?: boolean;
 }) {
   const requiredExpansions =
     showExpansionBanner && playerCount != null
@@ -169,6 +173,7 @@ function CardCover({
       {bannerLabel && <ExpansionRequiredBanner label={bannerLabel} />}
       {showExpansionVoteFollows && <ExpansionVoteFollowsBanner />}
       {lentOut && <LentOutBanner />}
+      {hostRecommendation && <HostRecommendationBanner />}
     </div>
   );
 }
@@ -336,6 +341,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
     ownedExpansions = [],
     className = "",
     lentOut,
+    hostRecommendation,
   } = props;
   const disabled = "disabled" in props ? props.disabled : false;
   const onDetailsClick =
@@ -400,6 +406,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
     showExpansionBanner,
     showExpansionVoteFollows,
     lentOut,
+    hostRecommendation,
   };
 
   if ("href" in props && props.href) {

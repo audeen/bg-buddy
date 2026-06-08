@@ -51,6 +51,17 @@ export async function loadExpansionPhaseState(
       duelFrozenData: true,
       expansionDuelStartedAt: true,
       expansionDuelFrozenData: true,
+      hostForcedGameId: true,
+      hostForcedGame: {
+        select: {
+          id: true,
+          name: true,
+          thumbnail: true,
+          image: true,
+          minPlayers: true,
+          maxPlayers: true,
+        },
+      },
       mandatoryExpansions: {
         select: { baseGameId: true, expansionGameId: true },
       },
@@ -58,6 +69,41 @@ export async function loadExpansionPhaseState(
   });
   if (!meetup) {
     return emptyExpansionPhase();
+  }
+
+  if (meetup.hostForcedGameId != null && meetup.hostForcedGame) {
+    const mandatoryByBase =
+      options?.mandatoryByBase ??
+      buildMandatoryMap(meetup.mandatoryExpansions);
+    const ownedByBase =
+      options?.ownedExpansionsByBase ??
+      (await loadOwnedExpansionsMap(db));
+    const winner = meetup.hostForcedGame;
+    const owned = ownedByBase.get(winner.id) ?? [];
+    const winnerHasExpansionsAtStar = owned.some((exp) =>
+      isPlayableAtCount(exp.minPlayers, exp.maxPlayers, expectedPlayerCount),
+    );
+    const mandatory = mandatoryByBase.get(winner.id) ?? [];
+    const configs = buildExpansionConfigs(
+      winner,
+      owned,
+      mandatory,
+      expectedPlayerCount,
+    );
+    const optionalExpansionCount = configs.filter(
+      (c) => c.optionalExpansionId != null,
+    ).length;
+
+    return {
+      mainDuelComplete: true,
+      winnerGameId: winner.id,
+      winnerName: winner.name,
+      expansionDuelAvailable: false,
+      expansionDuelStarted: false,
+      expansionDuelComplete: false,
+      optionalExpansionCount,
+      winnerHasExpansionsAtStar,
+    };
   }
 
   const [groupPicks, duelVotes, expansionVotes, allVotes] = await Promise.all([

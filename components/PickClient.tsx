@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import type { HostChoiceMode } from "@prisma/client";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { GameCover } from "@/components/GameCover";
 import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
 import { GameCard, type GameCardGame } from "@/components/GameCard";
 import { GamesFilterBar } from "@/components/GamesFilterBar";
@@ -54,6 +56,10 @@ export function PickClient({
   pickPhaseSummary,
   expansionsByBaseId,
   guestGameIds = [],
+  hostChoiceGameIds = [],
+  hostChoiceMode = "NONE",
+  hostForced = false,
+  hostForcedGame = null,
   activeFilters,
   sort,
 }: {
@@ -67,6 +73,15 @@ export function PickClient({
   pickPhaseSummary: PickPhaseSummary;
   expansionsByBaseId: Record<string, GameCardGame[]>;
   guestGameIds?: number[];
+  hostChoiceGameIds?: number[];
+  hostChoiceMode?: HostChoiceMode;
+  hostForced?: boolean;
+  hostForcedGame?: {
+    id: number;
+    name: string;
+    thumbnail: string | null;
+    image: string | null;
+  } | null;
   activeFilters: GameFilters;
   sort: GameSort;
 }) {
@@ -92,6 +107,10 @@ export function PickClient({
   }, [games, filters.rating]);
 
   const guestIdSet = useMemo(() => new Set(guestGameIds), [guestGameIds]);
+  const hostChoiceIdSet = useMemo(
+    () => new Set(hostChoiceGameIds),
+    [hostChoiceGameIds],
+  );
   const [selected, setSelected] = useState(expected);
   const pointsRef = useRef<Record<string, number>>({});
   const [points, setPoints] = useState<Record<string, number>>(() => {
@@ -169,22 +188,80 @@ export function PickClient({
     [games, selected, expansionsByBaseId],
   );
 
+  const filteredEligible = useMemo(
+    () =>
+      eligibleGames.filter((g) =>
+        matchesGameFilters(g, filters, {
+          expansions: expansionsByBaseId[String(g.id)] ?? [],
+        }),
+      ),
+    [eligibleGames, filters, expansionsByBaseId],
+  );
+
+  const hostChoiceVisible = useMemo(() => {
+    if (hostChoiceMode !== "HIGHLIGHT" || hostChoiceIdSet.size === 0) {
+      return [];
+    }
+    const hostGames = filteredEligible.filter((g) => hostChoiceIdSet.has(g.id));
+    return sortGames(hostGames, sort);
+  }, [filteredEligible, hostChoiceMode, hostChoiceIdSet, sort]);
+
   const visible = useMemo(() => {
-    const filtered = eligibleGames.filter((g) =>
-      matchesGameFilters(g, filters, {
-        expansions: expansionsByBaseId[String(g.id)] ?? [],
-      }),
-    );
-    const sorted = sortGames(filtered, sort);
+    const pool =
+      hostChoiceMode === "HIGHLIGHT" && hostChoiceIdSet.size > 0
+        ? filteredEligible.filter((g) => !hostChoiceIdSet.has(g.id))
+        : filteredEligible;
+    const sorted = sortGames(pool, sort);
     return sorted.sort((a, b) => {
       const aGuest = guestIdSet.has(a.id);
       const bGuest = guestIdSet.has(b.id);
       if (aGuest !== bGuest) return aGuest ? -1 : 1;
       return 0;
     });
-  }, [eligibleGames, filters, sort, guestIdSet, expansionsByBaseId]);
+  }, [filteredEligible, hostChoiceMode, hostChoiceIdSet, sort, guestIdSet]);
 
-  const expectedLocked = picksLocked && selected === expected;
+  const expectedLocked =
+    hostForced || (picksLocked && selected === expected);
+
+  function renderGameCard(g: PickGame, options?: { hostRecommendation?: boolean }) {
+    const key = pointsKey(g.id, selected);
+    const gamePoints = points[key] ?? 0;
+    const isGuest = guestIdSet.has(g.id);
+    const isLent = !!g.lentOut;
+    const isHostRec = options?.hostRecommendation ?? false;
+    return (
+      <li key={g.id} className="flex flex-col gap-1">
+        {!isHostRec && isGuest && (
+          <span className="text-xs font-semibold text-[var(--accent)] px-0.5">
+            Temporär
+          </span>
+        )}
+        <GameCard
+          game={g}
+          playerCount={selected}
+          activeFilters={filters}
+          filterMode
+          filterBasePath={filterBasePath}
+          filterSort={sort}
+          filterScrollToId={scrollTargetId}
+          selected={gamePoints > 0}
+          selectedPoints={gamePoints}
+          ownedExpansions={expansionsByBaseId[String(g.id)] ?? []}
+          lentOut={isLent}
+          hostRecommendation={isHostRec}
+          disabled={expectedLocked || isLent}
+          onActivate={() => cycleGamePoints(g.id)}
+          onDetailsClick={(displayed) => {
+            const expansions = expansionsByBaseId[String(g.id)] ?? [];
+            setDetail({
+              baseGame: g,
+              viewGame: resolveDetailGameView(g, displayed, expansions),
+            });
+          }}
+        />
+      </li>
+    );
+  }
 
   function persistPick(
     gameId: number,
@@ -269,9 +346,42 @@ export function PickClient({
     ? "scroll-to-top-above-picker-at-limit"
     : "scroll-to-top-above-picker";
 
-  const pickerPaddingClass = atLimit
-    ? "pb-sticky-picker-at-limit"
-    : "pb-sticky-picker";
+  const pickerPaddingClass = hostForced
+    ? ""
+    : atLimit
+      ? "pb-sticky-picker-at-limit"
+      : "pb-sticky-picker";
+
+  if (hostForced && hostForcedGame) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div
+          className="card flex flex-col items-center gap-4 text-center border border-[var(--accent)]"
+          style={{ padding: "var(--space-card)" }}
+          role="status"
+        >
+          <p className="text-sm font-semibold text-[var(--accent)]">
+            Vom Host festgelegt
+          </p>
+          <GameCover
+            src={hostForcedGame.thumbnail ?? hostForcedGame.image}
+            alt={hostForcedGame.name}
+            className="h-32 w-24 rounded-lg"
+          />
+          <p className="text-lg font-bold">{hostForcedGame.name}</p>
+          <p className="text-sm text-[var(--muted)]">
+            Der Host hat dieses Spiel festgelegt — keine Abstimmung nötig.
+          </p>
+          <Link
+            href={`/meetups/${meetupId}`}
+            className="btn btn-primary"
+          >
+            Zurück zum Treffen
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex flex-col gap-6 ${pickerPaddingClass}`}>
@@ -279,7 +389,9 @@ export function PickClient({
         className="text-sm text-[var(--muted)] leading-relaxed rounded-lg border border-[var(--border)] px-3 py-2"
         role="status"
       >
-        {phaseBanner}
+        {hostChoiceMode === "RESTRICT" && hostChoiceIdSet.size > 0
+          ? "Nur Host-Vorauswahl — wähle aus den vom Host vorgeschlagenen Spielen."
+          : phaseBanner}
       </p>
 
       <Suspense
@@ -296,7 +408,26 @@ export function PickClient({
         />
       </Suspense>
 
-      {visible.length === 0 ? (
+      {hostChoiceVisible.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-[var(--muted)]">
+            Host-Empfehlung
+          </h2>
+          <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            {hostChoiceVisible.map((g) =>
+              renderGameCard(g, { hostRecommendation: true }),
+            )}
+          </ul>
+        </section>
+      )}
+
+      {hostChoiceVisible.length > 0 && visible.length > 0 && (
+        <h2 className="text-sm font-semibold text-[var(--muted)]">
+          Alle Spiele
+        </h2>
+      )}
+
+      {visible.length === 0 && hostChoiceVisible.length === 0 ? (
         <p className="text-[var(--muted)]">
           {eligibleGames.length === 0
             ? `Keine Spiele für ${selected} Spieler in der Sammlung.`
@@ -304,50 +435,14 @@ export function PickClient({
               ? "Keine Spiele für die gewählten Filter."
               : `Keine Spiele für ${selected} Spieler in der Sammlung.`}
         </p>
-      ) : (
+      ) : visible.length > 0 ? (
         <ul
           key={filterListKey}
           className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
         >
-          {visible.map((g) => {
-            const key = pointsKey(g.id, selected);
-            const gamePoints = points[key] ?? 0;
-            const isGuest = guestIdSet.has(g.id);
-            const isLent = !!g.lentOut;
-            return (
-              <li key={g.id} className="flex flex-col gap-1">
-                {isGuest && (
-                  <span className="text-xs font-semibold text-[var(--accent)] px-0.5">
-                    Temporär
-                  </span>
-                )}
-                <GameCard
-                  game={g}
-                  playerCount={selected}
-                  activeFilters={filters}
-                  filterMode
-                  filterBasePath={filterBasePath}
-                  filterSort={sort}
-                  filterScrollToId={scrollTargetId}
-                  selected={gamePoints > 0}
-                  selectedPoints={gamePoints}
-                  ownedExpansions={expansionsByBaseId[String(g.id)] ?? []}
-                  lentOut={isLent}
-                  disabled={expectedLocked || isLent}
-                  onActivate={() => cycleGamePoints(g.id)}
-                  onDetailsClick={(displayed) => {
-                    const expansions = expansionsByBaseId[String(g.id)] ?? [];
-                    setDetail({
-                      baseGame: g,
-                      viewGame: resolveDetailGameView(g, displayed, expansions),
-                    });
-                  }}
-                />
-              </li>
-            );
-          })}
+          {visible.map((g) => renderGameCard(g))}
         </ul>
-      )}
+      ) : null}
 
       <GameDetailModal
         game={detail?.viewGame ?? null}

@@ -5,7 +5,7 @@ import { PickClient } from "@/components/PickClient";
 import { PageHeader } from "@/components/PageHeader";
 import { loadPickPhaseSummary } from "@/lib/pick-phase";
 import { loadOwnedExpansionsByBaseGame, serializeExpansionsByBaseId } from "@/lib/owned-expansions";
-import { pickGamesWhere } from "@/lib/meetup-guest-games";
+import { pickGamesWhereForMeetup } from "@/lib/meetup-guest-games";
 import { parseGameFilters, parseGameSort } from "@/lib/game-filters";
 
 export const dynamic = "force-dynamic";
@@ -26,12 +26,34 @@ export default async function PickPage({
   const user = await getCurrentUser();
   if (!user) redirect("/#login");
 
-  const meetup = await prisma.meetup.findUnique({ where: { id } });
+  const meetup = await prisma.meetup.findUnique({
+    where: { id },
+    select: {
+      title: true,
+      expectedPlayerCount: true,
+      hostChoiceMode: true,
+      hostForcedGameId: true,
+      hostForcedGame: {
+        select: { id: true, name: true, thumbnail: true, image: true },
+      },
+      hostChoiceGames: {
+        select: { gameId: true },
+        orderBy: { sortOrder: "asc" },
+      },
+    },
+  });
   if (!meetup) notFound();
+
+  const hostChoiceGameIds = meetup.hostChoiceGames.map((g) => g.gameId);
+  const hostForced = meetup.hostForcedGameId != null;
 
   const [games, guestGameIds, myVotes, { phase, summary }, expansionsByBase] = await Promise.all([
     prisma.game.findMany({
-      where: pickGamesWhere(id),
+      where: pickGamesWhereForMeetup(
+        id,
+        meetup.hostChoiceMode,
+        hostChoiceGameIds,
+      ),
       select: {
         id: true,
         name: true,
@@ -88,6 +110,10 @@ export default async function PickPage({
         pickPhaseSummary={summary}
         expansionsByBaseId={serializeExpansionsByBaseId(expansionsByBase)}
         guestGameIds={guestGameIds}
+        hostChoiceGameIds={hostChoiceGameIds}
+        hostChoiceMode={meetup.hostChoiceMode}
+        hostForced={hostForced}
+        hostForcedGame={meetup.hostForcedGame}
         activeFilters={activeFilters}
         sort={sort}
       />

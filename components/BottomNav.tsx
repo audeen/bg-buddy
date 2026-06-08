@@ -36,7 +36,7 @@ type NavItem = {
 };
 
 const navItemClass = (active: boolean) =>
-  `flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 min-w-0 w-full text-[0.65rem] font-semibold transition-colors ${
+  `flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 min-w-0 w-full text-[0.65rem] md:text-xs font-semibold transition-colors ${
     active
       ? "nav-item-active"
       : "text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -138,7 +138,7 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
 
   return (
     <nav
-      className={`md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-[var(--surface)] safe-bottom header-shadow bottom-nav-chrome${chromeHidden ? " chrome-hidden" : ""}`}
+      className={`fixed bottom-0 left-0 right-0 z-30 border-t border-[var(--border)] bg-[var(--surface)] safe-bottom header-shadow bottom-nav-chrome md:max-w-[72rem] md:mx-auto${chromeHidden ? " chrome-hidden" : ""}`}
       aria-label="Hauptnavigation"
     >
       <ul className="flex items-stretch justify-around h-[var(--bottom-nav-height)] px-1">

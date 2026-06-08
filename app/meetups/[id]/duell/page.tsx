@@ -35,10 +35,15 @@ export default async function DuellPage({
       title: true,
       expectedPlayerCount: true,
       duelFrozenData: true,
+      hostForcedGameId: true,
       createdBy: { select: { id: true } },
     },
   });
   if (!meetup) notFound();
+
+  if (meetup.hostForcedGameId != null) {
+    redirect(`/meetups/${id}`);
+  }
 
   const isHost = user.id === meetup.createdBy.id;
   const expected = meetup.expectedPlayerCount;

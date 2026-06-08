@@ -15,6 +15,7 @@ export type PickPhaseState = {
   duelComplete: boolean;
   partialPickers: { userId: string; sum: number }[];
   missingCount: number;
+  hostForced: boolean;
 };
 
 export function summarizePickSums(
@@ -32,7 +33,22 @@ export function assessPickPhase(
   expectedPlayerCount: number,
   duelVoteCount: number,
   duelComplete = false,
+  hostForced = false,
 ): PickPhaseState {
+  if (hostForced) {
+    return {
+      poolSize: 0,
+      fullPickCount: 0,
+      expectedPlayerCount,
+      readyForDuels: false,
+      picksLocked: true,
+      duelComplete: true,
+      partialPickers: [],
+      missingCount: 0,
+      hostForced: true,
+    };
+  }
+
   const sums = summarizePickSums(groupPicks);
   const poolSize = poolGameIds(buildPickCounts(groupPicks)).length;
 
@@ -65,6 +81,7 @@ export function assessPickPhase(
     duelComplete,
     partialPickers,
     missingCount,
+    hostForced: false,
   };
 }
 
@@ -86,7 +103,7 @@ export async function getPickPhaseState(
   const [meetup, groupPicks, duelVotes] = await Promise.all([
     db.meetup.findUnique({
       where: { id: meetupId },
-      select: { duelFrozenData: true },
+      select: { duelFrozenData: true, hostForcedGameId: true },
     }),
     db.vote.findMany({
       where: {
@@ -153,6 +170,7 @@ export async function getPickPhaseState(
     expectedPlayerCount,
     duelVotes.length,
     duelComplete,
+    meetup?.hostForcedGameId != null,
   );
 }
 

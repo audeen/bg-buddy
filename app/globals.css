@@ -214,13 +214,6 @@ body {
     transition: padding-bottom 0.25s ease;
   }
 
-  @media (min-width: 768px) {
-    .pb-nav {
-      padding-bottom: 0;
-      transition: none;
-    }
-  }
-
   html.scroll-chrome-hidden .pb-nav {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -680,6 +673,66 @@ body {
     padding: 0.55rem 1rem;
     line-height: 1.25;
     box-shadow: 0 2px 12px rgb(0 0 0 / 0.35);
+  }
+
+  .host-rec-banner {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .host-rec-banner__strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: color-mix(in srgb, var(--accent) 55%, transparent);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-align: center;
+    padding: 0.35rem 0.5rem;
+    line-height: 1.25;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+  }
+
+  .spielsteuerung-details {
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+
+  .spielsteuerung-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+  }
+
+  .spielsteuerung-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .spielsteuerung-chevron {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+
+  .spielsteuerung-details[open] .spielsteuerung-chevron {
+    transform: rotate(180deg);
+  }
+
+  .spielsteuerung-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-top: 1rem;
   }
 
   .duel-arena {
@@ -1151,13 +1204,19 @@ body {
 
   @media (min-width: 768px) {
     .scroll-to-top {
-      bottom: 1.5rem;
+      bottom: calc(var(--bottom-nav-height) + 1rem);
     }
 
-    .scroll-to-top-above-footer,
-    .scroll-to-top-above-picker,
+    .scroll-to-top-above-footer {
+      bottom: calc(var(--bottom-nav-height) + 5rem);
+    }
+
+    .scroll-to-top-above-picker {
+      bottom: calc(var(--bottom-nav-height) + 5.5rem);
+    }
+
     .scroll-to-top-above-picker-at-limit {
-      bottom: 1.5rem;
+      bottom: calc(var(--bottom-nav-height) + 9.5rem);
     }
   }
 

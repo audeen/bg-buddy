@@ -48,7 +48,7 @@ export default async function RootLayout({
         >
           {children}
         </main>
-        <footer className="container-app py-4 md:py-6 pb-nav md:pb-6 text-sm text-[var(--muted)]">
+        <footer className="container-app py-4 md:py-6 pb-nav text-sm text-[var(--muted)]">
           BG Buddy · Daten von BoardGameGeek
         </footer>
         <BottomNav fallbackMeetupId={fallbackMeetup?.id ?? null} />

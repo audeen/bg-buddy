@@ -10,7 +10,7 @@ import { MeetupExpansionActions } from "@/components/MeetupExpansionActions";
 import { MeetupRankings } from "@/components/MeetupRankings";
 import { MeetupParticipants } from "@/components/MeetupParticipants";
 import { JoinMeetupButton } from "@/components/JoinMeetupButton";
-import { MeetupGuestGamesClient } from "@/components/MeetupGuestGamesClient";
+import { MeetupSpielsteuerungClient } from "@/components/MeetupSpielsteuerungClient";
 import { PageHeader } from "@/components/PageHeader";
 import {
   buildCombinedByCount,
@@ -84,6 +84,27 @@ export default async function MeetupDetail({
         },
         orderBy: { createdAt: "asc" },
       },
+      hostChoiceGames: {
+        include: {
+          game: {
+            select: {
+              id: true,
+              name: true,
+              thumbnail: true,
+              image: true,
+            },
+          },
+        },
+        orderBy: { sortOrder: "asc" },
+      },
+      hostForcedGame: {
+        select: {
+          id: true,
+          name: true,
+          thumbnail: true,
+          image: true,
+        },
+      },
       mandatoryExpansions: {
         select: { baseGameId: true, expansionGameId: true },
       },
@@ -92,6 +113,9 @@ export default async function MeetupDetail({
   if (!meetup) notFound();
 
   const guestGames = meetup.guestGames.map((g) => g.game);
+  const hostChoiceGames = meetup.hostChoiceGames.map((g) => g.game);
+  const forcedGame = meetup.hostForcedGame;
+  const hostForced = meetup.hostForcedGameId != null;
 
   const votes = await prisma.vote.findMany({
     where: { meetupId: id },
@@ -177,7 +201,8 @@ export default async function MeetupDetail({
     frozen,
   });
 
-  const duelRoundComplete = duelComplete && totalPairs > 0;
+  const duelRoundComplete =
+    hostForced || (duelComplete && totalPairs > 0);
   const isHost = user?.id === meetup.createdBy.id;
 
   const expansionPhase = await loadExpansionPhaseState(id, expected, prisma);
@@ -406,8 +431,11 @@ export default async function MeetupDetail({
               meetupId={meetup.id}
               value={meetup.expectedPlayerCount}
             />
-            <MeetupGuestGamesClient
+            <MeetupSpielsteuerungClient
               meetupId={meetup.id}
+              forcedGame={forcedGame}
+              hostChoiceGames={hostChoiceGames}
+              hostChoiceMode={meetup.hostChoiceMode}
               guestGames={guestGames}
             />
           </>
@@ -440,6 +468,9 @@ export default async function MeetupDetail({
           expectedPlayerCount={pickPhase.expectedPlayerCount}
           poolSize={pickPhase.poolSize}
           duellLinkTitle={duellLinkTitle}
+          hostForced={hostForced}
+          hostForcedGameName={forcedGame?.name ?? null}
+          hostChoiceMode={meetup.hostChoiceMode}
         />
         {duelRoundComplete && (
           <MeetupExpansionActions
@@ -476,6 +507,8 @@ export default async function MeetupDetail({
         expansionDuelComplete={expansionPhase.expansionDuelComplete}
         expansionRankingAvailable={expansionRankingAvailable}
         winnerName={expansionPhase.winnerName}
+        hostForced={hostForced}
+        hostForcedGameName={forcedGame?.name ?? null}
       />
     </div>
   );

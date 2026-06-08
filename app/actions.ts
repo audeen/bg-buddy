@@ -1,6 +1,6 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
+import { type HostChoiceMode, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -153,7 +153,7 @@ export async function updateExpectedCountAction(
     meetup.expectedPlayerCount,
     prisma,
   );
-  if (phase.picksLocked) {
+  if (phase.picksLocked && !phase.hostForced) {
     return {
       error:
         "Erwartete Spieleranzahl kann erst geändert werden, wenn die laufenden Duelle abgeschlossen sind.",
@@ -168,6 +168,8 @@ export async function updateExpectedCountAction(
       duelFrozenData: Prisma.DbNull,
       expansionDuelStartedAt: null,
       expansionDuelFrozenData: Prisma.DbNull,
+      hostForcedGameId: null,
+      hostForcedAt: null,
     },
   });
   await prisma.vote.deleteMany({
@@ -291,9 +293,12 @@ export async function setPickPointsAction(
 
   const meetup = await prisma.meetup.findUnique({
     where: { id: meetupId },
-    select: { expectedPlayerCount: true },
+    select: { expectedPlayerCount: true, hostForcedGameId: true },
   });
   if (!meetup) return { error: "Treffen nicht gefunden." };
+  if (meetup.hostForcedGameId != null) {
+    return { error: "Der Host hat bereits ein Spiel festgelegt — keine Abstimmung." };
+  }
 
   const game = await prisma.game.findUnique({
     where: { id: gameId },
@@ -419,9 +424,16 @@ export async function duelVoteAction(
 
   const meetup = await prisma.meetup.findUnique({
     where: { id: meetupId },
-    select: { expectedPlayerCount: true, duelFrozenData: true },
+    select: {
+      expectedPlayerCount: true,
+      duelFrozenData: true,
+      hostForcedGameId: true,
+    },
   });
   if (!meetup) return { error: "Treffen nicht gefunden." };
+  if (meetup.hostForcedGameId != null) {
+    return { error: "Der Host hat bereits ein Spiel festgelegt — keine Duelle." };
+  }
   if (playerCount !== meetup.expectedPlayerCount) {
     return { error: "Duelle nur für die erwartete Spieleranzahl." };
   }
@@ -1462,4 +1474,321 @@ export async function completeDummyDuelsAction(meetupId: string) {
   revalidatePath("/");
 
   return { ok: true, votesAdded: result.votesAdded };
+}
+
+async function loadMeetupForHostControl(meetupId: string, userId: string) {
+  const meetup = await prisma.meetup.findUnique({
+    where: { id: meetupId },
+    select: {
+      createdById: true,
+      expectedPlayerCount: true,
+      hostForcedGameId: true,
+      hostChoiceMode: true,
+    },
+  });
+  if (!meetup) return { error: "Treffen nicht gefunden." as const };
+  if (meetup.createdById !== userId) {
+    return { error: "Nur der Host kann diese Einstellung ändern." as const };
+  }
+  return { meetup };
+}
+
+async function validateHostChoiceGame(meetupId: string, gameId: number) {
+  if (!Number.isFinite(gameId)) {
+    return { error: "Ungültige Spiel-ID." as const };
+  }
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: {
+      id: true,
+      name: true,
+      isExpansion: true,
+      listedInCollection: true,
+      lentOut: true,
+      meetupGuestGames: {
+        where: { meetupId },
+        select: { id: true },
+        take: 1,
+      },
+    },
+  });
+  if (!game) return { error: "Spiel nicht gefunden." as const };
+  if (game.isExpansion) {
+    return { error: "Erweiterungen können nicht ausgewählt werden." as const };
+  }
+  if (game.lentOut) {
+    return { error: "Dieses Spiel ist verliehen." as const };
+  }
+  const inPickPool =
+    game.listedInCollection || game.meetupGuestGames.length > 0;
+  if (!inPickPool) {
+    return { error: "Dieses Spiel ist nicht verfügbar." as const };
+  }
+  return { game };
+}
+
+async function validateForcePickGame(meetupId: string, gameId: number) {
+  if (!Number.isFinite(gameId)) {
+    return { error: "Ungültige Spiel-ID." as const };
+  }
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: {
+      id: true,
+      name: true,
+      isExpansion: true,
+      listedInCollection: true,
+      lentOut: true,
+      meetupGuestGames: {
+        where: { meetupId },
+        select: { id: true },
+        take: 1,
+      },
+    },
+  });
+  if (!game) return { error: "Spiel nicht gefunden." as const };
+  if (game.isExpansion) {
+    return { error: "Erweiterungen können nicht festgelegt werden." as const };
+  }
+  if (game.lentOut) {
+    return { error: "Dieses Spiel ist verliehen." as const };
+  }
+  const inPickPool =
+    game.listedInCollection || game.meetupGuestGames.length > 0;
+  if (!inPickPool) {
+    return { error: "Dieses Spiel ist nicht verfügbar." as const };
+  }
+  return { game };
+}
+
+export async function forceMeetupGameAction(meetupId: string, gameId: number) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const hostCheck = await loadMeetupForHostControl(meetupId, user.id);
+  if ("error" in hostCheck && hostCheck.error) return { error: hostCheck.error };
+
+  const gameCheck = await validateForcePickGame(meetupId, gameId);
+  if ("error" in gameCheck && gameCheck.error) return { error: gameCheck.error };
+
+  const phase = await getPickPhaseState(
+    meetupId,
+    hostCheck.meetup.expectedPlayerCount,
+    prisma,
+  );
+
+  await prisma.$transaction(async (tx) => {
+    await tx.meetupHostChoiceGame.deleteMany({ where: { meetupId } });
+    await tx.meetup.update({
+      where: { id: meetupId },
+      data: {
+        hostForcedGameId: gameId,
+        hostForcedAt: new Date(),
+        hostChoiceMode: "NONE",
+      },
+    });
+  });
+
+  if (phase.picksLocked) {
+    await cancelActiveDuel(
+      meetupId,
+      hostCheck.meetup.expectedPlayerCount,
+      prisma,
+    );
+  }
+
+  revalidateMeetupPaths(meetupId);
+  revalidatePath("/");
+  return { ok: true as const, name: gameCheck.game.name };
+}
+
+export async function clearForcedMeetupGameAction(meetupId: string) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const hostCheck = await loadMeetupForHostControl(meetupId, user.id);
+  if ("error" in hostCheck && hostCheck.error) return { error: hostCheck.error };
+  if (hostCheck.meetup.hostForcedGameId == null) {
+    return { ok: true };
+  }
+
+  await prisma.meetup.update({
+    where: { id: meetupId },
+    data: { hostForcedGameId: null, hostForcedAt: null },
+  });
+
+  revalidateMeetupPaths(meetupId);
+  revalidatePath("/");
+  return { ok: true };
+}
+
+export async function addHostChoiceGameAction(meetupId: string, gameId: number) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const hostCheck = await loadMeetupForHostControl(meetupId, user.id);
+  if ("error" in hostCheck && hostCheck.error) return { error: hostCheck.error };
+  if (hostCheck.meetup.hostForcedGameId != null) {
+    return { error: "Spiel ist festgelegt — Vorauswahl nicht möglich." };
+  }
+
+  const gameCheck = await validateHostChoiceGame(meetupId, gameId);
+  if ("error" in gameCheck && gameCheck.error) return { error: gameCheck.error };
+
+  const existing = await prisma.meetupHostChoiceGame.findUnique({
+    where: { meetupId_gameId: { meetupId, gameId } },
+    select: { id: true },
+  });
+  if (existing) {
+    return { error: "Spiel ist bereits in der Vorauswahl." };
+  }
+
+  const count = await prisma.meetupHostChoiceGame.count({ where: { meetupId } });
+
+  await prisma.meetupHostChoiceGame.create({
+    data: { meetupId, gameId, sortOrder: count },
+  });
+
+  if (hostCheck.meetup.hostChoiceMode === "NONE") {
+    await prisma.meetup.update({
+      where: { id: meetupId },
+      data: { hostChoiceMode: "HIGHLIGHT" },
+    });
+  }
+
+  revalidateMeetupPaths(meetupId);
+  return { ok: true as const, name: gameCheck.game.name };
+}
+
+export async function removeHostChoiceGameAction(
+  meetupId: string,
+  gameId: number,
+) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const hostCheck = await loadMeetupForHostControl(meetupId, user.id);
+  if ("error" in hostCheck && hostCheck.error) return { error: hostCheck.error };
+  if (hostCheck.meetup.hostForcedGameId != null) {
+    return { error: "Spiel ist festgelegt — Vorauswahl nicht änderbar." };
+  }
+
+  await prisma.meetupHostChoiceGame.deleteMany({
+    where: { meetupId, gameId },
+  });
+
+  const remaining = await prisma.meetupHostChoiceGame.count({ where: { meetupId } });
+  if (remaining === 0 && hostCheck.meetup.hostChoiceMode !== "NONE") {
+    await prisma.meetup.update({
+      where: { id: meetupId },
+      data: { hostChoiceMode: "NONE" },
+    });
+  }
+
+  revalidateMeetupPaths(meetupId);
+  return { ok: true };
+}
+
+export async function setHostChoiceModeAction(
+  meetupId: string,
+  mode: HostChoiceMode,
+) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const hostCheck = await loadMeetupForHostControl(meetupId, user.id);
+  if ("error" in hostCheck && hostCheck.error) return { error: hostCheck.error };
+  if (hostCheck.meetup.hostForcedGameId != null) {
+    return { error: "Spiel ist festgelegt — Vorauswahl nicht änderbar." };
+  }
+
+  if (mode !== "NONE") {
+    const count = await prisma.meetupHostChoiceGame.count({ where: { meetupId } });
+    if (count === 0) {
+      return { error: "Zuerst Spiele zur Vorauswahl hinzufügen." };
+    }
+  }
+
+  await prisma.meetup.update({
+    where: { id: meetupId },
+    data: { hostChoiceMode: mode === "NONE" ? "NONE" : mode },
+  });
+
+  revalidateMeetupPaths(meetupId);
+  return { ok: true };
+}
+
+export async function clearHostChoiceGamesAction(meetupId: string) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const hostCheck = await loadMeetupForHostControl(meetupId, user.id);
+  if ("error" in hostCheck && hostCheck.error) return { error: hostCheck.error };
+  if (hostCheck.meetup.hostForcedGameId != null) {
+    return { error: "Spiel ist festgelegt — Vorauswahl nicht änderbar." };
+  }
+
+  await prisma.$transaction([
+    prisma.meetupHostChoiceGame.deleteMany({ where: { meetupId } }),
+    prisma.meetup.update({
+      where: { id: meetupId },
+      data: { hostChoiceMode: "NONE" },
+    }),
+  ]);
+
+  revalidateMeetupPaths(meetupId);
+  return { ok: true };
+}
+
+export async function searchCollectionGamesAction(
+  query: string,
+  meetupId?: string,
+) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const q = query.trim();
+  if (q.length < 2) {
+    return { ok: true as const, games: [] as { id: number; name: string; thumbnail: string | null }[] };
+  }
+
+  const nameFilter = { contains: q, mode: "insensitive" as const };
+  const baseSelect = { id: true, name: true, thumbnail: true } as const;
+
+  const collectionGames = await prisma.game.findMany({
+    where: {
+      listedInCollection: true,
+      isExpansion: false,
+      lentOut: false,
+      name: nameFilter,
+    },
+    select: baseSelect,
+    orderBy: { name: "asc" },
+    take: 20,
+  });
+
+  if (!meetupId) {
+    return { ok: true as const, games: collectionGames };
+  }
+
+  const collectionIds = new Set(collectionGames.map((g) => g.id));
+  const remaining = 20 - collectionGames.length;
+  const guestGames =
+    remaining > 0
+      ? await prisma.game.findMany({
+          where: {
+            listedInCollection: false,
+            isExpansion: false,
+            lentOut: false,
+            name: nameFilter,
+            meetupGuestGames: { some: { meetupId } },
+            id: { notIn: [...collectionIds] },
+          },
+          select: baseSelect,
+          orderBy: { name: "asc" },
+          take: remaining,
+        })
+      : [];
+
+  return { ok: true as const, games: [...collectionGames, ...guestGames] };
 }

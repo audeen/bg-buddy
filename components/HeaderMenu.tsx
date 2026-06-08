@@ -10,15 +10,14 @@ import {
   logoutAction,
   purgeDummyMeetupsAction,
 } from "@/app/actions";
+import { useSecretMenuReveal } from "@/lib/use-secret-menu-reveal";
 
 function meetupIdFromPath(pathname: string): string | null {
   const match = pathname.match(/^\/meetups\/([^/]+)/);
   return match?.[1] ?? null;
 }
 
-const MOBILE_NAV = [
-  { href: "/games", label: "Spiele" },
-  { href: "/", label: "Treffen" },
+const ADMIN_NAV = [
   { href: "/admin/collection", label: "Sammlung" },
   { href: "/admin/import", label: "Import" },
 ] as const;
@@ -32,6 +31,7 @@ export function HeaderMenu({ userName }: { userName: string }) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { revealed, registerClick } = useSecretMenuReveal();
 
   useEffect(() => {
     if (!open) return;
@@ -125,30 +125,40 @@ export function HeaderMenu({ userName }: { userName: string }) {
 
   return (
     <div className="relative flex flex-col items-end" ref={menuRef}>
-      <button
-        type="button"
-        className="btn btn-ghost min-w-[44px] min-h-[44px] px-3"
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label="Menü"
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span className="text-xl leading-none" aria-hidden>
-          ☰
-        </span>
-      </button>
+      {revealed ? (
+        <button
+          type="button"
+          className="btn btn-ghost min-w-[44px] min-h-[44px] px-3"
+          aria-expanded={open}
+          aria-haspopup="menu"
+          aria-label="Menü"
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span className="text-xl leading-none" aria-hidden>
+            ☰
+          </span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="min-w-[44px] min-h-[44px] opacity-0"
+          aria-hidden
+          tabIndex={-1}
+          onClick={registerClick}
+        />
+      )}
 
-      {open && (
+      {open && revealed && (
         <div
           role="menu"
           className="absolute top-full right-0 z-30 mt-1 min-w-[14rem] max-w-[calc(100vw-2rem)] rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] shadow-lg py-1"
         >
-          <p className="px-3 py-2 text-xs text-[var(--muted)] border-b border-[var(--border)] md:hidden">
+          <p className="px-3 py-2 text-xs text-[var(--muted)] border-b border-[var(--border)]">
             Angemeldet als {userName}
           </p>
 
-          <div className="md:hidden py-1 border-b border-[var(--border)]">
-            {MOBILE_NAV.map((item) => (
+          <div className="py-1 border-b border-[var(--border)]">
+            {ADMIN_NAV.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -196,7 +206,7 @@ export function HeaderMenu({ userName }: { userName: string }) {
             )}
           </div>
 
-          <div className="py-1 border-t border-[var(--border)] md:hidden">
+          <div className="py-1 border-t border-[var(--border)]">
             <button
               type="button"
               role="menuitem"

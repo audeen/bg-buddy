@@ -18,7 +18,13 @@ export async function GET(
   const { id } = await params;
   const meetup = await prisma.meetup.findUnique({
     where: { id },
-    select: { id: true, title: true, expectedPlayerCount: true },
+    select: {
+      id: true,
+      title: true,
+      expectedPlayerCount: true,
+      hostForcedGameId: true,
+      hostForcedGame: { select: { name: true } },
+    },
   });
   if (!meetup) {
     return NextResponse.json({ error: "Treffen nicht gefunden." }, { status: 404 });
@@ -64,8 +70,12 @@ export async function GET(
     phase,
     duelVoteCount,
     pickers,
-    hint: phase.readyForDuels
-      ? "Duell frei (readyForDuels=true)"
-      : `Gesperrt: ${phase.fullPickCount}/${phase.expectedPlayerCount} mit 3/3 bei ★`,
+    hostForced: meetup.hostForcedGameId != null,
+    hostForcedGameName: meetup.hostForcedGame?.name ?? null,
+    hint: meetup.hostForcedGameId != null
+      ? "Host hat Spiel festgelegt"
+      : phase.readyForDuels
+        ? "Duell frei (readyForDuels=true)"
+        : `Gesperrt: ${phase.fullPickCount}/${phase.expectedPlayerCount} mit 3/3 bei ★`,
   });
 }

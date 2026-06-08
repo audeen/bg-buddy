@@ -32,6 +32,8 @@ export function MeetupRankings({
   expansionDuelComplete = false,
   expansionRankingAvailable = false,
   winnerName = null,
+  hostForced = false,
+  hostForcedGameName = null,
 }: {
   expected: number;
   playerCounts: number[];
@@ -48,6 +50,8 @@ export function MeetupRankings({
   expansionDuelComplete?: boolean;
   expansionRankingAvailable?: boolean;
   winnerName?: string | null;
+  hostForced?: boolean;
+  hostForcedGameName?: string | null;
 }) {
   const defaultView: RankingView =
     expansionDuelComplete && expansionRankingAvailable ? "expansion" : "base";
@@ -62,7 +66,10 @@ export function MeetupRankings({
   );
   const [unlocking, setUnlocking] = useState(false);
 
-  const revealed = userRevealed || (duelComplete && totalPairs > 0);
+  const revealed =
+    hostForced ||
+    userRevealed ||
+    (duelComplete && totalPairs > 0);
 
   useEffect(() => {
     if (revealed && expansionDuelComplete && expansionRankingAvailable) {
@@ -124,6 +131,29 @@ export function MeetupRankings({
     winnerName != null
       ? `Erweiterungen für ${winnerName} bei ${expected} ★`
       : `Erweiterungen bei ${expected} ★`;
+
+  if (hostForced && hostForcedGameName) {
+    return (
+      <section
+        id="ergebnisse"
+        className="flex flex-col gap-3 scroll-mt-24"
+      >
+        <h2 className="section-title">Ergebnisse</h2>
+        <div
+          className="card flex flex-col items-center gap-2 text-center border border-[var(--accent)]"
+          style={{ padding: "var(--space-card)" }}
+        >
+          <span className="text-xs font-semibold text-[var(--accent)]">
+            Vom Host festgelegt
+          </span>
+          <p className="text-lg font-bold">{hostForcedGameName}</p>
+          <p className="text-sm text-[var(--muted)]">
+            Keine Abstimmung — dieses Spiel wird gespielt.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section

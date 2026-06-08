@@ -50,7 +50,15 @@ model Game {
 
   votesAsWinner    Vote[]             @relation("VoteWinner")
   votesAsOpponent  Vote[]             @relation("VoteOpponent")
-  meetupGuestGames MeetupGuestGame[]
+  meetupGuestGames    MeetupGuestGame[]
+  meetupHostChoiceGames MeetupHostChoiceGame[]
+  meetupsForcedAsGame Meetup[] @relation("MeetupForcedGame")
+}
+
+enum HostChoiceMode {
+  NONE
+  HIGHLIGHT
+  RESTRICT
 }
 
 enum VoteMode {
@@ -75,10 +83,15 @@ model Meetup {
   duelFrozenData             Json?
   expansionDuelStartedAt     DateTime?
   expansionDuelFrozenData    Json?
+  hostForcedGameId           Int?
+  hostForcedGame             Game?          @relation("MeetupForcedGame", fields: [hostForcedGameId], references: [id], onDelete: SetNull)
+  hostForcedAt               DateTime?
+  hostChoiceMode             HostChoiceMode @default(NONE)
 
   votes                Vote[]
   registrations        MeetupRegistration[]
   guestGames           MeetupGuestGame[]
+  hostChoiceGames      MeetupHostChoiceGame[]
   mandatoryExpansions  MeetupMandatoryExpansion[]
 }
 
@@ -101,6 +114,19 @@ model MeetupGuestGame {
   game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   addedById String
   addedBy   User     @relation(fields: [addedById], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([meetupId, gameId])
+  @@index([meetupId])
+}
+
+model MeetupHostChoiceGame {
+  id        String   @id @default(cuid())
+  meetupId  String
+  meetup    Meetup   @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  gameId    Int
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 
   @@unique([meetupId, gameId])
