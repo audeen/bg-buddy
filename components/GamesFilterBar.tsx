@@ -18,11 +18,20 @@ import {
   type RatingBlock,
 } from "@/lib/game-filters";
 
+function scrollToElement(id: string) {
+  requestAnimationFrame(() => {
+    document
+      .getElementById(id)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
 type GamesFilterBarProps = {
   genres: string[];
   ratingBlocks: RatingBlock[];
   basePath?: string;
   hideExpansions?: boolean;
+  scrollToId?: string;
 };
 
 const EMPTY_FILTERS: GameFilters = {
@@ -44,6 +53,7 @@ export function GamesFilterBar({
   ratingBlocks,
   basePath = "/games",
   hideExpansions = false,
+  scrollToId,
 }: GamesFilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -59,9 +69,10 @@ export function GamesFilterBar({
       const qs = params.toString();
       startTransition(() => {
         router.push(qs ? `${basePath}?${qs}` : basePath, { scroll: false });
+        if (scrollToId) scrollToElement(scrollToId);
       });
     },
-    [basePath, router, sort, startTransition],
+    [basePath, router, scrollToId, sort, startTransition],
   );
 
   const updateField = (patch: Partial<GameFilters>) => {

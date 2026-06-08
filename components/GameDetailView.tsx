@@ -9,7 +9,7 @@ import {
   expansionNamesForPlayerCount,
 } from "@/lib/effective-player-count";
 import { bggBoardgameUrl } from "@/lib/bgg-url";
-import type { GameFilters } from "@/lib/game-filters";
+import type { GameFilters, GameSort } from "@/lib/game-filters";
 import { buildGameTags, categoryTag, mechanicTag } from "@/lib/game-tags";
 
 export interface GameDetailData {
@@ -42,6 +42,8 @@ type GameDetailViewProps = {
   activeFilters?: GameFilters;
   filterMode?: boolean;
   filterBasePath?: string;
+  filterSort?: GameSort;
+  filterScrollToId?: string;
   onFilterNavigate?: () => void;
   ownedExpansions?: GameCardGame[];
   onSelectExpansion?: (id: number) => void;
@@ -58,6 +60,8 @@ export function GameDetailView({
   activeFilters,
   filterMode,
   filterBasePath,
+  filterSort,
+  filterScrollToId,
   onFilterNavigate,
   ownedExpansions,
   onSelectExpansion,
@@ -134,6 +138,8 @@ export function GameDetailView({
                   activeFilters={activeFilters}
                   filterMode={filterMode}
                   basePath={filterBasePath}
+                  sort={filterSort}
+                  scrollToId={filterScrollToId}
                   onNavigate={onFilterNavigate}
                 />
               ))
@@ -213,6 +219,8 @@ export function GameDetailView({
                     activeFilters={activeFilters}
                     filterMode={filterMode}
                     basePath={filterBasePath}
+                    sort={filterSort}
+                    scrollToId={filterScrollToId}
                     onNavigate={onFilterNavigate}
                   />
                 ) : (
@@ -255,6 +263,8 @@ export function GameDetailView({
                   activeFilters={activeFilters}
                   filterMode={filterMode}
                   basePath={filterBasePath}
+                  sort={filterSort}
+                  scrollToId={filterScrollToId}
                   onNavigate={onFilterNavigate}
                 />
               ) : (

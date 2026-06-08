@@ -15,7 +15,7 @@ import { ExpansionRequiredBanner } from "@/components/ExpansionRequiredBanner";
 import { ExpansionVoteFollowsBanner } from "@/components/ExpansionVoteFollowsBanner";
 import { LentOutBanner } from "@/components/LentOutBanner";
 import { FilterChipButton } from "@/components/FilterChipButton";
-import type { GameFilters } from "@/lib/game-filters";
+import type { GameFilters, GameSort } from "@/lib/game-filters";
 import {
   buildGameTags,
   groupGameTags,
@@ -36,6 +36,8 @@ type BaseProps = {
   activeFilters?: GameFilters;
   filterMode?: boolean;
   filterBasePath?: string;
+  filterSort?: GameSort;
+  filterScrollToId?: string;
   selected?: boolean;
   selectedPoints?: number;
   ownedExpansions?: GameCardGame[];
@@ -65,6 +67,8 @@ function TagRows({
   activeFilters,
   filterMode,
   filterBasePath,
+  filterSort,
+  filterScrollToId,
   ownedExpansions,
   onBaseView,
 }: {
@@ -74,6 +78,8 @@ function TagRows({
   activeFilters?: GameFilters;
   filterMode?: boolean;
   filterBasePath?: string;
+  filterSort?: GameSort;
+  filterScrollToId?: string;
   ownedExpansions: GameCardGame[];
   onBaseView: boolean;
 }) {
@@ -96,6 +102,8 @@ function TagRows({
               activeFilters={activeFilters}
               filterMode={filterMode}
               basePath={filterBasePath}
+              sort={filterSort}
+              scrollToId={filterScrollToId}
             />
           ))}
         </div>
@@ -109,6 +117,8 @@ function TagRows({
               activeFilters={activeFilters}
               filterMode={filterMode}
               basePath={filterBasePath}
+              sort={filterSort}
+              scrollToId={filterScrollToId}
             />
           ))}
         </div>
@@ -170,6 +180,8 @@ function CardBody({
   activeFilters,
   filterMode,
   filterBasePath,
+  filterSort,
+  filterScrollToId,
   ownedExpansions,
   viewExpansionId,
   onSelectBase,
@@ -181,6 +193,8 @@ function CardBody({
   activeFilters?: GameFilters;
   filterMode?: boolean;
   filterBasePath?: string;
+  filterSort?: GameSort;
+  filterScrollToId?: string;
   ownedExpansions: GameCardGame[];
   viewExpansionId: number | null;
   onSelectBase: () => void;
@@ -201,6 +215,8 @@ function CardBody({
         activeFilters={activeFilters}
         filterMode={filterMode}
         filterBasePath={filterBasePath}
+        filterSort={filterSort}
+        filterScrollToId={filterScrollToId}
         ownedExpansions={ownedExpansions}
         onBaseView={viewExpansionId == null}
       />
@@ -313,6 +329,8 @@ export function GameCard(props: ButtonProps | LinkProps) {
     activeFilters,
     filterMode,
     filterBasePath,
+    filterSort,
+    filterScrollToId,
     selected,
     selectedPoints,
     ownedExpansions = [],
@@ -349,6 +367,8 @@ export function GameCard(props: ButtonProps | LinkProps) {
     activeFilters,
     filterMode,
     filterBasePath,
+    filterSort,
+    filterScrollToId,
     ownedExpansions,
     viewExpansionId,
     onSelectBase: selectBase,

@@ -1,5 +1,4 @@
 import { notFound, redirect } from "next/navigation";
-import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { PickClient } from "@/components/PickClient";
@@ -7,15 +6,23 @@ import { PageHeader } from "@/components/PageHeader";
 import { loadPickPhaseSummary } from "@/lib/pick-phase";
 import { loadOwnedExpansionsByBaseGame, serializeExpansionsByBaseId } from "@/lib/owned-expansions";
 import { pickGamesWhere } from "@/lib/meetup-guest-games";
+import { parseGameFilters, parseGameSort } from "@/lib/game-filters";
 
 export const dynamic = "force-dynamic";
 
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
 export default async function PickPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: SearchParams;
 }) {
   const { id } = await params;
+  const sp = await searchParams;
+  const activeFilters = parseGameFilters(sp);
+  const sort = parseGameSort(sp);
   const user = await getCurrentUser();
   if (!user) redirect("/#login");
 
@@ -69,25 +76,21 @@ export default async function PickPage({
         title="Stimmen vergeben"
       />
 
-      <Suspense
-        fallback={
-          <div className="filter-dropdown h-12 animate-pulse rounded-xl" />
-        }
-      >
-        <PickClient
-          key={meetup.expectedPlayerCount}
-          meetupId={id}
-          expected={meetup.expectedPlayerCount}
-          games={games}
-          initialPicks={myVotes}
-          scrollTargetId="pick-page-top"
-          picksLocked={phase.picksLocked}
-          readyForDuels={phase.readyForDuels}
-          pickPhaseSummary={summary}
-          expansionsByBaseId={serializeExpansionsByBaseId(expansionsByBase)}
-          guestGameIds={guestGameIds}
-        />
-      </Suspense>
+      <PickClient
+        key={meetup.expectedPlayerCount}
+        meetupId={id}
+        expected={meetup.expectedPlayerCount}
+        games={games}
+        initialPicks={myVotes}
+        scrollTargetId="pick-page-top"
+        picksLocked={phase.picksLocked}
+        readyForDuels={phase.readyForDuels}
+        pickPhaseSummary={summary}
+        expansionsByBaseId={serializeExpansionsByBaseId(expansionsByBase)}
+        guestGameIds={guestGameIds}
+        activeFilters={activeFilters}
+        sort={sort}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { GameDetailView, type GameDetailData } from "@/components/GameDetailView";
 import type { GameCardGame } from "@/components/GameCard";
-import type { GameFilters } from "@/lib/game-filters";
+import type { GameFilters, GameSort } from "@/lib/game-filters";
 
 const DRAG_CLOSE_THRESHOLD = 100;
 const DRAG_CLOSE_AFTER_DEMOTE = 60;
@@ -69,6 +69,8 @@ type GameDetailModalProps = {
   activeFilters?: GameFilters;
   filterMode?: boolean;
   filterBasePath?: string;
+  filterSort?: GameSort;
+  filterScrollToId?: string;
   ownedExpansions?: GameCardGame[];
 };
 
@@ -80,6 +82,8 @@ export function GameDetailModal({
   activeFilters,
   filterMode,
   filterBasePath,
+  filterSort,
+  filterScrollToId,
   ownedExpansions = [],
 }: GameDetailModalProps) {
   const titleId = useId();
@@ -550,6 +554,8 @@ export function GameDetailModal({
             activeFilters={activeFilters}
             filterMode={filterMode}
             filterBasePath={filterBasePath}
+            filterSort={filterSort}
+            filterScrollToId={filterScrollToId}
             onFilterNavigate={dismiss}
             ownedExpansions={modalExpansions}
             onSelectExpansion={(id) => {

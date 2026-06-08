@@ -8,13 +8,24 @@ import {
   parseGameSort,
   toggleGameFilter,
   type GameFilters,
+  type GameSort,
 } from "@/lib/game-filters";
+
+function scrollToElement(id: string) {
+  requestAnimationFrame(() => {
+    document
+      .getElementById(id)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
 
 type FilterChipButtonProps = {
   tag: GameTag;
   activeFilters?: GameFilters;
   filterMode?: boolean;
   basePath?: string;
+  sort?: GameSort;
+  scrollToId?: string;
   onNavigate?: () => void;
 };
 
@@ -23,13 +34,17 @@ export function FilterChipButton({
   activeFilters,
   filterMode,
   basePath = "/games",
+  sort: sortProp,
+  scrollToId,
   onNavigate,
 }: FilterChipButtonProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sort = parseGameSort(
-    Object.fromEntries(searchParams.entries()) as Record<string, string>,
-  );
+  const sort =
+    sortProp ??
+    parseGameSort(
+      Object.fromEntries(searchParams.entries()) as Record<string, string>,
+    );
   const baseClass = chipClassForVariant(tag.variant);
   const canFilter = filterMode && tag.filter && activeFilters;
   const isActive = canFilter ? isFilterActive(activeFilters, tag.filter!) : false;
@@ -47,6 +62,7 @@ export function FilterChipButton({
         onNavigate?.();
         const next = toggleGameFilter(activeFilters, tag.filter!);
         router.push(filterUrl(basePath, next, sort), { scroll: false });
+        if (scrollToId) scrollToElement(scrollToId);
       }}
     >
       {tag.label}

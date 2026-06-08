@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
 import { GameCard, type GameCardGame } from "@/components/GameCard";
 import { GamesFilterBar } from "@/components/GamesFilterBar";
@@ -22,12 +21,13 @@ import {
 } from "@/lib/pick-points";
 import { enqueuePickTap } from "@/lib/pick-tap-queue";
 import {
+  filtersToSearchParams,
   hasActiveFilters,
   matchesGameFilters,
-  parseGameFilters,
-  parseGameSort,
   ratingBlocksFromRatings,
   sortGames,
+  type GameFilters,
+  type GameSort,
   type RatingBlock,
 } from "@/lib/game-filters";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
@@ -54,6 +54,8 @@ export function PickClient({
   pickPhaseSummary,
   expansionsByBaseId,
   guestGameIds = [],
+  activeFilters,
+  sort,
 }: {
   meetupId: string;
   expected: number;
@@ -65,23 +67,12 @@ export function PickClient({
   pickPhaseSummary: PickPhaseSummary;
   expansionsByBaseId: Record<string, GameCardGame[]>;
   guestGameIds?: number[];
+  activeFilters: GameFilters;
+  sort: GameSort;
 }) {
-  const searchParams = useSearchParams();
-  const filters = useMemo(
-    () =>
-      parseGameFilters(
-        Object.fromEntries(searchParams.entries()) as Record<string, string>,
-      ),
-    [searchParams],
-  );
-  const sort = useMemo(
-    () =>
-      parseGameSort(
-        Object.fromEntries(searchParams.entries()) as Record<string, string>,
-      ),
-    [searchParams],
-  );
+  const filters = activeFilters;
   const filterBasePath = `/meetups/${meetupId}/pick`;
+  const filterListKey = filtersToSearchParams(filters, sort).toString();
 
   const genres = useMemo(
     () =>
@@ -278,8 +269,12 @@ export function PickClient({
     ? "scroll-to-top-above-picker-at-limit"
     : "scroll-to-top-above-picker";
 
+  const pickerPaddingClass = atLimit
+    ? "pb-sticky-picker-at-limit"
+    : "pb-sticky-picker";
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className={`flex flex-col gap-6 ${pickerPaddingClass}`}>
       <p
         className="text-sm text-[var(--muted)] leading-relaxed rounded-lg border border-[var(--border)] px-3 py-2"
         role="status"
@@ -287,17 +282,22 @@ export function PickClient({
         {phaseBanner}
       </p>
 
-      <GamesFilterBar
-        genres={genres}
-        ratingBlocks={ratingBlocks}
-        basePath={filterBasePath}
-        hideExpansions
-      />
+      <Suspense
+        fallback={
+          <div className="filter-dropdown h-12 animate-pulse rounded-xl" />
+        }
+      >
+        <GamesFilterBar
+          genres={genres}
+          ratingBlocks={ratingBlocks}
+          basePath={filterBasePath}
+          hideExpansions
+          scrollToId={scrollTargetId}
+        />
+      </Suspense>
 
       {visible.length === 0 ? (
-        <p
-          className={`text-[var(--muted)] ${atLimit ? "pb-sticky-picker-at-limit" : "pb-sticky-picker"}`}
-        >
+        <p className="text-[var(--muted)]">
           {eligibleGames.length === 0
             ? `Keine Spiele für ${selected} Spieler in der Sammlung.`
             : hasActiveFilters(filters)
@@ -306,7 +306,8 @@ export function PickClient({
         </p>
       ) : (
         <ul
-          className={`grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 ${atLimit ? "pb-sticky-picker-at-limit" : "pb-sticky-picker"}`}
+          key={filterListKey}
+          className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
         >
           {visible.map((g) => {
             const key = pointsKey(g.id, selected);
@@ -326,6 +327,8 @@ export function PickClient({
                   activeFilters={filters}
                   filterMode
                   filterBasePath={filterBasePath}
+                  filterSort={sort}
+                  filterScrollToId={scrollTargetId}
                   selected={gamePoints > 0}
                   selectedPoints={gamePoints}
                   ownedExpansions={expansionsByBaseId[String(g.id)] ?? []}
@@ -354,6 +357,8 @@ export function PickClient({
         activeFilters={filters}
         filterMode
         filterBasePath={filterBasePath}
+        filterSort={sort}
+        filterScrollToId={scrollTargetId}
         ownedExpansions={
           detail
             ? (expansionsByBaseId[String(detail.baseGame.id)] ?? [])
