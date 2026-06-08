@@ -6,12 +6,8 @@ import type { GameCardGame } from "@/components/GameCard";
 import type { GameFilters, GameSort } from "@/lib/game-filters";
 
 const DRAG_CLOSE_THRESHOLD = 100;
-const DRAG_CLOSE_AFTER_DEMOTE = 60;
-const DRAG_MAXIMIZE_THRESHOLD = 80;
 const DRAG_CHAIN_DEADZONE = 5;
-const PARTIAL_HEIGHT_RATIO = 0.85;
 
-type SnapPoint = "partial" | "maximized";
 type DragSource = "handle" | "body" | null;
 
 type DragEndState = {
@@ -37,27 +33,11 @@ function safeReleasePointerCapture(el: Element, pointerId: number) {
   }
 }
 
-function computeDragState(rawDelta: number, startSnap: SnapPoint): DragEndState {
-  const vh = window.innerHeight;
-  const partialH = vh * PARTIAL_HEIGHT_RATIO;
-  const maxH = vh;
-  const heightTravel = maxH - partialH;
-
-  if (startSnap === "partial") {
-    if (rawDelta < 0) {
-      const upAmount = Math.min(-rawDelta, heightTravel);
-      return { height: partialH + upAmount, translateY: 0 };
-    }
-    return { height: partialH, translateY: rawDelta };
-  }
-
+function computeDragState(rawDelta: number): DragEndState {
+  const maxH = window.innerHeight;
   if (rawDelta > 0) {
-    if (rawDelta <= heightTravel) {
-      return { height: maxH - rawDelta, translateY: 0 };
-    }
-    return { height: partialH, translateY: rawDelta - heightTravel };
+    return { height: maxH, translateY: rawDelta };
   }
-
   return { height: maxH, translateY: 0 };
 }
 
@@ -88,14 +68,12 @@ export function GameDetailModal({
 }: GameDetailModalProps) {
   const titleId = useId();
   const [viewGame, setViewGame] = useState<GameDetailData | null>(null);
-  const [snapPoint, setSnapPoint] = useState<SnapPoint>("partial");
   const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const historyPushedRef = useRef(false);
   const skipPopCloseRef = useRef(false);
   const dragStartYRef = useRef(0);
-  const dragStartSnapRef = useRef<SnapPoint>("partial");
   const draggingRef = useRef(false);
   const sheetDragActiveRef = useRef(false);
   const chainEligibleRef = useRef(false);
@@ -105,15 +83,10 @@ export function GameDetailModal({
   const dragSourceRef = useRef<DragSource>(null);
   const pointerIdRef = useRef<number | null>(null);
   const captureTargetRef = useRef<Element | null>(null);
-  const snapPointRef = useRef<SnapPoint>("partial");
   const onCloseRef = useRef(onClose);
   const prevGameRef = useRef<GameDetailData | null>(null);
 
   onCloseRef.current = onClose;
-
-  useEffect(() => {
-    snapPointRef.current = snapPoint;
-  }, [snapPoint]);
 
   useEffect(() => {
     setViewGame(game);
@@ -161,12 +134,12 @@ export function GameDetailModal({
     clearDragVisuals();
   }, [clearDragVisuals]);
 
-  const applyDragVisuals = useCallback((rawDelta: number, startSnap: SnapPoint) => {
+  const applyDragVisuals = useCallback((rawDelta: number) => {
     const panel = panelRef.current;
     const overlay = overlayRef.current;
     if (!panel) return;
 
-    const { height, translateY } = computeDragState(rawDelta, startSnap);
+    const { height, translateY } = computeDragState(rawDelta);
     panel.style.height = `${height}px`;
     panel.style.maxHeight = `${height}px`;
     panel.style.transform = translateY > 0 ? `translateY(${translateY}px)` : "";
@@ -177,62 +150,18 @@ export function GameDetailModal({
     }
   }, []);
 
-  const demoteToPartial = useCallback(() => {
-    setSnapPoint("partial");
-    bodyRef.current?.scrollTo({ top: 0 });
-  }, []);
-
   const resolveSnapOnRelease = useCallback(
-    (rawDelta: number, startSnap: SnapPoint) => {
-      const { height, translateY } = computeDragState(rawDelta, startSnap);
-      const vh = window.innerHeight;
-      const partialH = vh * PARTIAL_HEIGHT_RATIO;
-      const maxH = vh;
-      const mid = (partialH + maxH) / 2;
-
-      if (startSnap === "maximized" && rawDelta > 0) {
-        const heightTravel = maxH - partialH;
-
-        if (translateY === 0) {
-          const progress = rawDelta / heightTravel;
-          if (progress >= 0.5) {
-            demoteToPartial();
-          } else {
-            setSnapPoint("maximized");
-          }
-        } else if (translateY >= DRAG_CLOSE_AFTER_DEMOTE) {
-          dismiss();
-        } else {
-          demoteToPartial();
-        }
-        clearDragVisuals();
-        return;
-      }
+    (rawDelta: number) => {
+      const { translateY } = computeDragState(rawDelta);
 
       if (translateY >= DRAG_CLOSE_THRESHOLD) {
         dismiss();
         return;
       }
 
-      if (startSnap === "partial" && rawDelta < 0) {
-        if (-rawDelta >= DRAG_MAXIMIZE_THRESHOLD || height >= mid) {
-          setSnapPoint("maximized");
-        } else {
-          setSnapPoint("partial");
-        }
-        clearDragVisuals();
-        return;
-      }
-
-      if (startSnap === "partial" && rawDelta > 0) {
-        setSnapPoint("partial");
-        clearDragVisuals();
-        return;
-      }
-
       clearDragVisuals();
     },
-    [dismiss, clearDragVisuals, demoteToPartial],
+    [dismiss, clearDragVisuals],
   );
 
   useEffect(() => {
@@ -245,8 +174,6 @@ export function GameDetailModal({
     prevGameRef.current = game;
 
     if (isFreshOpen) {
-      setSnapPoint("partial");
-      snapPointRef.current = "partial";
       scrolledToBottomRef.current = false;
       window.history.pushState({ gameDetailModal: true }, "");
       historyPushedRef.current = true;
@@ -325,7 +252,7 @@ export function GameDetailModal({
           pointerIdRef.current,
         );
       }
-      resolveSnapOnRelease(rawDelta, dragStartSnapRef.current);
+      resolveSnapOnRelease(rawDelta);
     },
     [resolveSnapOnRelease, abortSheetDrag],
   );
@@ -345,7 +272,6 @@ export function GameDetailModal({
       dragSourceRef.current = "handle";
       pointerIdRef.current = e.pointerId;
       dragStartYRef.current = e.clientY;
-      dragStartSnapRef.current = snapPointRef.current;
       panelRef.current?.classList.add("modal-panel-dragging");
       captureTargetRef.current = e.currentTarget;
       e.currentTarget.setPointerCapture(e.pointerId);
@@ -360,7 +286,7 @@ export function GameDetailModal({
       }
 
       const rawDelta = e.clientY - dragStartYRef.current;
-      applyDragVisuals(rawDelta, dragStartSnapRef.current);
+      applyDragVisuals(rawDelta);
       e.preventDefault();
     },
     [applyDragVisuals],
@@ -421,7 +347,6 @@ export function GameDetailModal({
       chainEligibleRef.current =
         !gestureBlockedRef.current && isScrollAtTop(body);
       dragStartYRef.current = touchY;
-      dragStartSnapRef.current = snapPointRef.current;
       sheetDragActiveRef.current = false;
       draggingRef.current = false;
       dragSourceRef.current = null;
@@ -477,7 +402,7 @@ export function GameDetailModal({
       }
 
       const rawDelta = touchY - dragStartYRef.current;
-      applyDragVisuals(rawDelta, dragStartSnapRef.current);
+      applyDragVisuals(rawDelta);
       e.preventDefault();
     }
 
@@ -529,7 +454,7 @@ export function GameDetailModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`modal-panel modal-panel-snap-transition${snapPoint === "maximized" ? " modal-panel-maximized" : ""}`}
+        className="modal-panel modal-panel-snap-transition modal-panel-maximized"
         tabIndex={-1}
       >
         <div
