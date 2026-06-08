@@ -1021,6 +1021,7 @@ body {
   @media (max-width: 639px) {
     .modal-body-chainable {
       touch-action: pan-y;
+      overscroll-behavior-y: contain;
     }
   }
 
