@@ -23,6 +23,15 @@ import {
   pairKey,
   parseDuelFrozenData,
 } from "@/lib/duel-pairs";
+import {
+  buildExpansionConfigs,
+  buildExpansionDuelPairs,
+  expansionConfigsNeedDuel,
+  expansionDuelFrozenToJson,
+  parseExpansionDuelFrozenData,
+  type ExpansionDuelFrozenData,
+} from "@/lib/expansion-duel";
+import { loadExpansionPhaseState } from "@/lib/expansion-phase";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import {
   formatDuellNotReadyMessage,
@@ -156,7 +165,12 @@ export async function updateExpectedCountAction(
       expectedPlayerCount: Math.max(1, Math.round(count)),
       duelFrozenAt: null,
       duelFrozenData: Prisma.DbNull,
+      expansionDuelStartedAt: null,
+      expansionDuelFrozenData: Prisma.DbNull,
     },
+  });
+  await prisma.vote.deleteMany({
+    where: { meetupId, mode: "EXPANSION_DUEL" },
   });
   revalidatePath(`/meetups/${meetupId}`);
   return { ok: true };
@@ -520,6 +534,256 @@ export async function duelVoteAction(
   return { ok: true };
 }
 
+function revalidateExpansionPaths(meetupId: string) {
+  revalidatePath(`/meetups/${meetupId}`);
+  revalidatePath(`/meetups/${meetupId}/erweiterung`);
+}
+
+export async function toggleMandatoryExpansionAction(
+  meetupId: string,
+  baseGameId: number,
+  expansionGameId: number,
+  mandatory: boolean,
+) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const meetup = await prisma.meetup.findUnique({
+    where: { id: meetupId },
+    select: { createdById: true },
+  });
+  if (!meetup) return { error: "Treffen nicht gefunden." };
+  if (meetup.createdById !== user.id) {
+    return { error: "Nur der Host kann Pflicht-Erweiterungen festlegen." };
+  }
+
+  const expansion = await prisma.game.findUnique({
+    where: { id: expansionGameId },
+    select: {
+      isExpansion: true,
+      expandsGameIds: true,
+      listedInCollection: true,
+    },
+  });
+  if (
+    !expansion?.isExpansion ||
+    !expansion.expandsGameIds.includes(baseGameId) ||
+    !expansion.listedInCollection
+  ) {
+    return { error: "Ungültige Erweiterung für dieses Basisspiel." };
+  }
+
+  if (mandatory) {
+    await prisma.meetupMandatoryExpansion.upsert({
+      where: {
+        meetupId_baseGameId_expansionGameId: {
+          meetupId,
+          baseGameId,
+          expansionGameId,
+        },
+      },
+      update: {},
+      create: { meetupId, baseGameId, expansionGameId },
+    });
+  } else {
+    await prisma.meetupMandatoryExpansion.deleteMany({
+      where: { meetupId, baseGameId, expansionGameId },
+    });
+  }
+
+  revalidateExpansionPaths(meetupId);
+  return { ok: true };
+}
+
+export async function startExpansionDuelAction(meetupId: string) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  const meetup = await prisma.meetup.findUnique({
+    where: { id: meetupId },
+    select: {
+      expectedPlayerCount: true,
+      createdById: true,
+      expansionDuelStartedAt: true,
+      mandatoryExpansions: {
+        select: { baseGameId: true, expansionGameId: true },
+      },
+    },
+  });
+  if (!meetup) return { error: "Treffen nicht gefunden." };
+  if (meetup.createdById !== user.id) {
+    return { error: "Nur der Host kann die Erweiterungs-Abstimmung starten." };
+  }
+  if (meetup.expansionDuelStartedAt) {
+    return { error: "Erweiterungs-Abstimmung läuft bereits." };
+  }
+
+  const expected = meetup.expectedPlayerCount;
+  const expansionPhase = await loadExpansionPhaseState(meetupId, expected, prisma);
+  if (!expansionPhase.mainDuelComplete || !expansionPhase.winnerGameId) {
+    return { error: "Haupt-Duelle müssen zuerst abgeschlossen sein." };
+  }
+  if (expansionPhase.optionalExpansionCount === 0) {
+    return { error: "Keine optionalen Erweiterungen zum Abstimmen." };
+  }
+
+  const mandatory = meetup.mandatoryExpansions
+    .filter((m) => m.baseGameId === expansionPhase.winnerGameId)
+    .map((m) => m.expansionGameId);
+
+  const baseGame = await prisma.game.findUnique({
+    where: { id: expansionPhase.winnerGameId },
+    select: {
+      id: true,
+      name: true,
+      thumbnail: true,
+      image: true,
+      minPlayers: true,
+      maxPlayers: true,
+    },
+  });
+  if (!baseGame) return { error: "Sieger-Spiel nicht gefunden." };
+
+  const ownedExpansions = await prisma.game.findMany({
+    where: {
+      isExpansion: true,
+      listedInCollection: true,
+      expandsGameIds: { has: baseGame.id },
+    },
+    select: {
+      id: true,
+      name: true,
+      thumbnail: true,
+      image: true,
+      minPlayers: true,
+      maxPlayers: true,
+    },
+  });
+
+  const configs = buildExpansionConfigs(
+    baseGame,
+    ownedExpansions,
+    mandatory,
+    expected,
+  );
+  if (!expansionConfigsNeedDuel(configs)) {
+    return { error: "Keine Abstimmung nötig — nur Pflicht-Erweiterungen." };
+  }
+
+  const frozen: ExpansionDuelFrozenData = {
+    baseGameId: baseGame.id,
+    playerCount: expected,
+    configs,
+    poolVoteGameIds: configs.map((c) => c.voteGameId),
+  };
+
+  await prisma.meetup.update({
+    where: { id: meetupId },
+    data: {
+      expansionDuelStartedAt: new Date(),
+      expansionDuelFrozenData: expansionDuelFrozenToJson(frozen),
+    },
+  });
+
+  revalidateExpansionPaths(meetupId);
+  return { ok: true };
+}
+
+export async function expansionDuelVoteAction(
+  meetupId: string,
+  winnerGameId: number,
+  opponentGameId: number,
+  playerCount: number,
+) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  if (winnerGameId === opponentGameId) {
+    return { error: "Gewinner und Gegner müssen verschieden sein." };
+  }
+
+  const meetup = await prisma.meetup.findUnique({
+    where: { id: meetupId },
+    select: {
+      expectedPlayerCount: true,
+      expansionDuelStartedAt: true,
+      expansionDuelFrozenData: true,
+    },
+  });
+  if (!meetup) return { error: "Treffen nicht gefunden." };
+  if (!meetup.expansionDuelStartedAt) {
+    return { error: "Erweiterungs-Abstimmung wurde noch nicht gestartet." };
+  }
+  if (playerCount !== meetup.expectedPlayerCount) {
+    return { error: "Abstimmung nur für die erwartete Spieleranzahl." };
+  }
+
+  const frozen = parseExpansionDuelFrozenData(
+    meetup.expansionDuelFrozenData,
+    playerCount,
+  );
+  if (!frozen) return { error: "Erweiterungs-Duell-Daten fehlen." };
+
+  const pool = new Set(frozen.poolVoteGameIds);
+  if (!pool.has(winnerGameId) || !pool.has(opponentGameId)) {
+    return { error: "Ungültige Konfiguration." };
+  }
+
+  const pairs = buildExpansionDuelPairs(frozen.configs);
+  const key = pairKey(
+    Math.min(winnerGameId, opponentGameId),
+    Math.max(winnerGameId, opponentGameId),
+  );
+  if (!pairs.some((p) => pairKey(p.a, p.b) === key)) {
+    return { error: "Dieses Paar ist nicht vorgesehen." };
+  }
+
+  const groupPicks = await prisma.vote.findMany({
+    where: { meetupId, mode: "PICK", playerCount },
+    select: { userId: true, gameId: true, points: true },
+  });
+
+  const myPickSum = groupPicks
+    .filter((p) => p.userId === user.id)
+    .reduce((s, p) => s + p.points, 0);
+  if (myPickSum < MAX_PICK_POINTS) {
+    return {
+      error: `Du brauchst ${MAX_PICK_POINTS}/${MAX_PICK_POINTS} Stimmen bei ★.`,
+    };
+  }
+
+  const existing = await prisma.vote.findFirst({
+    where: {
+      meetupId,
+      userId: user.id,
+      playerCount,
+      mode: "EXPANSION_DUEL",
+      OR: [
+        { gameId: winnerGameId, opponentGameId },
+        { gameId: opponentGameId, opponentGameId: winnerGameId },
+      ],
+    },
+  });
+  if (existing) {
+    return { error: "Du hast für dieses Paar schon abgestimmt." };
+  }
+
+  await prisma.vote.create({
+    data: {
+      meetupId,
+      userId: user.id,
+      gameId: winnerGameId,
+      opponentGameId,
+      playerCount,
+      mode: "EXPANSION_DUEL",
+      points: 1,
+    },
+  });
+
+  revalidateExpansionPaths(meetupId);
+  return { ok: true };
+}
+
 function parseConflictResolution(value: string | null): ConflictResolution {
   return value === "overwriteAll" ? "overwriteAll" : "keepManual";
 }
@@ -870,6 +1134,7 @@ function revalidateMeetupPaths(meetupId: string) {
   revalidatePath(`/meetups/${meetupId}`);
   revalidatePath(`/meetups/${meetupId}/pick`);
   revalidatePath(`/meetups/${meetupId}/duell`);
+  revalidatePath(`/meetups/${meetupId}/erweiterung`);
 }
 
 export async function addGuestGameToMeetupAction(

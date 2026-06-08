@@ -6,6 +6,10 @@ import { ExpectedCountReadOnly } from "@/components/ExpectedCountReadOnly";
 import { MeetupActionsMenu } from "@/components/MeetupActionsMenu";
 import { MeetupShareQr } from "@/components/MeetupShareQr";
 import { MeetupVoteActions } from "@/components/MeetupVoteActions";
+import { MeetupExpansionActions } from "@/components/MeetupExpansionActions";
+import {
+  MeetupMandatoryExpansions,
+} from "@/components/MeetupMandatoryExpansions";
 import { MeetupRankings } from "@/components/MeetupRankings";
 import { MeetupParticipants } from "@/components/MeetupParticipants";
 import { JoinMeetupButton } from "@/components/JoinMeetupButton";
@@ -29,6 +33,12 @@ import {
   isUserRegistered,
   sumPickPointsAtExpected,
 } from "@/lib/meetup-participants";
+import { loadExpansionPhaseState } from "@/lib/expansion-phase";
+import {
+  loadMandatoryExpansionFamilies,
+  mandatoryExpansionKeys,
+} from "@/lib/meetup-mandatory-data";
+import { resolveExpansionResultLabel } from "@/lib/expansion-result";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +81,9 @@ export default async function MeetupDetail({
           },
         },
         orderBy: { createdAt: "asc" },
+      },
+      mandatoryExpansions: {
+        select: { baseGameId: true, expansionGameId: true },
       },
     },
   });
@@ -163,6 +176,76 @@ export default async function MeetupDetail({
   });
 
   const duelRoundComplete = duelComplete && totalPairs > 0;
+  const isHost = user?.id === meetup.createdBy.id;
+
+  const expansionPhase = await loadExpansionPhaseState(id, expected, prisma);
+  const mandatoryFamilies = isHost
+    ? await loadMandatoryExpansionFamilies()
+    : [];
+  const mandatoryKeys = mandatoryExpansionKeys(meetup.mandatoryExpansions);
+
+  let expansionResultLabel: string | null = null;
+  if (
+    duelRoundComplete &&
+    expansionPhase.winnerGameId &&
+    (expansionPhase.expansionDuelComplete ||
+      expansionPhase.optionalExpansionCount === 0)
+  ) {
+    const winnerId = expansionPhase.winnerGameId;
+    const mandatoryIds = meetup.mandatoryExpansions
+      .filter((m) => m.baseGameId === winnerId)
+      .map((m) => m.expansionGameId);
+    const [baseGame, ownedExpansions, expansionVotes] = await Promise.all([
+      prisma.game.findUnique({
+        where: { id: winnerId },
+        select: {
+          id: true,
+          name: true,
+          thumbnail: true,
+          image: true,
+          minPlayers: true,
+          maxPlayers: true,
+        },
+      }),
+      prisma.game.findMany({
+        where: {
+          isExpansion: true,
+          listedInCollection: true,
+          expandsGameIds: { has: winnerId },
+        },
+        select: {
+          id: true,
+          name: true,
+          thumbnail: true,
+          image: true,
+          minPlayers: true,
+          maxPlayers: true,
+        },
+      }),
+      prisma.vote.findMany({
+        where: {
+          meetupId: id,
+          mode: "EXPANSION_DUEL",
+          playerCount: expected,
+        },
+        select: {
+          gameId: true,
+          opponentGameId: true,
+          userId: true,
+        },
+      }),
+    ]);
+    if (baseGame) {
+      expansionResultLabel = resolveExpansionResultLabel(
+        baseGame,
+        ownedExpansions,
+        mandatoryIds,
+        expected,
+        expansionVotes,
+        meetup.expansionDuelFrozenData,
+      );
+    }
+  }
 
   const duellLinkTitle = duelRoundComplete
     ? "Duelle abgeschlossen — Host kann ★ ändern für eine neue Runde"
@@ -171,8 +254,6 @@ export default async function MeetupDetail({
       : pickPhase.poolSize < 2
         ? "Mindestens zwei nominierte Spiele nötig"
         : `${pickPhase.fullPickCount}/${pickPhase.expectedPlayerCount} Spieler mit ${MAX_PICK_POINTS}/${MAX_PICK_POINTS} Stimmen bei ★`;
-
-  const isHost = user?.id === meetup.createdBy.id;
 
   const pickVoters = votes
     .filter((v) => v.mode === "PICK")
@@ -307,6 +388,11 @@ export default async function MeetupDetail({
               meetupId={meetup.id}
               guestGames={guestGames}
             />
+            <MeetupMandatoryExpansions
+              meetupId={meetup.id}
+              families={mandatoryFamilies}
+              mandatoryKeys={mandatoryKeys}
+            />
           </>
         ) : (
           <ExpectedCountReadOnly count={meetup.expectedPlayerCount} />
@@ -338,6 +424,18 @@ export default async function MeetupDetail({
           poolSize={pickPhase.poolSize}
           duellLinkTitle={duellLinkTitle}
         />
+        {duelRoundComplete && (
+          <MeetupExpansionActions
+            meetupId={meetup.id}
+            isHost={isHost}
+            expansionDuelAvailable={expansionPhase.expansionDuelAvailable}
+            expansionDuelStarted={expansionPhase.expansionDuelStarted}
+            expansionDuelComplete={expansionPhase.expansionDuelComplete}
+            winnerName={expansionPhase.winnerName}
+            expansionResultLabel={expansionResultLabel}
+            optionalExpansionCount={expansionPhase.optionalExpansionCount}
+          />
+        )}
       </div>
 
       <MeetupRankings

@@ -15,6 +15,10 @@ export function expansionViewLabel(baseGameName: string): string {
   return `Erweitert: ${short}`;
 }
 
+export function expansionVoteFollowsLabel(): string {
+  return "Erweiterungs-Abstimmung folgt";
+}
+
 export function expansionRequiredForCountLabel(
   expansionNames: string[],
   playerCount: number,

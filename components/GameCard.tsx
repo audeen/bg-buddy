@@ -12,6 +12,7 @@ import {
 } from "@/lib/expansion-label";
 import { expansionNamesForPlayerCount } from "@/lib/effective-player-count";
 import { ExpansionRequiredBanner } from "@/components/ExpansionRequiredBanner";
+import { ExpansionVoteFollowsBanner } from "@/components/ExpansionVoteFollowsBanner";
 import { FilterChipButton } from "@/components/FilterChipButton";
 import type { GameFilters } from "@/lib/game-filters";
 import {
@@ -115,12 +116,14 @@ function CardCover({
   baseGame,
   ownedExpansions,
   showExpansionBanner,
+  showExpansionVoteFollows,
 }: {
   game: GameCardGame;
   playerCount?: number;
   baseGame: GameCardGame;
   ownedExpansions: GameCardGame[];
   showExpansionBanner: boolean;
+  showExpansionVoteFollows?: boolean;
 }) {
   const requiredExpansions =
     showExpansionBanner && playerCount != null
@@ -142,6 +145,7 @@ function CardCover({
         className="w-full aspect-square"
       />
       {bannerLabel && <ExpansionRequiredBanner label={bannerLabel} />}
+      {showExpansionVoteFollows && <ExpansionVoteFollowsBanner />}
     </div>
   );
 }
@@ -342,6 +346,12 @@ export function GameCard(props: ButtonProps | LinkProps) {
   ) : null;
 
   const showExpansionBanner = viewExpansionId == null && !game.isExpansion;
+  const showExpansionVoteFollows =
+    pickMode &&
+    onBaseView &&
+    !game.isExpansion &&
+    ownedExpansions.length > 0 &&
+    points > 0;
 
   const coverProps = {
     game: displayedGame,
@@ -349,6 +359,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
     baseGame: game,
     ownedExpansions,
     showExpansionBanner,
+    showExpansionVoteFollows,
   };
 
   if ("href" in props && props.href) {

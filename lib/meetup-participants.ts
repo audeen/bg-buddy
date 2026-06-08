@@ -101,7 +101,7 @@ export async function cancelActiveDuel(
       where: {
         meetupId,
         playerCount: expectedPlayerCount,
-        mode: { in: ["DUEL", "TINDER"] },
+        mode: { in: ["DUEL", "TINDER", "EXPANSION_DUEL"] },
       },
     }),
     db.meetup.update({
@@ -109,6 +109,8 @@ export async function cancelActiveDuel(
       data: {
         duelFrozenAt: null,
         duelFrozenData: Prisma.DbNull,
+        expansionDuelStartedAt: null,
+        expansionDuelFrozenData: Prisma.DbNull,
       },
     }),
   ]);
