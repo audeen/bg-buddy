@@ -6,11 +6,13 @@ import type { GameCardGame } from "@/components/GameCard";
 import type { GameFilters } from "@/lib/game-filters";
 
 const DRAG_CLOSE_THRESHOLD = 100;
+const DRAG_CLOSE_AFTER_DEMOTE = 60;
 const DRAG_MAXIMIZE_THRESHOLD = 80;
 const DRAG_CHAIN_DEADZONE = 5;
 const PARTIAL_HEIGHT_RATIO = 0.85;
 
 type SnapPoint = "partial" | "maximized";
+type DragSource = "handle" | "body" | null;
 
 type DragEndState = {
   height: number;
@@ -93,8 +95,9 @@ export function GameDetailModal({
   const chainEligibleRef = useRef(false);
   const gestureStartScrollTopRef = useRef(0);
   const gestureBlockedRef = useRef(false);
+  const scrolledToBottomRef = useRef(false);
+  const dragSourceRef = useRef<DragSource>(null);
   const pointerIdRef = useRef<number | null>(null);
-  const pendingPointerIdRef = useRef<number | null>(null);
   const captureTargetRef = useRef<Element | null>(null);
   const snapPointRef = useRef<SnapPoint>("partial");
 
@@ -132,8 +135,8 @@ export function GameDetailModal({
     chainEligibleRef.current = false;
     gestureStartScrollTopRef.current = 0;
     gestureBlockedRef.current = false;
+    dragSourceRef.current = null;
     pointerIdRef.current = null;
-    pendingPointerIdRef.current = null;
     captureTargetRef.current = null;
     dragStartYRef.current = 0;
   }, []);
@@ -164,6 +167,11 @@ export function GameDetailModal({
     }
   }, []);
 
+  const demoteToPartial = useCallback(() => {
+    setSnapPoint("partial");
+    bodyRef.current?.scrollTo({ top: 0 });
+  }, []);
+
   const resolveSnapOnRelease = useCallback(
     (rawDelta: number, startSnap: SnapPoint) => {
       const { height, translateY } = computeDragState(rawDelta, startSnap);
@@ -177,11 +185,15 @@ export function GameDetailModal({
 
         if (translateY === 0) {
           const progress = rawDelta / heightTravel;
-          setSnapPoint(progress >= 0.5 ? "partial" : "maximized");
-        } else if (translateY >= DRAG_CLOSE_THRESHOLD) {
+          if (progress >= 0.5) {
+            demoteToPartial();
+          } else {
+            setSnapPoint("maximized");
+          }
+        } else if (translateY >= DRAG_CLOSE_AFTER_DEMOTE) {
           dismiss();
         } else {
-          setSnapPoint("partial");
+          demoteToPartial();
         }
         clearDragVisuals();
         return;
@@ -210,7 +222,7 @@ export function GameDetailModal({
 
       clearDragVisuals();
     },
-    [dismiss, clearDragVisuals],
+    [dismiss, clearDragVisuals, demoteToPartial],
   );
 
   const handleKeyDown = useCallback(
@@ -245,6 +257,7 @@ export function GameDetailModal({
 
     setSnapPoint("partial");
     snapPointRef.current = "partial";
+    scrolledToBottomRef.current = false;
     window.history.pushState({ gameDetailModal: true }, "");
     historyPushedRef.current = true;
     clearDragVisuals();
@@ -277,6 +290,36 @@ export function GameDetailModal({
     };
   }, [game, onClose, handleKeyDown, clearDragVisuals]);
 
+  const endSheetDrag = useCallback(
+    (rawDelta: number) => {
+      if (dragSourceRef.current === "body") {
+        if (gestureBlockedRef.current || gestureStartScrollTopRef.current > 1) {
+          abortSheetDrag();
+          return;
+        }
+
+        const body = bodyRef.current;
+        if (
+          body &&
+          isScrollAtBottom(body) &&
+          gestureStartScrollTopRef.current > 1
+        ) {
+          abortSheetDrag();
+          return;
+        }
+      }
+
+      if (captureTargetRef.current && pointerIdRef.current !== null) {
+        safeReleasePointerCapture(
+          captureTargetRef.current,
+          pointerIdRef.current,
+        );
+      }
+      resolveSnapOnRelease(rawDelta, dragStartSnapRef.current);
+    },
+    [resolveSnapOnRelease, abortSheetDrag],
+  );
+
   const isMobileSheet = useCallback(() => {
     return window.matchMedia("(max-width: 639px)").matches;
   }, []);
@@ -289,6 +332,7 @@ export function GameDetailModal({
 
       draggingRef.current = true;
       sheetDragActiveRef.current = true;
+      dragSourceRef.current = "handle";
       pointerIdRef.current = e.pointerId;
       dragStartYRef.current = e.clientY;
       dragStartSnapRef.current = snapPointRef.current;
@@ -312,34 +356,6 @@ export function GameDetailModal({
     [applyDragVisuals],
   );
 
-  const endSheetDrag = useCallback(
-    (rawDelta: number) => {
-      if (gestureBlockedRef.current || gestureStartScrollTopRef.current > 1) {
-        abortSheetDrag();
-        return;
-      }
-
-      const body = bodyRef.current;
-      if (
-        body &&
-        isScrollAtBottom(body) &&
-        gestureStartScrollTopRef.current > 1
-      ) {
-        abortSheetDrag();
-        return;
-      }
-
-      if (captureTargetRef.current && pointerIdRef.current !== null) {
-        safeReleasePointerCapture(
-          captureTargetRef.current,
-          pointerIdRef.current,
-        );
-      }
-      resolveSnapOnRelease(rawDelta, dragStartSnapRef.current);
-    },
-    [resolveSnapOnRelease, abortSheetDrag],
-  );
-
   const onHandlePointerEnd = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (!sheetDragActiveRef.current || e.pointerId !== pointerIdRef.current) {
@@ -352,90 +368,129 @@ export function GameDetailModal({
     [endSheetDrag],
   );
 
-  const onBodyPointerDown = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (e.button !== 0) return;
-      if ((e.target as HTMLElement).closest("button, a")) return;
-      if (!isMobileSheet()) return;
+  useEffect(() => {
+    if (!game) return;
 
-      const body = bodyRef.current;
-      const scrollTop = body?.scrollTop ?? 0;
+    const body = bodyRef.current;
+    if (!body) return;
+
+    const onScroll = () => {
+      if (isScrollAtBottom(body)) {
+        scrolledToBottomRef.current = true;
+      }
+      if (isScrollAtTop(body)) {
+        scrolledToBottomRef.current = false;
+      }
+    };
+
+    body.addEventListener("scroll", onScroll, { passive: true });
+    return () => body.removeEventListener("scroll", onScroll);
+  }, [game, viewGame]);
+
+  useEffect(() => {
+    if (!game) return;
+
+    const body = bodyRef.current;
+    if (!body) return;
+    if (!window.matchMedia("(max-width: 639px)").matches) return;
+
+    function initBodyGesture(touchY: number, target: EventTarget | null) {
+      if (!(target instanceof HTMLElement)) return false;
+      if (target.closest("button, a")) return false;
+
+      const scrollTop = body.scrollTop;
       gestureStartScrollTopRef.current = scrollTop;
       gestureBlockedRef.current =
-        scrollTop > 1 || (body !== null && isScrollAtBottom(body));
+        scrolledToBottomRef.current ||
+        scrollTop > 1 ||
+        isScrollAtBottom(body);
       chainEligibleRef.current =
-        !gestureBlockedRef.current &&
-        body !== null &&
-        isScrollAtTop(body);
-      pendingPointerIdRef.current = e.pointerId;
-      dragStartYRef.current = e.clientY;
+        !gestureBlockedRef.current && isScrollAtTop(body);
+      dragStartYRef.current = touchY;
       dragStartSnapRef.current = snapPointRef.current;
       sheetDragActiveRef.current = false;
       draggingRef.current = false;
-    },
-    [isMobileSheet],
-  );
+      dragSourceRef.current = null;
+      return true;
+    }
 
-  const onBodyPointerMove = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (e.pointerId !== pendingPointerIdRef.current) return;
+    function onTouchStart(e: TouchEvent) {
+      if (e.touches.length !== 1) return;
+      initBodyGesture(e.touches[0].clientY, e.target);
+    }
 
-      const body = bodyRef.current;
-      if (!body) return;
+    function onTouchMove(e: TouchEvent) {
+      if (e.touches.length !== 1) return;
+
+      const touchY = e.touches[0].clientY;
 
       if (gestureBlockedRef.current) return;
       if (gestureStartScrollTopRef.current > 1) return;
+      if (scrolledToBottomRef.current) return;
 
       if (!sheetDragActiveRef.current) {
         if (!chainEligibleRef.current) return;
         if (!isScrollAtTop(body)) return;
         if (isScrollAtBottom(body)) return;
 
-        const rawDelta = e.clientY - dragStartYRef.current;
+        const rawDelta = touchY - dragStartYRef.current;
         if (rawDelta <= DRAG_CHAIN_DEADZONE) return;
 
-        sheetDragActiveRef.current = true;
-        draggingRef.current = true;
-        pointerIdRef.current = e.pointerId;
-        panelRef.current?.classList.add("modal-panel-dragging");
-        captureTargetRef.current = e.currentTarget;
-        e.currentTarget.setPointerCapture(e.pointerId);
-      } else {
-        if (isScrollAtBottom(body)) {
+        if (
+          scrolledToBottomRef.current ||
+          !isScrollAtTop(body) ||
+          isScrollAtBottom(body)
+        ) {
           gestureBlockedRef.current = true;
           return;
         }
-        if (!isScrollAtTop(body)) {
+
+        sheetDragActiveRef.current = true;
+        draggingRef.current = true;
+        dragSourceRef.current = "body";
+        panelRef.current?.classList.add("modal-panel-dragging");
+      } else {
+        if (
+          isScrollAtBottom(body) ||
+          !isScrollAtTop(body) ||
+          scrolledToBottomRef.current
+        ) {
           gestureBlockedRef.current = true;
           return;
         }
       }
 
-      const rawDelta = e.clientY - dragStartYRef.current;
+      const rawDelta = touchY - dragStartYRef.current;
       applyDragVisuals(rawDelta, dragStartSnapRef.current);
       e.preventDefault();
-    },
-    [applyDragVisuals],
-  );
+    }
 
-  const onBodyPointerEnd = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (e.pointerId !== pendingPointerIdRef.current) return;
-
-      if (sheetDragActiveRef.current) {
-        const rawDelta = e.clientY - dragStartYRef.current;
+    function onTouchEnd(e: TouchEvent) {
+      if (sheetDragActiveRef.current && dragSourceRef.current === "body") {
+        const touch = e.changedTouches[0];
+        const rawDelta = touch ? touch.clientY - dragStartYRef.current : 0;
         endSheetDrag(rawDelta);
         return;
       }
 
-      pendingPointerIdRef.current = null;
-      chainEligibleRef.current = false;
       gestureStartScrollTopRef.current = 0;
       gestureBlockedRef.current = false;
+      chainEligibleRef.current = false;
       dragStartYRef.current = 0;
-    },
-    [endSheetDrag],
-  );
+    }
+
+    body.addEventListener("touchstart", onTouchStart, { passive: true });
+    body.addEventListener("touchmove", onTouchMove, { passive: false });
+    body.addEventListener("touchend", onTouchEnd, { passive: true });
+    body.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+    return () => {
+      body.removeEventListener("touchstart", onTouchStart);
+      body.removeEventListener("touchmove", onTouchMove);
+      body.removeEventListener("touchend", onTouchEnd);
+      body.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [game, viewGame, applyDragVisuals, endSheetDrag]);
 
   if (!game || !viewGame) return null;
 
@@ -474,14 +529,7 @@ export function GameDetailModal({
           </span>
         </div>
 
-        <div
-          ref={bodyRef}
-          className="modal-body modal-body-chainable safe-bottom"
-          onPointerDown={onBodyPointerDown}
-          onPointerMove={onBodyPointerMove}
-          onPointerUp={onBodyPointerEnd}
-          onPointerCancel={onBodyPointerEnd}
-        >
+        <div ref={bodyRef} className="modal-body modal-body-chainable safe-bottom">
           <GameDetailView
             game={viewGame}
             titleId={titleId}
