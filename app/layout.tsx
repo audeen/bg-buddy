@@ -5,6 +5,7 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { SwipeBackHandler } from "@/components/SwipeBackHandler";
+import { ChunkLoadRecovery } from "@/components/ChunkLoadRecovery";
 import { prisma } from "@/lib/prisma";
 
 const inter = Inter({
@@ -36,7 +37,7 @@ export default async function RootLayout({
 
   return (
     <html lang="de" className={`h-full antialiased ${inter.variable}`}>
-      <body className="min-h-full flex flex-col">
+      <body className={`min-h-full flex flex-col ${inter.className}`}>
         <Header />
         <main
           id="app-main"
@@ -52,6 +53,7 @@ export default async function RootLayout({
         </footer>
         <BottomNav fallbackMeetupId={fallbackMeetup?.id ?? null} />
         <SwipeBackHandler />
+        <ChunkLoadRecovery />
         <Analytics />
       </body>
     </html>
