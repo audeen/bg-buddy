@@ -189,7 +189,7 @@ export function MeetupSpielsteuerungClient({
   return (
     <details
       className="spielsteuerung-details"
-      defaultOpen={hasConfig}
+      open={hasConfig || undefined}
     >
       <summary className="spielsteuerung-summary">
         <span className="text-sm font-semibold">Spielsteuerung</span>
