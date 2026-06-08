@@ -938,11 +938,31 @@ body {
     transition: none;
   }
 
+  .modal-panel-maximized {
+    max-height: 100dvh;
+    height: 100dvh;
+    border-radius: 0;
+  }
+
+  .modal-panel-snap-transition {
+    transition:
+      transform 0.2s ease,
+      height 0.2s ease,
+      max-height 0.2s ease,
+      border-radius 0.2s ease;
+  }
+
   @media (min-width: 640px) {
     .modal-panel {
       max-width: 42rem;
       border-radius: 0.9rem;
       max-height: 88vh;
+    }
+
+    .modal-panel-maximized {
+      max-height: 88vh;
+      height: auto;
+      border-radius: 0.9rem;
     }
   }
 
@@ -998,6 +1018,12 @@ body {
     min-height: 0;
   }
 
+  @media (max-width: 639px) {
+    .modal-body-chainable {
+      touch-action: pan-y;
+    }
+  }
+
   .header-chrome {
     transition: transform 0.25s ease;
   }
@@ -1017,6 +1043,10 @@ body {
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .modal-panel-snap-transition {
+      transition: none;
+    }
+
     .header-chrome,
     .bottom-nav-chrome,
     .sticky-above-nav,
