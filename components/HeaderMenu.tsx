@@ -7,6 +7,7 @@ import {
   completeDummyDuelsAction,
   countDummyMeetupsAction,
   createDummyMeetupsAction,
+  logoutAction,
   purgeDummyMeetupsAction,
 } from "@/app/actions";
 
@@ -80,6 +81,13 @@ export function HeaderMenu({ userName }: { userName: string }) {
           : "Alle Dummy-Duelle waren bereits fertig.",
       );
       router.refresh();
+    });
+  }
+
+  function handleLogout() {
+    setOpen(false);
+    startTransition(async () => {
+      await logoutAction();
     });
   }
 
@@ -186,6 +194,18 @@ export function HeaderMenu({ userName }: { userName: string }) {
                 {pending ? "Bitte warten…" : "Dummy-Duelle abschließen"}
               </button>
             )}
+          </div>
+
+          <div className="py-1 border-t border-[var(--border)] md:hidden">
+            <button
+              type="button"
+              role="menuitem"
+              className="btn btn-ghost w-full justify-start rounded-none"
+              disabled={pending}
+              onClick={handleLogout}
+            >
+              Abmelden
+            </button>
           </div>
         </div>
       )}

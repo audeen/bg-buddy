@@ -510,6 +510,41 @@ body {
     padding-bottom: 0.125rem;
   }
 
+  .gotd-chip-header {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-width: 0;
+  }
+
+  .gotd-chip-marquee {
+    overflow: hidden;
+  }
+
+  .gotd-chip-marquee-track {
+    flex-wrap: nowrap;
+    width: max-content;
+  }
+
+  .gotd-chip-marquee-animate {
+    animation: gotd-chip-marquee var(--gotd-marquee-duration, 16s) linear infinite;
+  }
+
+  @keyframes gotd-chip-marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gotd-chip-marquee-animate {
+      animation: none;
+    }
+  }
+
   .chip-interactive {
     cursor: pointer;
     transition:
