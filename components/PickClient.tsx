@@ -410,21 +410,12 @@ export function PickClient({
 
       {hostChoiceVisible.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold text-[var(--muted)]">
-            Host-Empfehlung
-          </h2>
           <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {hostChoiceVisible.map((g) =>
               renderGameCard(g, { hostRecommendation: true }),
             )}
           </ul>
         </section>
-      )}
-
-      {hostChoiceVisible.length > 0 && visible.length > 0 && (
-        <h2 className="text-sm font-semibold text-[var(--muted)]">
-          Alle Spiele
-        </h2>
       )}
 
       {visible.length === 0 && hostChoiceVisible.length === 0 ? (
