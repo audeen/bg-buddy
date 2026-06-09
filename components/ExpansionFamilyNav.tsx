@@ -71,6 +71,63 @@ function SiblingNav({
   );
 }
 
+function ExpansionFamilyMenu({
+  expansions,
+  activeId,
+  onSelectBase,
+  onSelectExpansion,
+  onPick,
+  variant,
+}: {
+  expansions: GameCardGame[];
+  activeId: number | null;
+  onSelectBase: () => void;
+  onSelectExpansion: (id: number) => void;
+  onPick: () => void;
+  variant: "card" | "detail";
+}) {
+  const scrollable = expansions.length >= 4;
+
+  return (
+    <div
+      className={`expansion-family-menu flex flex-col gap-1 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-1.5 ${
+        variant === "card" ? "w-full" : ""
+      }`}
+    >
+      <button
+        type="button"
+        {...chipPointerGuard}
+        className={`chip chip-meta chip-interactive w-full text-left ${activeId == null ? "chip-active" : ""}`}
+        onClick={(e) => {
+          stopCardActivation(e);
+          onSelectBase();
+          onPick();
+        }}
+      >
+        Basisspiel
+      </button>
+      <div className={`chip-row ${scrollable ? "chip-row-scroll" : ""} ${variant === "card" ? "flex-col" : ""}`}>
+        {expansions.map((exp) => (
+          <button
+            key={exp.id}
+            type="button"
+            {...chipPointerGuard}
+            className={`chip chip-interactive ${variant === "card" ? "w-full text-left" : ""} ${activeId === exp.id ? "chip-active" : ""}`}
+            title={exp.name}
+            onClick={(e) => {
+              stopCardActivation(e);
+              onSelectExpansion(exp.id);
+              onPick();
+            }}
+          >
+            {expansionChipLabel(exp.name, variant)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ExpansionFamilyNav({
   baseGame,
   expansions,
@@ -87,7 +144,14 @@ export function ExpansionFamilyNav({
 
   if (expansions.length === 0) return null;
 
-  if (activeId != null) {
+  const activeExpansion =
+    activeId != null
+      ? expansions.find((e) => e.id === activeId)
+      : null;
+
+  const useSiblingNav = variant === "detail" && activeId != null;
+
+  if (useSiblingNav) {
     return (
       <SiblingNav
         baseGame={baseGame}
@@ -100,22 +164,9 @@ export function ExpansionFamilyNav({
     );
   }
 
-  if (expansions.length === 1) {
-    const exp = expansions[0];
-    return (
-      <button
-        type="button"
-        {...chipPointerGuard}
-        className="chip chip-meta chip-interactive w-fit text-left"
-        onClick={(e) => {
-          stopCardActivation(e);
-          onSelectExpansion(exp.id);
-        }}
-      >
-        {expansionAvailableLabel(1)}
-      </button>
-    );
-  }
+  const toggleLabel = activeExpansion
+    ? expansionChipLabel(activeExpansion.name, variant)
+    : expansionAvailableLabel(expansions.length);
 
   return (
     <div className={`flex flex-col gap-1.5 ${variant === "card" ? "w-full" : ""}`}>
@@ -125,37 +176,29 @@ export function ExpansionFamilyNav({
       <button
         type="button"
         {...chipPointerGuard}
-        className="chip chip-meta chip-interactive w-fit text-left"
+        className={`chip chip-meta chip-interactive w-full text-left flex items-center justify-between gap-2 ${
+          activeExpansion ? "chip-active" : ""
+        }`}
         aria-expanded={expanded}
         onClick={(e) => {
           stopCardActivation(e);
           setExpanded((v) => !v);
         }}
       >
-        {expansionAvailableLabel(expansions.length)}
-        <span className="ml-1 opacity-70" aria-hidden>
+        <span className="truncate min-w-0">{toggleLabel}</span>
+        <span className="shrink-0 opacity-70" aria-hidden>
           {expanded ? "▴" : "▾"}
         </span>
       </button>
       {expanded && (
-        <div className={`chip-row ${expansions.length >= 4 ? "chip-row-scroll" : ""}`}>
-          {expansions.map((exp) => (
-            <button
-              key={exp.id}
-              type="button"
-              {...chipPointerGuard}
-              className="chip chip-interactive"
-              title={exp.name}
-              onClick={(e) => {
-                stopCardActivation(e);
-                onSelectExpansion(exp.id);
-                setExpanded(false);
-              }}
-            >
-              {expansionChipLabel(exp.name, variant)}
-            </button>
-          ))}
-        </div>
+        <ExpansionFamilyMenu
+          expansions={expansions}
+          activeId={activeId}
+          onSelectBase={onSelectBase}
+          onSelectExpansion={onSelectExpansion}
+          onPick={() => setExpanded(false)}
+          variant={variant}
+        />
       )}
     </div>
   );

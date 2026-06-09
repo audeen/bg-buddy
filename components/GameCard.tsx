@@ -235,7 +235,6 @@ function CardBody({
           variant="card"
         />
       )}
-      {game.isExpansion && <span className="chip w-fit">Erweiterung</span>}
     </div>
   );
 }
@@ -381,14 +380,15 @@ export function GameCard(props: ButtonProps | LinkProps) {
     onSelectExpansion: selectExpansion,
   };
 
-  const expansionBadge = showExpansionBadge ? (
-    <ExpansionCountBadge
-      count={ownedExpansions.length}
-      expansionNames={expansionNames}
-      baseGameName={game.name}
-      viewExpansionId={viewExpansionId}
-    />
-  ) : null;
+  const expansionBadge =
+    showExpansionBadge && viewExpansionId == null ? (
+      <ExpansionCountBadge
+        count={ownedExpansions.length}
+        expansionNames={expansionNames}
+        baseGameName={game.name}
+        viewExpansionId={viewExpansionId}
+      />
+    ) : null;
 
   const showExpansionBanner = viewExpansionId == null && !game.isExpansion;
   const showExpansionVoteFollows =
