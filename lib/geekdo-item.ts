@@ -1,25 +1,6 @@
 import type { ThingDetails } from "@/lib/bgg";
+import { stripBggHtml } from "@/lib/bgg/html";
 import { parseExpandsGameIdsFromGeekdoLinks } from "@/lib/expansion-links";
-
-function stripHtml(html: string | null | undefined): string | null {
-  if (html == null || html === "") return null;
-  let text = String(html);
-  text = text
-    .replace(/&#10;/g, "\n")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&rsquo;|&lsquo;/g, "'")
-    .replace(/&ldquo;|&rdquo;/g, '"')
-    .replace(/&mdash;/g, "—")
-    .replace(/&ndash;/g, "–")
-    .replace(/&nbsp;/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-  return text || null;
-}
 
 function linkNames(
   links: Record<string, { name?: string }[] | undefined> | undefined,
@@ -55,8 +36,8 @@ export function parseGeekitemJson(
     | Record<string, { name?: string; objectid?: string | number }[] | undefined>
     | undefined;
   const desc =
-    stripHtml(item.description as string) ??
-    stripHtml(item.short_description as string);
+    stripBggHtml(item.description as string) ??
+    stripBggHtml(item.short_description as string);
 
   const image =
     (item.topimageurl as string) ||

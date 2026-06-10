@@ -1,4 +1,4 @@
-import type { RankEntry } from "@/components/Ranking";
+import type { RankEntry } from "@/lib/types/ranking";
 
 /** Top combined-ranking entry for a player count (pickCount + duel wins). */
 export function winnerFromCombined(

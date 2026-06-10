@@ -4,6 +4,10 @@ import type { ParsedGame } from "@/lib/bgg";
 export type ConflictResolution = "keepManual" | "overwriteAll";
 export type FieldChoice = "keep" | "overwrite";
 
+export function parseConflictResolution(value: unknown): ConflictResolution {
+  return value === "overwriteAll" ? "overwriteAll" : "keepManual";
+}
+
 export type SyncFieldName =
   | "name"
   | "year"

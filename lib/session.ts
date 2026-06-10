@@ -6,9 +6,11 @@ export interface SessionData {
   name?: string;
 }
 
-const password =
-  process.env.SESSION_SECRET ??
-  "fallback-dev-secret-change-me-please-32chars-minimum!!";
+const fallbackDevSecret = "fallback-dev-secret-change-me-please-32chars-minimum!!";
+const password = process.env.SESSION_SECRET ?? fallbackDevSecret;
+if (password === fallbackDevSecret && process.env.NODE_ENV === "production") {
+  throw new Error("SESSION_SECRET muss in Production gesetzt sein.");
+}
 
 export const sessionOptions: SessionOptions = {
   password,

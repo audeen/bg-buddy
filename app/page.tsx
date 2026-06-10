@@ -7,7 +7,7 @@ import {
   GameOfTheDayCard,
   GameOfTheDayEmpty,
 } from "@/components/GameOfTheDayCard";
-import type { GameCardGame } from "@/components/GameCard";
+import type { GameCardGame } from "@/lib/types/game";
 import {
   berlinDateKey,
   findUpcomingMeetup,
@@ -105,7 +105,7 @@ export default async function Home() {
           by: ["meetupId"],
           where: {
             meetupId: { in: meetupIds },
-            mode: { in: ["DUEL", "TINDER"] },
+            mode: "DUEL",
           },
           _count: { _all: true },
         })

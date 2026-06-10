@@ -8,7 +8,7 @@ import {
   removeGameFromCollectionAction,
   setGameLentOutAction,
 } from "@/app/actions";
-import { CameraIcon } from "@/components/BarcodeScanClient";
+import { CameraIcon } from "@/components/icons";
 
 export type CollectionGameRow = {
   id: number;

@@ -1,105 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
-import { GameCover } from "@/components/GameCover";
+import {
+  DuelArena,
+  DuelChoiceCard,
+  DuelProgressBar,
+} from "@/components/DuelArena";
 import { duelVoteAction } from "@/app/actions";
 import { pairKey, type DuelPair, type DuelPhase } from "@/lib/duel-pairs";
-import { prefersReducedMotion, sleep } from "@/lib/motion";
+import { groupProgressText } from "@/lib/duel-progress";
+import { useDuelVoting } from "@/lib/use-duel-voting";
 import { markScrollToErgebnisse } from "@/lib/scroll-ergebnisse";
-
-const VOTE_ANIMATION_MS = 400;
 
 export interface DuellGame {
   id: number;
   name: string;
   thumbnail: string | null;
   image: string | null;
-}
-
-function DuelChoiceCard({
-  game,
-  disabled,
-  side,
-  outcome,
-  onClick,
-}: {
-  game: DuellGame;
-  disabled: boolean;
-  side: "left" | "right";
-  outcome?: "winner" | "loser";
-  onClick: () => void;
-}) {
-  const enterClass =
-    side === "left" ? "duel-card-enter-left" : "duel-card-enter-right";
-  const outcomeClass =
-    outcome === "winner"
-      ? "duel-card-winner"
-      : outcome === "loser"
-        ? "duel-card-loser"
-        : "";
-
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={`card card-game overflow-hidden flex flex-col h-full min-h-0 w-full min-h-[44px] ${enterClass} ${outcomeClass}`}
-    >
-      <div className="relative flex-1 min-h-0 w-full">
-        <GameCover
-          src={game.thumbnail ?? game.image}
-          alt={game.name}
-          className="h-full w-full min-h-[8rem] card-game-cover sm:aspect-square sm:min-h-0"
-        />
-      </div>
-      <span className="p-2 sm:p-3 font-bold text-sm sm:text-base text-center leading-tight line-clamp-2 shrink-0">
-        {game.name}
-      </span>
-    </button>
-  );
-}
-
-function groupProgressText(
-  phase: DuelPhase,
-  groupDecidedPairs: number,
-  totalPairs: number,
-  finishedParticipants: number,
-  totalParticipants: number,
-): string {
-  if (phase === "GROUP") {
-    return `Matrix: ${groupDecidedPairs}/${totalPairs} abgestimmt · ${finishedParticipants}/${totalParticipants} Spieler fertig`;
-  }
-  return `${groupDecidedPairs} / ${totalPairs} mit allen Stimmen`;
-}
-
-function DuelProgressBar({
-  done,
-  total,
-  complete = false,
-}: {
-  done: number;
-  total: number;
-  complete?: boolean;
-}) {
-  const pct = total > 0 ? (done / total) * 100 : 0;
-  const isFull = complete || (total > 0 && done >= total);
-
-  return (
-    <div
-      className="progress-bar w-full"
-      role="progressbar"
-      aria-valuenow={done}
-      aria-valuemin={0}
-      aria-valuemax={total}
-      aria-label="Eigener Duell-Fortschritt"
-    >
-      <div
-        className={`progress-bar-fill ${isFull ? "bg-[var(--accent)]" : ""}`}
-        style={{ width: `${pct}%` }}
-      />
-    </div>
-  );
 }
 
 export function DuellClient({
@@ -132,24 +50,13 @@ export function DuellClient({
     [games],
   );
 
-  const [completed, setCompleted] = useState(
-    () => new Set(initialCompletedKeys),
-  );
-  const [busy, setBusy] = useState(false);
-  const [voteError, setVoteError] = useState<string | null>(null);
-  const [voteOutcome, setVoteOutcome] = useState<{ winnerId: number } | null>(
-    null,
-  );
-
-  const pendingPairs = useMemo(
-    () =>
-      myPairs.filter((p) => !completed.has(pairKey(p.a, p.b))),
-    [myPairs, completed],
-  );
-
-  const myDone = myPairs.length - pendingPairs.length;
-  const finished = pendingPairs.length === 0;
-  const current = pendingPairs[0] ?? null;
+  const { busy, voteError, myDone, finished, current, outcomeFor, choose } =
+    useDuelVoting({
+      myPairs,
+      initialCompletedKeys,
+      vote: (winnerId, loserId) =>
+        duelVoteAction(meetupId, winnerId, loserId, expected),
+    });
 
   const gameA = current ? gameMap.get(current.a) : null;
   const gameB = current ? gameMap.get(current.b) : null;
@@ -162,42 +69,6 @@ export function DuellClient({
     totalParticipants,
   );
 
-  function outcomeFor(gameId: number): "winner" | "loser" | undefined {
-    if (!voteOutcome) return undefined;
-    if (voteOutcome.winnerId === gameId) return "winner";
-    return "loser";
-  }
-
-  async function choose(winnerId: number, loserId: number) {
-    if (busy || finished || !current) return;
-    setVoteError(null);
-    setBusy(true);
-    setVoteOutcome({ winnerId });
-
-    const key = pairKey(current.a, current.b);
-    const animationMs = prefersReducedMotion() ? 0 : VOTE_ANIMATION_MS;
-
-    try {
-      const [res] = await Promise.all([
-        duelVoteAction(meetupId, winnerId, loserId, expected),
-        sleep(animationMs),
-      ]);
-      if (!res || !("ok" in res) || !res.ok) {
-        setVoteError(
-          res && "error" in res && res.error
-            ? res.error
-            : "Abstimmung fehlgeschlagen. Bitte erneut versuchen.",
-        );
-        setVoteOutcome(null);
-        return;
-      }
-      setVoteOutcome(null);
-      setCompleted((prev) => new Set(prev).add(key));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   if (finished) {
     return (
       <div
@@ -209,11 +80,7 @@ export function DuellClient({
           <p className="text-[var(--muted)] text-sm tabular-nums">
             Duell {myDone} von {myPairs.length} · {expected} Spieler ★
           </p>
-          <DuelProgressBar
-            done={myDone}
-            total={myPairs.length}
-            complete
-          />
+          <DuelProgressBar done={myDone} total={myPairs.length} complete />
         </div>
         {isHost && (
           <p className="text-[var(--muted)] text-sm">{progressLabel}</p>
@@ -231,7 +98,6 @@ export function DuellClient({
   }
 
   const currentKey = current ? pairKey(current.a, current.b) : null;
-  const vsPulseClass = busy ? "" : "duel-vs-pulse";
 
   return (
     <div className="flex flex-col gap-3">
@@ -261,38 +127,30 @@ export function DuellClient({
       </p>
 
       {current && gameA && gameB && currentKey ? (
-        <div key={currentKey} className="duel-arena -mx-1">
-          <div className="duel-arena-grid">
+        <DuelArena
+          key={currentKey}
+          busy={busy}
+          left={
             <DuelChoiceCard
-              game={gameA}
+              coverSrc={gameA.thumbnail ?? gameA.image}
+              label={gameA.name}
               side="left"
               outcome={outcomeFor(gameA.id)}
               disabled={busy}
               onClick={() => choose(gameA.id, current.b)}
             />
-            <div className="hidden sm:flex items-center justify-center self-center">
-              <span
-                className={`duel-vs-badge ${vsPulseClass}`}
-                aria-hidden
-              >
-                VS
-              </span>
-            </div>
+          }
+          right={
             <DuelChoiceCard
-              game={gameB}
+              coverSrc={gameB.thumbnail ?? gameB.image}
+              label={gameB.name}
               side="right"
               outcome={outcomeFor(gameB.id)}
               disabled={busy}
               onClick={() => choose(gameB.id, current.a)}
             />
-          </div>
-          <span
-            className={`duel-vs-badge duel-vs-badge-overlay ${vsPulseClass}`}
-            aria-hidden
-          >
-            VS
-          </span>
-        </div>
+          }
+        />
       ) : (
         <p className="text-center text-[var(--muted)]">
           Spieldaten für dieses Paar fehlen.

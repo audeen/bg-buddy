@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ExpansionFamilyNav } from "@/components/ExpansionFamilyNav";
 import { FilterChipButton } from "@/components/FilterChipButton";
 import { GameCover } from "@/components/GameCover";
-import type { GameCardGame } from "@/components/GameCard";
+import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import { playerRange, playtime, weightLabel } from "@/lib/format";
 import {
   displayPlayerRangeForBaseGame,
@@ -11,28 +11,6 @@ import {
 import { bggBoardgameUrl } from "@/lib/bgg-url";
 import type { GameFilters, GameSort } from "@/lib/game-filters";
 import { buildGameTags, categoryTag, mechanicTag } from "@/lib/game-tags";
-
-export interface GameDetailData {
-  id: number;
-  name: string;
-  year: number | null;
-  description: string | null;
-  image: string | null;
-  thumbnail: string | null;
-  minPlayers: number | null;
-  maxPlayers: number | null;
-  minPlaytime: number | null;
-  maxPlaytime: number | null;
-  playingTime: number | null;
-  weight: number | null;
-  bggRating: number | null;
-  ageRange: string | null;
-  isExpansion: boolean;
-  categories: string[];
-  mechanics: string[];
-  bestPlayerCounts: number[];
-  recommendedPlayerCounts: number[];
-}
 
 type GameDetailViewProps = {
   game: GameDetailData;

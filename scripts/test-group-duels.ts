@@ -7,7 +7,6 @@ import {
   countFullyVotedPairs,
   duelParticipantIds,
   getDuelProgressForCount,
-  pairCount,
   parseDuelFrozenData,
   type DuelPickRow,
 } from "../lib/duel-pairs";

@@ -41,7 +41,7 @@ export async function GET(
       where: {
         meetupId: id,
         playerCount: expected,
-        mode: { in: ["DUEL", "TINDER"] },
+        mode: "DUEL",
       },
     }),
   ]);

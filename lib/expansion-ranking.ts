@@ -1,4 +1,4 @@
-import type { RankEntry } from "@/components/Ranking";
+import type { RankEntry } from "@/lib/types/ranking";
 import {
   buildExpansionCopelandWins,
   type ExpansionConfig,

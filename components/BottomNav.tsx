@@ -2,11 +2,35 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { navigateToErgebnisse } from "@/lib/scroll-ergebnisse";
 import { useScrollChromeHidden } from "@/lib/scroll-chrome";
 
 const LAST_MEETUP_KEY = "bg-buddy:last-meetup-id";
+
+const lastMeetupListeners = new Set<() => void>();
+
+function readStoredMeetupId(): string | null {
+  return localStorage.getItem(LAST_MEETUP_KEY);
+}
+
+function storeMeetupId(id: string) {
+  localStorage.setItem(LAST_MEETUP_KEY, id);
+  for (const listener of lastMeetupListeners) listener();
+}
+
+function subscribeStoredMeetupId(listener: () => void): () => void {
+  lastMeetupListeners.add(listener);
+  return () => {
+    lastMeetupListeners.delete(listener);
+  };
+}
 
 function meetupIdFromPath(pathname: string): string | null {
   const match = pathname.match(/^\/meetups\/([^/]+)/);
@@ -48,20 +72,17 @@ const disabledNavItemClass =
 export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | null }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [storedMeetupId, setStoredMeetupId] = useState<string | null>(null);
+  const storedMeetupId = useSyncExternalStore(
+    subscribeStoredMeetupId,
+    readStoredMeetupId,
+    () => null,
+  );
   const [hash, setHash] = useState("");
 
   const pathMeetupId = meetupIdFromPath(pathname);
 
   useEffect(() => {
-    const stored = localStorage.getItem(LAST_MEETUP_KEY);
-    if (stored) setStoredMeetupId(stored);
-  }, []);
-
-  useEffect(() => {
-    if (!pathMeetupId) return;
-    localStorage.setItem(LAST_MEETUP_KEY, pathMeetupId);
-    setStoredMeetupId(pathMeetupId);
+    if (pathMeetupId) storeMeetupId(pathMeetupId);
   }, [pathMeetupId]);
 
   useEffect(() => {

@@ -116,7 +116,7 @@ export async function getPickPhaseState(
     db.vote.findMany({
       where: {
         meetupId,
-        mode: { in: ["DUEL", "TINDER"] },
+        mode: "DUEL",
         playerCount: expectedPlayerCount,
       },
       select: {

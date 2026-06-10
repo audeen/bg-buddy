@@ -3,12 +3,13 @@
 import Link from "next/link";
 import type { HostChoiceMode } from "@prisma/client";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GameCover } from "@/components/GameCover";
 import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
-import { GameCard, type GameCardGame } from "@/components/GameCard";
+import { GameCard } from "@/components/GameCard";
 import { GamesFilterBar } from "@/components/GamesFilterBar";
 import { GameDetailModal } from "@/components/GameDetailModal";
-import type { GameDetailData } from "@/components/GameDetailView";
+import { HostForcedGameBanner } from "@/components/HostForcedGameBanner";
+import { ScrollToTopButton } from "@/components/ScrollToTopButton";
+import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import { setPickPointsAction } from "@/app/actions";
 import { resolveDetailGameView } from "@/lib/expansion-detail";
 import {
@@ -112,19 +113,17 @@ export function PickClient({
     [hostChoiceGameIds],
   );
   const [selected, setSelected] = useState(expected);
-  const pointsRef = useRef<Record<string, number>>({});
   const [points, setPoints] = useState<Record<string, number>>(() => {
     const m: Record<string, number> = {};
     for (const p of initialPicks) {
       m[pointsKey(p.gameId, p.playerCount)] = p.points;
     }
-    pointsRef.current = m;
     return m;
   });
+  const pointsRef = useRef<Record<string, number>>(points);
   const [limitMsg, setLimitMsg] = useState<string | null>(null);
   const [detail, setDetail] = useState<DetailState | null>(null);
   const closeDetail = useCallback(() => setDetail(null), []);
-  const [showScrollTop, setShowScrollTop] = useState(false);
   const persistChainRef = useRef(Promise.resolve());
   const tapQueueRef = useRef<Array<() => void>>([]);
   const tapFlushScheduledRef = useRef(false);
@@ -135,24 +134,6 @@ export function PickClient({
     document.documentElement.classList.add("pick-page");
     return () => document.documentElement.classList.remove("pick-page");
   }, []);
-
-  useEffect(() => {
-    const el = document.getElementById(scrollTargetId);
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setShowScrollTop(!entry.isIntersecting),
-      { threshold: 0 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [scrollTargetId]);
-
-  function scrollToPageTop() {
-    document
-      .getElementById(scrollTargetId)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
 
   const usedPoints = pointsForCount(points, selected);
   const budgetLeft = MAX_PICK_POINTS - usedPoints;
@@ -355,30 +336,15 @@ export function PickClient({
   if (hostForced && hostForcedGame) {
     return (
       <div className="flex flex-col gap-6">
-        <div
-          className="card flex flex-col items-center gap-4 text-center border border-[var(--accent)]"
-          style={{ padding: "var(--space-card)" }}
-          role="status"
+        <HostForcedGameBanner
+          gameName={hostForcedGame.name}
+          description="Der Host hat dieses Spiel festgelegt — keine Abstimmung nötig."
+          coverSrc={hostForcedGame.thumbnail ?? hostForcedGame.image}
         >
-          <p className="text-sm font-semibold text-[var(--accent)]">
-            Vom Host festgelegt
-          </p>
-          <GameCover
-            src={hostForcedGame.thumbnail ?? hostForcedGame.image}
-            alt={hostForcedGame.name}
-            className="h-32 w-24 rounded-lg"
-          />
-          <p className="text-lg font-bold">{hostForcedGame.name}</p>
-          <p className="text-sm text-[var(--muted)]">
-            Der Host hat dieses Spiel festgelegt — keine Abstimmung nötig.
-          </p>
-          <Link
-            href={`/meetups/${meetupId}`}
-            className="btn btn-primary"
-          >
+          <Link href={`/meetups/${meetupId}`} className="btn btn-primary">
             Zurück zum Treffen
           </Link>
-        </div>
+        </HostForcedGameBanner>
       </div>
     );
   }
@@ -452,17 +418,11 @@ export function PickClient({
         }
       />
 
-      {showScrollTop && (
-        <button
-          type="button"
-          onClick={scrollToPageTop}
-          className={`scroll-to-top btn btn-ghost ${scrollTopClass}`}
-          aria-label="Nach oben"
-          title="Stimmen vergeben"
-        >
-          ↑
-        </button>
-      )}
+      <ScrollToTopButton
+        scrollTargetId={scrollTargetId}
+        className={scrollTopClass}
+        title="Stimmen vergeben"
+      />
 
       <div className="sticky-above-nav picker-sticky-bar safe-bottom">
         <div className="flex items-center justify-between gap-2">

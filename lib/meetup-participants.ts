@@ -101,7 +101,7 @@ export async function cancelActiveDuel(
       where: {
         meetupId,
         playerCount: expectedPlayerCount,
-        mode: { in: ["DUEL", "TINDER", "EXPANSION_DUEL"] },
+        mode: { in: ["DUEL", "EXPANSION_DUEL"] },
       },
     }),
     db.meetup.update({
@@ -158,7 +158,7 @@ export async function loadMeetupParticipantData(
   const duelVoteCount = await db.vote.count({
     where: {
       meetupId,
-      mode: { in: ["DUEL", "TINDER"] },
+      mode: "DUEL",
     },
   });
 

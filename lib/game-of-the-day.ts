@@ -1,10 +1,8 @@
-import type { GameCardGame } from "@/components/GameCard";
-import type { GameDetailData } from "@/components/GameDetailView";
+import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import {
   isPlayableWithOwnedExpansions,
   mergedBestPlayerCounts,
   type BestPlayerCountFields,
-  type PlayerCountFields,
 } from "@/lib/effective-player-count";
 
 const BERLIN_TZ = "Europe/Berlin";

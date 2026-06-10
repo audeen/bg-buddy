@@ -63,7 +63,6 @@ enum HostChoiceMode {
 
 enum VoteMode {
   PICK
-  TINDER
   DUEL
   EXPANSION_DUEL
 }

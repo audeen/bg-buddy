@@ -1,10 +1,8 @@
 import type { Prisma } from "@prisma/client";
 import type { ParsedGame } from "@/lib/bgg";
 import { prisma } from "@/lib/prisma";
-import {
-  loadEnrichmentCache,
-  thingDetailsToDbFields,
-} from "@/lib/enrichment-cache";
+import { bggClient } from "@/lib/bgg/client";
+import { thingDetailsToDbFields } from "@/lib/enrichment-cache";
 import {
   applyBaseGameCleanup,
   buildResolvableUpdate,
@@ -50,7 +48,7 @@ export async function previewCsvImport(games: ParsedGame[]): Promise<{
   wouldUpdate: number;
   cacheApplied: number;
 }> {
-  const cache = loadEnrichmentCache();
+  const cache = bggClient.getCachedThings();
   const conflicts: GameSyncConflict[] = [];
   let wouldCreate = 0;
   let wouldUpdate = 0;
@@ -96,7 +94,7 @@ export async function applyCsvImport(
   resolution: ConflictResolution = "keepManual",
   fieldResolutions?: FieldResolutionMap,
 ): Promise<{ cacheApplied: number }> {
-  const cache = loadEnrichmentCache();
+  const cache = bggClient.getCachedThings();
   let cacheApplied = 0;
 
   for (const g of games) {
@@ -173,7 +171,7 @@ export async function applyCsvImport(
     const mergedManual =
       (enrichmentData.manuallyEditedFields as string[] | undefined) ?? csvManual;
 
-    let updateData: Prisma.GameUpdateInput = applyBaseGameCleanup(existing, {
+    const updateData: Prisma.GameUpdateInput = applyBaseGameCleanup(existing, {
       ...csvData,
       ...enrichmentData,
       manuallyEditedFields: mergedManual,

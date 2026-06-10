@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { GameCardGame } from "@/components/GameCard";
+import type { GameCardGame } from "@/lib/types/game";
 
 export const gameCardSelect = {
   id: true,

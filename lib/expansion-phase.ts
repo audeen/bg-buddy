@@ -13,7 +13,6 @@ import { duelParticipantIds } from "@/lib/duel-pairs";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import { buildCombinedByCount } from "@/lib/vote-aggregation";
 import { winnerFromCombined } from "@/lib/meetup-winner";
-import { isExpansionDuelMode } from "@/lib/vote-mode";
 
 export type ExpansionPhaseState = {
   mainDuelComplete: boolean;
@@ -24,16 +23,6 @@ export type ExpansionPhaseState = {
   expansionDuelComplete: boolean;
   optionalExpansionCount: number;
   winnerHasExpansionsAtStar: boolean;
-};
-
-type VoteGameMeta = {
-  id: number;
-  name: string;
-  thumbnail: string | null;
-  image: string | null;
-  bestPlayerCounts: number[];
-  rank: number | null;
-  bggRating: number | null;
 };
 
 export async function loadExpansionPhaseState(
@@ -118,7 +107,7 @@ export async function loadExpansionPhaseState(
     db.vote.findMany({
       where: {
         meetupId,
-        mode: { in: ["DUEL", "TINDER"] },
+        mode: "DUEL",
         playerCount: expectedPlayerCount,
       },
       select: {
@@ -374,6 +363,6 @@ export function expansionVotesForMeetup(
   expected: number,
 ): number {
   return votes.filter(
-    (v) => isExpansionDuelMode(v.mode) && v.playerCount === expected,
+    (v) => v.mode === "EXPANSION_DUEL" && v.playerCount === expected,
   ).length;
 }

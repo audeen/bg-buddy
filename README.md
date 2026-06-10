@@ -62,8 +62,8 @@ App läuft auf http://localhost:3000.
 ## Vercel / Produktion
 
 Der Build auf Vercel führt `prisma migrate deploy` aus (`npm run vercel-build` via
-[`vercel.json`](vercel.json)). Ohne Migration schlagen Meetup-Seiten fehl, wenn die
-DB noch alte `TINDER`-Votes enthält.
+[`vercel.json`](vercel.json)). Die Migration `drop_tinder_vote_mode` migriert
+verbliebene `TINDER`-Votes zu `DUEL` und entfernt den alten Enum-Wert.
 
 Nach Deploy einmalig prüfen (mit Produktions-`DATABASE_URL`):
 

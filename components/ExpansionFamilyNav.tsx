@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { GameCardGame } from "@/components/GameCard";
+import { useState } from "react";
+import type { GameCardGame } from "@/lib/types/game";
 import { expansionAvailableLabel } from "@/lib/expansion-label";
 
 type ExpansionFamilyNavProps = {
@@ -28,7 +28,6 @@ function expansionChipLabel(name: string, variant: "card" | "detail"): string {
 }
 
 function SiblingNav({
-  baseGame,
   expansions,
   activeId,
   onSelectBase,
@@ -138,9 +137,13 @@ export function ExpansionFamilyNav({
 }: ExpansionFamilyNavProps) {
   const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => {
+  // Klappt die Liste wieder ein, wenn Spiel oder Auswahl wechseln (derived state).
+  const resetKey = `${baseGame.id}:${activeId ?? ""}`;
+  const [prevResetKey, setPrevResetKey] = useState(resetKey);
+  if (resetKey !== prevResetKey) {
+    setPrevResetKey(resetKey);
     setExpanded(false);
-  }, [baseGame.id, activeId]);
+  }
 
   if (expansions.length === 0) return null;
 

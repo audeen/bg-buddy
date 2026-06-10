@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type MouseEvent, type PointerEvent } from "react";
+import { useState, type MouseEvent, type PointerEvent } from "react";
 import { GameCover } from "@/components/GameCover";
 import { ExpansionFamilyNav } from "@/components/ExpansionFamilyNav";
 import {
@@ -17,19 +17,8 @@ import { HostRecommendationBanner } from "@/components/HostRecommendationBanner"
 import { LentOutBanner } from "@/components/LentOutBanner";
 import { FilterChipButton } from "@/components/FilterChipButton";
 import type { GameFilters, GameSort } from "@/lib/game-filters";
-import {
-  buildGameTags,
-  groupGameTags,
-  type GameTagSource,
-} from "@/lib/game-tags";
-
-export interface GameCardGame extends GameTagSource {
-  id: number;
-  name: string;
-  thumbnail: string | null;
-  image: string | null;
-  isExpansion?: boolean;
-}
+import { buildGameTags, groupGameTags } from "@/lib/game-tags";
+import type { GameCardGame } from "@/lib/types/game";
 
 type BaseProps = {
   game: GameCardGame;
@@ -64,7 +53,6 @@ type LinkProps = BaseProps & {
 
 function TagRows({
   game,
-  baseGame,
   playerCount,
   activeFilters,
   filterMode,
@@ -75,7 +63,6 @@ function TagRows({
   onBaseView,
 }: {
   game: GameCardGame;
-  baseGame: GameCardGame;
   playerCount?: number;
   activeFilters?: GameFilters;
   filterMode?: boolean;
@@ -215,7 +202,6 @@ function CardBody({
       </span>
       <TagRows
         game={game}
-        baseGame={baseGame}
         playerCount={playerCount}
         activeFilters={activeFilters}
         filterMode={filterMode}
@@ -304,9 +290,12 @@ function DetailsButton({ onClick }: { onClick: () => void }) {
 function useDisplayedGame(game: GameCardGame, ownedExpansions: GameCardGame[]) {
   const [viewExpansionId, setViewExpansionId] = useState<number | null>(null);
 
-  useEffect(() => {
+  // Springt zurück zum Basisspiel, wenn die Karte ein anderes Spiel zeigt.
+  const [prevGameId, setPrevGameId] = useState(game.id);
+  if (game.id !== prevGameId) {
+    setPrevGameId(game.id);
     setViewExpansionId(null);
-  }, [game.id]);
+  }
 
   const displayedGame =
     viewExpansionId != null

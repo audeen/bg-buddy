@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GameCover } from "@/components/GameCover";
 import { GameDetailModal } from "@/components/GameDetailModal";
-import type { GameCardGame } from "@/components/GameCard";
-import type { GameDetailData } from "@/components/GameDetailView";
+import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import {
   buildGameTags,
   chipClassForVariant,

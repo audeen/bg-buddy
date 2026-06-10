@@ -40,7 +40,7 @@ import {
   buildExpansionRankingEntries,
   coverByVoteGameIdForConfigs,
 } from "@/lib/expansion-ranking";
-import type { RankEntry } from "@/components/Ranking";
+import type { RankEntry } from "@/lib/types/ranking";
 
 export const dynamic = "force-dynamic";
 
@@ -152,11 +152,7 @@ export default async function MeetupDetail({
   const pickPoolSize = poolIds.length;
 
   const duelRows = votes
-    .filter(
-      (v) =>
-        (v.mode === "DUEL" || v.mode === "TINDER") &&
-        v.playerCount === expected,
-    )
+    .filter((v) => v.mode === "DUEL" && v.playerCount === expected)
     .map((v) => ({
       gameId: v.gameId,
       opponentGameId: v.opponentGameId,
@@ -336,9 +332,7 @@ export default async function MeetupDetail({
     meetup.expectedPlayerCount,
   );
 
-  const duelVoteCount = votes.filter(
-    (v) => v.mode === "DUEL" || v.mode === "TINDER",
-  ).length;
+  const duelVoteCount = votes.filter((v) => v.mode === "DUEL").length;
   const duelsStarted = duelVoteCount > 0;
 
   const isRegistered = user
@@ -359,10 +353,7 @@ export default async function MeetupDetail({
     );
     const countPool = poolGameIds(buildPickCounts(countPicks));
     const countDuels = votes
-      .filter(
-        (v) =>
-          (v.mode === "DUEL" || v.mode === "TINDER") && v.playerCount === pc,
-      )
+      .filter((v) => v.mode === "DUEL" && v.playerCount === pc)
       .map((v) => ({
         gameId: v.gameId,
         opponentGameId: v.opponentGameId,
@@ -416,7 +407,7 @@ export default async function MeetupDetail({
           </p>
           <div className="flex shrink-0 items-center gap-1">
             <MeetupShareQr meetupId={meetup.id} title={meetup.title} />
-            {user && (
+            {isHost && (
               <MeetupActionsMenu meetupId={meetup.id} title={meetup.title} />
             )}
           </div>
@@ -492,6 +483,7 @@ export default async function MeetupDetail({
 
       <MeetupRankings
         key={expected}
+        meetupId={id}
         expected={expected}
         playerCounts={playerCounts}
         combinedByCount={combinedByCount}

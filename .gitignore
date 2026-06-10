@@ -25,6 +25,9 @@
 .DS_Store
 *.pem
 
+# lokaler BGG-Export (Eingabe für Prefetch-Skripte)
+/collection.csv
+
 # debug
 npm-debug.log*
 yarn-debug.log*

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useTransition } from "react";
 import {
   activeFilterLabels,
   clearFilterKind,
@@ -63,17 +63,14 @@ export function GamesFilterBar({
   const filters = parseGameFilters(sp);
   const sort = parseGameSort(sp);
 
-  const navigate = useCallback(
-    (next: GameFilters, nextSort: GameSort = sort) => {
-      const params = filtersToSearchParams(next, nextSort);
-      const qs = params.toString();
-      startTransition(() => {
-        router.push(qs ? `${basePath}?${qs}` : basePath, { scroll: false });
-        if (scrollToId) scrollToElement(scrollToId);
-      });
-    },
-    [basePath, router, scrollToId, sort, startTransition],
-  );
+  const navigate = (next: GameFilters, nextSort: GameSort = sort) => {
+    const params = filtersToSearchParams(next, nextSort);
+    const qs = params.toString();
+    startTransition(() => {
+      router.push(qs ? `${basePath}?${qs}` : basePath, { scroll: false });
+      if (scrollToId) scrollToElement(scrollToId);
+    });
+  };
 
   const updateField = (patch: Partial<GameFilters>) => {
     navigate({ ...filters, ...patch });

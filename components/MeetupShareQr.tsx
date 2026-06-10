@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import QRCode from "react-qr-code";
+import { useEscapeKey } from "@/lib/use-escape-key";
 
 const DRAG_CLOSE_THRESHOLD = 100;
 
@@ -74,16 +75,7 @@ export function MeetupShareQr({
     setOpen(true);
   }
 
-  useEffect(() => {
-    if (!open) return;
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") close();
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, close]);
+  useEscapeKey(close, open);
 
   const applyDragVisuals = useCallback((delta: number) => {
     const panel = panelRef.current;

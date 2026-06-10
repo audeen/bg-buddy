@@ -16,6 +16,13 @@ export function ExpectedCountControl({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  // Mit neuem Server-Wert synchronisieren (derived state beim Rendern).
+  const [lastServerValue, setLastServerValue] = useState(value);
+  if (value !== lastServerValue) {
+    setLastServerValue(value);
+    setCount(value);
+  }
+
   function save(next: number) {
     const clamped = Math.max(1, Math.min(20, next));
     setCount(clamped);
@@ -24,7 +31,8 @@ export function ExpectedCountControl({
       const res = await updateExpectedCountAction(meetupId, clamped);
       if (res && "error" in res && res.error) {
         setError(res.error);
-        setCount(value);
+        // Rollback auf den letzten vom Server bestätigten Wert.
+        setCount(lastServerValue);
         return;
       }
       router.refresh();

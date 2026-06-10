@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { GameDetailView, type GameDetailData } from "@/components/GameDetailView";
-import type { GameCardGame } from "@/components/GameCard";
+import { GameDetailView } from "@/components/GameDetailView";
+import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import type { GameFilters, GameSort } from "@/lib/game-filters";
 
 const DRAG_CLOSE_THRESHOLD = 100;
@@ -67,7 +67,8 @@ export function GameDetailModal({
   ownedExpansions = [],
 }: GameDetailModalProps) {
   const titleId = useId();
-  const [viewGame, setViewGame] = useState<GameDetailData | null>(null);
+  const [viewGame, setViewGame] = useState<GameDetailData | null>(game);
+  const [prevGameProp, setPrevGameProp] = useState<GameDetailData | null>(game);
   const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -86,11 +87,15 @@ export function GameDetailModal({
   const onCloseRef = useRef(onClose);
   const prevGameRef = useRef<GameDetailData | null>(null);
 
-  onCloseRef.current = onClose;
-
   useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
+  // Wechselt das angezeigte Spiel, sobald sich die Prop ändert (derived state).
+  if (game !== prevGameProp) {
+    setPrevGameProp(game);
     setViewGame(game);
-  }, [game]);
+  }
 
   const dismiss = useCallback(() => {
     if (historyPushedRef.current) {

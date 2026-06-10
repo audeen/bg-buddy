@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { HostChoiceMode } from "@prisma/client";
+import { HostForcedGameBanner } from "@/components/HostForcedGameBanner";
 import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
@@ -38,16 +39,10 @@ export function MeetupVoteActions({
 
   if (hostForced && hostForcedGameName) {
     return (
-      <div
-        className="rounded-lg border border-[var(--accent)] bg-[var(--surface-elevated)] px-4 py-3 text-center"
-        role="status"
-      >
-        <p className="text-sm font-semibold">Vom Host festgelegt</p>
-        <p className="text-base font-bold mt-1">{hostForcedGameName}</p>
-        <p className="text-xs text-[var(--muted)] mt-2">
-          Keine Abstimmung — das Spiel steht fest.
-        </p>
-      </div>
+      <HostForcedGameBanner
+        gameName={hostForcedGameName}
+        description="Keine Abstimmung — das Spiel steht fest."
+      />
     );
   }
 

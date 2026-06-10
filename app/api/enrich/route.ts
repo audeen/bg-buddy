@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { fetchThingBatch } from "@/lib/bgg";
+import { bggClient } from "@/lib/bgg/client";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -14,10 +14,6 @@ async function status() {
     prisma.game.count({ where: { enriched: true } }),
   ]);
   return { total, enriched, remaining: total - enriched };
-}
-
-export async function GET() {
-  return NextResponse.json(await status());
 }
 
 export async function POST() {
@@ -41,7 +37,7 @@ export async function POST() {
 
   let details;
   try {
-    details = await fetchThingBatch(ids);
+    details = await bggClient.getThings(ids);
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "BGG-Abruf fehlgeschlagen." },
@@ -53,16 +49,20 @@ export async function POST() {
 
   for (const id of ids) {
     const d = byId.get(id);
+    // Liefert BGG keine Daten, nur als abgearbeitet markieren statt
+    // vorhandene Felder mit null zu überschreiben.
     await prisma.game.update({
       where: { id },
-      data: {
-        description: d?.description ?? null,
-        image: d?.image ?? null,
-        thumbnail: d?.thumbnail ?? null,
-        categories: d?.categories ?? [],
-        mechanics: d?.mechanics ?? [],
-        enriched: true,
-      },
+      data: d
+        ? {
+            description: d.description ?? null,
+            image: d.image ?? null,
+            thumbnail: d.thumbnail ?? null,
+            categories: d.categories,
+            mechanics: d.mechanics,
+            enriched: true,
+          }
+        : { enriched: true },
     });
   }
 

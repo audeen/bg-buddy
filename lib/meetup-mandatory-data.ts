@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { isPlayableAtCount } from "@/lib/effective-player-count";
-import type { MandatoryExpansionFamily } from "@/components/MeetupMandatoryExpansions";
+import type { MandatoryExpansionFamily } from "@/lib/types/meetup";
 
 export async function loadWinnerExpansionFamily(
   winnerGameId: number,

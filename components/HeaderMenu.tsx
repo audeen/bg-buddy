@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useMemo, useRef, useState, useTransition } from "react";
 import {
   completeDummyDuelsAction,
   countDummyMeetupsAction,
@@ -10,6 +10,7 @@ import {
   logoutAction,
   purgeDummyMeetupsAction,
 } from "@/app/actions";
+import { useClickOutside } from "@/lib/use-click-outside";
 import { useSecretMenuReveal } from "@/lib/use-secret-menu-reveal";
 
 function meetupIdFromPath(pathname: string): string | null {
@@ -33,16 +34,8 @@ export function HeaderMenu({ userName }: { userName: string }) {
   const menuRef = useRef<HTMLDivElement>(null);
   const { revealed, registerClick } = useSecretMenuReveal();
 
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(event: MouseEvent) {
-      if (!menuRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+  const closeMenu = useCallback(() => setOpen(false), []);
+  useClickOutside(menuRef, closeMenu, open);
 
   function handleCreate() {
     setOpen(false);

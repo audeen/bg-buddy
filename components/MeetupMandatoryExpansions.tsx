@@ -2,12 +2,7 @@
 
 import { useTransition } from "react";
 import { toggleMandatoryExpansionAction } from "@/app/actions";
-
-export type MandatoryExpansionFamily = {
-  baseGameId: number;
-  baseGameName: string;
-  expansions: { id: number; name: string }[];
-};
+import type { MandatoryExpansionFamily } from "@/lib/types/meetup";
 
 export function MeetupMandatoryExpansions({
   meetupId,

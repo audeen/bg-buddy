@@ -3,8 +3,7 @@
  * Nutzung: npm run test:expansion-detail
  */
 import assert from "node:assert/strict";
-import type { GameCardGame } from "../components/GameCard";
-import type { GameDetailData } from "../components/GameDetailView";
+import type { GameCardGame, GameDetailData } from "../lib/types/game";
 import { resolveDetailGameView } from "../lib/expansion-detail";
 
 const baseGame: GameDetailData = {

@@ -5,7 +5,7 @@ import {
   CollectionManagerClient,
   type CollectionGameRow,
 } from "@/components/CollectionManagerClient";
-import { AddGameModal } from "@/components/BarcodeScanClient";
+import { AddGameModal } from "@/components/AddGameModal";
 
 export function CollectionAdminClient({ games }: { games: CollectionGameRow[] }) {
   const [addGameOpen, setAddGameOpen] = useState(false);

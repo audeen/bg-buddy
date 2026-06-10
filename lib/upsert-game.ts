@@ -1,10 +1,6 @@
 import type { ThingDetails } from "@/lib/bgg";
-import { fetchThingBatch } from "@/lib/bgg";
-import { geekitemApiUrl, parseGeekitemJson } from "@/lib/geekdo-item";
-import {
-  loadEnrichmentCache,
-  thingDetailsToDbFields,
-} from "@/lib/enrichment-cache";
+import { bggClient } from "@/lib/bgg/client";
+import { thingDetailsToDbFields } from "@/lib/enrichment-cache";
 import { prisma } from "@/lib/prisma";
 
 export type SingleGameInput = {
@@ -40,23 +36,12 @@ function thingToPartialFields(d: ThingDetails): Omit<SingleGameInput, "bggId"> {
   };
 }
 
-async function fetchGeekdoDetails(bggId: number): Promise<ThingDetails | null> {
-  try {
-    const res = await fetch(geekitemApiUrl(bggId), { cache: "no-store" });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return parseGeekitemJson(json, bggId);
-  } catch {
-    return null;
-  }
-}
-
 /** Loads metadata for a single BGG id: cache → Geekdo → BGG thing API. */
 export async function loadGameMetadata(bggId: number): Promise<{
   base: SingleGameInput;
   enrichment: ReturnType<typeof thingDetailsToDbFields> | null;
 }> {
-  const cache = loadEnrichmentCache();
+  const cache = bggClient.getCachedThings();
   const cached = cache.get(bggId);
   const enrichmentFromCache = cached ? thingDetailsToDbFields(cached) : null;
 
@@ -68,7 +53,7 @@ export async function loadGameMetadata(bggId: number): Promise<{
     base = { bggId, ...thingToPartialFields(cached) };
   }
 
-  const geekdo = await fetchGeekdoDetails(bggId);
+  const geekdo = await bggClient.getThingFromGeekdo(bggId);
   if (geekdo) {
     base = { ...base, bggId, ...thingToPartialFields(geekdo) };
     if (!enrichment) {
@@ -77,7 +62,7 @@ export async function loadGameMetadata(bggId: number): Promise<{
   }
 
   try {
-    const bggItems = await fetchThingBatch([bggId]);
+    const bggItems = await bggClient.getThings([bggId]);
     const bgg = bggItems[0];
     if (bgg) {
       base = { ...base, bggId, ...thingToPartialFields(bgg) };
@@ -107,7 +92,7 @@ export async function upsertGameRecord(
   const existing = await prisma.game.findUnique({ where: { id: bggId } });
   const created = !existing;
 
-  const cache = loadEnrichmentCache();
+  const cache = bggClient.getCachedThings();
   const cached = cache.get(bggId);
   const enrichment =
     enrichmentOverride ?? (cached ? thingDetailsToDbFields(cached) : null);

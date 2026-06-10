@@ -6,16 +6,7 @@ import { GameCover } from "@/components/GameCover";
 import { estimateRankingListHeight } from "@/lib/ranking-layout";
 import { followErgebnisseLayoutGrowth } from "@/lib/scroll-ergebnisse";
 import { prefersReducedMotion, sleep } from "@/lib/motion";
-
-export interface RankEntry {
-  id: number;
-  name: string;
-  thumbnail: string | null;
-  points: number;
-  voters: number;
-  pickCount?: number;
-  duelWins?: number;
-}
+import type { RankEntry } from "@/lib/types/ranking";
 
 const PODIUM_DELAY_MS = 650;
 const GOLD_DELAY_MS = 800;

@@ -16,12 +16,14 @@ export function DuellSessionGuard({
 }) {
   const router = useRouter();
   const redirected = useRef(false);
+  const inFlight = useRef(false);
 
   useEffect(() => {
     if (initialDuelVoteCount === 0) return;
 
     async function check() {
-      if (redirected.current) return;
+      if (redirected.current || inFlight.current) return;
+      inFlight.current = true;
       try {
         const res = await fetch(`/api/meetups/${meetupId}/pick-phase`);
         if (!res.ok) return;
@@ -32,6 +34,8 @@ export function DuellSessionGuard({
         }
       } catch {
         // ignore transient network errors
+      } finally {
+        inFlight.current = false;
       }
     }
 

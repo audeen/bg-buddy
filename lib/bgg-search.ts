@@ -1,11 +1,5 @@
-import { BggBlockedError, parseSearchXml, searchBggGames } from "@/lib/bgg";
-
-export type BggSearchCandidate = {
-  bggId: number;
-  name: string;
-  year: number | null;
-  isExpansion: boolean;
-};
+import { BggBlockedError, type BggSearchItem } from "@/lib/bgg";
+import { bggClient } from "@/lib/bgg/client";
 
 export type BggSearchResult =
   | {
@@ -16,7 +10,7 @@ export type BggSearchResult =
       year: number | null;
       isExpansion: boolean;
     }
-  | { status: "candidates"; query: string; items: BggSearchCandidate[] }
+  | { status: "candidates"; query: string; items: BggSearchItem[] }
   | { status: "notFound"; query: string }
   | { status: "error"; message: string };
 
@@ -24,7 +18,7 @@ const DEFAULT_LIMIT = 20;
 
 /** Maps raw BGG search hits into a structured lookup result. Exported for tests. */
 export function parseBggSearchResponse(
-  items: BggSearchCandidate[],
+  items: BggSearchItem[],
   query: string,
   limit = DEFAULT_LIMIT,
 ): BggSearchResult {
@@ -56,7 +50,7 @@ export async function lookupBggByName(rawQuery: string): Promise<BggSearchResult
   }
 
   try {
-    const items = await searchBggGames(query);
+    const items = await bggClient.searchByName(query);
     return parseBggSearchResponse(items, query);
   } catch (err) {
     if (err instanceof BggBlockedError) {
@@ -67,5 +61,3 @@ export async function lookupBggByName(rawQuery: string): Promise<BggSearchResult
     return { status: "error", message };
   }
 }
-
-export { parseSearchXml, searchBggGames };

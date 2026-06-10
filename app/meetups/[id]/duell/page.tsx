@@ -57,7 +57,7 @@ export default async function DuellPage({
     prisma.vote.findMany({
       where: {
         meetupId: id,
-        mode: { in: ["DUEL", "TINDER"] },
+        mode: "DUEL",
         playerCount: expected,
       },
       select: {

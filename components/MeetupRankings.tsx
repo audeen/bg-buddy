@@ -1,8 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Ranking, type RankEntry } from "@/components/Ranking";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { HostForcedGameBanner } from "@/components/HostForcedGameBanner";
+import { Ranking } from "@/components/Ranking";
+import type { RankEntry } from "@/lib/types/ranking";
 import type { DuelPhase } from "@/lib/duel-pairs";
+import { groupProgressText } from "@/lib/duel-progress";
 import { estimateRankingBlockHeight } from "@/lib/ranking-layout";
 import { sleep } from "@/lib/motion";
 import {
@@ -16,7 +19,29 @@ const UNLOCK_FADE_MS = 250;
 
 type RankingView = "expansion" | "base";
 
+function rankingViewStorageKey(meetupId: string): string {
+  return `bg-buddy:ranking-view:${meetupId}`;
+}
+
+function readStoredRankingView(meetupId: string): RankingView | null {
+  try {
+    const raw = sessionStorage.getItem(rankingViewStorageKey(meetupId));
+    return raw === "expansion" || raw === "base" ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeRankingView(meetupId: string, view: RankingView): void {
+  try {
+    sessionStorage.setItem(rankingViewStorageKey(meetupId), view);
+  } catch {
+    // ignore private browsing / storage errors
+  }
+}
+
 export function MeetupRankings({
+  meetupId,
   expected,
   playerCounts,
   combinedByCount,
@@ -35,6 +60,7 @@ export function MeetupRankings({
   hostForced = false,
   hostForcedGameName = null,
 }: {
+  meetupId: string;
   expected: number;
   playerCounts: number[];
   combinedByCount: Record<number, RankEntry[]>;
@@ -71,8 +97,39 @@ export function MeetupRankings({
     userRevealed ||
     (duelComplete && totalPairs > 0);
 
+  // Nur einmalig auf "Varianten" umschalten, damit eine manuelle
+  // Tab-Auswahl nicht bei jedem Refresh überschrieben wird.
+  const autoSwitched = useRef(false);
+
+  // Manuelle Tab-Wahl überlebt auch einen vollen Reload (sessionStorage).
+  // Bewusst im Effect statt im useState-Initializer, um Hydration-Mismatches
+  // zu vermeiden.
   useEffect(() => {
-    if (revealed && expansionDuelComplete && expansionRankingAvailable) {
+    const stored = readStoredRankingView(meetupId);
+    if (stored) {
+      autoSwitched.current = true;
+      setView(stored === "expansion" && !expansionRankingAvailable ? "base" : stored);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meetupId]);
+
+  const selectView = useCallback(
+    (next: RankingView) => {
+      autoSwitched.current = true;
+      setView(next);
+      storeRankingView(meetupId, next);
+    },
+    [meetupId],
+  );
+
+  useEffect(() => {
+    if (
+      !autoSwitched.current &&
+      revealed &&
+      expansionDuelComplete &&
+      expansionRankingAvailable
+    ) {
+      autoSwitched.current = true;
       setView("expansion");
     }
   }, [revealed, expansionDuelComplete, expansionRankingAvailable]);
@@ -104,7 +161,13 @@ export function MeetupRankings({
 
   const baseStatusText =
     duelPhase === "GROUP" && totalPairs > 0
-      ? `Matrix: ${groupDecidedPairs}/${totalPairs} abgestimmt · ${finishedParticipants}/${totalParticipants} Spieler fertig`
+      ? groupProgressText(
+          duelPhase,
+          groupDecidedPairs,
+          totalPairs,
+          finishedParticipants,
+          totalParticipants,
+        )
       : totalPairs > 0
         ? `Noch ${openPairs} von ${totalPairs} Vergleichen ohne alle Stimmen.`
         : `Ergebnisse für ${expected} Spieler ★ werden nach den Duellen freigegeben.`;
@@ -139,18 +202,10 @@ export function MeetupRankings({
         className="flex flex-col gap-3 scroll-mt-24"
       >
         <h2 className="section-title">Ergebnisse</h2>
-        <div
-          className="card flex flex-col items-center gap-2 text-center border border-[var(--accent)]"
-          style={{ padding: "var(--space-card)" }}
-        >
-          <span className="text-xs font-semibold text-[var(--accent)]">
-            Vom Host festgelegt
-          </span>
-          <p className="text-lg font-bold">{hostForcedGameName}</p>
-          <p className="text-sm text-[var(--muted)]">
-            Keine Abstimmung — dieses Spiel wird gespielt.
-          </p>
-        </div>
+        <HostForcedGameBanner
+          gameName={hostForcedGameName}
+          description="Keine Abstimmung — dieses Spiel wird gespielt."
+        />
       </section>
     );
   }
@@ -172,14 +227,14 @@ export function MeetupRankings({
             <button
               type="button"
               className={`btn btn-tab ${view === "expansion" ? "btn-primary" : "btn-ghost"}`}
-              onClick={() => setView("expansion")}
+              onClick={() => selectView("expansion")}
             >
               Varianten
             </button>
             <button
               type="button"
               className={`btn btn-tab ${view === "base" ? "btn-primary" : "btn-ghost"}`}
-              onClick={() => setView("base")}
+              onClick={() => selectView("base")}
             >
               Basisspiele
             </button>

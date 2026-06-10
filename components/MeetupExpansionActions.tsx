@@ -4,10 +4,8 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
 import { startExpansionDuelAction } from "@/app/actions";
-import {
-  MeetupMandatoryExpansions,
-  type MandatoryExpansionFamily,
-} from "@/components/MeetupMandatoryExpansions";
+import { MeetupMandatoryExpansions } from "@/components/MeetupMandatoryExpansions";
+import type { MandatoryExpansionFamily } from "@/lib/types/meetup";
 
 export function MeetupExpansionActions({
   meetupId,

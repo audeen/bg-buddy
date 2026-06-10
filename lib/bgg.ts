@@ -1,5 +1,6 @@
 import Papa from "papaparse";
 import { XMLParser } from "fast-xml-parser";
+import { stripBggHtml } from "@/lib/bgg/html";
 import { parseExpandsGameIdsFromBggXmlLinks } from "@/lib/expansion-links";
 
 export interface ParsedGame {
@@ -130,26 +131,6 @@ function asArray<T>(value: T | T[] | undefined): T[] {
   return Array.isArray(value) ? value : [value];
 }
 
-function cleanDescription(raw: unknown): string | null {
-  if (raw == null) return null;
-  let text = String(raw);
-  // BGG sends literal HTML entities for newlines and tags.
-  text = text
-    .replace(/&#10;/g, "\n")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&rsquo;|&lsquo;/g, "'")
-    .replace(/&ldquo;|&rdquo;/g, '"')
-    .replace(/&mdash;/g, "—")
-    .replace(/&ndash;/g, "–")
-    .replace(/&nbsp;/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-  return text || null;
-}
-
 function attrValue(node: unknown): string | null {
   if (node == null) return null;
   if (typeof node === "object" && node !== null && "value" in node) {
@@ -206,7 +187,7 @@ export function parseThingXml(xml: string): ThingDetails[] {
       bggRating: toFloat(attrValue(ratings?.average)),
       rank: toInt(boardgameRank?.value),
       isExpansion: itemType.includes("expansion"),
-      description: cleanDescription(item.description),
+      description: stripBggHtml(item.description),
       image: (item.image as string) ?? null,
       thumbnail: (item.thumbnail as string) ?? null,
       categories,
@@ -302,7 +283,7 @@ async function fetchBggXml(url: string): Promise<string> {
     attempt += 1;
     await new Promise((r) => setTimeout(r, 1500 * attempt));
   }
-  if (!xml) throw new Error("BGG search API did not return data");
+  if (!xml) throw new Error(`BGG XML API did not return data (${url})`);
   return xml;
 }
 
@@ -337,15 +318,3 @@ export function chunk<T>(arr: T[], size: number): T[][] {
   }
   return out;
 }
-
-export {
-  loadEnrichmentCache,
-  enrichmentCacheEntryCount,
-  thingDetailsToDbFields,
-  localizedEnrichmentFields,
-  hasEnrichmentContent,
-  normalizeCacheEntry,
-  serializeEnrichmentCache,
-  enrichmentCachePath,
-  ENRICHMENT_CACHE_FILE,
-} from "@/lib/enrichment-cache";

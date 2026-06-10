@@ -1,4 +1,4 @@
-import type { RankEntry } from "@/components/Ranking";
+import type { RankEntry } from "@/lib/types/ranking";
 import { buildCopelandForCount } from "@/lib/copeland";
 import { pairCount } from "@/lib/duel-pairs";
 import {
@@ -7,7 +7,6 @@ import {
 } from "@/lib/duel-tiebreaker";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import { FULL_THRESHOLD } from "@/lib/vote-limits";
-import { isDuelMode, isPickMode } from "@/lib/vote-mode";
 
 type VoteRow = {
   playerCount: number;
@@ -31,11 +30,7 @@ export function buildRankingByCount(
   votes: VoteRow[],
   mode?: "PICK" | "DUEL",
 ): Record<number, RankEntry[]> {
-  const filtered = mode
-    ? votes.filter((v) =>
-        mode === "DUEL" ? isDuelMode(v.mode) : isPickMode(v.mode),
-      )
-    : votes;
+  const filtered = mode ? votes.filter((v) => v.mode === mode) : votes;
   const byCount = new Map<
     number,
     Map<number, { entry: RankEntry; voters: Set<string> }>
@@ -76,7 +71,7 @@ export function buildDuelCopelandByCount(
 ): Record<number, RankEntry[]> {
   const picksByCount = new Map<number, { gameId: number; points: number }[]>();
   for (const v of votes) {
-    if (!isPickMode(v.mode)) continue;
+    if (v.mode !== "PICK") continue;
     if (!picksByCount.has(v.playerCount)) picksByCount.set(v.playerCount, []);
     picksByCount.get(v.playerCount)!.push({
       gameId: v.gameId,
@@ -85,7 +80,7 @@ export function buildDuelCopelandByCount(
   }
 
   const duelVotes = votes
-    .filter((v) => isDuelMode(v.mode))
+    .filter((v) => v.mode === "DUEL")
     .map((v) => ({
       gameId: v.gameId,
       opponentGameId: v.opponentGameId ?? null,
@@ -180,7 +175,7 @@ export function buildCombinedByCount(
 ): Record<number, RankEntry[]> {
   const picksByCount = new Map<number, Record<number, number>>();
   for (const v of votes) {
-    if (!isPickMode(v.mode)) continue;
+    if (v.mode !== "PICK") continue;
     if (!picksByCount.has(v.playerCount)) {
       picksByCount.set(v.playerCount, {});
     }
@@ -252,63 +247,6 @@ export function buildPickCountsByExpected(
   return buildPickCounts(
     votes.filter((v) => v.mode === "PICK" && v.playerCount === expected),
   );
-}
-
-export type PickListGame = {
-  id: number;
-  name: string;
-  thumbnail: string | null;
-  points: number;
-};
-
-export type PickListPlayer = {
-  userId: string;
-  userName: string;
-  games: PickListGame[];
-};
-
-export function buildPicksByCount(
-  votes: (VoteRow & { user: { name: string } })[],
-): Record<number, PickListPlayer[]> {
-  const byCount = new Map<
-    number,
-    Map<string, { userName: string; games: PickListGame[] }>
-  >();
-
-  for (const v of votes) {
-    if (!isPickMode(v.mode)) continue;
-    if (!byCount.has(v.playerCount)) byCount.set(v.playerCount, new Map());
-    const users = byCount.get(v.playerCount)!;
-    if (!users.has(v.userId)) {
-      users.set(v.userId, { userName: v.user.name, games: [] });
-    }
-    const u = users.get(v.userId)!;
-    const existing = u.games.find((g) => g.id === v.gameId);
-    if (existing) {
-      existing.points = v.points;
-      continue;
-    }
-    u.games.push({
-      id: v.game.id,
-      name: v.game.name,
-      thumbnail: v.game.thumbnail ?? v.game.image,
-      points: v.points,
-    });
-  }
-
-  const result: Record<number, PickListPlayer[]> = {};
-  for (const [pc, users] of byCount) {
-    result[pc] = Array.from(users.entries())
-      .map(([userId, { userName, games }]) => ({
-        userId,
-        userName,
-        games: games.sort(
-          (a, b) => b.points - a.points || a.name.localeCompare(b.name),
-        ),
-      }))
-      .sort((a, b) => a.userName.localeCompare(b.userName));
-  }
-  return result;
 }
 
 export function playerCountsFromVotes(

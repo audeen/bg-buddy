@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import type { HostChoiceMode } from "@prisma/client";
 import { GameCover } from "@/components/GameCover";
-import { AddGameModal } from "@/components/BarcodeScanClient";
+import { AddGameModal } from "@/components/AddGameModal";
+import { PlusIcon } from "@/components/icons";
 import {
   addGuestGameToMeetupAction,
   addHostChoiceGameAction,
@@ -25,24 +26,6 @@ export type SpielsteuerungGameRow = {
 };
 
 type SearchResult = { id: number; name: string; thumbnail: string | null };
-
-function PlusIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M12 5v14M5 12h14" />
-    </svg>
-  );
-}
 
 function buildSummaryText({
   forcedGame,
@@ -96,7 +79,10 @@ export function MeetupSpielsteuerungClient({
   const [clearChoicePending, setClearChoicePending] = useState(false);
 
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [searchResponse, setSearchResponse] = useState<{
+    query: string;
+    games: SearchResult[];
+  }>({ query: "", games: [] });
   const [searching, setSearching] = useState(false);
   const [selectedGame, setSelectedGame] = useState<SearchResult | null>(null);
   const [forceConfirmGame, setForceConfirmGame] = useState<{
@@ -126,22 +112,34 @@ export function MeetupSpielsteuerungClient({
 
   useEffect(() => {
     const q = query.trim();
-    if (q.length < 2 || forcedGame) {
-      setResults([]);
-      return;
-    }
+    if (q.length < 2 || forcedGame) return;
 
+    // Verhindert, dass eine überholte Antwort neuere Ergebnisse überschreibt.
+    let cancelled = false;
     const timer = setTimeout(async () => {
       setSearching(true);
       const res = await searchCollectionGamesAction(q, meetupId);
+      if (cancelled) return;
       setSearching(false);
       if (res && "games" in res && res.games) {
-        setResults(res.games);
+        setSearchResponse({ query: q, games: res.games });
       }
     }, 250);
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [query, forcedGame, meetupId]);
+
+  // Ergebnisse nur zeigen, solange sie zur aktuellen Suche passen.
+  const trimmedQuery = query.trim();
+  const results =
+    trimmedQuery.length >= 2 &&
+    !forcedGame &&
+    searchResponse.query === trimmedQuery
+      ? searchResponse.games
+      : [];
 
   function runAction(fn: () => Promise<{ error?: string } | { ok: true }>) {
     setError(null);
@@ -154,7 +152,7 @@ export function MeetupSpielsteuerungClient({
       setSelectedGame(null);
       setForceConfirmGame(null);
       setQuery("");
-      setResults([]);
+      setSearchResponse({ query: "", games: [] });
       router.refresh();
     });
   }

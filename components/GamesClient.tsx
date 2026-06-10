@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { GameCard, type GameCardGame } from "@/components/GameCard";
+import { GameCard } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
-import type { GameDetailData } from "@/components/GameDetailView";
+import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import { resolveDetailGameView } from "@/lib/expansion-detail";
 import type { GameFilters } from "@/lib/game-filters";
 

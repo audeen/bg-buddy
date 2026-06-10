@@ -19,7 +19,9 @@ export function useMeetupPhaseRefresh(active: boolean) {
 
   useEffect(() => {
     if (!active) return;
-    const id = window.setInterval(() => router.refresh(), POLL_MS);
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") router.refresh();
+    }, POLL_MS);
     return () => window.clearInterval(id);
   }, [active, router]);
 }

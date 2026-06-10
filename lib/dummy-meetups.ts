@@ -334,7 +334,7 @@ export async function completeDummyDuelsForMeetup(
   const existingDuelVotes = await db.vote.findMany({
     where: {
       meetupId,
-      mode: { in: ["DUEL", "TINDER"] },
+      mode: "DUEL",
       playerCount,
     },
     select: {

@@ -1,18 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "bg-buddy:secret-menu";
 const TRIPLE_CLICK_WINDOW_MS = 500;
 
+const listeners = new Set<() => void>();
+
+function readRevealed(): boolean {
+  return sessionStorage.getItem(STORAGE_KEY) === "1";
+}
+
+function reveal() {
+  sessionStorage.setItem(STORAGE_KEY, "1");
+  for (const listener of listeners) listener();
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
 export function useSecretMenuReveal() {
-  const [revealed, setRevealed] = useState(false);
+  const revealed = useSyncExternalStore(subscribe, readRevealed, () => false);
   const clicksRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    setRevealed(sessionStorage.getItem(STORAGE_KEY) === "1");
-  }, []);
 
   const registerClick = useCallback(() => {
     clicksRef.current += 1;
@@ -20,8 +34,7 @@ export function useSecretMenuReveal() {
 
     if (clicksRef.current >= 3) {
       clicksRef.current = 0;
-      setRevealed(true);
-      sessionStorage.setItem(STORAGE_KEY, "1");
+      reveal();
       return;
     }
 

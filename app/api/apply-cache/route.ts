@@ -8,6 +8,7 @@ import {
 } from "@/lib/apply-enrichment-cache";
 import { enrichmentCacheEntryCount } from "@/lib/enrichment-cache";
 import {
+  parseConflictResolution,
   parseFieldResolutionMap,
   type ConflictResolution,
 } from "@/lib/game-sync";
@@ -16,8 +17,9 @@ export const dynamic = "force-dynamic";
 
 function parseResolution(body: unknown): ConflictResolution {
   if (body && typeof body === "object" && "conflictResolution" in body) {
-    const v = (body as { conflictResolution?: string }).conflictResolution;
-    if (v === "overwriteAll") return "overwriteAll";
+    return parseConflictResolution(
+      (body as { conflictResolution?: string }).conflictResolution,
+    );
   }
   return "keepManual";
 }
