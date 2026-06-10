@@ -34,11 +34,12 @@ function loadEnv(path = ".env") {
 
 loadEnv();
 
-if (!process.env.BGG_TOKEN) {
-  console.warn(
-    "Warnung: BGG_TOKEN ist nicht gesetzt. Die BGG-XML-API verlangt seit 2025 " +
-      "einen Token (https://boardgamegeek.com/applications). Ohne Token kommt 401.",
+if (!process.env.BGG_TOKEN?.trim()) {
+  console.error(
+    "BGG_TOKEN ist nicht gesetzt. Die BGG-XML-API verlangt einen Token " +
+      "(https://boardgamegeek.com/applications). In .env eintragen und erneut starten.",
   );
+  process.exit(1);
 }
 
 const prisma = new PrismaClient();

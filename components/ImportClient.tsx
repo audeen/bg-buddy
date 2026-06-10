@@ -17,20 +17,15 @@ type ImportResult =
       total: number;
       standalone: number;
       expansions: number;
-      cacheApplied: number;
     }
   | { error: string };
-
-type ConflictMode = "csv" | "cache" | null;
 
 export function ImportClient({
   total,
   enriched,
-  cacheEntries,
 }: {
   total: number;
   enriched: number;
-  cacheEntries: number;
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,11 +42,6 @@ export function ImportClient({
   const [enrichError, setEnrichError] = useState<string | null>(null);
   const [enrichDone, setEnrichDone] = useState(false);
 
-  const [cachePreviewLoading, setCachePreviewLoading] = useState(false);
-  const [cacheApplyMsg, setCacheApplyMsg] = useState<string | null>(null);
-  const [cacheApplyOk, setCacheApplyOk] = useState(false);
-
-  const [conflictMode, setConflictMode] = useState<ConflictMode>(null);
   const [conflicts, setConflicts] = useState<GameSyncConflict[]>([]);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
@@ -73,7 +63,6 @@ export function ImportClient({
       }
     } finally {
       setApplyRunning(false);
-      setConflictMode(null);
       setConflicts([]);
       setPendingFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -101,72 +90,11 @@ export function ImportClient({
       if (preview && "ok" in preview && preview.conflicts.length > 0) {
         setPendingFile(file);
         setConflicts(preview.conflicts);
-        setConflictMode("csv");
         return;
       }
       await runCsvImport(file, {});
     } finally {
       setPreviewLoading(false);
-    }
-  }
-
-  async function runApplyCache(choices: Record<string, FieldChoice>) {
-    setApplyRunning(true);
-    setCacheApplyMsg(null);
-    setCacheApplyOk(false);
-    setEnrichError(null);
-    try {
-      const fieldResolutions = buildFieldResolutionsFromChoices(conflicts, choices);
-      const res = await fetch("/api/apply-cache", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fieldResolutions }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setCacheApplyMsg(data.error ?? "Cache konnte nicht angewendet werden.");
-        return;
-      }
-      setCacheApplyOk(true);
-      const skipped =
-        data.conflictsSkipped > 0
-          ? ` (${data.conflictsSkipped} manuelle Felder beibehalten)`
-          : "";
-      setCacheApplyMsg(
-        `${data.updated} Spiele aus dem Offline-Cache aktualisiert (${data.enriched}/${data.total} angereichert)${skipped}.`,
-      );
-      setProgress({ enriched: data.enriched, total: data.total });
-      router.refresh();
-    } catch {
-      setCacheApplyMsg("Netzwerkfehler beim Anwenden des Caches.");
-    } finally {
-      setApplyRunning(false);
-      setConflictMode(null);
-      setConflicts([]);
-    }
-  }
-
-  async function handleApplyCacheClick() {
-    setCachePreviewLoading(true);
-    setCacheApplyMsg(null);
-    setCacheApplyOk(false);
-    try {
-      const res = await fetch("/api/apply-cache?preview=1");
-      const data = await res.json();
-      if (!res.ok) {
-        setCacheApplyMsg(data.error ?? "Cache-Vorschau fehlgeschlagen.");
-        return;
-      }
-      if (data.conflicts?.length > 0) {
-        setConflicts(data.conflicts);
-        setConflictMode("cache");
-        return;
-      }
-      await runApplyCache({});
-    } catch {
-      setCacheApplyMsg("Netzwerkfehler bei der Cache-Vorschau.");
-    } finally {
-      setCachePreviewLoading(false);
     }
   }
 
@@ -202,36 +130,22 @@ export function ImportClient({
   const pct = shownTotal > 0 ? Math.round((shownEnriched / shownTotal) * 100) : 0;
 
   const csvBusy = previewLoading || applyRunning;
-  const cacheBusy = cachePreviewLoading || applyRunning;
 
   return (
     <div className="flex flex-col gap-6">
-      {conflictMode && conflicts.length > 0 && (
+      {conflicts.length > 0 && (
         <SyncConflictDialog
-          title={
-            conflictMode === "csv"
-              ? "Konflikte beim CSV-Import"
-              : "Konflikte beim Offline-Cache"
-          }
-          description={
-            conflictMode === "csv"
-              ? "Wähle pro Feld, ob deine manuelle Änderung bleibt oder der Import-Wert übernommen wird."
-              : "Wähle pro Feld, ob deine manuelle Änderung bleibt oder der Cache-Wert übernommen wird."
-          }
-          applyLabel={
-            conflictMode === "csv" ? "Import starten" : "Cache anwenden"
-          }
+          title="Konflikte beim CSV-Import"
+          description="Wähle pro Feld, ob deine manuelle Änderung bleibt oder der Import-Wert übernommen wird."
+          applyLabel="Import starten"
           conflicts={conflicts}
           pending={applyRunning}
           onApply={(choices) => {
-            if (conflictMode === "csv" && pendingFile) {
+            if (pendingFile) {
               void runCsvImport(pendingFile, choices);
-            } else if (conflictMode === "cache") {
-              void runApplyCache(choices);
             }
           }}
           onCancel={() => {
-            setConflictMode(null);
             setConflicts([]);
             setPendingFile(null);
           }}
@@ -245,18 +159,6 @@ export function ImportClient({
           deine Sammlung als CSV und lade sie hier hoch. Bestehende Spiele werden
           aktualisiert. Manuell bearbeitete Felder werden vor dem Import geprüft.
         </p>
-        {cacheEntries > 0 ? (
-          <p className="text-sm text-[var(--accent)]">
-            <code className="text-xs">data/bgg-enrichment.json</code> enthält{" "}
-            {cacheEntries} Einträge — beim Import werden Cover &amp; Details daraus
-            übernommen (Anzeige auf Deutsch, Englisch bleibt in der Datei; kein API-Token nötig).
-          </p>
-        ) : (
-          <p className="text-sm text-[var(--muted)]">
-            Noch keine Anreicherungs-Datei: siehe Schritt 2 oder{" "}
-            <code className="text-xs">docs/browser-prefetch-bgg.md</code>.
-          </p>
-        )}
         <form onSubmit={handleCsvPreview} className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <input
             ref={fileInputRef}
@@ -271,15 +173,13 @@ export function ImportClient({
             className="btn btn-primary btn-lg sm:w-auto shrink-0"
             disabled={csvBusy}
           >
-            {previewLoading ? "Prüfe…" : applyRunning && conflictMode === "csv" ? "Importiere…" : "Importieren"}
+            {previewLoading ? "Prüfe…" : applyRunning ? "Importiere…" : "Importieren"}
           </button>
         </form>
         {importState && "ok" in importState && (
           <p className="text-sm text-[var(--accent)]">
             {importState.total} Einträge importiert ({importState.standalone}{" "}
             Spiele, {importState.expansions} Erweiterungen).
-            {importState.cacheApplied > 0 &&
-              ` ${importState.cacheApplied} mit Daten aus dem Offline-Cache angereichert.`}
           </p>
         )}
         {importState && "error" in importState && (
@@ -288,49 +188,39 @@ export function ImportClient({
       </section>
 
       <section className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
-        <h2 className="section-title">2. Offline-Cache anwenden</h2>
+        <h2 className="section-title">2. Cover &amp; Details von BGG laden</h2>
         <p className="text-sm text-[var(--muted)]">
-          Wenn <code className="text-xs">bgg-enrichment.json</code> deployed ist:
-          ein Klick schreibt Cover &amp; Details (deutsch) in die Datenbank (ohne BGG-Token).
-          Manuell bearbeitete Felder werden vorher geprüft.
+          Lädt Beschreibung, Cover, Kategorien und Mechaniken über die offizielle
+          BGG-XML-API (benötigt <code className="text-xs">BGG_TOKEN</code> auf dem
+          Server). Die Anfragen werden automatisch gedrosselt.
         </p>
 
-        <button
-          type="button"
-          className="btn btn-primary btn-lg sm:w-fit"
-          onClick={handleApplyCacheClick}
-          disabled={cacheBusy || cacheEntries === 0 || total === 0}
-        >
-          {cachePreviewLoading
-            ? "Prüfe…"
-            : applyRunning && conflictMode === "cache"
-              ? "Wird angewendet…"
-              : "Offline-Cache jetzt anwenden"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            className="btn btn-primary btn-lg sm:w-fit"
+            onClick={runEnrichment}
+            disabled={enriching || total === 0}
+          >
+            {enriching ? "Lädt…" : "Von BGG laden"}
+          </button>
+        </div>
 
-        {cacheEntries === 0 && (
-          <p className="text-sm text-[var(--primary)]">
-            Auf dem Server wurde keine Cache-Datei gefunden — neu deployen oder{" "}
-            <code className="text-xs">docs/browser-prefetch-bgg.md</code>.
-          </p>
-        )}
-        {total === 0 && cacheEntries > 0 && (
+        {total === 0 && (
           <p className="text-sm text-[var(--primary)]">
             Zuerst Schritt 1: CSV importieren, dann diesen Button.
           </p>
         )}
-        {cacheApplyMsg && (
-          <p
-            className={`text-sm ${cacheApplyOk ? "text-[var(--accent)]" : "text-[var(--primary)]"}`}
-          >
-            {cacheApplyMsg}
-          </p>
+        {enrichDone && (
+          <p className="text-sm text-[var(--accent)]">Anreicherung fertig.</p>
+        )}
+        {enrichError && (
+          <p className="text-sm text-[var(--primary)]">{enrichError}</p>
         )}
 
         <div className="flex items-center gap-3 text-sm text-[var(--muted)]">
           <span>
             {shownEnriched} / {shownTotal} in der DB angereichert
-            {cacheEntries > 0 ? ` · ${cacheEntries} Cache-Einträge` : ""}
           </span>
         </div>
 
@@ -340,34 +230,6 @@ export function ImportClient({
             style={{ width: `${pct}%` }}
           />
         </div>
-      </section>
-
-      <section className="card flex flex-col gap-3 border-dashed" style={{ padding: "var(--space-card)" }}>
-        <h2 className="font-bold text-sm">Optional: BGG-XML-API (mit Token)</h2>
-        <p className="text-sm text-[var(--muted)]">
-          Wenn deine Application freigegeben ist: <code className="text-xs">BGG_TOKEN</code>{" "}
-          setzen und unten klicken oder{" "}
-          <code className="text-xs">npm run prefetch-bgg</code> /{" "}
-          <code className="text-xs">npm run enrich</code>.
-        </p>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="btn btn-ghost btn-lg sm:w-fit"
-            onClick={runEnrichment}
-            disabled={enriching || total === 0}
-          >
-            {enriching ? "Lädt…" : "Live von BGG laden"}
-          </button>
-        </div>
-
-        {enrichDone && (
-          <p className="text-sm text-[var(--accent)]">Live-Anreicherung fertig.</p>
-        )}
-        {enrichError && (
-          <p className="text-sm text-[var(--primary)]">{enrichError}</p>
-        )}
       </section>
     </div>
   );

@@ -50,16 +50,6 @@ export const CSV_SYNC_FIELDS: SyncFieldName[] = [
   "recommendedPlayerCounts",
 ];
 
-export const ENRICHMENT_SYNC_FIELDS: SyncFieldName[] = [
-  "description",
-  "image",
-  "thumbnail",
-  "categories",
-  "mechanics",
-  "expandsGameIds",
-  "enriched",
-];
-
 /** Fields that only apply when isExpansion is true. */
 export const EXPANSION_DEPENDENT_FIELDS: SyncFieldName[] = [
   "expandsGameIds",

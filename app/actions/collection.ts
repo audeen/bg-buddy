@@ -72,11 +72,7 @@ export async function importCsvAction(formData: FormData) {
     return { error: "Keine Spiele in der CSV gefunden. Ist es ein BGG-Export?" };
   }
 
-  const { cacheApplied } = await applyCsvImport(
-    games,
-    resolution,
-    fieldResolutions ?? undefined,
-  );
+  await applyCsvImport(games, resolution, fieldResolutions ?? undefined);
 
   const expansions = games.filter((g) => g.isExpansion).length;
   revalidateCollectionPaths();
@@ -85,7 +81,6 @@ export async function importCsvAction(formData: FormData) {
     total: games.length,
     standalone: games.length - expansions,
     expansions,
-    cacheApplied,
   };
 }
 
@@ -334,7 +329,15 @@ export async function addGameByBggIdAction(
     return { ok: true as const, created: true, name: existing.name, bggId };
   }
 
-  const { base, enrichment } = await loadGameMetadata(bggId);
+  let base, enrichment;
+  try {
+    ({ base, enrichment } = await loadGameMetadata(bggId));
+  } catch (err) {
+    return {
+      error:
+        err instanceof Error ? err.message : "BGG-Abruf fehlgeschlagen.",
+    };
+  }
 
   const { created, name } = await upsertGameRecord(
     {

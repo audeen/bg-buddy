@@ -124,7 +124,7 @@ export function CollectionManagerClient({
     <div className="flex flex-col gap-4">
       <p className="text-sm text-[var(--muted)]">
         Bearbeite Metadaten und Erweiterungszuordnungen pro Spiel. Gespeicherte
-        Änderungen werden beim CSV-Import und Offline-Cache als Konflikt erkannt —
+        Änderungen werden beim CSV-Import als Konflikt erkannt —
         du kannst sie behalten oder überschreiben.
       </p>
       {manualCount > 0 && (

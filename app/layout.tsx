@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Image from "next/image";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -47,8 +48,22 @@ export default async function RootLayout({
         >
           {children}
         </main>
-        <footer className="container-app py-4 md:py-6 pb-nav text-sm text-[var(--muted)]">
-          BG Buddy · Daten von BoardGameGeek
+        <footer className="container-app pt-4 md:pt-6 pb-nav flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--muted)]">
+          <span>BG Buddy · Daten von BoardGameGeek</span>
+          <a
+            href="https://boardgamegeek.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="BoardGameGeek"
+            className="shrink-0"
+          >
+            <Image
+              src="/powered-by-bgg.svg"
+              alt="Powered by BGG"
+              width={180}
+              height={40}
+            />
+          </a>
         </footer>
         <BottomNav fallbackMeetupId={fallbackMeetup?.id ?? null} />
         <SwipeBackHandler />

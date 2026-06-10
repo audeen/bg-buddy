@@ -67,7 +67,15 @@ export async function addGuestGameToMeetupAction(
       }
     }
 
-    const { base, enrichment } = await loadGameMetadata(bggId);
+    let base, enrichment;
+    try {
+      ({ base, enrichment } = await loadGameMetadata(bggId));
+    } catch (err) {
+      return {
+        error:
+          err instanceof Error ? err.message : "BGG-Abruf fehlgeschlagen.",
+      };
+    }
     if (base.isExpansion) {
       return { error: "Erweiterungen können nicht als temporäres Spiel hinzugefügt werden." };
     }

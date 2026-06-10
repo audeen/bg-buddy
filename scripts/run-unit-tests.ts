@@ -9,7 +9,6 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 
 const UNIT_TESTS = [
-  "test-enrichment-cache",
   "test-expansion-links",
   "test-owned-expansions",
   "test-expansion-label",

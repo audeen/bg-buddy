@@ -1,14 +1,11 @@
 import type { Prisma } from "@prisma/client";
 import type { ParsedGame } from "@/lib/bgg";
 import { prisma } from "@/lib/prisma";
-import { bggClient } from "@/lib/bgg/client";
-import { thingDetailsToDbFields } from "@/lib/enrichment-cache";
 import {
   applyBaseGameCleanup,
   buildResolvableUpdate,
   CSV_SYNC_FIELDS,
   diffGameFields,
-  ENRICHMENT_SYNC_FIELDS,
   parsedGameToCsvFields,
   type ConflictResolution,
   type FieldResolutionMap,
@@ -46,24 +43,16 @@ export async function previewCsvImport(games: ParsedGame[]): Promise<{
   conflicts: GameSyncConflict[];
   wouldCreate: number;
   wouldUpdate: number;
-  cacheApplied: number;
 }> {
-  const cache = bggClient.getCachedThings();
   const conflicts: GameSyncConflict[] = [];
   let wouldCreate = 0;
   let wouldUpdate = 0;
-  let cacheApplied = 0;
 
   for (const g of games) {
     const existing = await prisma.game.findUnique({
       where: { id: g.id },
       select: existingSelect,
     });
-
-    const csvIncoming = parsedGameToCsvFields(g);
-    const cached = cache.get(g.id);
-    const enrichmentIncoming = cached ? thingDetailsToDbFields(cached) : {};
-    if (cached) cacheApplied += 1;
 
     if (!existing) {
       wouldCreate += 1;
@@ -71,45 +60,35 @@ export async function previewCsvImport(games: ParsedGame[]): Promise<{
     }
 
     wouldUpdate += 1;
+    const csvIncoming = parsedGameToCsvFields(g);
     const csvConflicts = diffGameFields(existing, csvIncoming, CSV_SYNC_FIELDS);
-    const enrichmentConflicts = cached
-      ? diffGameFields(existing, enrichmentIncoming, ENRICHMENT_SYNC_FIELDS)
-      : [];
-    const allConflicts = [...csvConflicts, ...enrichmentConflicts];
 
-    if (allConflicts.length > 0) {
+    if (csvConflicts.length > 0) {
       conflicts.push({
         gameId: g.id,
         name: existing.name,
-        conflicts: allConflicts,
+        conflicts: csvConflicts,
       });
     }
   }
 
-  return { conflicts, wouldCreate, wouldUpdate, cacheApplied };
+  return { conflicts, wouldCreate, wouldUpdate };
 }
 
 export async function applyCsvImport(
   games: ParsedGame[],
   resolution: ConflictResolution = "keepManual",
   fieldResolutions?: FieldResolutionMap,
-): Promise<{ cacheApplied: number }> {
-  const cache = bggClient.getCachedThings();
-  let cacheApplied = 0;
-
+): Promise<void> {
   for (const g of games) {
     const existing = await prisma.game.findUnique({
       where: { id: g.id },
       select: existingSelect,
     });
 
-    const csvIncoming = parsedGameToCsvFields(g);
-    const cached = cache.get(g.id);
-    const enrichmentIncoming = cached ? thingDetailsToDbFields(cached) : {};
-    if (cached) cacheApplied += 1;
-
     if (!existing) {
-      const enrichment = cached ? thingDetailsToDbFields(cached) : null;
+      // Beschreibung/Cover/Kategorien kommen später über den Enrich-Lauf
+      // (BGG-XML-API), deshalb startet das Spiel als nicht angereichert.
       await prisma.game.create({
         data: {
           id: g.id,
@@ -129,58 +108,34 @@ export async function applyCsvImport(
           bestPlayerCounts: g.bestPlayerCounts,
           recommendedPlayerCounts: g.recommendedPlayerCounts,
           barcode: g.barcode,
-          enriched: enrichment?.enriched ?? false,
-          description: enrichment?.description ?? null,
-          image: enrichment?.image ?? null,
-          thumbnail: enrichment?.thumbnail ?? null,
-          categories: enrichment?.categories ?? [],
-          mechanics: enrichment?.mechanics ?? [],
-          expandsGameIds: g.isExpansion ? (enrichment?.expandsGameIds ?? []) : [],
+          enriched: false,
+          description: null,
+          image: null,
+          thumbnail: null,
+          categories: [],
+          mechanics: [],
+          expandsGameIds: [],
         },
       });
       continue;
     }
 
-    const applyOptions = {
-      gameId: g.id,
-      fieldResolutions,
-    };
-
+    const csvIncoming = parsedGameToCsvFields(g);
     const { data: csvData } = buildResolvableUpdate(
       existing,
       csvIncoming,
       CSV_SYNC_FIELDS,
       resolution,
-      applyOptions,
+      { gameId: g.id, fieldResolutions },
     );
-    const csvManual =
-      (csvData.manuallyEditedFields as string[] | undefined) ??
-      existing.manuallyEditedFields;
 
-    let enrichmentData: Prisma.GameUpdateInput = {};
-    if (cached) {
-      enrichmentData = buildResolvableUpdate(
-        { ...existing, manuallyEditedFields: csvManual },
-        enrichmentIncoming,
-        ENRICHMENT_SYNC_FIELDS,
-        resolution,
-        applyOptions,
-      ).data;
-    }
-
-    const mergedManual =
-      (enrichmentData.manuallyEditedFields as string[] | undefined) ?? csvManual;
-
-    const updateData: Prisma.GameUpdateInput = applyBaseGameCleanup(existing, {
-      ...csvData,
-      ...enrichmentData,
-      manuallyEditedFields: mergedManual,
-    });
+    const updateData: Prisma.GameUpdateInput = applyBaseGameCleanup(
+      existing,
+      csvData,
+    );
 
     if (Object.keys(updateData).length > 0) {
       await prisma.game.update({ where: { id: g.id }, data: updateData });
     }
   }
-
-  return { cacheApplied };
 }

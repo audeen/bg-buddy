@@ -4,13 +4,15 @@ Verwalte deine Brettspielsammlung und stimmt gemeinsam ab, was beim nächsten
 Treffen gespielt wird – per gewichteten Stimmen und optionalem Duell-Modus unter den Nominierungen.
 
 Die Spieledaten kommen aus deinem **BoardGameGeek (BGG) Collection-Export** und
-werden optional mit Cover, Beschreibung, Genre und Mechaniken angereichert.
+werden über die offizielle BGG-XML-API mit Cover, Beschreibung, Genre und
+Mechaniken angereichert (benötigt einen `BGG_TOKEN`, siehe unten).
 
 ## Features
 
 - **CSV-Import** der BGG-Collection (Spieleranzahl, Spielzeit, Komplexität,
   Rating, „beste Spieleranzahl" u. a. kommen direkt aus dem Export)
-- **Anreicherung** per Offline-Cache (`data/bgg-enrichment.json`, EN + DE) oder optional BGG-XML-API
+- **Anreicherung** über die offizielle BGG-XML-API (Cover, Beschreibung,
+  Kategorien, Mechaniken) — serverseitig gedrosselt, ein App-Token für alle Nutzer
 - **Spielebrowser** mit Suche und Filter (Spieleranzahl, Genre)
 - **Niederschwellige Anmeldung** – nur ein Name, kein Passwort
 - **Treffen** anlegen; der **Host** legt die erwartete Spieleranzahl (★) fest
@@ -41,8 +43,10 @@ npm install
 
 # 2. Environment einrichten
 cp .env.example .env
-#   DATABASE_URL und SESSION_SECRET in .env setzen
+#   DATABASE_URL, SESSION_SECRET und BGG_TOKEN in .env setzen
 #   (SESSION_SECRET: mind. 32 Zeichen, z. B. `openssl rand -base64 32`)
+#   (BGG_TOKEN: Application unter https://boardgamegeek.com/applications
+#    registrieren und dort einen Token erzeugen)
 
 # Schnell ein lokales Postgres via Docker/Podman:
 docker run -d --name bgbuddy-pg \
@@ -71,43 +75,35 @@ Nach Deploy einmalig prüfen (mit Produktions-`DATABASE_URL`):
 npm run db:migrate
 ```
 
+## BGG-API-Token (Pflicht)
+
+Die BGG-XML-API verlangt einen registrierten App-Token:
+
+1. Application unter https://boardgamegeek.com/applications registrieren
+   (Freigabe kann etwas dauern).
+2. Auf der Application-Seite einen Token erzeugen.
+3. Als `BGG_TOKEN` in `.env` (lokal) bzw. in den Vercel Environment Variables setzen.
+
+Der Token identifiziert die **Anwendung**, nicht einzelne Nutzer — alle
+BGG-Anfragen laufen serverseitig über diesen einen Token und werden global
+gedrosselt (Mindestabstand zwischen Requests), damit parallele Nutzeraktionen
+das gemeinsame Rate-Limit nicht sprengen. Der Token darf nie im Client landen.
+
+Als öffentliche Anwendung zeigt BG Buddy das verpflichtende
+[„Powered by BGG"-Logo](https://boardgamegeek.com/wiki/page/Powered_by_BGG_Logos)
+im Footer (verlinkt auf BoardGameGeek).
+
 ## Daten befüllen
 
 1. Auf BGG unter **Profile → Collection → Export Collection** die CSV
    herunterladen (eine Beispieldatei liegt unter `sample-data/collection.csv`).
 2. In der App anmelden, **Import** öffnen, CSV hochladen — Pick/Duell/Ranking
    funktionieren sofort (Spieleranzahl, Rating, … kommen aus der CSV).
-
-### Anreicherung ohne API-Token (empfohlen)
-
-Cover, Beschreibung, Genre und Mechaniken einmalig im Browser holen — **kein
-`BGG_TOKEN` nötig**:
-
-1. Anleitung: [`docs/browser-prefetch-bgg.md`](docs/browser-prefetch-bgg.md) (Konsole auf boardgamegeek.com)
-   oder einmalig: `npm run prefetch-geekdo collection.csv`
-2. Ergebnis als `data/bgg-enrichment.json` ins Projekt legen (oder committen für Vercel).
-3. Deutsche Texte ergänzen (einmalig nach Prefetch):
+3. Cover, Beschreibung, Genre und Mechaniken laden: Button
+   **„Von BGG laden"** im Import, oder per CLI:
    ```bash
-   npm run translate-enrichment
+   npm run enrich   # schreibt direkt in DATABASE_URL
    ```
-   Nutzt `lib/bgg-taxonomy-de.ts` für Genre/Mechaniken und `data/bgg-descriptions-de.json` für Beschreibungen. Die App zeigt **Deutsch** (Englisch bleibt in der JSON).
-4. CSV erneut importieren **oder**:
-   ```bash
-   npm run apply-cache
-   ```
-
-### Optional: BGG-XML-API (wenn Application freigegeben)
-
-Die API verlangt seit 2025 einen Token (`401` ohne Token). Wenn du einen hast:
-
-1. `BGG_TOKEN` in `.env` (lokal) bzw. Vercel Environment Variables
-2. Cache-Datei füllen: `npm run prefetch-bgg collection.csv`
-3. Oder direkt in die DB: `npm run enrich`, oder Button „Live von BGG laden" im Import
-
-```bash
-npm run prefetch-bgg   # schreibt data/bgg-enrichment.json
-npm run enrich         # schreibt direkt in DATABASE_URL
-```
 
 ## Deployment (Vercel + Neon, kostenlos)
 
@@ -116,12 +112,12 @@ npm run enrich         # schreibt direkt in DATABASE_URL
 3. Environment-Variablen in Vercel setzen:
    - `DATABASE_URL` = Neon-Connection-String
    - `SESSION_SECRET` = zufälliger String (≥ 32 Zeichen)
-   - `BGG_TOKEN` = optional (nur für Live-API; nicht nötig mit `data/bgg-enrichment.json`)
+   - `BGG_TOKEN` = App-Token (siehe „BGG-API-Token" oben)
 4. Migration gegen Neon ausführen (lokal mit gesetzter `DATABASE_URL`):
    ```bash
    npx prisma migrate deploy
    ```
-5. Deployen. `data/bgg-enrichment.json` mit committen oder nach Deploy `npm run apply-cache` gegen Neon.
+5. Deployen.
 
 Der `build`-Schritt ruft automatisch `prisma generate` auf.
 
@@ -133,10 +129,8 @@ app/                 Routen (App Router) + Server Actions (actions.ts)
   games/             Sammlung + Detailseite
   meetups/           Treffen, Pick- und Duell-Modus
 components/          UI-Komponenten (Client & Server)
-lib/                 prisma, session, auth, bgg (CSV/XML), enrichment-cache, bgg-taxonomy-de
+lib/                 prisma, session, auth, bgg (CSV/XML-API, Drosselung), bgg-taxonomy-de
 prisma/schema.prisma Datenmodell
-data/                bgg-enrichment.json (zweisprachig), bgg-descriptions-de.json
-docs/                browser-prefetch-bgg.md (Konsole ohne Token)
-scripts/             apply-cache, prefetch-geekdo, translate-enrichment, enrich
+scripts/             enrich, Unit-Test-Skripte
 sample-data/         Beispiel-Collection-CSV
 ```

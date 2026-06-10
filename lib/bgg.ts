@@ -201,28 +201,83 @@ export class BggBlockedError extends Error {
   constructor(public status: number) {
     super(
       `BoardGameGeek hat die Anfrage abgelehnt (HTTP ${status}). ` +
-        "Die XML-API verlangt seit 2025 einen API-Token. " +
-        "Registriere eine Application unter https://boardgamegeek.com/applications, " +
-        "erzeuge einen Token und setze ihn als Umgebungsvariable BGG_TOKEN " +
-        "(lokal in .env, auf Vercel als Environment Variable).",
+        "Prüfe, ob der BGG_TOKEN gültig ist: Registriere eine Application unter " +
+        "https://boardgamegeek.com/applications, erzeuge einen Token und setze " +
+        "ihn als Umgebungsvariable BGG_TOKEN (lokal in .env, auf Vercel als " +
+        "Environment Variable).",
     );
     this.name = "BggBlockedError";
   }
 }
 
+export class BggTokenMissingError extends Error {
+  constructor() {
+    super(
+      "BGG_TOKEN ist nicht gesetzt. Die BGG-XML-API verlangt einen API-Token: " +
+        "Registriere eine Application unter https://boardgamegeek.com/applications, " +
+        "erzeuge einen Token und setze ihn als Umgebungsvariable BGG_TOKEN " +
+        "(lokal in .env, auf Vercel als Environment Variable).",
+    );
+    this.name = "BggTokenMissingError";
+  }
+}
+
+const BGG_USER_AGENT = "BG-Buddy/0.1 (registrierte BGG-Application)";
+
+if (process.env.NODE_ENV !== "production" && !process.env.BGG_TOKEN?.trim()) {
+  console.warn(
+    "[bgg] BGG_TOKEN ist nicht gesetzt – BGG-Anfragen (Suche, Enrichment, " +
+      "Import) werden fehlschlagen. Token unter " +
+      "https://boardgamegeek.com/applications erzeugen und in .env eintragen.",
+  );
+}
+
 function buildHeaders(): Record<string, string> {
-  const headers: Record<string, string> = {
-    "User-Agent":
-      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  const token = process.env.BGG_TOKEN?.trim();
+  if (!token) {
+    throw new BggTokenMissingError();
+  }
+  return {
+    "User-Agent": BGG_USER_AGENT,
     Accept: "application/xml,text/xml,*/*;q=0.9",
     "Accept-Language": "de,en;q=0.8",
-  };
-  const token = process.env.BGG_TOKEN?.trim();
-  if (token) {
     // BGG requires "Bearer <token>" (space, no colon) since 2025.
-    headers.Authorization = `Bearer ${token}`;
-  }
-  return headers;
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+/**
+ * Alle Nutzer teilen sich den App-Token und damit ein Rate-Limit.
+ * Deshalb laufen alle XML-Requests seriell mit Mindestabstand durch
+ * eine globale Queue (pro Server-Instanz).
+ */
+const MIN_REQUEST_INTERVAL_MS = 1500;
+let requestChain: Promise<unknown> = Promise.resolve();
+let lastRequestFinishedAt = 0;
+
+function enqueueBggRequest<T>(task: () => Promise<T>): Promise<T> {
+  const run = requestChain.then(async () => {
+    const wait = lastRequestFinishedAt + MIN_REQUEST_INTERVAL_MS - Date.now();
+    if (wait > 0) {
+      await new Promise((r) => setTimeout(r, wait));
+    }
+    try {
+      return await task();
+    } finally {
+      lastRequestFinishedAt = Date.now();
+    }
+  });
+  requestChain = run.catch(() => {});
+  return run;
+}
+
+function parseRetryAfterMs(header: string | null): number | null {
+  if (!header) return null;
+  const seconds = Number(header);
+  if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+  const date = Date.parse(header);
+  if (!Number.isNaN(date)) return Math.max(0, date - Date.now());
+  return null;
 }
 
 /**
@@ -269,22 +324,26 @@ export function parseSearchXml(xml: string): BggSearchItem[] {
 
 async function fetchBggXml(url: string): Promise<string> {
   const headers = buildHeaders();
-  let attempt = 0;
-  let xml = "";
-  while (attempt < 5) {
-    const res = await fetch(url, { headers, cache: "no-store" });
-    if (res.status === 200) {
-      xml = await res.text();
-      break;
+  return enqueueBggRequest(async () => {
+    let attempt = 0;
+    while (attempt < 5) {
+      const res = await fetch(url, { headers, cache: "no-store" });
+      if (res.status === 200) {
+        return res.text();
+      }
+      if (res.status === 401 || res.status === 403) {
+        throw new BggBlockedError(res.status);
+      }
+      attempt += 1;
+      const retryAfterMs =
+        res.status === 429
+          ? parseRetryAfterMs(res.headers.get("retry-after"))
+          : null;
+      const delay = retryAfterMs ?? 1500 * attempt;
+      await new Promise((r) => setTimeout(r, delay));
     }
-    if (res.status === 401 || res.status === 403) {
-      throw new BggBlockedError(res.status);
-    }
-    attempt += 1;
-    await new Promise((r) => setTimeout(r, 1500 * attempt));
-  }
-  if (!xml) throw new Error(`BGG XML API did not return data (${url})`);
-  return xml;
+    throw new Error(`BGG XML API did not return data (${url})`);
+  });
 }
 
 /**

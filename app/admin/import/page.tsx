@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { ImportClient } from "@/components/ImportClient";
 import { LoginForm } from "@/components/LoginForm";
-import { enrichmentCacheEntryCount } from "@/lib/enrichment-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -40,11 +39,7 @@ export default async function ImportPage() {
         </p>
       </div>
 
-      <ImportClient
-        total={total}
-        enriched={enriched}
-        cacheEntries={enrichmentCacheEntryCount()}
-      />
+      <ImportClient total={total} enriched={enriched} />
 
       {total > 0 && (
         <div className="flex flex-wrap gap-3">
