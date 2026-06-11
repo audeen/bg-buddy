@@ -12,7 +12,7 @@ import {
   type GameTag,
 } from "@/lib/game-tags";
 
-function GotdChipMarquee({ meta }: { meta: GameTag[] }) {
+function GotdChipMarquee({ label, meta }: { label: string; meta: GameTag[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [marquee, setMarquee] = useState(false);
@@ -58,7 +58,7 @@ function GotdChipMarquee({ meta }: { meta: GameTag[] }) {
 
   return (
     <div className="gotd-chip-header">
-      <span className="chip chip-accent shrink-0">Spiel des Tages</span>
+      <span className="chip chip-accent shrink-0">{label}</span>
       {meta.length > 0 && (
         <div ref={containerRef} className="gotd-chip-marquee min-w-0 flex-1">
           <div
@@ -80,10 +80,12 @@ export function GameOfTheDayCard({
   game,
   playerCount,
   ownedExpansions = [],
+  label = "Spiel des Tages",
 }: {
   game: GameDetailData;
   playerCount?: number;
   ownedExpansions?: GameCardGame[];
+  label?: string;
 }) {
   const [open, setOpen] = useState(false);
   const closeDetail = useCallback(() => setOpen(false), []);
@@ -99,7 +101,7 @@ export function GameOfTheDayCard({
         className="card flex flex-col gap-3 hover:opacity-90 transition-opacity text-left w-full"
         style={{ padding: "var(--space-card)" }}
       >
-        <GotdChipMarquee meta={meta} />
+        <GotdChipMarquee label={label} meta={meta} />
 
         <div className="flex gap-4 items-center">
           <GameCover

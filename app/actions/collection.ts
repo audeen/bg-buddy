@@ -388,6 +388,7 @@ export async function addGameByBggIdAction(
       where: { id: bggId },
       data: {
         listedInCollection: true,
+        addedToCollectionAt: new Date(),
         ...(normalizedBarcode ? { barcode: normalizedBarcode } : {}),
       },
     });

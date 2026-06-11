@@ -23,6 +23,8 @@ const UNIT_TESTS = [
   "test-pick-points",
   "test-game-filters",
   "test-game-tags",
+  "test-latest-game",
+  "test-spotlight-pick",
   "test-effective-player-count",
   "test-barcode-lookup",
   "test-bgg-search",

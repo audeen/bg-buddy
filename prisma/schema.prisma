@@ -48,6 +48,9 @@ model Game {
   manuallyEditedFields    String[] @default([])
   /// Manuelles Cover-Override (externe URL, Geekdo-URL oder interner Upload-Pfad).
   coverUrl                String?
+  /// Zeitpunkt der Aufnahme in die Sammlung (nur bei manuellem Hinzufügen
+  /// gesetzt, nicht beim CSV-Bulk-Import). Quelle für die "Neu"-Karte.
+  addedToCollectionAt     DateTime?
   updatedAt               DateTime @updatedAt
 
   votesAsWinner    Vote[]             @relation("VoteWinner")
@@ -56,6 +59,8 @@ model Game {
   meetupHostChoiceGames MeetupHostChoiceGame[]
   meetupsForcedAsGame Meetup[] @relation("MeetupForcedGame")
   coverImage          GameCoverImage?
+
+  @@index([addedToCollectionAt])
 }
 
 /// Eigenes hochgeladenes Cover-Bild (clientseitig verkleinert, daher klein).

@@ -3,20 +3,19 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { LoginForm } from "@/components/LoginForm";
 import { MeetupOverviewCard } from "@/components/MeetupOverviewCard";
-import {
-  GameOfTheDayCard,
-  GameOfTheDayEmpty,
-} from "@/components/GameOfTheDayCard";
-import type { GameCardGame } from "@/lib/types/game";
+import { HomeSpotlightCard } from "@/components/HomeSpotlightCard";
+import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import {
   berlinDateKey,
   findUpcomingMeetup,
   resolveGameOfTheDay,
   type GameOfTheDayCandidate,
 } from "@/lib/game-of-the-day";
+import { buildRecentGamesPool } from "@/lib/latest-game";
 import {
   gameCardSelect,
   loadOwnedExpansionsByBaseGame,
+  serializeExpansionsByBaseId,
 } from "@/lib/owned-expansions";
 import {
   buildRegisteredPlayers,
@@ -121,13 +120,14 @@ export default async function Home() {
 
   let gotdGame: GameOfTheDayCandidate | null = null;
   let gotdPlayerCount: number | null = null;
-  let gotdExpansions: GameCardGame[] = [];
+  let latestPool: GameDetailData[] = [];
+  let spotlightExpansions: Record<string, GameCardGame[]> = {};
 
   if (gameCount > 0) {
     const [games, expansionsByBase] = await Promise.all([
       prisma.game.findMany({
         where: { isExpansion: false, listedInCollection: true },
-        select: { ...gameCardSelect, lentOut: true },
+        select: { ...gameCardSelect, lentOut: true, addedToCollectionAt: true },
       }),
       loadOwnedExpansionsByBaseGame(),
     ]);
@@ -139,8 +139,8 @@ export default async function Home() {
     );
     gotdGame = gotd.game;
     gotdPlayerCount = gotd.playerCount;
-    gotdExpansions =
-      gotdGame != null ? (expansionsByBase.get(gotdGame.id) ?? []) : [];
+    latestPool = buildRecentGamesPool(games);
+    spotlightExpansions = serializeExpansionsByBaseId(expansionsByBase);
   }
 
   function renderMeetupCard(m: HomeMeetup) {
@@ -175,15 +175,12 @@ export default async function Home() {
   const gotdSection =
     gameCount > 0 ? (
       <section className="sm:max-w-[calc(50%-0.375rem)]">
-        {gotdGame ? (
-          <GameOfTheDayCard
-            game={gotdGame}
-            playerCount={gotdPlayerCount ?? undefined}
-            ownedExpansions={gotdExpansions}
-          />
-        ) : (
-          <GameOfTheDayEmpty />
-        )}
+        <HomeSpotlightCard
+          gotdGame={gotdGame}
+          gotdPlayerCount={gotdPlayerCount ?? undefined}
+          expansionsByBaseId={spotlightExpansions}
+          latestPool={latestPool}
+        />
       </section>
     ) : null;
 

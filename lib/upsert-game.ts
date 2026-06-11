@@ -92,12 +92,16 @@ export async function upsertGameRecord(
     ...(enrichment ?? {}),
   };
 
+  const listedInCollection = rest.listedInCollection ?? true;
+
   if (created) {
     await prisma.game.create({
       data: {
         id: bggId,
         enriched: enrichment?.enriched ?? false,
-        listedInCollection: rest.listedInCollection ?? true,
+        listedInCollection,
+        // Gast-Spiele (listedInCollection: false) zählen nicht als Neuzugang.
+        addedToCollectionAt: listedInCollection ? new Date() : null,
         bestPlayerCounts: [],
         recommendedPlayerCounts: [],
         categories: enrichment?.categories ?? [],
