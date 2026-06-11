@@ -8,7 +8,7 @@ import {
   removeGameFromCollectionAction,
   setGameLentOutAction,
 } from "@/app/actions";
-import { CameraIcon } from "@/components/icons";
+import { PlusIcon } from "@/components/icons";
 
 export type CollectionGameRow = {
   id: number;
@@ -144,7 +144,7 @@ export function CollectionManagerClient({
             title="Spiel hinzufügen"
             onClick={onAddGame}
           >
-            <CameraIcon />
+            <PlusIcon />
           </button>
         )}
         <div className="flex-1 min-w-[10rem]">
