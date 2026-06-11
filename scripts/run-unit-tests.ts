@@ -28,6 +28,7 @@ const UNIT_TESTS = [
   "test-effective-player-count",
   "test-barcode-lookup",
   "test-bgg-search",
+  "test-bgg-thing-polls",
   "test-cover-image",
   "test-bgg-gallery",
   "test-swipe-back",

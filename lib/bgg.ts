@@ -118,6 +118,12 @@ export interface ThingDetails {
   bggRating?: number | null;
   rank?: number | null;
   isExpansion?: boolean;
+  /** Community age recommendation, e.g. "10+" (suggested_playerage poll). */
+  ageRange?: string | null;
+  /** Winning option of the language_dependence poll, e.g. "No necessary in-game text". */
+  languageDependence?: string | null;
+  bestPlayerCounts?: number[];
+  recommendedPlayerCounts?: number[];
 }
 
 const xmlParser = new XMLParser({
@@ -147,6 +153,111 @@ function primaryName(item: Record<string, unknown>): string | null {
   return primary?.value?.trim() || null;
 }
 
+type BggPollResult = { value?: string; numvotes?: string; level?: string };
+type BggPollResults = {
+  numplayers?: string;
+  result?: BggPollResult | BggPollResult[];
+};
+type BggPoll = { name?: string; results?: BggPollResults | BggPollResults[] };
+
+function findPoll(
+  item: Record<string, unknown>,
+  name: string,
+): BggPoll | undefined {
+  return asArray(item.poll as BggPoll[] | undefined).find(
+    (p) => p.name === name,
+  );
+}
+
+/** Flat result list of a poll without per-player-count grouping. */
+function flatPollResults(poll: BggPoll | undefined): BggPollResult[] {
+  return asArray(poll?.results).flatMap((r) => asArray(r.result));
+}
+
+function pollWinner(results: BggPollResult[]): BggPollResult | null {
+  let winner: BggPollResult | null = null;
+  let winnerVotes = 0;
+  for (const r of results) {
+    const votes = toInt(r.numvotes) ?? 0;
+    if (votes > winnerVotes) {
+      winnerVotes = votes;
+      winner = r;
+    }
+  }
+  return winner;
+}
+
+/**
+ * Derives best/recommended player counts from the suggested_numplayers poll,
+ * mirroring the BGG collection CSV columns (best counts are part of
+ * recommended, "Not Recommended" winners are excluded).
+ */
+export function parseSuggestedPlayerCounts(item: Record<string, unknown>): {
+  bestPlayerCounts: number[];
+  recommendedPlayerCounts: number[];
+} {
+  const poll = findPoll(item, "suggested_numplayers");
+  const best: number[] = [];
+  const recommended: number[] = [];
+
+  for (const entry of asArray(poll?.results)) {
+    const raw = String(entry.numplayers ?? "");
+    // Skip open-ended entries like "4+" (no concrete player count).
+    if (!/^\d+$/.test(raw.trim())) continue;
+    const count = toInt(raw);
+    if (count == null || count <= 0) continue;
+
+    let bestVotes = 0;
+    let recVotes = 0;
+    let notVotes = 0;
+    for (const r of asArray(entry.result)) {
+      const votes = toInt(r.numvotes) ?? 0;
+      const value = (r.value ?? "").toLowerCase();
+      if (value === "best") bestVotes = votes;
+      else if (value === "recommended") recVotes = votes;
+      else if (value === "not recommended") notVotes = votes;
+    }
+
+    if (bestVotes + recVotes + notVotes === 0) continue;
+    if (notVotes > bestVotes && notVotes > recVotes) continue;
+
+    recommended.push(count);
+    if (bestVotes >= recVotes && bestVotes >= notVotes) {
+      best.push(count);
+    }
+  }
+
+  return {
+    bestPlayerCounts: best.sort((a, b) => a - b),
+    recommendedPlayerCounts: recommended.sort((a, b) => a - b),
+  };
+}
+
+/**
+ * Community age recommendation as "10+" (suggested_playerage poll winner),
+ * falling back to the publisher minage. Matches the CSV bggrecagerange format.
+ */
+export function parseAgeRange(item: Record<string, unknown>): string | null {
+  const winner = pollWinner(
+    flatPollResults(findPoll(item, "suggested_playerage")),
+  );
+  const winnerAge = winner?.value?.match(/\d+/)?.[0];
+  if (winnerAge) return `${winnerAge}+`;
+
+  const minAge = toInt(attrValue(item.minage));
+  return minAge != null && minAge > 0 ? `${minAge}+` : null;
+}
+
+/** Winning option text of the language_dependence poll (CSV format). */
+export function parseLanguageDependence(
+  item: Record<string, unknown>,
+): string | null {
+  const winner = pollWinner(
+    flatPollResults(findPoll(item, "language_dependence")),
+  );
+  return winner?.value?.trim() || null;
+}
+
 /** Parses the XML returned by the BGG "thing" endpoint into ThingDetails. */
 export function parseThingXml(xml: string): ThingDetails[] {
   const parsed = xmlParser.parse(xml);
@@ -168,11 +279,16 @@ export function parseThingXml(xml: string): ThingDetails[] {
 
     const ratings = (item.statistics as Record<string, unknown> | undefined)
       ?.ratings as Record<string, unknown> | undefined;
+    // Ranks live under statistics > ratings > ranks > rank in the BGG XML.
+    const ranks = ratings?.ranks as Record<string, unknown> | undefined;
     const rankEntries = asArray(
-      ratings?.rank as Record<string, string>[] | undefined,
+      ranks?.rank as Record<string, string>[] | undefined,
     );
     const boardgameRank =
       rankEntries.find((r) => r.name === "boardgame") ?? rankEntries[0];
+
+    const { bestPlayerCounts, recommendedPlayerCounts } =
+      parseSuggestedPlayerCounts(item);
 
     return {
       id: toInt(item.id as string) ?? 0,
@@ -186,6 +302,10 @@ export function parseThingXml(xml: string): ThingDetails[] {
       weight: toFloat(attrValue(ratings?.averageweight)),
       bggRating: toFloat(attrValue(ratings?.average)),
       rank: toInt(boardgameRank?.value),
+      ageRange: parseAgeRange(item),
+      languageDependence: parseLanguageDependence(item),
+      bestPlayerCounts,
+      recommendedPlayerCounts,
       isExpansion: itemType.includes("expansion"),
       description: stripBggHtml(item.description),
       image: (item.image as string) ?? null,

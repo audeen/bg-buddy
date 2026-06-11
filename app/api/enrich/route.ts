@@ -60,6 +60,18 @@ export async function POST() {
             thumbnail: d.thumbnail ?? null,
             categories: d.categories,
             mechanics: d.mechanics,
+            // Stammdaten aus den BGG-Polls nur setzen, wenn vorhanden.
+            ...(d.rank != null ? { rank: d.rank } : {}),
+            ...(d.ageRange ? { ageRange: d.ageRange } : {}),
+            ...(d.languageDependence
+              ? { languageDependence: d.languageDependence }
+              : {}),
+            ...(d.bestPlayerCounts?.length
+              ? { bestPlayerCounts: d.bestPlayerCounts }
+              : {}),
+            ...(d.recommendedPlayerCounts?.length
+              ? { recommendedPlayerCounts: d.recommendedPlayerCounts }
+              : {}),
             enriched: true,
           }
         : { enriched: true },

@@ -15,6 +15,10 @@ export type SingleGameInput = {
   weight?: number | null;
   bggRating?: number | null;
   rank?: number | null;
+  ageRange?: string | null;
+  languageDependence?: string | null;
+  bestPlayerCounts?: number[];
+  recommendedPlayerCounts?: number[];
   isExpansion?: boolean;
   barcode?: string | null;
   listedInCollection?: boolean;
@@ -32,6 +36,10 @@ function thingToPartialFields(d: ThingDetails): Omit<SingleGameInput, "bggId"> {
     weight: d.weight ?? null,
     bggRating: d.bggRating ?? null,
     rank: d.rank ?? null,
+    ageRange: d.ageRange ?? null,
+    languageDependence: d.languageDependence ?? null,
+    bestPlayerCounts: d.bestPlayerCounts ?? [],
+    recommendedPlayerCounts: d.recommendedPlayerCounts ?? [],
     isExpansion: d.isExpansion ?? false,
   };
 }
@@ -87,6 +95,16 @@ export async function upsertGameRecord(
     weight: rest.weight ?? existing?.weight ?? null,
     bggRating: rest.bggRating ?? existing?.bggRating ?? null,
     rank: rest.rank ?? existing?.rank ?? null,
+    ageRange: rest.ageRange ?? existing?.ageRange ?? null,
+    languageDependence:
+      rest.languageDependence ?? existing?.languageDependence ?? null,
+    // Leere Poll-Ergebnisse überschreiben vorhandene Werte nicht.
+    bestPlayerCounts: rest.bestPlayerCounts?.length
+      ? rest.bestPlayerCounts
+      : (existing?.bestPlayerCounts ?? []),
+    recommendedPlayerCounts: rest.recommendedPlayerCounts?.length
+      ? rest.recommendedPlayerCounts
+      : (existing?.recommendedPlayerCounts ?? []),
     isExpansion: rest.isExpansion ?? existing?.isExpansion ?? false,
     ...(barcode ? { barcode } : {}),
     ...(enrichment ?? {}),
@@ -102,8 +120,6 @@ export async function upsertGameRecord(
         listedInCollection,
         // Gast-Spiele (listedInCollection: false) zählen nicht als Neuzugang.
         addedToCollectionAt: listedInCollection ? new Date() : null,
-        bestPlayerCounts: [],
-        recommendedPlayerCounts: [],
         categories: enrichment?.categories ?? [],
         mechanics: enrichment?.mechanics ?? [],
         expandsGameIds:
