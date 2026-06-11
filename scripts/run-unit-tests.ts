@@ -29,6 +29,7 @@ const UNIT_TESTS = [
   "test-barcode-lookup",
   "test-bgg-search",
   "test-bgg-thing-polls",
+  "test-bgg-hotness",
   "test-cover-image",
   "test-bgg-gallery",
   "test-swipe-back",

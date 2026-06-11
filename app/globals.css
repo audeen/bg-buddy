@@ -538,6 +538,27 @@ body {
     }
   }
 
+  .spotlight-slide-enter {
+    animation: spotlight-slide-enter 0.3s ease-out both;
+  }
+
+  @keyframes spotlight-slide-enter {
+    from {
+      opacity: 0;
+      transform: translateX(0.75rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spotlight-slide-enter {
+      animation: none;
+    }
+  }
+
   .chip-interactive {
     cursor: pointer;
     transition:

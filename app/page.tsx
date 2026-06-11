@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { LoginForm } from "@/components/LoginForm";
 import { MeetupOverviewCard } from "@/components/MeetupOverviewCard";
-import { HomeSpotlightCard } from "@/components/HomeSpotlightCard";
+import { HomeSpotlightCarousel } from "@/components/HomeSpotlightCarousel";
 import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import {
   berlinDateKey,
@@ -12,6 +12,10 @@ import {
   type GameOfTheDayCandidate,
 } from "@/lib/game-of-the-day";
 import { buildRecentGamesPool } from "@/lib/latest-game";
+import {
+  getHotnessSpotlight,
+  type HotnessSpotlight,
+} from "@/lib/bgg/hotness";
 import {
   gameCardSelect,
   loadOwnedExpansionsByBaseGame,
@@ -122,15 +126,18 @@ export default async function Home() {
   let gotdPlayerCount: number | null = null;
   let latestPool: GameDetailData[] = [];
   let spotlightExpansions: Record<string, GameCardGame[]> = {};
+  let hotness: HotnessSpotlight | null = null;
 
   if (gameCount > 0) {
-    const [games, expansionsByBase] = await Promise.all([
+    const [games, expansionsByBase, hotnessResult] = await Promise.all([
       prisma.game.findMany({
         where: { isExpansion: false, listedInCollection: true },
         select: { ...gameCardSelect, lentOut: true, addedToCollectionAt: true },
       }),
       loadOwnedExpansionsByBaseGame(),
+      getHotnessSpotlight(berlinDateKey(new Date())).catch(() => null),
     ]);
+    hotness = hotnessResult;
     const gotd = resolveGameOfTheDay(
       games,
       expansionsByBase,
@@ -175,11 +182,13 @@ export default async function Home() {
   const gotdSection =
     gameCount > 0 ? (
       <section className="sm:max-w-[calc(50%-0.375rem)]">
-        <HomeSpotlightCard
+        <HomeSpotlightCarousel
           gotdGame={gotdGame}
           gotdPlayerCount={gotdPlayerCount ?? undefined}
           expansionsByBaseId={spotlightExpansions}
           latestPool={latestPool}
+          hotnessGame={hotness?.game ?? null}
+          hotnessRank={hotness?.rank}
         />
       </section>
     ) : null;

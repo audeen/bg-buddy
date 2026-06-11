@@ -489,6 +489,48 @@ export async function searchBggGames(
   return items.slice(0, limit);
 }
 
+export type BggHotItem = {
+  bggId: number;
+  rank: number;
+  name: string;
+  year: number | null;
+  thumbnail: string | null;
+};
+
+/** Parses the XML returned by the BGG "hot" endpoint (Hotness list). */
+export function parseHotXml(xml: string): BggHotItem[] {
+  const parsed = xmlParser.parse(xml);
+  const items = asArray(parsed?.items?.item);
+
+  return items
+    .map((item: Record<string, unknown>): BggHotItem | null => {
+      const bggId = toInt(item.id as string);
+      const rank = toInt(item.rank as string);
+      const name = attrValue(item.name);
+      if (bggId == null || rank == null || !name) return null;
+
+      return {
+        bggId,
+        rank,
+        name,
+        year: toInt(attrValue(item.yearpublished)),
+        thumbnail: attrValue(item.thumbnail),
+      };
+    })
+    .filter((item): item is BggHotItem => item != null)
+    .sort((a, b) => a.rank - b.rank);
+}
+
+/**
+ * Fetches the current BGG Hotness list (top 50 board games).
+ * Requires BGG_TOKEN (see https://boardgamegeek.com/applications).
+ */
+export async function fetchHotGames(): Promise<BggHotItem[]> {
+  const url = "https://boardgamegeek.com/xmlapi2/hot?type=boardgame";
+  const xml = await fetchBggXml(url);
+  return parseHotXml(xml);
+}
+
 /** Splits an array into chunks of the given size. */
 export function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];

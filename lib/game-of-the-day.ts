@@ -114,7 +114,7 @@ export function filterPlayableGames(
   });
 }
 
-function deterministicIndex(seed: string, length: number): number {
+export function deterministicIndex(seed: string, length: number): number {
   let h = 0;
   for (let i = 0; i < seed.length; i++) {
     h = (h * 31 + seed.charCodeAt(i)) >>> 0;

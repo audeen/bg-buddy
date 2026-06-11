@@ -1,34 +1,9 @@
 /**
- * Tests für die Spotlight-Auswahl (GOTD vs. Latest, Pool-Rotation).
+ * Tests für die Spotlight-Auswahl (Neuzugangs-Pool-Rotation).
  * Nutzung: npm run test:spotlight-pick
  */
 import assert from "node:assert/strict";
-import {
-  LATEST_VARIANT_PROBABILITY,
-  pickLatestGameFromPool,
-  pickSpotlightVariant,
-} from "../lib/spotlight-pick";
-
-function testVariantWithoutPool() {
-  assert.equal(pickSpotlightVariant(false, true), "gotd");
-  assert.equal(pickSpotlightVariant(false, false), "gotd");
-}
-
-function testVariantFirstVisit() {
-  assert.equal(pickSpotlightVariant(true, true, () => 0.99), "latest");
-}
-
-function testVariantWeighting() {
-  assert.equal(
-    pickSpotlightVariant(true, false, () => LATEST_VARIANT_PROBABILITY - 0.01),
-    "latest",
-  );
-  assert.equal(
-    pickSpotlightVariant(true, false, () => LATEST_VARIANT_PROBABILITY),
-    "gotd",
-  );
-  assert.equal(pickSpotlightVariant(true, false, () => 0.9), "gotd");
-}
+import { pickLatestGameFromPool } from "../lib/spotlight-pick";
 
 const pool = [{ id: 1 }, { id: 2 }, { id: 3 }];
 
@@ -64,9 +39,6 @@ function testRandomCoversPool() {
   assert.deepEqual([...seen].sort(), [2, 3], "rotiert über Pool ohne lastShownId");
 }
 
-testVariantWithoutPool();
-testVariantFirstVisit();
-testVariantWeighting();
 testEmptyAndSingle();
 testFirstLatestPicksNewest();
 testNoImmediateRepeat();

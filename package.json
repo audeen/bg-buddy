@@ -26,6 +26,7 @@
     "test:expansion-ranking": "tsx scripts/test-expansion-ranking.ts",
     "test:winner-expansion-family": "tsx scripts/test-winner-expansion-family.ts",
     "test:bgg-search": "tsx scripts/test-bgg-search.ts",
+    "test:bgg-hotness": "tsx scripts/test-bgg-hotness.ts",
     "test:bgg-thing-polls": "tsx scripts/test-bgg-thing-polls.ts",
     "test:swipe-back": "tsx scripts/test-swipe-back.ts",
     "test:pick-phase": "tsx scripts/test-pick-phase.ts",

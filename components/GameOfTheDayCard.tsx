@@ -81,14 +81,21 @@ export function GameOfTheDayCard({
   playerCount,
   ownedExpansions = [],
   label = "Spiel des Tages",
+  onOpenChange,
 }: {
   game: GameDetailData;
   playerCount?: number;
   ownedExpansions?: GameCardGame[];
   label?: string;
+  /** Meldet das Öffnen/Schließen des Detail-Modals (z.B. zum Pausieren des Carousels). */
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
   const closeDetail = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
   const tags = buildGameTags(game, { playerCount, ownedExpansions });
   const { meta, content } = groupGameTags(tags);
   const coverSrc = resolveCoverSrc(game);
