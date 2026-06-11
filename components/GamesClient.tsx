@@ -28,16 +28,18 @@ export function GamesClient({
 
   if (games.length === 0) {
     return (
-      <p className="text-[var(--muted)]">
-        Keine Spiele gefunden. Passe die Filter an oder importiere zuerst deine
-        Sammlung.
-      </p>
+      <div className="card card-pad flex flex-col items-start gap-2">
+        <h2 className="section-title">Keine Spiele gefunden</h2>
+        <p className="text-sm text-[var(--muted)]">
+          Passe die Filter an oder importiere zuerst deine Sammlung.
+        </p>
+      </div>
     );
   }
 
   return (
     <>
-      <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {games.map((g) => (
           <li key={g.id}>
             <GameCard

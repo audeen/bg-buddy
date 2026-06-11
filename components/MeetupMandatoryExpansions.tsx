@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toggleMandatoryExpansionAction } from "@/app/actions";
 import type { MandatoryExpansionFamily } from "@/lib/types/meetup";
 
@@ -14,16 +14,21 @@ export function MeetupMandatoryExpansions({
   mandatoryKeys: string[];
 }) {
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const mandatorySet = new Set(mandatoryKeys);
 
   function toggle(baseGameId: number, expansionGameId: number, checked: boolean) {
+    setError(null);
     startTransition(async () => {
-      await toggleMandatoryExpansionAction(
+      const res = await toggleMandatoryExpansionAction(
         meetupId,
         baseGameId,
         expansionGameId,
         checked,
       );
+      if (res && "error" in res && res.error) {
+        setError(res.error);
+      }
     });
   }
 
@@ -53,14 +58,17 @@ export function MeetupMandatoryExpansions({
                   className="rounded border-[var(--border)]"
                 />
                 <span>{exp.name}</span>
-                {checked && (
-                  <span className="chip text-[10px] py-0">Pflicht</span>
-                )}
+                {checked && <span className="chip chip-meta">Pflicht</span>}
               </label>
             </li>
           );
         })}
       </ul>
+      {error && (
+        <p className="text-xs text-[var(--danger)]" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

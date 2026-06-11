@@ -150,13 +150,13 @@ export function GameDetailView({
             <p className="text-sm text-[var(--accent)]">
               {game.bestPlayerCounts.includes(playerCount!) ? (
                 <>
-                  <span className="font-semibold">Best · {playerCount}P</span> — beste
-                  Spieleranzahl laut BGG-Community
+                  <span className="font-semibold">Beste Spieleranzahl: {playerCount}</span>{" "}
+                  — laut BGG-Community
                 </>
               ) : (
                 <>
-                  <span className="font-semibold">Empf. · {playerCount}P</span> —
-                  empfohlene Spieleranzahl laut BGG-Community
+                  <span className="font-semibold">Empfohlen für {playerCount} Spieler</span>{" "}
+                  — laut BGG-Community
                 </>
               )}
             </p>
@@ -207,11 +207,11 @@ export function GameDetailView({
       </div>
 
       {game.description ? (
-        <section
-          className="card whitespace-pre-line leading-relaxed"
-          style={{ padding: "var(--space-card)" }}
-        >
-          {game.description}
+        <section className="flex flex-col gap-2">
+          <h2 className="section-title">Beschreibung</h2>
+          <div className="card card-pad whitespace-pre-line leading-relaxed">
+            {game.description}
+          </div>
         </section>
       ) : (
         <p className="text-[var(--muted)] text-sm">

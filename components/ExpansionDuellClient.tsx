@@ -5,12 +5,14 @@ import Link from "next/link";
 import {
   DuelArena,
   DuelChoiceCard,
-  DuelProgressBar,
+  DuelFinishedCard,
+  DuelStickyBar,
+  DuelStickyFooter,
+  DuelVoteError,
 } from "@/components/DuelArena";
 import { expansionDuelVoteAction } from "@/app/actions";
 import { pairKey, type DuelPair } from "@/lib/duel-pairs";
 import { useDuelVoting } from "@/lib/use-duel-voting";
-import { markScrollToErgebnisse } from "@/lib/scroll-ergebnisse";
 import { resolveCoverSrc } from "@/lib/cover-image";
 
 export type ExpansionDuellChoice = {
@@ -58,24 +60,17 @@ export function ExpansionDuellClient({
 
   if (finished) {
     return (
-      <div
-        className="card flex flex-col items-center gap-3 text-center"
-        style={{ padding: "1.5rem" }}
-      >
-        <p className="text-lg font-bold">Erweiterungs-Duelle erledigt!</p>
-        <p className="text-sm text-[var(--muted)]">
-          {winnerName} · {expected} Spieler ★
-        </p>
-        <DuelProgressBar done={myDone} total={myPairs.length} complete />
-        <Link
-          href={`/meetups/${meetupId}`}
-          scroll={false}
-          onClick={() => markScrollToErgebnisse()}
-          className="btn btn-primary btn-lg w-full max-w-sm"
-        >
-          Zum Ergebnis
-        </Link>
-      </div>
+      <DuelFinishedCard
+        meetupId={meetupId}
+        title="Erweiterungs-Duelle erledigt!"
+        meta={
+          <>
+            {winnerName} · {expected} Spieler ★
+          </>
+        }
+        done={myDone}
+        total={myPairs.length}
+      />
     );
   }
 
@@ -83,24 +78,18 @@ export function ExpansionDuellClient({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="sticky-below-header -mx-1 filter-bar flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-3">
-          <span className="chip chip-accent">Erweiterung · {expected} ★</span>
-          <span className="text-sm font-semibold tabular-nums">
-            {myDone + 1} / {myPairs.length}
-          </span>
-        </div>
-        <DuelProgressBar done={myDone} total={myPairs.length} />
-        <p className="text-xs text-[var(--muted)] tabular-nums">
-          Gruppe: {decidedPairs}/{totalPairs} Vergleiche
-        </p>
-      </div>
+      <DuelStickyBar
+        chipLabel={`Erweiterung · ${expected} ★`}
+        done={myDone}
+        total={myPairs.length}
+        meta={
+          <p className="text-xs text-[var(--muted)] tabular-nums">
+            Gruppe: {decidedPairs}/{totalPairs} Vergleiche
+          </p>
+        }
+      />
 
-      {voteError && (
-        <p className="text-sm text-center text-[var(--accent)]" role="alert">
-          {voteError}
-        </p>
-      )}
+      <DuelVoteError error={voteError} />
 
       <p className="text-center text-sm text-[var(--muted)]">
         Welche Variante von {winnerName} soll es bei {expected} Spielern sein?
@@ -139,14 +128,14 @@ export function ExpansionDuellClient({
         </p>
       )}
 
-      <div className="sticky-above-nav -mx-4 px-4 py-3 mt-2 bg-[var(--background)] border-t border-[var(--border)] flex justify-center sm:static sm:border-0 sm:mx-0 sm:px-0 sm:mt-0">
+      <DuelStickyFooter>
         <Link
           href={`/meetups/${meetupId}`}
           className="btn btn-ghost w-full sm:w-auto text-center"
         >
           Zurück zum Treffen
         </Link>
-      </div>
+      </DuelStickyFooter>
     </div>
   );
 }

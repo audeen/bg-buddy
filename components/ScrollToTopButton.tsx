@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { scrollBehavior } from "@/lib/scroll";
 
 type ScrollToTopButtonProps = {
   scrollTargetId: string;
@@ -35,7 +36,7 @@ export function ScrollToTopButton({
       onClick={() =>
         document
           .getElementById(scrollTargetId)
-          ?.scrollIntoView({ behavior: "smooth", block: "start" })
+          ?.scrollIntoView({ behavior: scrollBehavior(), block: "start" })
       }
       className={`scroll-to-top btn btn-ghost ${className}`}
       aria-label="Nach oben"

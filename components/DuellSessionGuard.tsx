@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { markDuellResetNotice } from "@/components/DuellResetNotice";
 
 const POLL_MS = 5000;
 
@@ -30,6 +31,7 @@ export function DuellSessionGuard({
         const data = (await res.json()) as { duelVoteCount?: number };
         if (data.duelVoteCount === 0) {
           redirected.current = true;
+          markDuellResetNotice();
           router.replace(`/meetups/${meetupId}`);
         }
       } catch {

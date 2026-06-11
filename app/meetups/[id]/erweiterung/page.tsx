@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { ExpansionDuellClient } from "@/components/ExpansionDuellClient";
+import { DuellGateCard } from "@/components/DuellGateCard";
 import { PageHeader } from "@/components/PageHeader";
 import {
   buildExpansionDuelPairs,
@@ -103,18 +103,11 @@ export default async function ErweiterungPage({
     return (
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Erweiterungs-Duell" />
-        <div
-          className="card flex flex-col items-center gap-3 text-center"
-          style={{ padding: "var(--space-card)" }}
-        >
-          <p className="text-lg font-bold">Erst Stimmen vergeben</p>
+        <DuellGateCard title="Erst Stimmen vergeben" ctaHref={`/meetups/${id}/pick`}>
           <p className="text-[var(--muted)] text-sm">
             Du brauchst {MAX_PICK_POINTS}/{MAX_PICK_POINTS} Stimmen bei ★.
           </p>
-          <Link href={`/meetups/${id}/pick`} className="btn btn-primary btn-lg">
-            Stimmen setzen
-          </Link>
-        </div>
+        </DuellGateCard>
       </div>
     );
   }

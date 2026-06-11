@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { setGameCoverAction } from "@/app/actions";
 import type { BggGalleryImage, BggGalleryPage } from "@/lib/bgg/gallery";
 
@@ -107,12 +108,19 @@ function GalleryTab({
     [gameId],
   );
 
-  useEffect(() => {
+  // Filterwechsel lädt direkt aus dem Event-Handler; der Effect deckt nur
+  // den initialen Fetch ab (boxFrontOnly startet mit true).
+  function changeBoxFrontOnly(checked: boolean) {
+    setBoxFrontOnly(checked);
     setImages([]);
     onSelect(null);
-    void loadPage(1, true, boxFrontOnly);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boxFrontOnly, loadPage]);
+    void loadPage(1, true, checked);
+  }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initialer Galerie-Fetch; das synchrone setLoading(true) ist beabsichtigtes Lade-Feedback
+    void loadPage(1, true, true);
+  }, [loadPage]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -120,7 +128,7 @@ function GalleryTab({
         <input
           type="checkbox"
           checked={boxFrontOnly}
-          onChange={(e) => setBoxFrontOnly(e.target.checked)}
+          onChange={(e) => changeBoxFrontOnly(e.target.checked)}
         />
         Nur Box-Cover anzeigen
       </label>
@@ -217,7 +225,7 @@ export function CoverPickerDialog({
   const [linkUrl, setLinkUrl] = useState("");
   const [linkPreviewOk, setLinkPreviewOk] = useState<boolean | null>(null);
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
-  const uploadBlobRef = useRef<Blob | null>(null);
+  const [uploadBlob, setUploadBlob] = useState<Blob | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -246,11 +254,11 @@ export function CoverPickerDialog({
     !pending &&
     ((tab === "gallery" && gallerySelection != null) ||
       (tab === "url" && linkValid) ||
-      (tab === "upload" && uploadBlobRef.current != null));
+      (tab === "upload" && uploadBlob != null));
 
   async function handleFileChange(file: File | null) {
     setError(null);
-    uploadBlobRef.current = null;
+    setUploadBlob(null);
     setUploadPreview(null);
     if (!file) return;
     if (!file.type.startsWith("image/")) {
@@ -259,7 +267,7 @@ export function CoverPickerDialog({
     }
     try {
       const blob = await resizeImageFile(file);
-      uploadBlobRef.current = blob;
+      setUploadBlob(blob);
       setUploadPreview(URL.createObjectURL(blob));
     } catch {
       setError("Bild konnte nicht verarbeitet werden.");
@@ -278,7 +286,7 @@ export function CoverPickerDialog({
       formData.set("type", "url");
       formData.set("url", trimmedLink);
     } else {
-      const blob = uploadBlobRef.current;
+      const blob = uploadBlob;
       if (!blob) return;
       formData.set("type", "upload");
       formData.set("file", new File([blob], "cover.webp", { type: blob.type }));
@@ -294,7 +302,9 @@ export function CoverPickerDialog({
     });
   }
 
-  return (
+  // Portal nach document.body, damit transform-/animation-Vorfahren das
+  // fixed-Overlay nicht einfangen (Containing Block & Stacking Context).
+  return createPortal(
     <div
       className="modal-overlay"
       onClick={(e) => {
@@ -305,8 +315,7 @@ export function CoverPickerDialog({
         role="dialog"
         aria-modal="true"
         aria-label={`Cover wählen für ${gameName}`}
-        className="modal-panel"
-        style={{ maxWidth: "28rem" }}
+        className="modal-panel max-w-md"
       >
         <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
           <h2 className="text-sm font-semibold">Cover wählen</h2>
@@ -423,6 +432,7 @@ export function CoverPickerDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

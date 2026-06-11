@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { DuellClient } from "@/components/DuellClient";
+import { DuellGateCard } from "@/components/DuellGateCard";
 import { DuellSessionGuard } from "@/components/DuellSessionGuard";
 import { PageHeader } from "@/components/PageHeader";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
@@ -93,19 +93,12 @@ export default async function DuellPage({
     return withSessionGuard(
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
-        <div
-          className="card flex flex-col items-center gap-3 text-center"
-          style={{ padding: "var(--space-card)" }}
-        >
-          <p className="text-lg font-bold">Noch zu wenige Stimmen</p>
+        <DuellGateCard title="Noch zu wenige Stimmen" ctaHref={`/meetups/${id}/pick`}>
           <p className="text-[var(--muted)] text-sm">
             Für {expected} Spieler ★ braucht es mindestens zwei nominierte
             Spiele von der Gruppe, bevor Duelle starten können.
           </p>
-          <Link href={`/meetups/${id}/pick`} className="btn btn-primary btn-lg">
-            Stimmen setzen
-          </Link>
-        </div>
+        </DuellGateCard>
       </div>,
     );
   }
@@ -114,19 +107,12 @@ export default async function DuellPage({
     return withSessionGuard(
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
-        <div
-          className="card flex flex-col items-center gap-3 text-center"
-          style={{ padding: "var(--space-card)" }}
-        >
-          <p className="text-lg font-bold">Erst Stimmen vergeben</p>
+        <DuellGateCard title="Erst Stimmen vergeben" ctaHref={`/meetups/${id}/pick`}>
           <p className="text-[var(--muted)] text-sm">
             Du brauchst {MAX_PICK_POINTS}/{MAX_PICK_POINTS} Stimmen bei{" "}
             {expected} Spielern ★, um Duelle zu spielen.
           </p>
-          <Link href={`/meetups/${id}/pick`} className="btn btn-primary btn-lg">
-            Stimmen setzen
-          </Link>
-        </div>
+        </DuellGateCard>
       </div>,
     );
   }
@@ -135,11 +121,10 @@ export default async function DuellPage({
     return withSessionGuard(
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
-        <div
-          className="card flex flex-col items-center gap-3 text-center"
-          style={{ padding: "var(--space-card)" }}
+        <DuellGateCard
+          title="Noch nicht alle Stimmen vergeben"
+          ctaHref={`/meetups/${id}/pick`}
         >
-          <p className="text-lg font-bold">Noch nicht alle Stimmen vergeben</p>
           <p className="text-[var(--muted)] text-sm">
             Du hast {myPickSum}/{MAX_PICK_POINTS} Stimmen bei {expected}{" "}
             Spielern ★. Setze alle {MAX_PICK_POINTS} Stimmen, bevor du
@@ -149,10 +134,7 @@ export default async function DuellPage({
             Gruppe: {summary.fullPickCount}/{summary.expectedPlayerCount}{" "}
             Spieler fertig.
           </p>
-          <Link href={`/meetups/${id}/pick`} className="btn btn-primary btn-lg">
-            Stimmen setzen
-          </Link>
-        </div>
+        </DuellGateCard>
       </div>,
     );
   }
@@ -161,11 +143,7 @@ export default async function DuellPage({
     return withSessionGuard(
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
-        <div
-          className="card flex flex-col items-center gap-3 text-center"
-          style={{ padding: "var(--space-card)" }}
-        >
-          <p className="text-lg font-bold">Warten auf alle Stimmen</p>
+        <DuellGateCard title="Warten auf alle Stimmen" ctaHref={`/meetups/${id}/pick`}>
           <p className="text-[var(--muted)] text-sm">
             Duell-Modus startet, wenn {expected} Spieler je {MAX_PICK_POINTS}/
             {MAX_PICK_POINTS} Stimmen bei ★ gesetzt haben.
@@ -184,10 +162,7 @@ export default async function DuellPage({
               {MAX_PICK_POINTS}/{MAX_PICK_POINTS} Stimmen.
             </p>
           )}
-          <Link href={`/meetups/${id}/pick`} className="btn btn-primary btn-lg">
-            Stimmen setzen
-          </Link>
-        </div>
+        </DuellGateCard>
       </div>,
     );
   }

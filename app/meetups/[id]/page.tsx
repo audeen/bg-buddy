@@ -5,6 +5,7 @@ import { ExpectedCountControl } from "@/components/ExpectedCountControl";
 import { ExpectedCountReadOnly } from "@/components/ExpectedCountReadOnly";
 import { MeetupActionsMenu } from "@/components/MeetupActionsMenu";
 import { MeetupShareQr } from "@/components/MeetupShareQr";
+import { DuellResetNotice } from "@/components/DuellResetNotice";
 import { MeetupVoteActions } from "@/components/MeetupVoteActions";
 import { MeetupExpansionActions } from "@/components/MeetupExpansionActions";
 import { MeetupRankings } from "@/components/MeetupRankings";
@@ -420,7 +421,9 @@ export default async function MeetupDetail({
         </div>
       </PageHeader>
 
-      <div className="card flex flex-col gap-4" style={{ padding: "var(--space-card)" }}>
+      <DuellResetNotice />
+
+      <div className="card card-pad flex flex-col gap-4">
         {isHost ? (
           <>
             <ExpectedCountControl

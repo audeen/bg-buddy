@@ -5,6 +5,7 @@ import { GameCover } from "@/components/GameCover";
 import { resolveCoverSrc } from "@/lib/cover-image";
 import type { BggGalleryImage, BggGalleryPage } from "@/lib/bgg/gallery";
 import type { GameDetailData } from "@/lib/types/game";
+import { prefersReducedMotion } from "@/lib/motion";
 
 const AUTO_ADVANCE_MS = 10_000;
 const SWIPE_THRESHOLD_PX = 40;
@@ -27,23 +28,28 @@ function ArrowButton({
       type="button"
       onClick={onClick}
       aria-label={isPrev ? "Vorheriges Bild" : "Nächstes Bild"}
-      className={`absolute top-1/2 -translate-y-1/2 z-[2] flex h-9 w-9 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-opacity hover:bg-black/65 ${
-        isPrev ? "left-2" : "right-2"
+      className={`absolute top-1/2 -translate-y-1/2 z-[2] flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center ${
+        isPrev ? "left-1" : "right-1"
       }`}
     >
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+      <span
         aria-hidden
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-opacity hover:bg-black/65"
       >
-        {isPrev ? <path d="M15 18l-6-6 6-6" /> : <path d="M9 18l6-6-6-6" />}
-      </svg>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          {isPrev ? <path d="M15 18l-6-6 6-6" /> : <path d="M9 18l6-6-6-6" />}
+        </svg>
+      </span>
     </button>
   );
 }
@@ -103,6 +109,7 @@ export function GameDetailCover({
 
   useEffect(() => {
     if (paused || count < 2) return;
+    if (prefersReducedMotion()) return;
     const timer = setInterval(() => step(1, false), AUTO_ADVANCE_MS);
     return () => clearInterval(timer);
   }, [paused, count, step]);

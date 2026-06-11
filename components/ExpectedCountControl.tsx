@@ -42,14 +42,14 @@ export function ExpectedCountControl({
   return (
     <div className="flex flex-col gap-1 w-full">
       <div className="flex flex-wrap items-center gap-2 w-full">
-        <span className="text-sm font-semibold">Erwartete Spieler festlegen:</span>
+        <span className="text-sm font-semibold">Erwartete Spieler:</span>
         <div className="flex items-center gap-1">
           <button
             type="button"
-            className="btn btn-ghost min-w-[44px] min-h-[44px] px-3"
+            className="btn btn-ghost min-w-[2.75rem] min-h-[2.75rem] px-3"
             onClick={() => save(count - 1)}
             disabled={pending || count <= 1}
-            aria-label="weniger"
+            aria-label="Weniger Spieler"
           >
             −
           </button>
@@ -58,20 +58,20 @@ export function ExpectedCountControl({
           </span>
           <button
             type="button"
-            className="btn btn-ghost min-w-[44px] min-h-[44px] px-3"
+            className="btn btn-ghost min-w-[2.75rem] min-h-[2.75rem] px-3"
             onClick={() => save(count + 1)}
             disabled={pending || count >= 20}
-            aria-label="mehr"
+            aria-label="Mehr Spieler"
           >
             +
           </button>
         </div>
         {pending && (
-          <span className="text-xs text-[var(--muted)]">gespeichert…</span>
+          <span className="text-xs text-[var(--muted)]">Speichere…</span>
         )}
       </div>
       {error && (
-        <p className="text-sm text-[var(--accent)]" role="alert">
+        <p className="text-sm text-[var(--danger)]" role="alert">
           {error}
         </p>
       )}

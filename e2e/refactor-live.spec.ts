@@ -130,7 +130,7 @@ test("Phase 2: Smoke — alle Routen", async ({ page }) => {
   record("Smoke", "/tinder redirectet nach /duell", page.url().includes("/duell") ? "pass" : "fail");
 });
 
-test("Phase 3: Auth & Treffen-Verwaltung", async ({ page, context }) => {
+test("Phase 3: Auth & Treffen-Verwaltung", async ({ page }) => {
   autoAcceptDialogs(page);
   await loginAs(page, HOST);
   await page.goto(`/meetups/${meetupId}`);
@@ -315,7 +315,7 @@ test("Phase 5: Spielsteuerung (Host-Control)", async ({ page }) => {
     await searchInput.fill("ab");
     await searchInput.fill("cat");
     await page.waitForTimeout(600);
-    const resultsText = await page.locator("text=Suche…").isVisible().catch(() => false);
+    await page.locator("text=Suche…").isVisible().catch(() => false);
     await page.waitForTimeout(800);
     // Kein Crash, Ergebnisse konsistent mit letzter Query
     record("Host-Control", "Spielsuche ohne Crash (Race-Fix)", "pass");

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useId, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { addGameByBggIdAction, type AddGameActionResult } from "@/app/actions";
 import type { BarcodeLookupCandidate } from "@/lib/barcode-lookup";
@@ -278,7 +279,9 @@ function AddGameModalContent({
   const lockedBarcode =
     scanLock && scanLock.phase !== "lookingUp" ? scanLock.barcode : null;
 
-  return (
+  // Portal nach document.body, damit transform-/animation-Vorfahren das
+  // fixed-Overlay nicht einfangen (Containing Block & Stacking Context).
+  return createPortal(
     <div
       ref={overlayRef}
       className="modal-overlay"
@@ -291,8 +294,7 @@ function AddGameModalContent({
         role="dialog"
         aria-modal="true"
         aria-labelledby={modalTitleId}
-        className="modal-panel"
-        style={{ maxWidth: "28rem" }}
+        className="modal-panel max-w-md"
         tabIndex={-1}
       >
         <div className="modal-drag-zone" {...dragZoneHandlers}>
@@ -308,9 +310,18 @@ function AddGameModalContent({
           {!scanLock && (
             <>
               {cameraError ? (
-                <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-                  {cameraError}
-                </p>
+                <div className="flex flex-col items-start gap-2">
+                  <p className="text-sm text-[var(--danger)]" role="alert">
+                    {cameraError}
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={resumeScanning}
+                  >
+                    Kamera erneut versuchen
+                  </button>
+                </div>
               ) : (
                 <>
                   <div className="overflow-hidden rounded-lg bg-black aspect-video w-full relative">
@@ -403,7 +414,7 @@ function AddGameModalContent({
                 onChange={(e) => setBggIdInput(e.target.value)}
               />
               <button type="submit" className="btn btn-primary shrink-0" disabled={pending}>
-                {pending ? "Hinzufügen …" : "Hinzufügen"}
+                {pending ? "Füge hinzu…" : "Hinzufügen"}
               </button>
             </div>
           </form>
@@ -442,7 +453,8 @@ function AddGameModalContent({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -498,7 +510,7 @@ function ScanLockPanel({
             disabled={pending}
             onClick={onConfirmAdd}
           >
-            {pending ? "Hinzufügen …" : confirmLabel}
+            {pending ? "Füge hinzu…" : confirmLabel}
           </button>
         </>
       )}
@@ -553,7 +565,7 @@ function ScanLockPanel({
                 disabled={pending}
                 onClick={onConfirmAdd}
               >
-                {pending ? "Hinzufügen …" : confirmLabel}
+                {pending ? "Füge hinzu…" : confirmLabel}
               </button>
             </>
           ) : (
@@ -583,12 +595,12 @@ function ScanLockPanel({
       {scanLock.phase === "error" && (
         <>
           <p className="text-sm text-[var(--muted)]">{scanLock.barcode}</p>
-          <p className="text-sm text-red-600 dark:text-red-400">{scanLock.message}</p>
+          <p className="text-sm text-[var(--danger)]" role="alert">{scanLock.message}</p>
         </>
       )}
 
       {scanLock.phase === "added" && (
-        <p className="text-sm text-green-700 dark:text-green-400">
+        <p className="text-sm text-[var(--accent)]">
           {variant === "meetup" ? (
             <>&bdquo;{scanLock.name}&ldquo; wurde zum Treffen hinzugefügt.</>
           ) : (

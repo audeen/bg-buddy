@@ -148,8 +148,7 @@ export function MeetupShareQr({
     <>
       <button
         type="button"
-        className="btn btn-ghost shrink-0"
-        style={{ width: "2rem", height: "2rem", padding: 0 }}
+        className="btn btn-ghost shrink-0 min-w-[2.75rem] min-h-[2.75rem] p-0"
         aria-label="Treffen teilen"
         title="QR-Code anzeigen"
         onClick={handleOpen}

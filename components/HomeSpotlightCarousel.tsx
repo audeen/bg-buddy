@@ -14,6 +14,7 @@ import {
 } from "@/components/GameOfTheDayCard";
 import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import { pickLatestGameFromPool } from "@/lib/spotlight-pick";
+import { prefersReducedMotion } from "@/lib/motion";
 
 const SEEN_KEY = "bg-buddy-spotlight-seen";
 const LAST_LATEST_ID_KEY = "bg-buddy-last-latest-id";
@@ -65,23 +66,28 @@ function CarouselArrow({
       type="button"
       onClick={onClick}
       aria-label={isPrev ? "Vorherige Karte" : "Nächste Karte"}
-      className={`absolute top-1/2 -translate-y-1/2 z-[2] flex h-7 w-7 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-opacity hover:bg-black/65 ${
-        isPrev ? "-left-2" : "-right-2"
+      className={`absolute top-1/2 -translate-y-1/2 z-[2] flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center rounded-full ${
+        isPrev ? "-left-4" : "-right-4"
       }`}
     >
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+      <span
         aria-hidden
+        className="flex h-7 w-7 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-opacity hover:bg-black/65"
       >
-        {isPrev ? <path d="M15 18l-6-6 6-6" /> : <path d="M9 18l6-6-6-6" />}
-      </svg>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          {isPrev ? <path d="M15 18l-6-6 6-6" /> : <path d="M9 18l6-6-6-6" />}
+        </svg>
+      </span>
     </button>
   );
 }
@@ -156,7 +162,10 @@ export function HomeSpotlightCarousel({
     if (hotnessGame) {
       out.push({
         key: "hotness",
-        label: hotnessRank != null ? `BGG Hotness #${hotnessRank}` : "BGG Hotness",
+        label:
+          hotnessRank != null
+            ? `Beliebt auf BGG · #${hotnessRank}`
+            : "Beliebt auf BGG",
         game: hotnessGame,
         ownedExpansions: expansionsByBaseId[String(hotnessGame.id)] ?? [],
       });
@@ -199,6 +208,7 @@ export function HomeSpotlightCarousel({
 
   useEffect(() => {
     if (stopped || hovering || modalOpen || pageHidden || count < 2) return;
+    if (prefersReducedMotion()) return;
     const timer = setInterval(() => step(1, false), AUTO_ADVANCE_MS);
     return () => clearInterval(timer);
   }, [stopped, hovering, modalOpen, pageHidden, count, step]);
@@ -256,7 +266,7 @@ export function HomeSpotlightCarousel({
       </div>
 
       {count > 1 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center">
           {slides.map((s, i) => (
             <button
               key={s.key}
@@ -264,12 +274,17 @@ export function HomeSpotlightCarousel({
               onClick={() => goTo(i)}
               aria-label={`${s.label} anzeigen`}
               aria-current={i === safeIndex ? "true" : undefined}
-              className={`h-2 rounded-full transition-all ${
-                i === safeIndex
-                  ? "w-5 bg-[var(--accent)]"
-                  : "w-2 bg-[var(--border)] hover:bg-[var(--muted)]"
-              }`}
-            />
+              className="flex min-h-[2.75rem] min-w-[1.75rem] items-center justify-center"
+            >
+              <span
+                aria-hidden
+                className={`h-2 rounded-full transition-all ${
+                  i === safeIndex
+                    ? "w-5 bg-[var(--accent)]"
+                    : "w-2 bg-[var(--border)] hover:bg-[var(--muted)]"
+                }`}
+              />
+            </button>
           ))}
         </div>
       )}

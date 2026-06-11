@@ -12,7 +12,7 @@ export function MeetupForm() {
   );
 
   return (
-    <form action={formAction} className="card flex flex-col gap-4" style={{ padding: "var(--space-card)" }}>
+    <form action={formAction} className="card card-pad flex flex-col gap-4">
       <div>
         <label className="label" htmlFor="title">
           Titel
@@ -67,7 +67,9 @@ export function MeetupForm() {
       </div>
 
       {state?.error && (
-        <p className="text-sm text-[var(--primary)]">{state.error}</p>
+        <p className="text-sm text-[var(--danger)]" role="alert">
+          {state.error}
+        </p>
       )}
 
       <button type="submit" className="btn btn-primary btn-lg" disabled={pending}>

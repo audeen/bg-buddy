@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { GameDetailView } from "@/components/GameDetailView";
 import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import type { GameFilters, GameSort } from "@/lib/game-filters";
@@ -446,7 +447,10 @@ export function GameDetailModal({
       ? ownedExpansions
       : undefined;
 
-  return (
+  // Portal nach document.body: Vorfahren mit transform/animation (z. B.
+  // .spotlight-slide-enter) würden das fixed-Overlay sonst einfangen —
+  // falsche Positionierung und z-index-Konflikte mit Seiteninhalten.
+  return createPortal(
     <div
       ref={overlayRef}
       className="modal-overlay"
@@ -463,7 +467,7 @@ export function GameDetailModal({
         tabIndex={-1}
       >
         <div
-          className="modal-drag-zone"
+          className="modal-drag-zone relative"
           onPointerDown={onHandlePointerDown}
           onPointerMove={onHandlePointerMove}
           onPointerUp={onHandlePointerEnd}
@@ -473,6 +477,15 @@ export function GameDetailModal({
           <span className="text-sm font-semibold text-[var(--muted)]">
             Spielinfo
           </span>
+          <button
+            type="button"
+            className="btn btn-ghost absolute right-2 top-1/2 -translate-y-1/2 min-w-[2.75rem] min-h-[2.75rem] px-0 text-lg leading-none sm:static sm:ml-auto sm:translate-y-0"
+            onClick={dismiss}
+            onPointerDown={(e) => e.stopPropagation()}
+            aria-label="Schließen"
+          >
+            ×
+          </button>
         </div>
 
         <div ref={bodyRef} className="modal-body modal-body-chainable safe-bottom">
@@ -498,6 +511,7 @@ export function GameDetailModal({
           />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

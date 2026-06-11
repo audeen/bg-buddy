@@ -86,6 +86,7 @@ export function GameEditClient({
   const [isExpansion, setIsExpansion] = useState(game.isExpansion);
   const [selectedBaseIds, setSelectedBaseIds] = useState<number[]>(game.expandsGameIds);
   const [extraBaseId, setExtraBaseId] = useState("");
+  const [extraBaseIdError, setExtraBaseIdError] = useState<string | null>(null);
   const [coverDialogOpen, setCoverDialogOpen] = useState(false);
   const [coverPending, startCoverTransition] = useTransition();
   const [coverError, setCoverError] = useState<string | null>(null);
@@ -114,7 +115,11 @@ export function GameEditClient({
 
   function addExtraBaseId() {
     const id = parseInt(extraBaseId.trim(), 10);
-    if (!Number.isFinite(id) || id <= 0) return;
+    if (!Number.isFinite(id) || id <= 0) {
+      setExtraBaseIdError("Bitte eine gültige BGG-ID (positive Zahl) eingeben.");
+      return;
+    }
+    setExtraBaseIdError(null);
     setSelectedBaseIds((prev) =>
       prev.includes(id) ? prev : [...prev, id].sort((a, b) => a - b),
     );
@@ -153,7 +158,7 @@ export function GameEditClient({
   return (
     <>
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <section className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
+      <section className="card card-pad flex flex-col gap-3">
         <h2 className="section-title">Stammdaten</h2>
         <div>
           <FieldLabel htmlFor="name" field="name" manual={manual} />
@@ -213,7 +218,7 @@ export function GameEditClient({
             />
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <FieldLabel htmlFor="playingTime" field="playingTime" manual={manual} />
             <input
@@ -245,7 +250,7 @@ export function GameEditClient({
             />
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <FieldLabel htmlFor="weight" field="weight" manual={manual} />
             <input
@@ -331,7 +336,7 @@ export function GameEditClient({
         </div>
       </section>
 
-      <section className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
+      <section className="card card-pad flex flex-col gap-3">
         <h2 className="section-title">
           Cover
           {game.coverUrl && (
@@ -378,7 +383,7 @@ export function GameEditClient({
       </section>
 
       {isExpansion && (
-        <section className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
+        <section className="card card-pad flex flex-col gap-3">
           <h2 className="section-title">
             Erweiterungszuordnung
             <ManualBadge field="expandsGameIds" manual={manual} />
@@ -417,18 +422,26 @@ export function GameEditClient({
                 type="number"
                 className="input"
                 value={extraBaseId}
-                onChange={(e) => setExtraBaseId(e.target.value)}
+                onChange={(e) => {
+                  setExtraBaseId(e.target.value);
+                  setExtraBaseIdError(null);
+                }}
                 placeholder="z. B. 28"
               />
             </div>
             <button
               type="button"
-              className="btn btn-ghost sm:w-auto min-h-[44px]"
+              className="btn btn-ghost sm:w-auto min-h-[2.75rem]"
               onClick={addExtraBaseId}
             >
               Hinzufügen
             </button>
           </div>
+          {extraBaseIdError && (
+            <p className="text-sm text-[var(--danger)]" role="alert">
+              {extraBaseIdError}
+            </p>
+          )}
           {selectedBaseIds.length > 0 && (
             <p className="text-sm text-[var(--muted)]">
               Zugeordnet: {selectedBaseIds.join(", ")}
@@ -437,7 +450,7 @@ export function GameEditClient({
         </section>
       )}
 
-      <section className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
+      <section className="card card-pad flex flex-col gap-3">
         <h2 className="section-title">Anreicherung</h2>
         <div>
           <FieldLabel htmlFor="description" field="description" manual={manual} />
@@ -475,8 +488,16 @@ export function GameEditClient({
         </div>
       </section>
 
-      {message && <p className="text-sm text-[var(--accent)]">{message}</p>}
-      {error && <p className="text-sm text-[var(--primary)]">{error}</p>}
+      {message && (
+        <p className="text-sm text-[var(--accent)]" role="status">
+          {message}
+        </p>
+      )}
+      {error && (
+        <p className="text-sm text-[var(--danger)]" role="alert">
+          {error}
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-3">
         <button
@@ -484,7 +505,7 @@ export function GameEditClient({
           className="btn btn-primary btn-lg"
           disabled={pending}
         >
-          {pending ? "Speichern…" : "Speichern"}
+          {pending ? "Speichere…" : "Speichern"}
         </button>
         <Link href="/admin/collection" className="btn btn-ghost btn-lg">
           Zurück

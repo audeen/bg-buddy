@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Callout } from "@/components/Callout";
 import { GameCover } from "@/components/GameCover";
 
 /** Banner für ein vom Host festgelegtes Spiel (keine Abstimmung). */
@@ -14,10 +15,9 @@ export function HostForcedGameBanner({
   children?: ReactNode;
 }) {
   return (
-    <div
-      className="card flex flex-col items-center gap-3 text-center border border-[var(--accent)]"
-      style={{ padding: "var(--space-card)" }}
-      role="status"
+    <Callout
+      variant="success"
+      className="flex flex-col items-center gap-3 text-center"
     >
       <span className="text-xs font-semibold text-[var(--accent)]">
         Vom Host festgelegt
@@ -28,6 +28,6 @@ export function HostForcedGameBanner({
       <p className="text-lg font-bold">{gameName}</p>
       <p className="text-sm text-[var(--muted)]">{description}</p>
       {children}
-    </div>
+    </Callout>
   );
 }

@@ -14,7 +14,11 @@ export function LoginForm() {
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-4" id="login">
+    <form
+      action={formAction}
+      className="flex flex-col gap-4 scroll-mt-[calc(var(--header-height)+1rem)]"
+      id="login"
+    >
       <div>
         <label className="label" htmlFor="name">
           Dein Name
@@ -34,12 +38,14 @@ export function LoginForm() {
             className="btn btn-primary btn-lg sm:w-auto shrink-0"
             disabled={pending}
           >
-            {pending ? "..." : "Los"}
+            {pending ? "Melde an…" : "Los"}
           </button>
         </div>
       </div>
       {state?.error && (
-        <p className="text-sm text-[var(--primary)]">{state.error}</p>
+        <p className="text-sm text-[var(--danger)]" role="alert">
+          {state.error}
+        </p>
       )}
       <p className="text-xs text-[var(--muted)] leading-relaxed">
         Kein Passwort nötig – einfach Name eingeben. Gibt es den Namen schon,

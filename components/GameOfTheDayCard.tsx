@@ -105,8 +105,7 @@ export function GameOfTheDayCard({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="card flex flex-col gap-3 hover:opacity-90 transition-opacity text-left w-full"
-        style={{ padding: "var(--space-card)" }}
+        className="card card-pad flex flex-col gap-3 hover:opacity-90 transition-opacity text-left w-full"
       >
         <GotdChipMarquee label={label} meta={meta} />
 
@@ -114,7 +113,7 @@ export function GameOfTheDayCard({
           <GameCover
             src={coverSrc}
             alt={game.name}
-            className="w-28 sm:w-32 aspect-[3/4] rounded-lg shrink-0"
+            className="w-28 sm:w-32 aspect-[3/4] rounded-[var(--radius)] shrink-0"
           />
           <div className="flex flex-col gap-2 min-w-0 flex-1">
             <span className="font-bold text-lg leading-snug line-clamp-2">
@@ -156,12 +155,11 @@ export function GameOfTheDayCard({
 export function GameOfTheDayEmpty() {
   return (
     <div
-      className="card flex flex-col gap-2"
-      style={{ padding: "var(--space-card)" }}
+      className="card card-pad flex flex-col gap-2"
     >
       <span className="chip chip-accent w-fit">Spiel des Tages</span>
       <p className="text-sm text-[var(--muted)]">
-        Keine verfügbaren Spiele in der Collection.
+        Keine verfügbaren Spiele in der Sammlung.
       </p>
     </div>
   );

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { LoginForm } from "@/components/LoginForm";
 import { CollectionAdminClient } from "@/components/CollectionAdminClient";
+import { PageHeader } from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export default async function CollectionAdminPage() {
         <p className="text-[var(--muted)]">
           Bitte melde dich an, um Spiele zu verwalten.
         </p>
-        <div className="card" style={{ padding: "var(--space-card)" }}>
+        <div className="card card-pad">
           <LoginForm />
         </div>
       </div>
@@ -38,12 +39,11 @@ export default async function CollectionAdminPage() {
 
   return (
     <div className="container-app max-w-2xl flex flex-col gap-6">
-      <div>
-        <h1 className="page-title">Sammlung bearbeiten</h1>
+      <PageHeader eyebrow="Administration" title="Sammlung bearbeiten">
         <p className="text-[var(--muted)] text-sm">
           {games.length} {games.length === 1 ? "Spiel" : "Spiele"} in der Datenbank
         </p>
-      </div>
+      </PageHeader>
 
       <CollectionAdminClient games={games} />
 

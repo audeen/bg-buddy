@@ -4,6 +4,7 @@
   --background: #f6f3ee;
   --surface: #ffffff;
   --surface-2: #fbf9f5;
+  --surface-elevated: var(--surface-2);
   --foreground: #221b14;
   --muted: #7a6f63;
   --border: #e6ddd0;
@@ -12,6 +13,9 @@
   --accent: #1f7a5a;
   --accent-2: #2f6db5;
   --warning: #c97a1a;
+  --danger: #b42318;
+  --radius: 0.6rem;
+  --radius-card: 0.9rem;
   --header-height: 3.25rem;
   --bottom-nav-height: 3.75rem;
 
@@ -56,6 +60,7 @@
     --accent: #3fae84;
     --accent-2: #5b97e0;
     --warning: #e0a24a;
+    --danger: #f97066;
 
     --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.25);
     --shadow-md: 0 4px 16px rgb(0 0 0 / 0.35);
@@ -118,8 +123,12 @@ body {
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 0.9rem;
+    border-radius: var(--radius-card);
     box-shadow: var(--shadow-sm);
+  }
+  /* Standard-Innenabstand für Karten (statt Inline-Style). */
+  .card-pad {
+    padding: var(--space-card);
   }
 
   .btn {
@@ -127,7 +136,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    border-radius: 0.6rem;
+    border-radius: var(--radius);
     padding: 0.55rem 1rem;
     font-weight: 600;
     font-size: 0.9rem;
@@ -146,6 +155,12 @@ body {
     opacity: 0.55;
     cursor: not-allowed;
   }
+  .btn:focus-visible,
+  .card-game:focus-visible,
+  .chip-interactive:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--primary) 55%, transparent);
+    outline-offset: 2px;
+  }
   .btn-primary {
     background: var(--primary);
     color: #fff;
@@ -161,6 +176,13 @@ body {
   .btn-ghost:hover:not(:disabled) {
     background: var(--surface-2);
   }
+  .btn-danger {
+    background: var(--danger);
+    color: #fff;
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--danger) 85%, black);
+  }
 
   .btn-tab {
     min-width: 2.75rem;
@@ -170,6 +192,12 @@ body {
 
   .btn-tab-expected {
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 35%, transparent);
+  }
+
+  .btn-sm {
+    min-height: 2.25rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
   }
 
   .btn-lg {
@@ -337,7 +365,7 @@ body {
       gap: 0.75rem;
       padding: var(--space-card);
       border: 1px solid var(--border);
-      border-radius: 0.9rem;
+      border-radius: var(--radius-card);
       background: color-mix(in srgb, var(--surface) 88%, transparent);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
@@ -347,7 +375,7 @@ body {
 
   .filter-dropdown {
     border: 1px solid var(--border);
-    border-radius: 0.9rem;
+    border-radius: var(--radius-card);
     background: color-mix(in srgb, var(--surface) 88%, transparent);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -412,7 +440,7 @@ body {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--border);
-    border-radius: 0.9rem;
+    border-radius: var(--radius-card);
     box-shadow: var(--shadow-sm);
     padding: var(--space-card);
   }
@@ -431,6 +459,11 @@ body {
     transition: width 0.2s ease;
   }
 
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--accent);
+  }
+
   .label {
     display: block;
     font-size: 0.75rem;
@@ -443,7 +476,7 @@ body {
     width: 100%;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 0.6rem;
+    border-radius: var(--radius);
     padding: 0.625rem 0.75rem;
     font-size: 0.95rem;
     color: var(--foreground);
@@ -542,6 +575,8 @@ body {
     animation: spotlight-slide-enter 0.3s ease-out both;
   }
 
+  /* Endet auf transform: none — sonst bliebe der Slide dauerhaft
+     Containing Block für fixed-Elemente (fill-mode: both). */
   @keyframes spotlight-slide-enter {
     from {
       opacity: 0;
@@ -549,7 +584,7 @@ body {
     }
     to {
       opacity: 1;
-      transform: translateX(0);
+      transform: none;
     }
   }
 
@@ -598,7 +633,7 @@ body {
   .nav-item-active {
     background: color-mix(in srgb, var(--primary) 14%, transparent);
     color: var(--primary);
-    border-radius: 0.6rem;
+    border-radius: var(--radius);
   }
 
   .header-shadow {
@@ -615,8 +650,28 @@ body {
       box-shadow 0.15s ease,
       transform 0.05s ease;
   }
-  .card-game:hover:not(:disabled) {
+  .card-game:hover:not(:disabled):not(.card-game-disabled) {
     box-shadow: var(--shadow-md);
+  }
+
+  /*
+   * Unsichtbare Aktivierungsfläche über der ganzen Karte (Stretched-Link-Pattern).
+   * Vermeidet verschachtelte interaktive Elemente: Chips/Nav liegen mit z-index
+   * darüber und bleiben eigenständig klickbar.
+   */
+  .card-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    cursor: pointer;
+  }
+  .card-overlay:disabled {
+    cursor: not-allowed;
+  }
+  .card-overlay:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--primary) 55%, transparent);
+    outline-offset: 2px;
   }
   .card-game-selected {
     box-shadow: var(--shadow-md);
@@ -629,7 +684,7 @@ body {
   }
 
   .card-game-cover {
-    border-radius: 0.9rem 0.9rem 0 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
   }
 
   .expansion-required-banner {
@@ -1013,7 +1068,7 @@ body {
     max-height: 85vh;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 0.9rem 0.9rem 0 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
     box-shadow: var(--shadow-lg);
     overflow: hidden;
     transition: transform 0.2s ease;
@@ -1040,14 +1095,14 @@ body {
   @media (min-width: 640px) {
     .modal-panel {
       max-width: 42rem;
-      border-radius: 0.9rem;
+      border-radius: var(--radius-card);
       max-height: 88vh;
     }
 
     .modal-panel-maximized {
       max-height: 88vh;
       height: auto;
-      border-radius: 0.9rem;
+      border-radius: var(--radius-card);
     }
   }
 

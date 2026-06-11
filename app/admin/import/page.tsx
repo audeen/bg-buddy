@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { ImportClient } from "@/components/ImportClient";
 import { LoginForm } from "@/components/LoginForm";
+import { PageHeader } from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export default async function ImportPage() {
         <p className="text-[var(--muted)]">
           Bitte melde dich an, um Spiele zu importieren.
         </p>
-        <div className="card" style={{ padding: "var(--space-card)" }}>
+        <div className="card card-pad">
           <LoginForm />
         </div>
       </div>
@@ -31,13 +32,12 @@ export default async function ImportPage() {
 
   return (
     <div className="container-app max-w-2xl flex flex-col gap-6">
-      <div>
-        <h1 className="page-title">Sammlung importieren</h1>
+      <PageHeader eyebrow="Administration" title="Sammlung importieren">
         <p className="text-[var(--muted)] text-sm">
           Aktuell {total} Spiele in der Datenbank ({expansions} Erweiterungen),
           davon {enriched} mit Cover &amp; Details.
         </p>
-      </div>
+      </PageHeader>
 
       <ImportClient total={total} enriched={enriched} />
 

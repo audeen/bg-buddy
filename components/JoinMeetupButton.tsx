@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { joinMeetupAction, leaveMeetupAction } from "@/app/actions";
 
@@ -17,6 +17,7 @@ export function JoinMeetupButton({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   if (!isLoggedIn) return null;
 
@@ -27,12 +28,13 @@ export function JoinMeetupButton({
   }
 
   function handleClick() {
+    setError(null);
     startTransition(async () => {
       const res = isRegistered
         ? await leaveMeetupAction(meetupId)
         : await joinMeetupAction(meetupId);
       if (res && "error" in res && res.error) {
-        alert(res.error);
+        setError(res.error);
         return;
       }
       router.refresh();
@@ -40,13 +42,27 @@ export function JoinMeetupButton({
   }
 
   return (
-    <button
-      type="button"
-      className={`btn ${isRegistered ? "btn-ghost" : "btn-primary"} btn-sm`}
-      onClick={handleClick}
-      disabled={pending}
-    >
-      {pending ? "…" : isRegistered ? "Abmelden" : "Teilnehmen"}
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        className={`btn ${isRegistered ? "btn-ghost" : "btn-primary"} btn-sm`}
+        onClick={handleClick}
+        disabled={pending}
+        aria-busy={pending}
+      >
+        {pending
+          ? isRegistered
+            ? "Melde ab…"
+            : "Melde an…"
+          : isRegistered
+            ? "Abmelden"
+            : "Teilnehmen"}
+      </button>
+      {error && (
+        <p className="text-xs text-[var(--danger)]" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

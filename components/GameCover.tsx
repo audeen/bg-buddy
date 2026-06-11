@@ -13,9 +13,10 @@ export function GameCover({
     return (
       <div
         className={`flex items-center justify-center bg-[var(--surface-2)] text-2xl text-[var(--muted)] ${className}`}
-        aria-hidden
+        role="img"
+        aria-label="Kein Cover verfügbar"
       >
-        🎲
+        <span aria-hidden>🎲</span>
       </div>
     );
   }

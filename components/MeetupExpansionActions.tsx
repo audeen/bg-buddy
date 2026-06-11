@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
 import { startExpansionDuelAction } from "@/app/actions";
 import { MeetupMandatoryExpansions } from "@/components/MeetupMandatoryExpansions";
@@ -31,6 +32,7 @@ export function MeetupExpansionActions({
   winnerHasExpansionsAtStar: boolean;
 }) {
   useMeetupPhaseRefresh(true);
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -105,19 +107,24 @@ export function MeetupExpansionActions({
           <button
             type="button"
             disabled={pending}
+            aria-busy={pending}
             onClick={() => {
               setError(null);
               startTransition(async () => {
                 const res = await startExpansionDuelAction(meetupId);
-                if (res && "error" in res && res.error) setError(res.error);
+                if (res && "error" in res && res.error) {
+                  setError(res.error);
+                  return;
+                }
+                router.refresh();
               });
             }}
             className="btn btn-primary btn-lg w-full sm:w-auto"
           >
-            Über Erweiterungen abstimmen
+            {pending ? "Starte Abstimmung…" : "Über Erweiterungen abstimmen"}
           </button>
           {error && (
-            <p className="text-xs text-[var(--accent)]" role="alert">
+            <p className="text-xs text-[var(--danger)]" role="alert">
               {error}
             </p>
           )}

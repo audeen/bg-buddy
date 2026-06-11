@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { LoginForm } from "@/components/LoginForm";
 import { MeetupOverviewCard } from "@/components/MeetupOverviewCard";
+import { PageHeader } from "@/components/PageHeader";
 import { HomeSpotlightCarousel } from "@/components/HomeSpotlightCarousel";
 import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import {
@@ -181,7 +182,7 @@ export default async function Home() {
 
   const gotdSection =
     gameCount > 0 ? (
-      <section className="sm:max-w-[calc(50%-0.375rem)]">
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <HomeSpotlightCarousel
           gotdGame={gotdGame}
           gotdPlayerCount={gotdPlayerCount ?? undefined}
@@ -195,8 +196,8 @@ export default async function Home() {
 
   const importBanner =
     gameCount === 0 ? (
-      <section className="card border-dashed" style={{ padding: "var(--space-card)" }}>
-        <h2 className="font-bold mb-1">Noch keine Spiele importiert</h2>
+      <section className="card card-pad border-dashed">
+        <h2 className="section-title mb-1">Noch keine Spiele importiert</h2>
         <p className="text-sm text-[var(--muted)] mb-3">
           Lade deine BoardGameGeek-Collection (CSV-Export) hoch, um loszulegen.
         </p>
@@ -216,7 +217,7 @@ export default async function Home() {
               <NewMeetupIconButton />
             </div>
             {nextMeetup ? (
-              <div className="sm:max-w-[calc(50%-0.375rem)]">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {renderMeetupCard(nextMeetup)}
               </div>
             ) : (
@@ -242,16 +243,15 @@ export default async function Home() {
         </>
       ) : (
         <>
-          <section className="flex flex-col gap-2">
-            <h1 className="page-title">Was kommt heute auf den Tisch?</h1>
+          <PageHeader title="Was kommt heute auf den Tisch?">
             <p className="text-[var(--muted)] max-w-2xl">
               Gib deine Stimmen ab und lass deine Spiele gegen die Picks der
               anderen antreten. Finde heraus, über welche Regeln wir heute
               diskutieren!
             </p>
-          </section>
+          </PageHeader>
 
-          <section className="card max-w-md" style={{ padding: "var(--space-card)" }}>
+          <section className="card card-pad max-w-md">
             <h2 className="section-title mb-3">Anmelden</h2>
             <LoginForm />
           </section>

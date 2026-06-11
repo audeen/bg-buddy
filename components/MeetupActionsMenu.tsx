@@ -44,7 +44,7 @@ export function MeetupActionsMenu({
   }
 
   return (
-    <div className="hidden md:flex flex-col items-end gap-1 relative" ref={menuRef}>
+    <div className="flex flex-col items-end gap-1 relative" ref={menuRef}>
       <button
         type="button"
         className="btn btn-ghost"
@@ -57,7 +57,7 @@ export function MeetupActionsMenu({
       {open && (
         <div
           role="menu"
-          className="absolute top-full right-0 z-10 mt-1 min-w-[12rem] rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] shadow-lg py-1"
+          className="absolute top-full right-0 z-10 mt-1 min-w-[12rem] max-w-[calc(100vw-2rem)] rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] shadow-lg py-1"
         >
           <button
             type="button"
@@ -66,11 +66,15 @@ export function MeetupActionsMenu({
             disabled={pending}
             onClick={handleDelete}
           >
-            {pending ? "Wird gelöscht…" : "Treffen löschen"}
+            {pending ? "Lösche…" : "Treffen löschen"}
           </button>
         </div>
       )}
-      {error && <p className="text-sm text-[var(--primary)]">{error}</p>}
+      {error && (
+        <p className="text-sm text-[var(--danger)]" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

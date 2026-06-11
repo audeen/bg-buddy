@@ -149,8 +149,11 @@ function CardCover({
     : bannerLabel ?? undefined;
 
   return (
+    // `isolate` kapselt die z-Indizes im Cover (Bild z-1, Banner z-2) ein,
+    // damit sie nicht mit der .card-overlay (z-1) konkurrieren — sonst
+    // schluckt das Cover-Bild die Klicks der Overlay-Fläche.
     <div
-      className="relative shrink-0 card-game-cover overflow-hidden"
+      className="relative isolate shrink-0 card-game-cover overflow-hidden"
       aria-label={coverAriaLabel}
     >
       <GameCover
@@ -194,10 +197,7 @@ function CardBody({
   onSelectExpansion: (id: number) => void;
 }) {
   return (
-    <div
-      className="flex flex-col gap-2.5 flex-1"
-      style={{ padding: "var(--space-card)" }}
-    >
+    <div className="card-pad flex flex-col gap-2.5 flex-1">
       <span className="font-semibold text-base leading-snug line-clamp-2">
         {game.name}
       </span>
@@ -213,14 +213,16 @@ function CardBody({
         onBaseView={viewExpansionId == null}
       />
       {ownedExpansions.length > 0 && (
-        <ExpansionFamilyNav
-          baseGame={baseGame}
-          expansions={ownedExpansions}
-          activeId={viewExpansionId}
-          onSelectBase={onSelectBase}
-          onSelectExpansion={onSelectExpansion}
-          variant="card"
-        />
+        <div className="relative z-[2]">
+          <ExpansionFamilyNav
+            baseGame={baseGame}
+            expansions={ownedExpansions}
+            activeId={viewExpansionId}
+            onSelectBase={onSelectBase}
+            onSelectExpansion={onSelectExpansion}
+            variant="card"
+          />
+        </div>
       )}
     </div>
   );
@@ -230,7 +232,7 @@ function StarsBadge({ points }: { points: number }) {
   if (points <= 0) return null;
   return (
     <span
-      className="absolute top-2.5 right-2.5 z-[3] bg-[var(--accent)] text-white rounded-full min-w-7 h-7 px-1.5 flex items-center justify-center text-xs font-bold tracking-tight"
+      className="absolute top-2.5 right-2.5 z-[3] pointer-events-none bg-[var(--accent)] text-white rounded-full min-w-7 h-7 px-1.5 flex items-center justify-center text-xs font-bold tracking-tight"
       style={{ boxShadow: "var(--shadow-md)" }}
       aria-label={`${points} ${points === 1 ? "Stern" : "Sterne"}`}
     >
@@ -257,7 +259,7 @@ function ExpansionCountBadge({
 
   return (
     <span
-      className="absolute top-2.5 left-1/2 -translate-x-1/2 z-[3] shrink-0 h-7 max-w-[10rem] px-2 rounded-full text-[10px] font-bold border tracking-tight truncate bg-[var(--surface)] text-[var(--foreground)] border-[var(--border)] flex items-center justify-center pointer-events-none"
+      className="absolute top-2.5 left-1/2 -translate-x-1/2 z-[3] shrink-0 h-7 max-w-[10rem] px-2 rounded-full text-[0.72rem] font-bold border tracking-tight truncate bg-[var(--surface)] text-[var(--foreground)] border-[var(--border)] flex items-center justify-center pointer-events-none"
       style={{ boxShadow: "var(--shadow-md)" }}
       title={onExpansionView ? baseGameName : expansionNames}
       aria-label={
@@ -279,11 +281,16 @@ function DetailsButton({ onClick }: { onClick: () => void }) {
         e.stopPropagation();
         onClick();
       }}
-      className="absolute top-2.5 left-2.5 z-[3] bg-[var(--surface)] text-[var(--foreground)] rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold border border-[var(--border)] hover:bg-[var(--surface-2)]"
-      style={{ boxShadow: "var(--shadow-md)" }}
+      className="absolute top-0.5 left-0.5 z-[3] flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center"
       aria-label="Details anzeigen"
     >
-      ℹ
+      <span
+        aria-hidden
+        className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] text-sm font-bold border border-[var(--border)] hover:bg-[var(--surface-2)]"
+        style={{ boxShadow: "var(--shadow-md)" }}
+      >
+        ℹ
+      </span>
     </button>
   );
 }
@@ -399,14 +406,22 @@ export function GameCard(props: ButtonProps | LinkProps) {
     hostRecommendation,
   };
 
+  // Die Karte selbst ist ein <div>; die Aktivierung läuft über eine unsichtbare
+  // Overlay-Fläche (.card-overlay). So entstehen keine verschachtelten
+  // interaktiven Elemente (Chips/Erweiterungs-Nav liegen per z-index darüber).
   if ("href" in props && props.href) {
     return (
-      <Link href={props.href} className={`${cardClass} hover:shadow-md relative`}>
+      <div className={`${cardClass} relative`}>
+        <Link
+          href={props.href}
+          className="card-overlay"
+          aria-label={displayedGame.name}
+        />
         <CardCover {...coverProps} />
         <CardBody {...bodyProps} />
         {expansionBadge}
         {showVoteState && points > 0 && <StarsBadge points={points} />}
-      </Link>
+      </div>
     );
   }
 
@@ -415,7 +430,6 @@ export function GameCard(props: ButtonProps | LinkProps) {
         onPointerUp: (e: PointerEvent<HTMLButtonElement>) => {
           if (disabled || e.button !== 0) return;
           if (pickMode && !onBaseView) return;
-          if ((e.target as HTMLElement).closest(".chip-interactive")) return;
           e.preventDefault();
           onActivate();
         },
@@ -427,36 +441,26 @@ export function GameCard(props: ButtonProps | LinkProps) {
         onClick: () => cardOnClick?.(displayedGame),
       };
 
-  if (onDetailsClick) {
-    return (
-      <div className={`${cardClass} relative`}>
-        <button
-          type="button"
-          {...activateProps}
-          disabled={disabled}
-          className="flex flex-col w-full h-full text-left"
-        >
-          <CardCover {...coverProps} />
-          <CardBody {...bodyProps} />
-        </button>
-        <DetailsButton onClick={() => onDetailsClick(displayedGame)} />
-        {expansionBadge}
-        {showVoteState && points > 0 && <StarsBadge points={points} />}
-      </div>
-    );
-  }
+  const overlayLabel = onActivate
+    ? `${displayedGame.name} – Punkte vergeben`
+    : `${displayedGame.name} – Details anzeigen`;
 
   return (
-    <button
-      type="button"
-      {...activateProps}
-      disabled={disabled}
-      className={`${cardClass} relative`}
-    >
+    <div className={`${cardClass} relative`}>
+      <button
+        type="button"
+        {...activateProps}
+        disabled={disabled}
+        className="card-overlay"
+        aria-label={overlayLabel}
+      />
       <CardCover {...coverProps} />
       <CardBody {...bodyProps} />
+      {onDetailsClick && (
+        <DetailsButton onClick={() => onDetailsClick(displayedGame)} />
+      )}
       {expansionBadge}
       {showVoteState && points > 0 && <StarsBadge points={points} />}
-    </button>
+    </div>
   );
 }

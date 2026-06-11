@@ -46,7 +46,7 @@ function RankingRow({
     <li>
       <Link
         href={`/games/${entry.id}`}
-        className={`card ranking-row p-2.5 flex items-center gap-3 min-h-[44px] ${rowClass}`}
+        className={`card ranking-row p-2.5 flex items-center gap-3 min-h-[2.75rem] ${rowClass}`}
         style={style}
       >
         <span
@@ -114,9 +114,9 @@ function scenarioLabel(
 ): string | null {
   if (count === expected) return null;
   if (completedCounts.includes(count)) {
-    return `Abgeschlossene Duell-Runde @ ${count} Spielern`;
+    return `Abgeschlossene Duell-Runde bei ${count} Spielern`;
   }
-  return `Vorbereitung @ ${count} Spielern (nur Stimmen)`;
+  return `Vorbereitung bei ${count} Spielern (nur Stimmen)`;
 }
 
 export function Ranking({
@@ -302,7 +302,7 @@ export function Ranking({
                 <li
                   key={e.id}
                   aria-hidden
-                  className="min-h-[44px] p-2.5 opacity-0 pointer-events-none"
+                  className="min-h-[2.75rem] p-2.5 opacity-0 pointer-events-none"
                 />
               );
             }

@@ -11,6 +11,7 @@ import {
 } from "react";
 import { navigateToErgebnisse } from "@/lib/scroll-ergebnisse";
 import { useScrollChromeHidden } from "@/lib/scroll-chrome";
+import { scrollBehavior } from "@/lib/scroll";
 
 const LAST_MEETUP_KEY = "bg-buddy:last-meetup-id";
 
@@ -105,7 +106,7 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
     if (!isAtPageTop()) {
       document
         .getElementById("meetup-page-top")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        ?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
       return;
     }
 
@@ -138,7 +139,7 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
       },
       {
         key: "vote",
-        label: "Vote",
+        label: "Stimmen",
         icon: "🗳️",
         ariaLabel: "Stimmen vergeben",
         href: voteHref,

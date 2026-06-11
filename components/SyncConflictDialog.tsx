@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ModalShell } from "@/components/ModalShell";
 import type { FieldChoice, GameSyncConflict, SyncFieldName } from "@/lib/game-sync";
 import {
   applyExpansionCascade,
@@ -58,21 +59,13 @@ export function SyncConflictDialog({
   }
 
   return (
-    <div
-      className="modal-overlay"
-      role="presentation"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !pending) onCancel();
-      }}
+    <ModalShell
+      labelledBy="sync-conflict-title"
+      panelClassName="max-w-3xl w-full"
+      dismissDisabled={pending}
+      onDismiss={onCancel}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="sync-conflict-title"
-        className="modal-panel max-w-3xl w-full"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="modal-body flex flex-col gap-4 safe-bottom">
+      <div className="modal-body flex flex-col gap-4 safe-bottom">
           <div>
             <h2 id="sync-conflict-title" className="section-title">
               {title}
@@ -87,7 +80,7 @@ export function SyncConflictDialog({
 
           <div className="max-h-72 overflow-y-auto border border-[var(--border)] rounded-lg">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-[var(--card)]">
+              <thead className="sticky top-0 bg-[var(--surface)]">
                 <tr className="text-left text-[var(--muted)]">
                   <th className="p-2 font-medium">Spiel</th>
                   <th className="p-2 font-medium">Feld</th>
@@ -191,7 +184,7 @@ export function SyncConflictDialog({
                 disabled={pending || visibleFieldCount === 0}
                 onClick={() => onApply(choices)}
               >
-                {pending ? "Wird angewendet…" : applyLabel}
+                {pending ? "Wende an…" : applyLabel}
               </button>
               <button
                 type="button"
@@ -203,8 +196,7 @@ export function SyncConflictDialog({
               </button>
             </div>
           </div>
-        </div>
       </div>
-    </div>
+    </ModalShell>
   );
 }

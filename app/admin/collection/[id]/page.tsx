@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { LoginForm } from "@/components/LoginForm";
 import { GameEditClient } from "@/components/GameEditClient";
+import { PageHeader } from "@/components/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export default async function GameEditPage({
         <p className="text-[var(--muted)]">
           Bitte melde dich an, um Spiele zu bearbeiten.
         </p>
-        <div className="card" style={{ padding: "var(--space-card)" }}>
+        <div className="card card-pad">
           <LoginForm />
         </div>
       </div>
@@ -45,14 +46,13 @@ export default async function GameEditPage({
 
   return (
     <div className="container-app max-w-2xl flex flex-col gap-6">
-      <div>
-        <h1 className="page-title">Spiel bearbeiten</h1>
+      <PageHeader eyebrow="Administration" title="Spiel bearbeiten">
         <p className="text-[var(--muted)] text-sm">
           BGG #{game.id}
           {game.manuallyEditedFields.length > 0 &&
             ` · ${game.manuallyEditedFields.length} manuell bearbeitete Felder`}
         </p>
-      </div>
+      </PageHeader>
 
       <p className="text-sm text-[var(--muted)]">
         Gespeicherte Änderungen werden beim CSV-Import und Offline-Cache als

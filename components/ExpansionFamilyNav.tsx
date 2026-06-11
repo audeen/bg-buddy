@@ -183,6 +183,7 @@ export function ExpansionFamilyNav({
           activeExpansion ? "chip-active" : ""
         }`}
         aria-expanded={expanded}
+        aria-label={`Erweiterungen auswählen: ${toggleLabel}`}
         onClick={(e) => {
           stopCardActivation(e);
           setExpanded((v) => !v);

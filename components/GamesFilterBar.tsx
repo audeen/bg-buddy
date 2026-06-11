@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
   activeFilterLabels,
   clearFilterKind,
@@ -18,13 +18,7 @@ import {
   type RatingBlock,
 } from "@/lib/game-filters";
 
-function scrollToElement(id: string) {
-  requestAnimationFrame(() => {
-    document
-      .getElementById(id)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-}
+import { scrollToElement } from "@/lib/scroll";
 
 type GamesFilterBarProps = {
   genres: string[];
@@ -57,11 +51,20 @@ export function GamesFilterBar({
 }: GamesFilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
   const sp = Object.fromEntries(searchParams.entries()) as Record<string, string>;
   const filters = parseGameFilters(sp);
   const sort = parseGameSort(sp);
+
+  // Lokaler Such-State, damit nicht jeder Tastendruck einen Server-Roundtrip auslöst.
+  const [searchValue, setSearchValue] = useState(filters.q);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, []);
 
   const navigate = (next: GameFilters, nextSort: GameSort = sort) => {
     const params = filtersToSearchParams(next, nextSort);
@@ -73,14 +76,24 @@ export function GamesFilterBar({
   };
 
   const updateField = (patch: Partial<GameFilters>) => {
-    navigate({ ...filters, ...patch });
+    navigate({ ...filters, q: searchValue, ...patch });
+  };
+
+  const onSearchChange = (value: string) => {
+    setSearchValue(value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      navigate({ ...filters, q: value });
+    }, 300);
   };
 
   const removeFilter = (kind: GameFilterKind) => {
-    navigate(clearFilterKind(filters, kind));
+    if (kind === "q") setSearchValue("");
+    navigate(clearFilterKind({ ...filters, q: searchValue }, kind));
   };
 
   const resetFilters = () => {
+    setSearchValue("");
     navigate(EMPTY_FILTERS, sort);
   };
 
@@ -88,12 +101,20 @@ export function GamesFilterBar({
   const ratingOptions = ratingTierOptions(ratingBlocks);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div
+      className={`flex flex-col gap-3 transition-opacity ${isPending ? "opacity-60" : ""}`}
+      aria-busy={isPending}
+    >
       <details className="filter-dropdown">
         <summary className="filter-dropdown-summary">
           <span className="font-semibold text-sm">Filter</span>
           {activeLabels.length > 0 && (
             <span className="filter-dropdown-badge">{activeLabels.length}</span>
+          )}
+          {isPending && (
+            <span className="text-xs text-[var(--muted)]" role="status">
+              Aktualisiere…
+            </span>
           )}
           <span className="filter-dropdown-chevron" aria-hidden="true">
             ▼
@@ -108,8 +129,9 @@ export function GamesFilterBar({
           </label>
           <input
             id="games-q"
-            value={filters.q}
-            onChange={(e) => updateField({ q: e.target.value })}
+            type="search"
+            value={searchValue}
+            onChange={(e) => onSearchChange(e.target.value)}
             className="input"
             placeholder="Spielname…"
           />
@@ -207,7 +229,7 @@ export function GamesFilterBar({
         </div>
         <div>
           <label className="label" htmlFor="games-rating">
-            Rating
+            Bewertung
           </label>
           <select
             id="games-rating"

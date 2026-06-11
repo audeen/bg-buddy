@@ -84,7 +84,7 @@ export async function revealSecretMenu(page: Page) {
   await page.reload();
 }
 
-export async function expectNoConsoleErrors(page: Page, label: string) {
+export async function expectNoConsoleErrors(page: Page) {
   const errors: string[] = [];
   page.on("console", (msg) => {
     if (msg.type() === "error") {

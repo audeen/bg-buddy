@@ -9,6 +9,7 @@ import {
   setGameLentOutAction,
 } from "@/app/actions";
 import { PlusIcon } from "@/components/icons";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export type CollectionGameRow = {
   id: number;
@@ -19,6 +20,18 @@ export type CollectionGameRow = {
   lentOut: boolean;
 };
 
+/** Welche Aktion gerade läuft — pro Zeile statt global. */
+type PendingAction =
+  | { type: "lent"; id: number }
+  | { type: "remove"; id: number }
+  | { type: "purge" }
+  | null;
+
+type ConfirmState =
+  | { type: "remove"; game: CollectionGameRow }
+  | { type: "purge" }
+  | null;
+
 export function CollectionManagerClient({
   games,
   onAddGame,
@@ -27,7 +40,9 @@ export function CollectionManagerClient({
   onAddGame?: () => void;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const [confirm, setConfirm] = useState<ConfirmState>(null);
   const [query, setQuery] = useState("");
   const [onlyBase, setOnlyBase] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -47,21 +62,14 @@ export function CollectionManagerClient({
     });
   }, [games, query, onlyBase]);
 
-  function purgeCollection() {
-    if (games.length === 0) return;
-
-    if (
-      !window.confirm(
-        `Wirklich alle ${games.length} Spiele aus der Sammlung löschen?\n\nStimmen in Treffen werden ebenfalls gelöscht. Meetups bleiben bestehen.`,
-      )
-    ) {
-      return;
-    }
-
+  function runPurge() {
     setMessage(null);
     setError(null);
+    setPendingAction({ type: "purge" });
     startTransition(async () => {
       const res = await purgeCollectionAction();
+      setPendingAction(null);
+      setConfirm(null);
       if (res && "error" in res && res.error) {
         setError(res.error);
         return;
@@ -70,7 +78,7 @@ export function CollectionManagerClient({
       setMessage(
         deleted === 0
           ? "Sammlung ist bereits leer."
-          : `${deleted} ${deleted === 1 ? "Spiel" : "Spiele"} aus der Sammlung entfernt.`,
+          : `${deleted} ${deleted === 1 ? "Spiel" : "Spiele"} aus der Datenbank gelöscht.`,
       );
       router.refresh();
     });
@@ -82,8 +90,10 @@ export function CollectionManagerClient({
 
     setMessage(null);
     setError(null);
+    setPendingAction({ type: "lent", id: game.id });
     startTransition(async () => {
       const res = await setGameLentOutAction(game.id, nextLent);
+      setPendingAction(null);
       if (res && "error" in res && res.error) {
         setError(res.error);
         return;
@@ -97,28 +107,26 @@ export function CollectionManagerClient({
     });
   }
 
-  function removeGame(game: CollectionGameRow) {
+  function runRemove(game: CollectionGameRow) {
     const label = game.name;
-    if (
-      !window.confirm(
-        `„${label}" wirklich aus der Sammlung entfernen?\n\nStimmen in Treffen für dieses Spiel werden ebenfalls gelöscht.`,
-      )
-    ) {
-      return;
-    }
-
     setMessage(null);
     setError(null);
+    setPendingAction({ type: "remove", id: game.id });
     startTransition(async () => {
       const res = await removeGameFromCollectionAction(game.id);
+      setPendingAction(null);
+      setConfirm(null);
       if (res && "error" in res && res.error) {
         setError(res.error);
         return;
       }
-      setMessage(`„${label}" wurde entfernt.`);
+      setMessage(`„${label}" wurde gelöscht.`);
       router.refresh();
     });
   }
+
+  const isPending = (check: (a: NonNullable<PendingAction>) => boolean) =>
+    pendingAction != null && check(pendingAction);
 
   return (
     <div className="flex flex-col gap-4">
@@ -138,8 +146,7 @@ export function CollectionManagerClient({
         {onAddGame && (
           <button
             type="button"
-            className="btn btn-ghost shrink-0"
-            style={{ width: "2.75rem", height: "2.75rem", padding: 0 }}
+            className="btn btn-ghost shrink-0 w-[2.75rem] h-[2.75rem] p-0"
             aria-label="Spiel hinzufügen"
             title="Spiel hinzufügen"
             onClick={onAddGame}
@@ -170,15 +177,42 @@ export function CollectionManagerClient({
         </label>
       </div>
 
-      {message && <p className="text-sm text-[var(--accent)]">{message}</p>}
-      {error && <p className="text-sm text-[var(--primary)]">{error}</p>}
+      {message && (
+        <p className="text-sm text-[var(--accent)]" role="status">
+          {message}
+        </p>
+      )}
+      {error && (
+        <p className="text-sm text-[var(--danger)]" role="alert">
+          {error}
+        </p>
+      )}
 
       <p className="text-sm text-[var(--muted)]">
         {filtered.length} von {games.length}{" "}
         {games.length === 1 ? "Spiel" : "Spielen"}
       </p>
 
-      {filtered.length === 0 ? (
+      {games.length === 0 ? (
+        <div
+          className="card card-pad flex flex-col items-start gap-3"
+        >
+          <h2 className="section-title">Noch keine Spiele in der Sammlung</h2>
+          <p className="text-sm text-[var(--muted)]">
+            Importiere deine BGG-Sammlung oder füge ein Spiel manuell hinzu.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/admin/import" className="btn btn-primary">
+              Sammlung importieren
+            </Link>
+            {onAddGame && (
+              <button type="button" className="btn btn-ghost" onClick={onAddGame}>
+                Spiel hinzufügen
+              </button>
+            )}
+          </div>
+        </div>
+      ) : filtered.length === 0 ? (
         <p className="text-[var(--muted)]">Keine Spiele passen zum Filter.</p>
       ) : (
         <ul className="card divide-y divide-[var(--border)] overflow-hidden">
@@ -206,27 +240,32 @@ export function CollectionManagerClient({
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <Link
                   href={`/admin/collection/${g.id}`}
-                  className="btn btn-ghost w-full sm:w-auto min-h-[44px] text-center"
+                  className="btn btn-ghost w-full sm:w-auto min-h-[2.75rem] text-center"
                 >
                   Bearbeiten
                 </Link>
                 <button
                   type="button"
-                  className={`btn w-full sm:w-auto min-h-[44px] ${
+                  className={`btn w-full sm:w-auto min-h-[2.75rem] ${
                     g.lentOut ? "btn-primary" : "btn-ghost"
                   }`}
-                  disabled={pending}
+                  disabled={isPending((a) => "id" in a && a.id === g.id)}
+                  aria-busy={isPending((a) => a.type === "lent" && a.id === g.id)}
                   onClick={() => toggleLentOut(g)}
                 >
-                  {pending ? "…" : g.lentOut ? "Zurückgegeben" : "Spiel verliehen"}
+                  {isPending((a) => a.type === "lent" && a.id === g.id)
+                    ? "Speichere…"
+                    : g.lentOut
+                      ? "Zurückgegeben"
+                      : "Spiel verliehen"}
                 </button>
                 <button
                   type="button"
-                  className="btn btn-ghost text-[var(--primary)] w-full sm:w-auto min-h-[44px]"
-                  disabled={pending}
-                  onClick={() => removeGame(g)}
+                  className="btn btn-ghost text-[var(--danger)] w-full sm:w-auto min-h-[2.75rem]"
+                  disabled={isPending((a) => "id" in a && a.id === g.id)}
+                  onClick={() => setConfirm({ type: "remove", game: g })}
                 >
-                  {pending ? "…" : "Entfernen"}
+                  Entfernen
                 </button>
               </div>
             </li>
@@ -235,10 +274,9 @@ export function CollectionManagerClient({
       )}
 
       <section
-        className="card flex flex-col gap-3 border-dashed"
-        style={{ padding: "var(--space-card)" }}
+        className="card card-pad flex flex-col gap-3 border-dashed"
       >
-        <h2 className="font-bold text-sm text-[var(--primary)]">Danger Zone</h2>
+        <h2 className="font-bold text-sm text-[var(--danger)]">Gefahrenbereich</h2>
         <p className="text-sm text-[var(--muted)]">
           Löscht <strong>alle</strong> Spiele aus der Datenbank. Stimmen in Treffen
           werden mitgelöscht, Duell-Snapshots in Meetups zurückgesetzt. Danach kannst
@@ -246,13 +284,43 @@ export function CollectionManagerClient({
         </p>
         <button
           type="button"
-          className="btn btn-ghost text-[var(--primary)] w-full sm:w-fit min-h-[44px]"
-          disabled={pending || games.length === 0}
-          onClick={purgeCollection}
+          className="btn btn-ghost text-[var(--danger)] w-full sm:w-fit min-h-[2.75rem]"
+          disabled={isPending((a) => a.type === "purge") || games.length === 0}
+          onClick={() => setConfirm({ type: "purge" })}
         >
-          {pending ? "…" : "Sammlung leeren"}
+          Sammlung leeren
         </button>
       </section>
+
+      <ConfirmDialog
+        open={confirm?.type === "remove"}
+        title={
+          confirm?.type === "remove"
+            ? `„${confirm.game.name}" löschen?`
+            : ""
+        }
+        description="Das Spiel wird endgültig aus der Datenbank gelöscht. Stimmen in Treffen für dieses Spiel werden ebenfalls gelöscht."
+        confirmLabel="Endgültig löschen"
+        pendingLabel="Lösche…"
+        pending={isPending((a) => a.type === "remove")}
+        onConfirm={() => {
+          if (confirm?.type === "remove") runRemove(confirm.game);
+        }}
+        onCancel={() => setConfirm(null)}
+      />
+
+      <ConfirmDialog
+        open={confirm?.type === "purge"}
+        title={`Alle ${games.length} Spiele löschen?`}
+        description={
+          "Alle Spiele werden endgültig aus der Datenbank gelöscht.\nStimmen in Treffen werden mitgelöscht, Treffen bleiben bestehen."
+        }
+        confirmLabel="Alles endgültig löschen"
+        pendingLabel="Lösche…"
+        pending={isPending((a) => a.type === "purge")}
+        onConfirm={runPurge}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   );
 }

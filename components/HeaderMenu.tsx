@@ -121,7 +121,7 @@ export function HeaderMenu({ userName }: { userName: string }) {
       {revealed ? (
         <button
           type="button"
-          className="btn btn-ghost min-w-[44px] min-h-[44px] px-3"
+          className="btn btn-ghost min-w-[2.75rem] min-h-[2.75rem] px-3"
           aria-expanded={open}
           aria-haspopup="menu"
           aria-label="Menü"
@@ -134,7 +134,7 @@ export function HeaderMenu({ userName }: { userName: string }) {
       ) : (
         <button
           type="button"
-          className="min-w-[44px] min-h-[44px] opacity-0"
+          className="min-w-[2.75rem] min-h-[2.75rem] opacity-0"
           aria-hidden
           tabIndex={-1}
           onClick={registerClick}
@@ -215,7 +215,7 @@ export function HeaderMenu({ userName }: { userName: string }) {
 
       {(message || error) && (
         <p
-          className={`text-xs mt-1 max-w-[12rem] text-right ${error ? "text-[var(--primary)]" : "text-[var(--muted)]"}`}
+          className={`text-xs mt-1 max-w-[12rem] text-right ${error ? "text-[var(--danger)]" : "text-[var(--muted)]"}`}
           role={error ? "alert" : "status"}
         >
           {error ?? message}

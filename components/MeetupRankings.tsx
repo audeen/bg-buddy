@@ -7,7 +7,7 @@ import type { RankEntry } from "@/lib/types/ranking";
 import type { DuelPhase } from "@/lib/duel-pairs";
 import { groupProgressText } from "@/lib/duel-progress";
 import { estimateRankingBlockHeight } from "@/lib/ranking-layout";
-import { sleep } from "@/lib/motion";
+import { prefersReducedMotion, sleep } from "@/lib/motion";
 import {
   followErgebnisseLayoutGrowth,
   retryScrollToErgebnisseElement,
@@ -108,6 +108,7 @@ export function MeetupRankings({
     const stored = readStoredRankingView(meetupId);
     if (stored) {
       autoSwitched.current = true;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- bewusst: sessionStorage erst nach Hydration lesen, sonst Hydration-Mismatch
       setView(stored === "expansion" && !expansionRankingAvailable ? "base" : stored);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -150,6 +151,11 @@ export function MeetupRankings({
   }, []);
 
   const handleReveal = useCallback(async () => {
+    if (prefersReducedMotion()) {
+      setUserRevealed(true);
+      followErgebnisseLayoutGrowth();
+      return;
+    }
     setUnlocking(true);
     await sleep(UNLOCK_FADE_MS);
     setUserRevealed(true);
@@ -244,10 +250,9 @@ export function MeetupRankings({
 
       {!revealed ? (
         <div
-          className={`card flex flex-col items-center gap-3 text-center ${
+          className={`card card-pad flex flex-col items-center gap-3 text-center ${
             unlocking ? "ranking-unlock-exit" : ""
           }`}
-          style={{ padding: "var(--space-card)" }}
         >
           {isHost && (
             <p className="text-sm text-[var(--muted)]">{baseStatusText}</p>

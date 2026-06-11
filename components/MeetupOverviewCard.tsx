@@ -53,15 +53,17 @@ export function MeetupOverviewCard({
 
   return (
     <article
-      className="card flex flex-col gap-3 h-full"
-      style={{ padding: "var(--space-card)" }}
+      className="card card-pad card-game relative flex flex-col gap-3 h-full"
     >
+      {/* Ganze Karte verlinkt (Stretched-Link); Join-Button liegt per z-index darüber. */}
       <Link
         href={`/meetups/${meetupId}`}
-        className="flex flex-col gap-2 hover:opacity-90 transition-opacity -m-1 p-1 rounded-lg"
-      >
+        className="card-overlay"
+        aria-label={title}
+      />
+      <div className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
-          <span className="font-bold text-lg">{title}</span>
+          <span className="section-title">{title}</span>
           <span className="chip chip-accent shrink-0 tabular-nums">
             {expected} ★
           </span>
@@ -70,7 +72,7 @@ export function MeetupOverviewCard({
           📅 {formatDate(scheduledAt)}
           {location ? ` · ${location}` : ""}
         </span>
-      </Link>
+      </div>
 
       <MeetupParticipants expected={expected} players={players} compact />
 
@@ -78,12 +80,14 @@ export function MeetupOverviewCard({
         <span className="text-xs text-[var(--muted)]">
           von {hostName} · {voteCount} Stimmen
         </span>
-        <JoinMeetupButton
-          meetupId={meetupId}
-          isLoggedIn={isLoggedIn}
-          isRegistered={registered}
-          canLeave={leaveAllowed}
-        />
+        <div className="relative z-[2]">
+          <JoinMeetupButton
+            meetupId={meetupId}
+            isLoggedIn={isLoggedIn}
+            isRegistered={registered}
+            canLeave={leaveAllowed}
+          />
+        </div>
       </div>
     </article>
   );

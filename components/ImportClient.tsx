@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { importCsvAction, importCsvPreviewAction } from "@/app/actions";
 import { SyncConflictDialog } from "@/components/SyncConflictDialog";
@@ -98,13 +98,29 @@ export function ImportClient({
     }
   }
 
+  // Bricht eine laufende Anreicherung sauber ab (Button oder Unmount).
+  const enrichAbortRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    return () => enrichAbortRef.current?.abort();
+  }, []);
+
+  function cancelEnrichment() {
+    enrichAbortRef.current?.abort();
+  }
+
   async function runEnrichment() {
+    const controller = new AbortController();
+    enrichAbortRef.current = controller;
     setEnriching(true);
     setEnrichError(null);
     setEnrichDone(false);
     try {
       for (let i = 0; i < 200; i++) {
-        const res = await fetch("/api/enrich", { method: "POST" });
+        if (controller.signal.aborted) break;
+        const res = await fetch("/api/enrich", {
+          method: "POST",
+          signal: controller.signal,
+        });
         const data = await res.json();
         if (!res.ok) {
           setEnrichError(data.error ?? "Fehler beim Anreichern.");
@@ -117,9 +133,12 @@ export function ImportClient({
         }
         await new Promise((r) => setTimeout(r, 1200));
       }
-    } catch {
-      setEnrichError("Netzwerkfehler beim Anreichern.");
+    } catch (err) {
+      if (!(err instanceof DOMException && err.name === "AbortError")) {
+        setEnrichError("Netzwerkfehler beim Anreichern.");
+      }
     } finally {
+      enrichAbortRef.current = null;
       setEnriching(false);
       router.refresh();
     }
@@ -152,8 +171,8 @@ export function ImportClient({
         />
       )}
 
-      <section className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
-        <h2 className="section-title">1. Collection-CSV hochladen</h2>
+      <section className="card card-pad flex flex-col gap-3">
+        <h2 className="section-title">1. Sammlungs-CSV hochladen</h2>
         <p className="text-sm text-[var(--muted)]">
           Exportiere auf BoardGameGeek unter <em>Profile → Collection → Export</em>{" "}
           deine Sammlung als CSV und lade sie hier hoch. Bestehende Spiele werden
@@ -166,7 +185,7 @@ export function ImportClient({
             name="file"
             accept=".csv,text/csv"
             required
-            className="input min-h-[44px]"
+            className="input min-h-[2.75rem]"
           />
           <button
             type="submit"
@@ -177,17 +196,19 @@ export function ImportClient({
           </button>
         </form>
         {importState && "ok" in importState && (
-          <p className="text-sm text-[var(--accent)]">
+          <p className="text-sm text-[var(--accent)]" role="status">
             {importState.total} Einträge importiert ({importState.standalone}{" "}
             Spiele, {importState.expansions} Erweiterungen).
           </p>
         )}
         {importState && "error" in importState && (
-          <p className="text-sm text-[var(--primary)]">{importState.error}</p>
+          <p className="text-sm text-[var(--danger)]" role="alert">
+            {importState.error}
+          </p>
         )}
       </section>
 
-      <section className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
+      <section className="card card-pad flex flex-col gap-3">
         <h2 className="section-title">2. Cover &amp; Details von BGG laden</h2>
         <p className="text-sm text-[var(--muted)]">
           Lädt Beschreibung, Cover, Kategorien und Mechaniken über die offizielle
@@ -201,9 +222,19 @@ export function ImportClient({
             className="btn btn-primary btn-lg sm:w-fit"
             onClick={runEnrichment}
             disabled={enriching || total === 0}
+            aria-busy={enriching}
           >
-            {enriching ? "Lädt…" : "Von BGG laden"}
+            {enriching ? "Lade…" : "Von BGG laden"}
           </button>
+          {enriching && (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={cancelEnrichment}
+            >
+              Abbrechen
+            </button>
+          )}
         </div>
 
         {total === 0 && (
@@ -212,10 +243,14 @@ export function ImportClient({
           </p>
         )}
         {enrichDone && (
-          <p className="text-sm text-[var(--accent)]">Anreicherung fertig.</p>
+          <p className="text-sm text-[var(--accent)]" role="status">
+            Anreicherung fertig.
+          </p>
         )}
         {enrichError && (
-          <p className="text-sm text-[var(--primary)]">{enrichError}</p>
+          <p className="text-sm text-[var(--danger)]" role="alert">
+            {enrichError}
+          </p>
         )}
 
         <div className="flex items-center gap-3 text-sm text-[var(--muted)]">

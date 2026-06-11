@@ -456,7 +456,7 @@ export function PickClient({
           ))}
         </div>
         {limitMsg && (
-          <p className="text-xs text-[var(--accent)]" role="alert">
+          <p className="text-xs text-[var(--danger)]" role="alert">
             {limitMsg}
           </p>
         )}

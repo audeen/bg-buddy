@@ -11,13 +11,7 @@ import {
   type GameSort,
 } from "@/lib/game-filters";
 
-function scrollToElement(id: string) {
-  requestAnimationFrame(() => {
-    document
-      .getElementById(id)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-}
+import { scrollToElement } from "@/lib/scroll";
 
 type FilterChipButtonProps = {
   tag: GameTag;
@@ -56,7 +50,8 @@ export function FilterChipButton({
   return (
     <button
       type="button"
-      className={`${baseClass} chip-interactive${isActive ? " chip-active" : ""}`}
+      className={`${baseClass} chip-interactive relative z-[2]${isActive ? " chip-active" : ""}`}
+      aria-pressed={isActive}
       onClick={(e) => {
         e.stopPropagation();
         onNavigate?.();

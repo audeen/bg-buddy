@@ -1,17 +1,19 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
 import {
   DuelArena,
   DuelChoiceCard,
-  DuelProgressBar,
+  DuelFinishedCard,
+  DuelRankingLink,
+  DuelStickyBar,
+  DuelStickyFooter,
+  DuelVoteError,
 } from "@/components/DuelArena";
 import { duelVoteAction } from "@/app/actions";
 import { pairKey, type DuelPair, type DuelPhase } from "@/lib/duel-pairs";
 import { groupProgressText } from "@/lib/duel-progress";
 import { useDuelVoting } from "@/lib/use-duel-voting";
-import { markScrollToErgebnisse } from "@/lib/scroll-ergebnisse";
 import { resolveCoverSrc } from "@/lib/cover-image";
 
 export interface DuellGame {
@@ -73,29 +75,22 @@ export function DuellClient({
 
   if (finished) {
     return (
-      <div
-        className="card flex flex-col items-center gap-3 text-center"
-        style={{ padding: "1.5rem" }}
-      >
-        <p className="text-lg font-bold">Deine Duelle sind erledigt!</p>
-        <div className="w-full max-w-sm flex flex-col gap-2">
-          <p className="text-[var(--muted)] text-sm tabular-nums">
+      <DuelFinishedCard
+        meetupId={meetupId}
+        title="Deine Duelle sind erledigt!"
+        meta={
+          <>
             Duell {myDone} von {myPairs.length} · {expected} Spieler ★
-          </p>
-          <DuelProgressBar done={myDone} total={myPairs.length} complete />
-        </div>
-        {isHost && (
-          <p className="text-[var(--muted)] text-sm">{progressLabel}</p>
-        )}
-        <Link
-          href={`/meetups/${meetupId}`}
-          scroll={false}
-          onClick={() => markScrollToErgebnisse()}
-          className="btn btn-primary btn-lg w-full max-w-sm"
-        >
-          Zum Ranking
-        </Link>
-      </div>
+          </>
+        }
+        done={myDone}
+        total={myPairs.length}
+        extra={
+          isHost ? (
+            <p className="text-[var(--muted)] text-sm">{progressLabel}</p>
+          ) : undefined
+        }
+      />
     );
   }
 
@@ -103,26 +98,20 @@ export function DuellClient({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="sticky-below-header -mx-1 filter-bar flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-3">
-          <span className="chip chip-accent">{expected} Spieler ★</span>
-          <span className="text-sm font-semibold tabular-nums">
-            Duell {myDone + 1} von {myPairs.length}
-          </span>
-        </div>
-        <DuelProgressBar done={myDone} total={myPairs.length} />
-        {isHost && (
-          <p className="text-xs text-[var(--muted)] tabular-nums">
-            {progressLabel}
-          </p>
-        )}
-      </div>
+      <DuelStickyBar
+        chipLabel={`${expected} Spieler ★`}
+        done={myDone}
+        total={myPairs.length}
+        meta={
+          isHost ? (
+            <p className="text-xs text-[var(--muted)] tabular-nums">
+              {progressLabel}
+            </p>
+          ) : undefined
+        }
+      />
 
-      {voteError && (
-        <p className="text-sm text-center text-[var(--accent)]" role="alert">
-          {voteError}
-        </p>
-      )}
+      <DuelVoteError error={voteError} />
 
       <p className="text-center text-sm text-[var(--muted)]">
         Was möchtest du lieber mit {expected} Spielern spielen?
@@ -159,16 +148,12 @@ export function DuellClient({
         </p>
       )}
 
-      <div className="sticky-above-nav -mx-4 px-4 py-3 mt-2 bg-[var(--background)] border-t border-[var(--border)] flex justify-center sm:static sm:border-0 sm:mx-0 sm:px-0 sm:mt-0">
-        <Link
-          href={`/meetups/${meetupId}`}
-          scroll={false}
-          onClick={() => markScrollToErgebnisse()}
+      <DuelStickyFooter>
+        <DuelRankingLink
+          meetupId={meetupId}
           className="btn btn-primary w-full sm:w-auto text-center"
-        >
-          Zum Ranking
-        </Link>
-      </div>
+        />
+      </DuelStickyFooter>
     </div>
   );
 }

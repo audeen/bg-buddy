@@ -39,9 +39,7 @@ export function ParticipantPickChip({
           <span
             key={i}
             className={
-              i < points
-                ? "text-[var(--warning)]"
-                : "text-[var(--foreground)] opacity-30"
+              i < points ? "text-[var(--warning)]" : "text-[var(--muted)]"
             }
             aria-hidden
           >
