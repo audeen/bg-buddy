@@ -7,6 +7,7 @@ export type ExpansionConfigGame = {
   name: string;
   thumbnail: string | null;
   image: string | null;
+  coverUrl?: string | null;
   minPlayers: number | null;
   maxPlayers: number | null;
 };

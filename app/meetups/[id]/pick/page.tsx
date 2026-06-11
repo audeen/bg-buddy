@@ -34,7 +34,7 @@ export default async function PickPage({
       hostChoiceMode: true,
       hostForcedGameId: true,
       hostForcedGame: {
-        select: { id: true, name: true, thumbnail: true, image: true },
+        select: { id: true, name: true, thumbnail: true, image: true, coverUrl: true },
       },
       hostChoiceGames: {
         select: { gameId: true },
@@ -61,6 +61,7 @@ export default async function PickPage({
         description: true,
         thumbnail: true,
         image: true,
+        coverUrl: true,
         minPlayers: true,
         maxPlayers: true,
         minPlaytime: true,

@@ -10,6 +10,7 @@ import { GameDetailModal } from "@/components/GameDetailModal";
 import { HostForcedGameBanner } from "@/components/HostForcedGameBanner";
 import { ScrollToTopButton } from "@/components/ScrollToTopButton";
 import type { GameCardGame, GameDetailData } from "@/lib/types/game";
+import { resolveCoverSrc } from "@/lib/cover-image";
 import { setPickPointsAction } from "@/app/actions";
 import { resolveDetailGameView } from "@/lib/expansion-detail";
 import {
@@ -82,6 +83,7 @@ export function PickClient({
     name: string;
     thumbnail: string | null;
     image: string | null;
+    coverUrl?: string | null;
   } | null;
   activeFilters: GameFilters;
   sort: GameSort;
@@ -339,7 +341,7 @@ export function PickClient({
         <HostForcedGameBanner
           gameName={hostForcedGame.name}
           description="Der Host hat dieses Spiel festgelegt — keine Abstimmung nötig."
-          coverSrc={hostForcedGame.thumbnail ?? hostForcedGame.image}
+          coverSrc={resolveCoverSrc(hostForcedGame)}
         >
           <Link href={`/meetups/${meetupId}`} className="btn btn-primary">
             Zurück zum Treffen

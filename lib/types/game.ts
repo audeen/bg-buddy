@@ -6,6 +6,7 @@ export interface GameCardGame extends GameTagSource {
   name: string;
   thumbnail: string | null;
   image: string | null;
+  coverUrl?: string | null;
   isExpansion?: boolean;
 }
 
@@ -17,6 +18,7 @@ export interface GameDetailData {
   description: string | null;
   image: string | null;
   thumbnail: string | null;
+  coverUrl?: string | null;
   minPlayers: number | null;
   maxPlayers: number | null;
   minPlaytime: number | null;

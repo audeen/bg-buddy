@@ -19,6 +19,7 @@ export {
   importCsvPreviewAction,
   importCsvAction,
   updateGameMetadataAction,
+  setGameCoverAction,
   addGameByBggIdAction,
   setGameLentOutAction,
   removeGameFromCollectionAction,

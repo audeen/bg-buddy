@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ExpansionFamilyNav } from "@/components/ExpansionFamilyNav";
 import { FilterChipButton } from "@/components/FilterChipButton";
-import { GameCover } from "@/components/GameCover";
+import { GameDetailCover } from "@/components/GameDetailCover";
 import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import { playerRange, playtime, weightLabel } from "@/lib/format";
 import {
@@ -79,13 +79,7 @@ export function GameDetailView({
   return (
     <div className="flex flex-col gap-6">
       <div className={`grid gap-6 ${compact ? "grid-cols-1" : "md:grid-cols-[260px_1fr]"}`}>
-        <div className="card overflow-hidden flex flex-col" style={{ boxShadow: "var(--shadow-md)" }}>
-          <GameCover
-            src={game.image ?? game.thumbnail}
-            alt={game.name}
-            className={`w-full aspect-square ${compact ? "" : "md:aspect-auto"}`}
-          />
-        </div>
+        <GameDetailCover key={game.id} game={game} compact={compact} />
 
         <div className="flex flex-col gap-4">
           <div>

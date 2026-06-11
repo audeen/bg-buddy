@@ -272,6 +272,74 @@ export async function updateGameMetadataAction(gameId: number, formData: FormDat
   return { ok: true, changedFields };
 }
 
+const MAX_COVER_UPLOAD_BYTES = 3 * 1024 * 1024;
+
+/**
+ * Setzt das manuelle Cover-Override eines Spiels.
+ * FormData: type = "url" | "upload" | "reset", dazu url bzw. file.
+ */
+export async function setGameCoverAction(gameId: number, formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Bitte zuerst anmelden." };
+
+  if (!Number.isFinite(gameId)) {
+    return { error: "Ungültige Spiel-ID." };
+  }
+
+  const existing = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: { id: true },
+  });
+  if (!existing) return { error: "Spiel nicht gefunden." };
+
+  const type = String(formData.get("type") ?? "");
+
+  if (type === "reset") {
+    await prisma.$transaction([
+      prisma.gameCoverImage.deleteMany({ where: { gameId } }),
+      prisma.game.update({ where: { id: gameId }, data: { coverUrl: null } }),
+    ]);
+  } else if (type === "url") {
+    const url = String(formData.get("url") ?? "").trim();
+    if (!/^https?:\/\//i.test(url)) {
+      return { error: "Bitte eine gültige http(s)-URL angeben." };
+    }
+    await prisma.$transaction([
+      prisma.gameCoverImage.deleteMany({ where: { gameId } }),
+      prisma.game.update({ where: { id: gameId }, data: { coverUrl: url } }),
+    ]);
+  } else if (type === "upload") {
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      return { error: "Keine Datei ausgewählt." };
+    }
+    if (!file.type.startsWith("image/")) {
+      return { error: "Bitte eine Bilddatei auswählen." };
+    }
+    if (file.size > MAX_COVER_UPLOAD_BYTES) {
+      return { error: "Bild zu groß (max. 3 MB)." };
+    }
+    const data = Buffer.from(await file.arrayBuffer());
+    // Cache-Buster in der URL, damit Browser das neue Bild laden.
+    const coverUrl = `/api/games/${gameId}/cover?v=${Date.now()}`;
+    await prisma.$transaction([
+      prisma.gameCoverImage.upsert({
+        where: { gameId },
+        create: { gameId, data, mimeType: file.type },
+        update: { data, mimeType: file.type },
+      }),
+      prisma.game.update({ where: { id: gameId }, data: { coverUrl } }),
+    ]);
+  } else {
+    return { error: "Ungültige Aktion." };
+  }
+
+  revalidateCollectionPaths(gameId);
+  revalidatePath(`/admin/collection/${gameId}`);
+
+  return { ok: true };
+}
+
 export type AddGameActionResult =
   | { ok: true; name: string; bggId: number; created?: boolean; alreadyExists?: boolean }
   | { error: string };

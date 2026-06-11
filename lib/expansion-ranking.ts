@@ -5,10 +5,12 @@ import {
   type ExpansionConfigGame,
   type ExpansionDuelVoteRow,
 } from "@/lib/expansion-duel";
+import { resolveCoverSrc } from "@/lib/cover-image";
 
 export type CoverMeta = {
   thumbnail: string | null;
   image: string | null;
+  coverUrl?: string | null;
 };
 
 export function coverByVoteGameIdForConfigs(
@@ -25,6 +27,7 @@ export function coverByVoteGameIdForConfigs(
     map.set(config.voteGameId, {
       thumbnail: coverGame.thumbnail,
       image: coverGame.image,
+      coverUrl: coverGame.coverUrl ?? null,
     });
   }
   return map;
@@ -45,7 +48,7 @@ export function buildExpansionRankingEntries(
     return {
       id: config.voteGameId,
       name: config.label,
-      thumbnail: cover?.thumbnail ?? cover?.image ?? null,
+      thumbnail: cover ? resolveCoverSrc(cover) : null,
       points: duelWins,
       voters: 0,
       duelWins,

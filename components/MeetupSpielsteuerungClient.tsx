@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import type { HostChoiceMode } from "@prisma/client";
 import { GameCover } from "@/components/GameCover";
+import { resolveCoverSrc } from "@/lib/cover-image";
 import { AddGameModal } from "@/components/AddGameModal";
 import { PlusIcon } from "@/components/icons";
 import {
@@ -23,6 +24,7 @@ export type SpielsteuerungGameRow = {
   name: string;
   thumbnail: string | null;
   image: string | null;
+  coverUrl?: string | null;
 };
 
 type SearchResult = { id: number; name: string; thumbnail: string | null };
@@ -299,7 +301,7 @@ export function MeetupSpielsteuerungClient({
         {forcedGame ? (
           <div className="flex items-center gap-3 rounded-lg border border-[var(--accent)] bg-[var(--surface-elevated)] p-3">
             <GameCover
-              src={forcedGame.thumbnail ?? forcedGame.image}
+              src={resolveCoverSrc(forcedGame)}
               alt={forcedGame.name}
               className="h-16 w-12 shrink-0 rounded"
             />
@@ -478,7 +480,7 @@ export function MeetupSpielsteuerungClient({
                   className="flex items-center gap-2 rounded-lg border border-[var(--border)] p-2"
                 >
                   <GameCover
-                    src={g.thumbnail ?? g.image}
+                    src={resolveCoverSrc(g)}
                     alt={g.name}
                     className="h-10 w-8 shrink-0 rounded"
                   />

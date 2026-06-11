@@ -209,6 +209,7 @@ export default async function DuellPage({
       name: true,
       thumbnail: true,
       image: true,
+      coverUrl: true,
       bestPlayerCounts: true,
       rank: true,
       bggRating: true,

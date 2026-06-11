@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { GameCover } from "@/components/GameCover";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameCardGame, GameDetailData } from "@/lib/types/game";
+import { resolveCoverSrc } from "@/lib/cover-image";
 import {
   buildGameTags,
   chipClassForVariant,
@@ -88,7 +89,7 @@ export function GameOfTheDayCard({
   const closeDetail = useCallback(() => setOpen(false), []);
   const tags = buildGameTags(game, { playerCount, ownedExpansions });
   const { meta, content } = groupGameTags(tags);
-  const coverSrc = game.thumbnail ?? game.image;
+  const coverSrc = resolveCoverSrc(game);
 
   return (
     <>

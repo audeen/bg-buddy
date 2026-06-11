@@ -8,6 +8,7 @@ export const gameCardSelect = {
   description: true,
   thumbnail: true,
   image: true,
+  coverUrl: true,
   minPlayers: true,
   maxPlayers: true,
   minPlaytime: true,

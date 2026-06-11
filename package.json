@@ -35,7 +35,9 @@
     "test:barcode-lookup": "tsx scripts/test-barcode-lookup.ts",
     "test:meetup-guest-games": "tsx scripts/test-meetup-guest-games.ts",
     "test:host-game-control": "tsx scripts/test-host-game-control.ts",
-    "test:pick-base-only": "tsx scripts/test-pick-base-only.ts"
+    "test:pick-base-only": "tsx scripts/test-pick-base-only.ts",
+    "test:cover-image": "tsx scripts/test-cover-image.ts",
+    "test:bgg-gallery": "tsx scripts/test-bgg-gallery.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

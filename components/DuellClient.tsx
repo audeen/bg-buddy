@@ -12,12 +12,14 @@ import { pairKey, type DuelPair, type DuelPhase } from "@/lib/duel-pairs";
 import { groupProgressText } from "@/lib/duel-progress";
 import { useDuelVoting } from "@/lib/use-duel-voting";
 import { markScrollToErgebnisse } from "@/lib/scroll-ergebnisse";
+import { resolveCoverSrc } from "@/lib/cover-image";
 
 export interface DuellGame {
   id: number;
   name: string;
   thumbnail: string | null;
   image: string | null;
+  coverUrl?: string | null;
 }
 
 export function DuellClient({
@@ -132,7 +134,7 @@ export function DuellClient({
           busy={busy}
           left={
             <DuelChoiceCard
-              coverSrc={gameA.thumbnail ?? gameA.image}
+              coverSrc={resolveCoverSrc(gameA)}
               label={gameA.name}
               side="left"
               outcome={outcomeFor(gameA.id)}
@@ -142,7 +144,7 @@ export function DuellClient({
           }
           right={
             <DuelChoiceCard
-              coverSrc={gameB.thumbnail ?? gameB.image}
+              coverSrc={resolveCoverSrc(gameB)}
               label={gameB.name}
               side="right"
               outcome={outcomeFor(gameB.id)}

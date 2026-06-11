@@ -11,12 +11,14 @@ import { expansionDuelVoteAction } from "@/app/actions";
 import { pairKey, type DuelPair } from "@/lib/duel-pairs";
 import { useDuelVoting } from "@/lib/use-duel-voting";
 import { markScrollToErgebnisse } from "@/lib/scroll-ergebnisse";
+import { resolveCoverSrc } from "@/lib/cover-image";
 
 export type ExpansionDuellChoice = {
   voteGameId: number;
   label: string;
   thumbnail: string | null;
   image: string | null;
+  coverUrl?: string | null;
 };
 
 export function ExpansionDuellClient({
@@ -110,7 +112,7 @@ export function ExpansionDuellClient({
           busy={busy}
           left={
             <DuelChoiceCard
-              coverSrc={choiceA.thumbnail ?? choiceA.image}
+              coverSrc={resolveCoverSrc(choiceA)}
               label={choiceA.label}
               labelLines={3}
               side="left"
@@ -121,7 +123,7 @@ export function ExpansionDuellClient({
           }
           right={
             <DuelChoiceCard
-              coverSrc={choiceB.thumbnail ?? choiceB.image}
+              coverSrc={resolveCoverSrc(choiceB)}
               label={choiceB.label}
               labelLines={3}
               side="right"

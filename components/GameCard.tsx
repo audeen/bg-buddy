@@ -18,6 +18,7 @@ import { LentOutBanner } from "@/components/LentOutBanner";
 import { FilterChipButton } from "@/components/FilterChipButton";
 import type { GameFilters, GameSort } from "@/lib/game-filters";
 import { buildGameTags, groupGameTags } from "@/lib/game-tags";
+import { resolveCoverSrc } from "@/lib/cover-image";
 import type { GameCardGame } from "@/lib/types/game";
 
 type BaseProps = {
@@ -153,7 +154,7 @@ function CardCover({
       aria-label={coverAriaLabel}
     >
       <GameCover
-        src={game.thumbnail ?? game.image}
+        src={resolveCoverSrc(game)}
         alt={game.name}
         className="w-full aspect-square"
       />

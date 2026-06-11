@@ -4,8 +4,11 @@ import type { FormEvent, ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { updateGameMetadataAction } from "@/app/actions";
+import { setGameCoverAction, updateGameMetadataAction } from "@/app/actions";
 import { SYNC_FIELD_LABELS, type SyncFieldName } from "@/lib/game-sync";
+import { CoverPickerDialog } from "@/components/CoverPickerDialog";
+import { GameCover } from "@/components/GameCover";
+import { resolveCoverSrc } from "@/lib/cover-image";
 
 export type GameEditData = {
   id: number;
@@ -27,6 +30,7 @@ export type GameEditData = {
   description: string | null;
   image: string | null;
   thumbnail: string | null;
+  coverUrl: string | null;
   categories: string[];
   mechanics: string[];
   expandsGameIds: number[];
@@ -82,6 +86,23 @@ export function GameEditClient({
   const [isExpansion, setIsExpansion] = useState(game.isExpansion);
   const [selectedBaseIds, setSelectedBaseIds] = useState<number[]>(game.expandsGameIds);
   const [extraBaseId, setExtraBaseId] = useState("");
+  const [coverDialogOpen, setCoverDialogOpen] = useState(false);
+  const [coverPending, startCoverTransition] = useTransition();
+  const [coverError, setCoverError] = useState<string | null>(null);
+
+  function resetCover() {
+    setCoverError(null);
+    startCoverTransition(async () => {
+      const formData = new FormData();
+      formData.set("type", "reset");
+      const res = await setGameCoverAction(game.id, formData);
+      if (res && "error" in res && res.error) {
+        setCoverError(res.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
 
   const manual = new Set(game.manuallyEditedFields);
 
@@ -130,6 +151,7 @@ export function GameEditClient({
   }
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <section className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
         <h2 className="section-title">Stammdaten</h2>
@@ -309,6 +331,52 @@ export function GameEditClient({
         </div>
       </section>
 
+      <section className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
+        <h2 className="section-title">
+          Cover
+          {game.coverUrl && (
+            <span className="text-xs text-[var(--accent)] ml-1">(manuell gewählt)</span>
+          )}
+        </h2>
+        <div className="flex flex-wrap items-start gap-4">
+          <GameCover
+            src={resolveCoverSrc(game)}
+            alt={game.name}
+            className="w-32 aspect-square rounded-lg shrink-0"
+          />
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-[var(--muted)] max-w-xs">
+              {game.coverUrl
+                ? "Eigenes Cover aktiv — das BGG-Cover wird nicht angezeigt."
+                : "Es wird das offizielle BGG-Cover angezeigt."}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={coverPending}
+                onClick={() => setCoverDialogOpen(true)}
+              >
+                Cover ändern
+              </button>
+              {game.coverUrl && (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  disabled={coverPending}
+                  onClick={resetCover}
+                >
+                  {coverPending ? "Zurücksetzen…" : "Auf BGG-Cover zurücksetzen"}
+                </button>
+              )}
+            </div>
+            {coverError && (
+              <p className="text-sm text-[var(--primary)]">{coverError}</p>
+            )}
+          </div>
+        </div>
+      </section>
+
       {isExpansion && (
         <section className="card flex flex-col gap-3" style={{ padding: "var(--space-card)" }}>
           <h2 className="section-title">
@@ -380,26 +448,9 @@ export function GameEditClient({
             defaultValue={game.description ?? ""}
           />
         </div>
-        <div>
-          <FieldLabel htmlFor="image" field="image" manual={manual} />
-          <input
-            id="image"
-            name="image"
-            type="url"
-            className="input"
-            defaultValue={game.image ?? ""}
-          />
-        </div>
-        <div>
-          <FieldLabel htmlFor="thumbnail" field="thumbnail" manual={manual} />
-          <input
-            id="thumbnail"
-            name="thumbnail"
-            type="url"
-            className="input"
-            defaultValue={game.thumbnail ?? ""}
-          />
-        </div>
+        {/* BGG-Bildfelder bleiben unverändert erhalten; Cover wird oben verwaltet. */}
+        <input type="hidden" name="image" value={game.image ?? ""} />
+        <input type="hidden" name="thumbnail" value={game.thumbnail ?? ""} />
         <div>
           <FieldLabel htmlFor="categories" field="categories" manual={manual}>
             Kategorien (kommagetrennt)
@@ -443,5 +494,18 @@ export function GameEditClient({
         </Link>
       </div>
     </form>
+
+    {coverDialogOpen && (
+      <CoverPickerDialog
+        gameId={game.id}
+        gameName={game.name}
+        onClose={() => setCoverDialogOpen(false)}
+        onSaved={() => {
+          setCoverDialogOpen(false);
+          router.refresh();
+        }}
+      />
+    )}
+    </>
   );
 }

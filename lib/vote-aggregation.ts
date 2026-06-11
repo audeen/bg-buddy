@@ -6,6 +6,7 @@ import {
   type DuelTieBreakContext,
 } from "@/lib/duel-tiebreaker";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
+import { resolveCoverSrc } from "@/lib/cover-image";
 import { FULL_THRESHOLD } from "@/lib/vote-limits";
 
 type VoteRow = {
@@ -20,6 +21,7 @@ type VoteRow = {
     name: string;
     thumbnail: string | null;
     image: string | null;
+    coverUrl?: string | null;
     bestPlayerCounts?: number[];
     rank?: number | null;
     bggRating?: number | null;
@@ -44,7 +46,7 @@ export function buildRankingByCount(
         entry: {
           id: v.game.id,
           name: v.game.name,
-          thumbnail: v.game.thumbnail ?? v.game.image,
+          thumbnail: resolveCoverSrc(v.game),
           points: 0,
           voters: 0,
         },
@@ -101,7 +103,7 @@ export function buildDuelCopelandByCount(
   for (const v of votes) {
     gameMeta.set(v.gameId, {
       name: v.game.name,
-      thumbnail: v.game.thumbnail ?? v.game.image,
+      thumbnail: resolveCoverSrc(v.game),
       bestPlayerCounts: v.game.bestPlayerCounts ?? [],
       rank: v.game.rank ?? null,
       bggRating: v.game.bggRating ?? null,
@@ -199,7 +201,7 @@ export function buildCombinedByCount(
   for (const v of votes) {
     gameMeta.set(v.gameId, {
       name: v.game.name,
-      thumbnail: v.game.thumbnail ?? v.game.image,
+      thumbnail: resolveCoverSrc(v.game),
     });
   }
 
