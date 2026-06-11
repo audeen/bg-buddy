@@ -23,12 +23,16 @@ const HOT_XML = `<?xml version="1.0" encoding="utf-8"?>
   <item id="999" rank="3">
     <name value="" />
   </item>
+  <item id="447508" rank="4">
+    <name value="The Old King&amp;#039;s Crown" />
+    <yearpublished value="2025" />
+  </item>
 </items>`;
 
 function testParseHotXml() {
   const items = parseHotXml(HOT_XML);
   // Eintrag ohne Namen wird verworfen, Rest nach Rang sortiert.
-  assert.equal(items.length, 2);
+  assert.equal(items.length, 3);
   assert.deepEqual(items[0], {
     bggId: 429861,
     rank: 1,
@@ -38,6 +42,8 @@ function testParseHotXml() {
   });
   assert.equal(items[1].bggId, 350184);
   assert.equal(items[1].year, 2023);
+  // BGG doppelt-kodiert Namen (&amp;#039;) → Entities werden dekodiert.
+  assert.equal(items[2].name, "The Old King's Crown");
 }
 
 function testParseHotXmlEmpty() {

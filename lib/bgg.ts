@@ -1,6 +1,6 @@
 import Papa from "papaparse";
 import { XMLParser } from "fast-xml-parser";
-import { stripBggHtml } from "@/lib/bgg/html";
+import { decodeBggText, stripBggHtml } from "@/lib/bgg/html";
 import { parseExpandsGameIdsFromBggXmlLinks } from "@/lib/expansion-links";
 
 export interface ParsedGame {
@@ -150,7 +150,7 @@ function attrValue(node: unknown): string | null {
 function primaryName(item: Record<string, unknown>): string | null {
   const names = asArray(item.name as Record<string, string>[] | undefined);
   const primary = names.find((n) => n.type === "primary") ?? names[0];
-  return primary?.value?.trim() || null;
+  return decodeBggText(primary?.value);
 }
 
 type BggPollResult = { value?: string; numvotes?: string; level?: string };
@@ -267,12 +267,12 @@ export function parseThingXml(xml: string): ThingDetails[] {
     const links = asArray(item.link as Record<string, string>[] | undefined);
     const categories = links
       .filter((l) => l.type === "boardgamecategory")
-      .map((l) => l.value)
-      .filter(Boolean);
+      .map((l) => decodeBggText(l.value))
+      .filter((v): v is string => v != null);
     const mechanics = links
       .filter((l) => l.type === "boardgamemechanic")
-      .map((l) => l.value)
-      .filter(Boolean);
+      .map((l) => decodeBggText(l.value))
+      .filter((v): v is string => v != null);
 
     const expandsGameIds = parseExpandsGameIdsFromBggXmlLinks(links);
     const itemType = String(item.type ?? "").toLowerCase();
@@ -506,7 +506,7 @@ export function parseHotXml(xml: string): BggHotItem[] {
     .map((item: Record<string, unknown>): BggHotItem | null => {
       const bggId = toInt(item.id as string);
       const rank = toInt(item.rank as string);
-      const name = attrValue(item.name);
+      const name = decodeBggText(attrValue(item.name));
       if (bggId == null || rank == null || !name) return null;
 
       return {
