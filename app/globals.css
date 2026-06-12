@@ -655,6 +655,49 @@ h3 {
     }
   }
 
+  /*
+   * Deck-Ansicht: eine große Karte zentriert, Nachbarn im Anschnitt.
+   * Natives Scroll-Snap — Wischen blättert, ohne Klick/Tap auszulösen
+   * (Touch-Pan feuert pointercancel statt pointerup).
+   */
+  .game-deck-viewport {
+    /* cqw-Basis, damit Kartenbreite und Rand-Padding konsistent gegen
+       dieselbe Breite rechnen (% wäre mal Content-Box, mal Containing Block). */
+    container-type: inline-size;
+  }
+
+  .game-deck {
+    --deck-card-w: min(82cqw, 26rem);
+    display: flex;
+    gap: 0.9rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    padding-block: 0.5rem;
+    /* Symmetrischer Rand, damit auch erste/letzte Karte zentriert snappen. */
+    padding-inline: calc((100cqw - var(--deck-card-w)) / 2);
+  }
+
+  .game-deck::-webkit-scrollbar {
+    display: none;
+  }
+
+  .game-deck-item {
+    flex: 0 0 var(--deck-card-w);
+    min-width: 0;
+    scroll-snap-align: center;
+    /* Ein Wisch = eine Karte (Tinder-Gefühl statt Durchfliegen). */
+    scroll-snap-stop: always;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .game-deck {
+      scroll-behavior: auto;
+    }
+  }
+
   .chip-interactive {
     cursor: pointer;
     transition:

@@ -5,10 +5,13 @@ import type { HostChoiceMode } from "@prisma/client";
 import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
 import { GameCard } from "@/components/GameCard";
+import { GameDeck } from "@/components/GameDeck";
 import { GamesFilterBar } from "@/components/GamesFilterBar";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import { HostForcedGameBanner } from "@/components/HostForcedGameBanner";
 import { ScrollToTopButton } from "@/components/ScrollToTopButton";
+import { ViewModeToggle } from "@/components/ViewModeToggle";
+import { useGamesViewMode } from "@/lib/use-view-mode";
 import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import { resolveCoverSrc } from "@/lib/cover-image";
 import { setPickPointsAction } from "@/app/actions";
@@ -130,6 +133,7 @@ export function PickClient({
   const persistChainRef = useRef(Promise.resolve());
   const tapQueueRef = useRef<Array<() => void>>([]);
   const tapFlushScheduledRef = useRef(false);
+  const { viewMode, setViewMode } = useGamesViewMode();
 
   useMeetupPhaseRefresh(true);
 
@@ -199,6 +203,15 @@ export function PickClient({
     });
   }, [filteredEligible, hostChoiceMode, hostChoiceIdSet, sort, guestIdSet]);
 
+  // Deck-Ansicht: eine gemeinsame Reihenfolge, Host-Empfehlungen zuerst.
+  const deckGames = useMemo(
+    () => [...hostChoiceVisible, ...visible],
+    [hostChoiceVisible, visible],
+  );
+
+  const isHostRecommendation = (g: PickGame) =>
+    hostChoiceMode === "HIGHLIGHT" && hostChoiceIdSet.has(g.id);
+
   const expectedLocked =
     hostForced || (picksLocked && selected === expected);
 
@@ -209,7 +222,7 @@ export function PickClient({
     const isLent = !!g.lentOut;
     const isHostRec = options?.hostRecommendation ?? false;
     return (
-      <li key={g.id} className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 flex-1">
         {!isHostRec && isGuest && (
           <span className="text-xs font-semibold text-[var(--accent)] px-0.5">
             Temporär
@@ -238,7 +251,7 @@ export function PickClient({
             });
           }}
         />
-      </li>
+      </div>
     );
   }
 
@@ -423,14 +436,8 @@ export function PickClient({
         />
       </Suspense>
 
-      {hostChoiceVisible.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-            {hostChoiceVisible.map((g) =>
-              renderGameCard(g, { hostRecommendation: true }),
-            )}
-          </ul>
-        </section>
+      {(visible.length > 0 || hostChoiceVisible.length > 0) && (
+        <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
       )}
 
       {visible.length === 0 && hostChoiceVisible.length === 0 ? (
@@ -441,14 +448,44 @@ export function PickClient({
               ? "Keine Spiele für die gewählten Filter."
               : `Keine Spiele für ${selected} Spieler in der Sammlung.`}
         </p>
-      ) : visible.length > 0 ? (
-        <ul
+      ) : viewMode === "deck" ? (
+        <GameDeck
           key={filterListKey}
-          className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          {visible.map((g) => renderGameCard(g))}
-        </ul>
-      ) : null}
+          items={deckGames}
+          getKey={(g) => g.id}
+          renderItem={(g) =>
+            renderGameCard(g, { hostRecommendation: isHostRecommendation(g) })
+          }
+          label="Spiele zur Abstimmung"
+        />
+      ) : (
+        <>
+          {hostChoiceVisible.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                {hostChoiceVisible.map((g) => (
+                  <li key={g.id} className="flex">
+                    {renderGameCard(g, { hostRecommendation: true })}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {visible.length > 0 && (
+            <ul
+              key={filterListKey}
+              className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+            >
+              {visible.map((g) => (
+                <li key={g.id} className="flex">
+                  {renderGameCard(g)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
 
       <GameDetailModal
         game={detail?.viewGame ?? null}

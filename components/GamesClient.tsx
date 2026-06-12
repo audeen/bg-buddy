@@ -2,10 +2,13 @@
 
 import { useCallback, useState, type CSSProperties } from "react";
 import { GameCard } from "@/components/GameCard";
+import { GameDeck } from "@/components/GameDeck";
 import { GameDetailModal } from "@/components/GameDetailModal";
+import { ViewModeToggle } from "@/components/ViewModeToggle";
 import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import { resolveDetailGameView } from "@/lib/expansion-detail";
 import type { GameFilters } from "@/lib/game-filters";
+import { useGamesViewMode } from "@/lib/use-view-mode";
 
 type DetailState = {
   viewGame: GameDetailData;
@@ -25,6 +28,7 @@ export function GamesClient({
 }) {
   const [detail, setDetail] = useState<DetailState | null>(null);
   const closeDetail = useCallback(() => setDetail(null), []);
+  const { viewMode, setViewMode } = useGamesViewMode();
 
   if (games.length === 0) {
     return (
@@ -37,34 +41,49 @@ export function GamesClient({
     );
   }
 
+  const renderCard = (g: GameDetailData & { lentOut?: boolean }) => (
+    <GameCard
+      game={g}
+      playerCount={playerCount}
+      activeFilters={activeFilters}
+      filterMode
+      ownedExpansions={expansionsByBaseId[String(g.id)] ?? []}
+      lentOut={g.lentOut}
+      className={g.lentOut ? "opacity-50" : ""}
+      onClick={(displayed) => {
+        const expansions = expansionsByBaseId[String(g.id)] ?? [];
+        setDetail({
+          baseGame: g,
+          viewGame: resolveDetailGameView(g, displayed, expansions),
+        });
+      }}
+    />
+  );
+
   return (
-    <>
-      <ul className="grid gap-3 sm:gap-5 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {games.map((g, i) => (
-          <li
-            key={g.id}
-            className="card-reveal"
-            style={{ "--reveal-i": i } as CSSProperties}
-          >
-            <GameCard
-              game={g}
-              playerCount={playerCount}
-              activeFilters={activeFilters}
-              filterMode
-              ownedExpansions={expansionsByBaseId[String(g.id)] ?? []}
-              lentOut={g.lentOut}
-              className={g.lentOut ? "opacity-50" : ""}
-              onClick={(displayed) => {
-                const expansions = expansionsByBaseId[String(g.id)] ?? [];
-                setDetail({
-                  baseGame: g,
-                  viewGame: resolveDetailGameView(g, displayed, expansions),
-                });
-              }}
-            />
-          </li>
-        ))}
-      </ul>
+    <div className="flex flex-col gap-2">
+      <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
+
+      {viewMode === "deck" ? (
+        <GameDeck
+          items={games}
+          getKey={(g) => g.id}
+          renderItem={renderCard}
+          label="Spielesammlung"
+        />
+      ) : (
+        <ul className="grid gap-3 sm:gap-5 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {games.map((g, i) => (
+            <li
+              key={g.id}
+              className="card-reveal"
+              style={{ "--reveal-i": i } as CSSProperties}
+            >
+              {renderCard(g)}
+            </li>
+          ))}
+        </ul>
+      )}
 
       <GameDetailModal
         game={detail?.viewGame ?? null}
@@ -79,6 +98,6 @@ export function GamesClient({
             : []
         }
       />
-    </>
+    </div>
   );
 }
