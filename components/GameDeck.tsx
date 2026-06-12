@@ -103,14 +103,18 @@ export function GameDeck<T>({
   }, []);
 
   // Neue Liste (Filter/Sortierung/Spieleranzahl) → zurück zur ersten Karte.
-  const [prevItems, setPrevItems] = useState(items);
-  if (items !== prevItems) {
-    setPrevItems(items);
+  // Vergleich über die Keys statt der Array-Referenz: Server-Refreshes
+  // (z. B. Phase-Polling) liefern inhaltsgleiche Listen mit neuer Referenz
+  // und dürfen die aktuelle Karte nicht zurücksetzen.
+  const itemsKey = items.map(getKey).join("\u0000");
+  const [prevItemsKey, setPrevItemsKey] = useState(itemsKey);
+  if (itemsKey !== prevItemsKey) {
+    setPrevItemsKey(itemsKey);
     setIndex(0);
   }
   useEffect(() => {
     listRef.current?.scrollTo({ left: 0, behavior: "instant" });
-  }, [items]);
+  }, [itemsKey]);
 
   const step = (delta: number) => {
     const list = listRef.current;
