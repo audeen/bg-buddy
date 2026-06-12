@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminEditGameLink } from "@/components/AdminEditGameLink";
 import { ExpansionFamilyNav } from "@/components/ExpansionFamilyNav";
 import { FilterChipButton } from "@/components/FilterChipButton";
 import { GameDetailCover } from "@/components/GameDetailCover";
@@ -83,9 +84,12 @@ export function GameDetailView({
 
         <div className="flex flex-col gap-4">
           <div>
-            <h1 className="page-title" id={titleId}>
-              {game.name}
-            </h1>
+            <div className="flex items-start justify-between gap-3">
+              <h1 className="page-title" id={titleId}>
+                {game.name}
+              </h1>
+              <AdminEditGameLink gameId={game.id} />
+            </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
               {game.year ? (
                 <p className="text-[var(--muted)]">{game.year}</p>
