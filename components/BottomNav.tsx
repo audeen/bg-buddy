@@ -12,6 +12,7 @@ import {
 } from "react";
 import { navigateToErgebnisse } from "@/lib/scroll-ergebnisse";
 import { useScrollChromeHidden } from "@/lib/scroll-chrome";
+import { useVisualViewportBottomGap } from "@/lib/visual-viewport-gap";
 import { scrollBehavior } from "@/lib/scroll";
 import {
   BallotIcon,
@@ -101,6 +102,7 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
   }, [pathname]);
 
   const chromeHidden = useScrollChromeHidden();
+  useVisualViewportBottomGap();
   const meetupId = pathMeetupId ?? storedMeetupId ?? fallbackMeetupId;
   const voteHref = meetupId ? `/meetups/${meetupId}/pick` : "/";
 
@@ -167,7 +169,7 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
 
   return (
     <nav
-      className={`fixed bottom-0 left-0 right-0 z-30 px-3 safe-bottom bottom-nav-chrome pointer-events-none${chromeHidden ? " chrome-hidden" : ""}`}
+      className={`fixed left-0 right-0 z-30 px-3 safe-bottom bottom-nav-chrome pointer-events-none${chromeHidden ? " chrome-hidden" : ""}`}
       aria-label="Hauptnavigation"
     >
       <ul className="bottom-nav-dock pointer-events-auto mx-auto w-full max-w-md md:max-w-lg">

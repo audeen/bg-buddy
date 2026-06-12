@@ -271,7 +271,8 @@ h3 {
 
   .pb-nav {
     padding-bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) +
+        var(--vv-bottom-gap, 0px)
     );
     transition: padding-bottom 0.25s ease;
   }
@@ -323,7 +324,8 @@ h3 {
     position: sticky;
     z-index: 15;
     bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) +
+        var(--vv-bottom-gap, 0px)
     );
     transition: bottom 0.25s ease;
   }
@@ -1446,6 +1448,9 @@ h3 {
   }
 
   .bottom-nav-chrome {
+    /* Hebt die Leiste über einklappbare Browser-Toolbars (Firefox iOS),
+       die fixed bottom:0 überdecken; Lücke via --vv-bottom-gap gemessen. */
+    bottom: var(--vv-bottom-gap, 0px);
     transition: transform 0.25s ease;
   }
 
@@ -1481,7 +1486,8 @@ h3 {
     border: 1px solid var(--border);
     box-shadow: var(--shadow-md);
     bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 1rem
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) +
+        var(--vv-bottom-gap, 0px) + 1rem
     );
     transition: bottom 0.25s ease;
   }
@@ -1496,7 +1502,8 @@ h3 {
 
   .scroll-to-top-above-footer {
     bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 5rem
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) +
+        var(--vv-bottom-gap, 0px) + 5rem
     );
   }
 
