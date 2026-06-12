@@ -105,7 +105,7 @@ export function GameOfTheDayCard({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="card card-pad flex flex-col gap-3 hover:opacity-90 transition-opacity text-left w-full"
+        className="card card-game relative card-pad flex flex-col gap-3 text-left w-full"
       >
         <GotdChipMarquee label={label} meta={meta} />
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { HostChoiceMode } from "@prisma/client";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import { useMeetupPhaseRefresh } from "@/lib/use-meetup-phase-refresh";
 import { GameCard } from "@/components/GameCard";
 import { GamesFilterBar } from "@/components/GamesFilterBar";
@@ -35,6 +35,7 @@ import {
   type RatingBlock,
 } from "@/lib/game-filters";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
+import { CheckIcon } from "@/components/icons";
 
 export type PickGame = GameDetailData & { lentOut?: boolean };
 
@@ -131,11 +132,6 @@ export function PickClient({
   const tapFlushScheduledRef = useRef(false);
 
   useMeetupPhaseRefresh(true);
-
-  useEffect(() => {
-    document.documentElement.classList.add("pick-page");
-    return () => document.documentElement.classList.remove("pick-page");
-  }, []);
 
   const usedPoints = pointsForCount(points, selected);
   const budgetLeft = MAX_PICK_POINTS - usedPoints;
@@ -325,16 +321,6 @@ export function PickClient({
     return msg;
   })();
 
-  const scrollTopClass = atLimit
-    ? "scroll-to-top-above-picker-at-limit"
-    : "scroll-to-top-above-picker";
-
-  const pickerPaddingClass = hostForced
-    ? ""
-    : atLimit
-      ? "pb-sticky-picker-at-limit"
-      : "pb-sticky-picker";
-
   if (hostForced && hostForcedGame) {
     return (
       <div className="flex flex-col gap-6">
@@ -352,7 +338,68 @@ export function PickClient({
   }
 
   return (
-    <div className={`flex flex-col gap-6 ${pickerPaddingClass}`}>
+    <div className="flex flex-col gap-6">
+      <div className="picker-top-bar">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-semibold">Spieleranzahl</span>
+          <span
+            className="vote-checks"
+            role="status"
+            aria-label={`${usedPoints} von ${MAX_PICK_POINTS} Stimmen abgegeben`}
+          >
+            {Array.from({ length: MAX_PICK_POINTS }, (_, i) => (
+              <span
+                key={i}
+                className={`vote-check${i < usedPoints ? " vote-check-filled" : ""}`}
+                aria-hidden
+              >
+                <CheckIcon size={14} />
+              </span>
+            ))}
+          </span>
+        </div>
+        <div className="tabs-scroll">
+          {availableCounts.map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => {
+                setSelected(n);
+                setLimitMsg(null);
+              }}
+              className={`btn btn-tab ${selected === n ? "btn-primary" : "btn-ghost"} ${
+                n === expected ? "btn-tab-expected" : ""
+              }`}
+            >
+              {n}
+              {n === expected ? " ★" : ""}
+            </button>
+          ))}
+        </div>
+        {limitMsg && (
+          <p className="text-xs text-[var(--danger)]" role="alert">
+            {limitMsg}
+          </p>
+        )}
+        {atLimit && (
+          <div className="flex flex-col gap-1.5 sm:items-center sm:gap-2">
+            <p className="text-xs text-[var(--muted)] sm:text-center">
+              {MAX_PICK_POINTS} Stimmen für {selected} Spieler vergeben
+              {selected === expected ? " ★" : ""}.
+              {selected === expected && readyForDuels && !picksLocked
+                ? " Duell-Modus ist frei."
+                : null}
+            </p>
+            <Link
+              href={`/meetups/${meetupId}`}
+              className="btn btn-primary w-full sm:w-auto text-center"
+            >
+              Fertig
+            </Link>
+          </div>
+        )}
+      </div>
+
       <p
         className="text-sm text-[var(--muted)] leading-relaxed rounded-lg border border-[var(--border)] px-3 py-2"
         role="status"
@@ -422,62 +469,8 @@ export function PickClient({
 
       <ScrollToTopButton
         scrollTargetId={scrollTargetId}
-        className={scrollTopClass}
         title="Stimmen vergeben"
       />
-
-      <div className="sticky-above-nav picker-sticky-bar safe-bottom">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-semibold">Spieleranzahl</span>
-          <span
-            className="text-xs font-bold tabular-nums text-[var(--muted)]"
-            role="status"
-            aria-label={`${usedPoints} von ${MAX_PICK_POINTS} Stimmen abgegeben`}
-          >
-            {usedPoints} / {MAX_PICK_POINTS} Stimmen abgegeben
-          </span>
-        </div>
-        <div className="tabs-scroll">
-          {availableCounts.map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => {
-                setSelected(n);
-                setLimitMsg(null);
-              }}
-              className={`btn btn-tab ${selected === n ? "btn-primary" : "btn-ghost"} ${
-                n === expected ? "btn-tab-expected" : ""
-              }`}
-            >
-              {n}
-              {n === expected ? " ★" : ""}
-            </button>
-          ))}
-        </div>
-        {limitMsg && (
-          <p className="text-xs text-[var(--danger)]" role="alert">
-            {limitMsg}
-          </p>
-        )}
-        {atLimit && (
-          <div className="flex flex-col gap-1.5 sm:items-center sm:gap-2">
-            <p className="text-xs text-[var(--muted)] sm:text-center">
-              {MAX_PICK_POINTS} Stimmen für {selected} Spieler vergeben
-              {selected === expected ? " ★" : ""}.
-              {selected === expected && readyForDuels && !picksLocked
-                ? " Duell-Modus ist frei."
-                : null}
-            </p>
-            <Link
-              href={`/meetups/${meetupId}`}
-              className="btn btn-primary w-full sm:w-auto text-center"
-            >
-              Fertig
-            </Link>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

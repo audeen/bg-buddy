@@ -280,7 +280,7 @@ export function HomeSpotlightCarousel({
                 aria-hidden
                 className={`h-2 rounded-full transition-all ${
                   i === safeIndex
-                    ? "w-5 bg-[var(--accent)]"
+                    ? "w-5 bg-[var(--gold)]"
                     : "w-2 bg-[var(--border)] hover:bg-[var(--muted)]"
                 }`}
               />

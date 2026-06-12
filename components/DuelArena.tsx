@@ -44,7 +44,7 @@ export function DuelChoiceCard({
   side,
   outcome,
   onClick,
-  labelLines = 2,
+  labelLines = 3,
 }: {
   coverSrc: string | null;
   label: string;
@@ -69,7 +69,7 @@ export function DuelChoiceCard({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`card card-game overflow-hidden flex flex-col h-full w-full min-h-[2.75rem] ${enterClass} ${outcomeClass}`}
+      className={`card card-game relative overflow-hidden flex flex-col h-full w-full min-h-[2.75rem] ${enterClass} ${outcomeClass}`}
     >
       <div className="relative flex-1 min-h-0 w-full">
         <GameCover
@@ -78,10 +78,14 @@ export function DuelChoiceCard({
           className="h-full w-full min-h-[8rem] card-game-cover sm:aspect-square sm:min-h-0"
         />
       </div>
-      <span
-        className={`p-2 sm:p-3 font-bold text-sm sm:text-base text-center leading-tight ${clampClass} shrink-0`}
-      >
-        {label}
+      {/* Padding liegt auf dem Wrapper: line-clamp + padding-bottom würde sonst
+          die verborgene Folgezeile halb durch den Padding-Bereich scheinen lassen. */}
+      <span className="block p-2 sm:p-3 shrink-0 w-full">
+        <span
+          className={`block font-bold text-sm sm:text-base text-center leading-tight ${clampClass}`}
+        >
+          {label}
+        </span>
       </span>
     </button>
   );

@@ -56,12 +56,12 @@ test("Phase 1: Setup — Login, Session, Dummy-Meetups", async ({ page }) => {
 
   // Geheimmenü + Dummy-Treffen
   await revealSecretMenu(page);
-  const menuBtn = page.locator("header.header-chrome").getByRole("button", { name: "Menü", exact: true });
+  const menuBtn = page.locator("footer").getByRole("button", { name: "Menü", exact: true });
   await expect(menuBtn).toBeVisible();
   record("Setup", "Geheimmenü per sessionStorage aktiviert", "pass");
 
   await menuBtn.click();
-  await page.getByRole("menuitem", { name: "Dummy-Treffen erzeugen" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Dummy-Treffen erzeugen" }).click();
   await expect(page.getByText(/Dummy-Treffen erstellt/)).toBeVisible({ timeout: 30_000 });
   record("Setup", "Dummy-Treffen erzeugen", "pass");
 
@@ -170,13 +170,13 @@ test("Phase 3: Auth & Treffen-Verwaltung", async ({ page }) => {
   await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 3000 });
   record("Auth/Meetups", "QR-Modal schließt mit Escape", "pass");
 
-  // Header-Menü click-outside
+  // Admin-Menü (Footer-Sheet) öffnet und schließt per Escape
   await revealSecretMenu(page);
-  await page.locator("header.header-chrome").getByRole("button", { name: "Menü", exact: true }).click();
-  await expect(page.getByRole("menu")).toBeVisible();
-  await page.locator("body").click({ position: { x: 10, y: 10 } });
-  await expect(page.getByRole("menu")).not.toBeVisible({ timeout: 3000 });
-  record("Auth/Meetups", "Header-Menü schließt bei Klick außerhalb", "pass");
+  await page.locator("footer").getByRole("button", { name: "Menü", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Admin-Menü" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Admin-Menü" })).not.toBeVisible({ timeout: 3000 });
+  record("Auth/Meetups", "Admin-Menü schließt mit Escape", "pass");
 
   // Gast: Join/Leave/Kick
   await logout(page);
@@ -410,8 +410,8 @@ test("Phase 7: Aufräumen", async ({ page }) => {
 
   // Dummy-Treffen purgen
   await revealSecretMenu(page);
-  await page.locator("header.header-chrome").getByRole("button", { name: "Menü", exact: true }).click();
-  await page.getByRole("menuitem", { name: "Dummy-Treffen löschen" }).click();
+  await page.locator("footer").getByRole("button", { name: "Menü", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Dummy-Treffen löschen" }).click();
   await expect(page.getByText(/Dummy-Treffen gelöscht|Keine Dummy-Treffen/)).toBeVisible({ timeout: 15_000 });
   record("Cleanup", "Dummy-Treffen purged", "pass");
 

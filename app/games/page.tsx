@@ -100,8 +100,11 @@ export default async function GamesPage({
         id="games-page-top"
         className="flex items-end justify-between gap-3 flex-wrap"
       >
-        <h1 className="page-title">Spielesammlung</h1>
-        <span className="text-sm text-[var(--muted)]">
+        <div className="flex flex-col gap-1">
+          <p className="page-eyebrow">Deine Kollektion</p>
+          <h1 className="page-title">Spielesammlung</h1>
+        </div>
+        <span className="text-sm text-[var(--muted)] tabular-nums">
           {games.length} {games.length === 1 ? "Spiel" : "Spiele"}
         </span>
       </div>

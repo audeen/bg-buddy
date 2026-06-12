@@ -16,7 +16,7 @@ export function LoginForm() {
   return (
     <form
       action={formAction}
-      className="flex flex-col gap-4 scroll-mt-[calc(var(--header-height)+1rem)]"
+      className="flex flex-col gap-4 scroll-mt-6"
       id="login"
     >
       <div>

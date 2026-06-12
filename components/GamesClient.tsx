@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, type CSSProperties } from "react";
 import { GameCard } from "@/components/GameCard";
 import { GameDetailModal } from "@/components/GameDetailModal";
 import type { GameCardGame, GameDetailData } from "@/lib/types/game";
@@ -39,9 +39,13 @@ export function GamesClient({
 
   return (
     <>
-      <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {games.map((g) => (
-          <li key={g.id}>
+      <ul className="grid gap-3 sm:gap-5 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {games.map((g, i) => (
+          <li
+            key={g.id}
+            className="card-reveal"
+            style={{ "--reveal-i": i } as CSSProperties}
+          >
             <GameCard
               game={g}
               playerCount={playerCount}

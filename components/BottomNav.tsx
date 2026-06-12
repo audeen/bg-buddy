@@ -8,10 +8,17 @@ import {
   useMemo,
   useState,
   useSyncExternalStore,
+  type ReactNode,
 } from "react";
 import { navigateToErgebnisse } from "@/lib/scroll-ergebnisse";
 import { useScrollChromeHidden } from "@/lib/scroll-chrome";
 import { scrollBehavior } from "@/lib/scroll";
+import {
+  BallotIcon,
+  CalendarIcon,
+  DiceIcon,
+  TrophyIcon,
+} from "@/components/icons";
 
 const LAST_MEETUP_KEY = "bg-buddy:last-meetup-id";
 
@@ -52,7 +59,7 @@ function isAtPageTop(scrollTargetId = "meetup-page-top"): boolean {
 type NavItem = {
   key: string;
   label: string;
-  icon: string;
+  icon: ReactNode;
   active: boolean;
   disabled?: boolean;
   ariaLabel?: string;
@@ -61,14 +68,14 @@ type NavItem = {
 };
 
 const navItemClass = (active: boolean) =>
-  `flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 min-w-0 w-full text-[0.65rem] md:text-xs font-semibold transition-colors ${
+  `flex flex-col items-center justify-center gap-0.5 px-2 py-1 min-w-0 w-full text-[0.62rem] md:text-xs font-semibold transition-colors rounded-full ${
     active
       ? "nav-item-active"
       : "text-[var(--muted)] hover:text-[var(--foreground)]"
   }`;
 
 const disabledNavItemClass =
-  "flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 min-w-0 w-full text-[0.65rem] font-semibold text-[var(--muted)] opacity-50";
+  "flex flex-col items-center justify-center gap-0.5 px-2 py-1 min-w-0 w-full text-[0.62rem] font-semibold text-[var(--muted)] opacity-50";
 
 export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | null }) {
   const pathname = usePathname();
@@ -123,7 +130,7 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
       {
         key: "treffen",
         label: "Treffen",
-        icon: "📅",
+        icon: <CalendarIcon />,
         active:
           pathname === "/" ||
           pathname === "/meetups/new" ||
@@ -131,16 +138,9 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
         onClick: handleTreffenClick,
       },
       {
-        key: "spiele",
-        label: "Spiele",
-        icon: "🎲",
-        href: "/games",
-        active: pathname.startsWith("/games"),
-      },
-      {
         key: "vote",
         label: "Stimmen",
-        icon: "🗳️",
+        icon: <BallotIcon />,
         ariaLabel: "Stimmen vergeben",
         href: voteHref,
         active: /^\/meetups\/[^/]+\/pick$/.test(pathname),
@@ -149,10 +149,17 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
       {
         key: "ergebnisse",
         label: "Ergebnisse",
-        icon: "🏆",
+        icon: <TrophyIcon />,
         active: isMeetupDetailPage(pathname) && hash === "#ergebnisse",
         disabled: !meetupId,
         onClick: handleErgebnisseClick,
+      },
+      {
+        key: "sammlung",
+        label: "Sammlung",
+        icon: <DiceIcon />,
+        href: "/games",
+        active: pathname.startsWith("/games"),
       },
     ],
     [pathname, hash, voteHref, meetupId, handleTreffenClick, handleErgebnisseClick],
@@ -160,15 +167,15 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
 
   return (
     <nav
-      className={`fixed bottom-0 left-0 right-0 z-30 border-t border-[var(--border)] bg-[var(--surface)] safe-bottom header-shadow bottom-nav-chrome md:max-w-[72rem] md:mx-auto${chromeHidden ? " chrome-hidden" : ""}`}
+      className={`fixed bottom-0 left-0 right-0 z-30 px-3 safe-bottom bottom-nav-chrome pointer-events-none${chromeHidden ? " chrome-hidden" : ""}`}
       aria-label="Hauptnavigation"
     >
-      <ul className="flex items-stretch justify-around h-[var(--bottom-nav-height)] px-1">
+      <ul className="bottom-nav-dock pointer-events-auto mx-auto w-full max-w-md md:max-w-lg">
         {items.map((item) => (
-          <li key={item.key} className="flex-1 flex items-center justify-center min-w-0">
+          <li key={item.key} className="flex-1 flex items-center justify-center min-w-0 py-1">
             {item.disabled ? (
               <span className={disabledNavItemClass} aria-disabled>
-                <span className="text-lg leading-none" aria-hidden>
+                <span className="leading-none" aria-hidden>
                   {item.icon}
                 </span>
                 <span>{item.label}</span>
@@ -181,7 +188,7 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
                 aria-current={item.active ? "page" : undefined}
                 aria-label={item.ariaLabel}
               >
-                <span className="text-lg leading-none" aria-hidden>
+                <span className="leading-none" aria-hidden>
                   {item.icon}
                 </span>
                 <span>{item.label}</span>
@@ -193,7 +200,7 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
                 aria-current={item.active ? "page" : undefined}
                 aria-label={item.ariaLabel}
               >
-                <span className="text-lg leading-none" aria-hidden>
+                <span className="leading-none" aria-hidden>
                   {item.icon}
                 </span>
                 <span>{item.label}</span>

@@ -19,6 +19,7 @@ import { FilterChipButton } from "@/components/FilterChipButton";
 import type { GameFilters, GameSort } from "@/lib/game-filters";
 import { buildGameTags, groupGameTags } from "@/lib/game-tags";
 import { resolveCoverSrc } from "@/lib/cover-image";
+import { CheckIcon } from "@/components/icons";
 import type { GameCardGame } from "@/lib/types/game";
 
 type BaseProps = {
@@ -84,7 +85,7 @@ function TagRows({
   return (
     <div className="flex flex-col gap-1.5">
       {meta.length > 0 && (
-        <div className="chip-row">
+        <div className="card-stats">
           {meta.map((t) => (
             <FilterChipButton
               key={t.label}
@@ -165,6 +166,9 @@ function CardCover({
       {showExpansionVoteFollows && <ExpansionVoteFollowsBanner />}
       {lentOut && <LentOutBanner />}
       {hostRecommendation && <HostRecommendationBanner />}
+      <div className="card-cover-scrim">
+        <span className="card-cover-title line-clamp-2">{game.name}</span>
+      </div>
     </div>
   );
 }
@@ -198,9 +202,6 @@ function CardBody({
 }) {
   return (
     <div className="card-pad flex flex-col gap-2.5 flex-1">
-      <span className="font-semibold text-base leading-snug line-clamp-2">
-        {game.name}
-      </span>
       <TagRows
         game={game}
         playerCount={playerCount}
@@ -228,15 +229,17 @@ function CardBody({
   );
 }
 
-function StarsBadge({ points }: { points: number }) {
+function VoteBadge({ points }: { points: number }) {
   if (points <= 0) return null;
   return (
     <span
-      className="absolute top-2.5 right-2.5 z-[3] pointer-events-none bg-[var(--accent)] text-white rounded-full min-w-7 h-7 px-1.5 flex items-center justify-center text-xs font-bold tracking-tight"
+      className="absolute top-2.5 right-2.5 z-[3] pointer-events-none bg-[var(--accent)] text-white rounded-full min-w-7 h-7 px-2 flex items-center justify-center gap-0.5"
       style={{ boxShadow: "var(--shadow-md)" }}
-      aria-label={`${points} ${points === 1 ? "Stern" : "Sterne"}`}
+      aria-label={`${points} ${points === 1 ? "Stimme" : "Stimmen"}`}
     >
-      {"★".repeat(points)}
+      {Array.from({ length: points }, (_, i) => (
+        <CheckIcon key={i} size={13} />
+      ))}
     </span>
   );
 }
@@ -358,7 +361,9 @@ export function GameCard(props: ButtonProps | LinkProps) {
   const onBaseView = viewExpansionId == null;
   const showVoteState = !pickMode || onBaseView;
 
-  const cardClass = `card card-game w-full ${
+  const isFoil = (displayedGame.bggRating ?? 0) >= 8;
+
+  const cardClass = `card card-game w-full ${isFoil ? "card-game-foil" : ""} ${
     showVoteState && selected ? "card-game-selected" : ""
   } ${disabled ? "card-game-disabled opacity-50 cursor-not-allowed" : ""} ${className}`;
 
@@ -420,7 +425,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
         <CardCover {...coverProps} />
         <CardBody {...bodyProps} />
         {expansionBadge}
-        {showVoteState && points > 0 && <StarsBadge points={points} />}
+        {showVoteState && points > 0 && <VoteBadge points={points} />}
       </div>
     );
   }
@@ -460,7 +465,7 @@ export function GameCard(props: ButtonProps | LinkProps) {
         <DetailsButton onClick={() => onDetailsClick(displayedGame)} />
       )}
       {expansionBadge}
-      {showVoteState && points > 0 && <StarsBadge points={points} />}
+      {showVoteState && points > 0 && <VoteBadge points={points} />}
     </div>
   );
 }

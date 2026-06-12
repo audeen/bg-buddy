@@ -211,10 +211,17 @@ export default async function Home() {
     <div className="container-app flex flex-col gap-8">
       {user ? (
         <>
+          <header className="flex items-end justify-between gap-3">
+            <div className="flex flex-col gap-1">
+              <p className="page-eyebrow">Spieleabend mit {user.name}</p>
+              <h1 className="page-title">BG Buddy</h1>
+            </div>
+            <NewMeetupIconButton />
+          </header>
+
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="section-title">Nächstes Treffen</h2>
-              <NewMeetupIconButton />
             </div>
             {nextMeetup ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

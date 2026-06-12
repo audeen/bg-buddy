@@ -66,12 +66,13 @@ export async function loginAs(page: Page, name: string) {
   });
 }
 
-const GLOBAL_HEADER = 'header.header-chrome';
+const GLOBAL_FOOTER = "footer";
 
 export async function logout(page: Page) {
   await page.evaluate(() => sessionStorage.setItem("bg-buddy:secret-menu", "1"));
-  await page.locator(GLOBAL_HEADER).getByRole("button", { name: "Menü", exact: true }).click();
-  await page.getByRole("menuitem", { name: "Abmelden" }).click();
+  await page.reload();
+  await page.locator(GLOBAL_FOOTER).getByRole("button", { name: "Menü", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Abmelden" }).click();
   await page.waitForURL((url) => url.pathname === "/" || url.hash.includes("login"), {
     timeout: 10_000,
   }).catch(() => {});

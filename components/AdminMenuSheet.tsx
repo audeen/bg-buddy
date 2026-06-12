@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useMemo, useRef, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import {
   completeDummyDuelsAction,
   countDummyMeetupsAction,
@@ -10,8 +10,7 @@ import {
   logoutAction,
   purgeDummyMeetupsAction,
 } from "@/app/actions";
-import { useClickOutside } from "@/lib/use-click-outside";
-import { useSecretMenuReveal } from "@/lib/use-secret-menu-reveal";
+import { useEscapeKey } from "@/lib/use-escape-key";
 
 function meetupIdFromPath(pathname: string): string | null {
   const match = pathname.match(/^\/meetups\/([^/]+)/);
@@ -19,26 +18,30 @@ function meetupIdFromPath(pathname: string): string | null {
 }
 
 const ADMIN_NAV = [
-  { href: "/admin/collection", label: "Sammlung" },
+  { href: "/admin/collection", label: "Sammlung verwalten" },
   { href: "/admin/import", label: "Import" },
 ] as const;
 
-export function HeaderMenu({ userName }: { userName: string }) {
+/** Admin-/Testdaten-Menü als Bottom-Sheet (ersetzt das alte Header-Dropdown). */
+export function AdminMenuSheet({
+  userName,
+  open,
+  onClose,
+}: {
+  userName: string;
+  open: boolean;
+  onClose: () => void;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const meetupId = useMemo(() => meetupIdFromPath(pathname), [pathname]);
-  const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const { revealed, registerClick } = useSecretMenuReveal();
 
-  const closeMenu = useCallback(() => setOpen(false), []);
-  useClickOutside(menuRef, closeMenu, open);
+  useEscapeKey(onClose, open);
 
   function handleCreate() {
-    setOpen(false);
     setMessage(null);
     setError(null);
     startTransition(async () => {
@@ -55,7 +58,6 @@ export function HeaderMenu({ userName }: { userName: string }) {
 
   function handleCompleteDuels() {
     if (!meetupId) return;
-    setOpen(false);
     setMessage(null);
     setError(null);
     startTransition(async () => {
@@ -78,14 +80,13 @@ export function HeaderMenu({ userName }: { userName: string }) {
   }
 
   function handleLogout() {
-    setOpen(false);
     startTransition(async () => {
       await logoutAction();
+      onClose();
     });
   }
 
   function handlePurge() {
-    setOpen(false);
     setMessage(null);
     setError(null);
     startTransition(async () => {
@@ -116,62 +117,60 @@ export function HeaderMenu({ userName }: { userName: string }) {
     });
   }
 
-  return (
-    <div className="relative flex flex-col items-end" ref={menuRef}>
-      {revealed ? (
-        <button
-          type="button"
-          className="btn btn-ghost min-w-[2.75rem] min-h-[2.75rem] px-3"
-          aria-expanded={open}
-          aria-haspopup="menu"
-          aria-label="Menü"
-          onClick={() => setOpen((v) => !v)}
-        >
-          <span className="text-xl leading-none" aria-hidden>
-            ☰
-          </span>
-        </button>
-      ) : (
-        <button
-          type="button"
-          className="min-w-[2.75rem] min-h-[2.75rem] opacity-0"
-          aria-hidden
-          tabIndex={-1}
-          onClick={registerClick}
-        />
-      )}
+  if (!open) return null;
 
-      {open && revealed && (
-        <div
-          role="menu"
-          className="absolute top-full right-0 z-30 mt-1 min-w-[14rem] max-w-[calc(100vw-2rem)] rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] shadow-lg py-1"
-        >
-          <p className="px-3 py-2 text-xs text-[var(--muted)] border-b border-[var(--border)]">
+  return (
+    <div
+      className="modal-overlay"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Admin-Menü"
+        className="modal-panel"
+      >
+        <div className="modal-drag-zone">
+          <span className="modal-handle" aria-hidden />
+          <div className="flex w-full items-center justify-between gap-2">
+            <span className="font-semibold text-sm">Admin-Menü</span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn btn-ghost btn-sm"
+              aria-label="Schließen"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+        <div className="modal-body flex flex-col gap-1">
+          <p className="text-xs text-[var(--muted)] pb-2 border-b border-[var(--border)]">
             Angemeldet als {userName}
           </p>
 
-          <div className="py-1 border-b border-[var(--border)]">
+          <div className="py-1 border-b border-[var(--border)] flex flex-col">
             {ADMIN_NAV.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                role="menuitem"
-                className="btn btn-ghost w-full justify-start rounded-none"
-                onClick={() => setOpen(false)}
+                className="btn btn-ghost w-full justify-start border-transparent"
+                onClick={onClose}
               >
                 {item.label}
               </Link>
             ))}
           </div>
 
-          <div className="py-1">
+          <div className="py-1 flex flex-col">
             <p className="px-3 py-1.5 text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">
               Testdaten
             </p>
             <button
               type="button"
-              role="menuitem"
-              className="btn btn-ghost w-full justify-start rounded-none"
+              className="btn btn-ghost w-full justify-start border-transparent"
               disabled={pending}
               onClick={handleCreate}
             >
@@ -179,8 +178,7 @@ export function HeaderMenu({ userName }: { userName: string }) {
             </button>
             <button
               type="button"
-              role="menuitem"
-              className="btn btn-ghost w-full justify-start text-[var(--primary)] rounded-none"
+              className="btn btn-ghost w-full justify-start text-[var(--danger)] border-transparent"
               disabled={pending}
               onClick={handlePurge}
             >
@@ -189,8 +187,7 @@ export function HeaderMenu({ userName }: { userName: string }) {
             {meetupId && (
               <button
                 type="button"
-                role="menuitem"
-                className="btn btn-ghost w-full justify-start rounded-none"
+                className="btn btn-ghost w-full justify-start border-transparent"
                 disabled={pending}
                 onClick={handleCompleteDuels}
               >
@@ -199,28 +196,27 @@ export function HeaderMenu({ userName }: { userName: string }) {
             )}
           </div>
 
-          <div className="py-1 border-t border-[var(--border)]">
+          <div className="py-1 border-t border-[var(--border)] flex flex-col">
             <button
               type="button"
-              role="menuitem"
-              className="btn btn-ghost w-full justify-start rounded-none"
+              className="btn btn-ghost w-full justify-start border-transparent"
               disabled={pending}
               onClick={handleLogout}
             >
               Abmelden
             </button>
           </div>
-        </div>
-      )}
 
-      {(message || error) && (
-        <p
-          className={`text-xs mt-1 max-w-[12rem] text-right ${error ? "text-[var(--danger)]" : "text-[var(--muted)]"}`}
-          role={error ? "alert" : "status"}
-        >
-          {error ?? message}
-        </p>
-      )}
+          {(message || error) && (
+            <p
+              className={`text-sm pt-2 ${error ? "text-[var(--danger)]" : "text-[var(--muted)]"}`}
+              role={error ? "alert" : "status"}
+            >
+              {error ?? message}
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
