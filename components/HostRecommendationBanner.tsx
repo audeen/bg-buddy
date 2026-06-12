@@ -1,12 +1,16 @@
 export function HostRecommendationBanner() {
   return (
-    <div
-      className="absolute bottom-0 left-0 right-0 z-[2] px-2 py-1.5 text-center pointer-events-none bg-[color-mix(in_srgb,var(--accent)_55%,transparent)]"
-      aria-hidden="true"
-    >
-      <span className="text-[0.65rem] font-bold tracking-tight text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.35)]">
-        Host-Empfehlung
-      </span>
+    <div className="host-rec-banner" aria-hidden="true">
+      <svg
+        width={12}
+        height={12}
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden
+      >
+        <path d="M3 7l4.5 4L12 4l4.5 7L21 7l-1.6 11.2a1 1 0 0 1-1 .8H5.6a1 1 0 0 1-1-.8L3 7z" />
+      </svg>
+      <span>Host-Empfehlung</span>
     </div>
   );
 }

@@ -861,11 +861,6 @@ h3 {
 
   /* Titel-Scrim auf dem Cover (Trading-Card-Namensleiste). */
   .card-cover-scrim {
-    position: absolute;
-    inset-inline: 0;
-    bottom: 0;
-    z-index: 2;
-    pointer-events: none;
     padding: 2.25rem 0.7rem 0.55rem;
     background: linear-gradient(
       to top,
@@ -884,6 +879,33 @@ h3 {
     letter-spacing: var(--tracking-tight);
     color: #fff;
     text-shadow: 0 1px 6px rgb(0 0 0 / 0.7);
+  }
+
+  /* Host-Empfehlungs-Band am unteren Cover-Rand. */
+  .host-rec-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.38rem 0.7rem;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--accent) 92%, black),
+      color-mix(in srgb, var(--accent) 64%, black)
+    );
+    border-top: 1px solid color-mix(in srgb, white 30%, transparent);
+    box-shadow: 0 -2px 10px rgb(0 0 0 / 0.25);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+  }
+
+  .host-rec-banner svg {
+    flex-shrink: 0;
+    filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.3));
   }
 
   /* Stat-Leiste unter dem Cover: dunkle Glas-Pills. */

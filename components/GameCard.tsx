@@ -163,11 +163,15 @@ function CardCover({
         className="w-full aspect-square"
       />
       {bannerLabel && <ExpansionRequiredBanner label={bannerLabel} />}
-      {showExpansionVoteFollows && <ExpansionVoteFollowsBanner />}
       {lentOut && <LentOutBanner />}
-      {hostRecommendation && <HostRecommendationBanner />}
-      <div className="card-cover-scrim">
-        <span className="card-cover-title line-clamp-2">{game.name}</span>
+      {/* Untere Overlays als Spalte gestapelt, damit Titel-Scrim und
+          Status-Bänder sich nicht gegenseitig überlagern. */}
+      <div className="absolute inset-x-0 bottom-0 z-[2] flex flex-col pointer-events-none">
+        <div className="card-cover-scrim">
+          <span className="card-cover-title line-clamp-2">{game.name}</span>
+        </div>
+        {showExpansionVoteFollows && <ExpansionVoteFollowsBanner />}
+        {hostRecommendation && <HostRecommendationBanner />}
       </div>
     </div>
   );
