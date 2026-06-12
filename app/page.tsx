@@ -212,8 +212,7 @@ export default async function Home() {
       {user ? (
         <>
           <header className="flex items-end justify-between gap-3">
-            <div className="flex flex-col gap-1">
-              <p className="page-eyebrow">Spieleabend mit {user.name}</p>
+            <div>
               <h1 className="page-title">BG Buddy</h1>
             </div>
             <NewMeetupIconButton />
