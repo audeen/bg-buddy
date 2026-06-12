@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isAdmin } from "@/lib/auth";
 import { getPickPhaseState } from "@/lib/pick-phase";
 import {
   cancelActiveDuel,
@@ -53,7 +53,7 @@ export async function deleteMeetupAction(meetupId: string) {
     select: { createdById: true },
   });
   if (!meetup) return { error: "Treffen nicht gefunden." };
-  if (meetup.createdById !== user.id) {
+  if (meetup.createdById !== user.id && !isAdmin(user)) {
     return { error: "Nur der Host kann das Treffen löschen." };
   }
 

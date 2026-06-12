@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isAdmin } from "@/lib/auth";
 import { ExpectedCountControl } from "@/components/ExpectedCountControl";
 import { ExpectedCountReadOnly } from "@/components/ExpectedCountReadOnly";
 import { MeetupActionsMenu } from "@/components/MeetupActionsMenu";
@@ -205,6 +205,7 @@ export default async function MeetupDetail({
   const duelRoundComplete =
     hostForced || (duelComplete && totalPairs > 0);
   const isHost = user?.id === meetup.createdBy.id;
+  const canDeleteMeetup = isHost || isAdmin(user);
 
   const expansionPhase = await loadExpansionPhaseState(id, expected, prisma);
   const winnerFamily =
@@ -414,7 +415,7 @@ export default async function MeetupDetail({
           </p>
           <div className="flex shrink-0 items-center gap-1">
             <MeetupShareQr meetupId={meetup.id} title={meetup.title} />
-            {isHost && (
+            {canDeleteMeetup && (
               <MeetupActionsMenu meetupId={meetup.id} title={meetup.title} />
             )}
           </div>

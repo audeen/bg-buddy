@@ -113,6 +113,8 @@ im Footer (verlinkt auf BoardGameGeek).
    - `DATABASE_URL` = Neon-Connection-String
    - `SESSION_SECRET` = zufälliger String (≥ 32 Zeichen)
    - `BGG_TOKEN` = App-Token (siehe „BGG-API-Token" oben)
+   - `ADMIN_USERS` = optional, kommagetrennte Nutzernamen mit Admin-Rechten
+     (dürfen z. B. jedes Treffen löschen, nicht nur eigene)
 4. Migration gegen Neon ausführen (lokal mit gesetzter `DATABASE_URL`):
    ```bash
    npx prisma migrate deploy

@@ -10,3 +10,16 @@ export const getCurrentUser = cache(async () => {
   });
   return user;
 });
+
+/**
+ * Admins werden über die Env-Variable ADMIN_USERS bestimmt
+ * (kommagetrennte Nutzernamen, z. B. ADMIN_USERS="Jannik,Anna").
+ */
+export function isAdmin(user: { name: string } | null): boolean {
+  if (!user) return false;
+  const adminNames = (process.env.ADMIN_USERS ?? "")
+    .split(",")
+    .map((n) => n.trim())
+    .filter(Boolean);
+  return adminNames.includes(user.name);
+}
