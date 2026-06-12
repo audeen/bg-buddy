@@ -688,8 +688,6 @@ h3 {
     flex: 0 0 var(--deck-card-w);
     min-width: 0;
     scroll-snap-align: center;
-    /* Ein Wisch = eine Karte (Tinder-Gefühl statt Durchfliegen). */
-    scroll-snap-stop: always;
   }
 
   @media (prefers-reduced-motion: reduce) {
