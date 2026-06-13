@@ -20,6 +20,13 @@ export type DuelFrozenData = {
   pickCounts: Record<number, number>;
   participantIds: string[];
   assignments?: Record<string, DuelPair[]>;
+  /** Pairs with no neutral judge -- resolved by deterministic chance. */
+  autoPairs?: DuelPair[];
+};
+
+export type GroupAssignment = {
+  assignments: Record<string, DuelPair[]>;
+  autoPairs: DuelPair[];
 };
 
 export function pairCount(n: number): number {
@@ -77,36 +84,42 @@ function sortPairs(
   });
 }
 
+/**
+ * Assign each pair to a neutral judge (stake 0: picked neither game).
+ * Pairs where every participant is biased land in `autoPairs` and are
+ * resolved by deterministic chance instead of a partial human vote.
+ */
 export function assignGroupPairs(
   pairs: DuelPair[],
   participantIds: string[],
   userPoints: Record<string, Record<number, number>>,
-): Record<string, DuelPair[]> {
+): GroupAssignment {
   const sortedParticipants = [...participantIds].sort();
   const assignments: Record<string, DuelPair[]> = {};
   for (const id of sortedParticipants) {
     assignments[id] = [];
   }
-  if (sortedParticipants.length === 0) return assignments;
+  const autoPairs: DuelPair[] = [];
+  if (sortedParticipants.length === 0) {
+    return { assignments, autoPairs: [...pairs] };
+  }
 
   for (const pair of pairs) {
-    const loads = sortedParticipants.map((id) => assignments[id].length);
-    const minLoad = Math.min(...loads);
-    const candidates = sortedParticipants.filter(
-      (id) => assignments[id].length === minLoad,
+    // Only participants who picked neither game may judge this pair.
+    const neutral = sortedParticipants.filter(
+      (id) => userStake(id, pair, userPoints) === 0,
     );
-    let chosen = candidates[0];
-    let minStake = userStake(chosen, pair, userPoints);
-    for (const id of candidates.slice(1)) {
-      const stake = userStake(id, pair, userPoints);
-      if (stake < minStake || (stake === minStake && id < chosen)) {
-        minStake = stake;
-        chosen = id;
-      }
+    if (neutral.length === 0) {
+      autoPairs.push(pair);
+      continue;
     }
+    const minLoad = Math.min(...neutral.map((id) => assignments[id].length));
+    // `neutral` keeps the sorted order, so the first min-load entry is the
+    // lowest userId -> deterministic tie-break.
+    const chosen = neutral.find((id) => assignments[id].length === minLoad)!;
     assignments[chosen].push(pair);
   }
-  return assignments;
+  return { assignments, autoPairs };
 }
 
 export function shufflePairs(pairs: DuelPair[], seed: string): DuelPair[] {
@@ -144,11 +157,13 @@ export function buildDuelFrozenSnapshot(opts: {
   };
 
   if (phase === "GROUP") {
-    snapshot.assignments = assignGroupPairs(
+    const { assignments, autoPairs } = assignGroupPairs(
       sortedPairs,
       participantIds,
       userPoints,
     );
+    snapshot.assignments = assignments;
+    snapshot.autoPairs = autoPairs;
   }
 
   return snapshot;
@@ -158,6 +173,20 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function parsePairList(raw: unknown): DuelPair[] {
+  if (!Array.isArray(raw)) return [];
+  const out: DuelPair[] = [];
+  for (const item of raw) {
+    if (!isRecord(item)) continue;
+    const a = Number(item.a);
+    const b = Number(item.b);
+    if (Number.isFinite(a) && Number.isFinite(b) && a !== b) {
+      out.push({ a, b });
+    }
+  }
+  return out;
+}
+
 function parseAssignments(
   raw: unknown,
 ): Record<string, DuelPair[]> | undefined {
@@ -165,16 +194,7 @@ function parseAssignments(
   const out: Record<string, DuelPair[]> = {};
   for (const [userId, pairs] of Object.entries(raw)) {
     if (!Array.isArray(pairs)) continue;
-    const parsed: DuelPair[] = [];
-    for (const item of pairs) {
-      if (!isRecord(item)) continue;
-      const a = Number(item.a);
-      const b = Number(item.b);
-      if (Number.isFinite(a) && Number.isFinite(b) && a !== b) {
-        parsed.push({ a, b });
-      }
-    }
-    out[userId] = parsed;
+    out[userId] = parsePairList(pairs);
   }
   return out;
 }
@@ -214,6 +234,7 @@ export function parseDuelFrozenData(
     pickCounts,
     participantIds,
     assignments: parseAssignments(raw.assignments),
+    autoPairs: parsePairList(raw.autoPairs),
   };
 }
 
@@ -376,7 +397,8 @@ export function countFullyVotedPairs(
 
   const assignments = ctx.frozen?.assignments;
   if (assignments) {
-    let count = 0;
+    // Auto-resolved pairs (no neutral judge) count as decided immediately.
+    let count = ctx.frozen?.autoPairs?.length ?? 0;
     for (const userId of participantIds) {
       const completed = completedPairKeysForUser(
         duelVotes,
@@ -391,20 +413,16 @@ export function countFullyVotedPairs(
   }
 
   const userPoints = buildUserPointsMap(ctx.picks);
-  const liveAssignments = assignGroupPairs(
-    allPairs(pool),
-    participantIds,
-    userPoints,
-  );
+  const live = assignGroupPairs(allPairs(pool), participantIds, userPoints);
 
-  let count = 0;
+  let count = live.autoPairs.length;
   for (const userId of participantIds) {
     const completed = completedPairKeysForUser(
       duelVotes,
       userId,
       ctx.playerCount,
     );
-    for (const pair of liveAssignments[userId] ?? []) {
+    for (const pair of live.assignments[userId] ?? []) {
       if (completed.has(pairKey(pair.a, pair.b))) count++;
     }
   }
@@ -538,7 +556,7 @@ export function buildDuellPlan(opts: {
 
   const assignments =
     frozen?.assignments ??
-    assignGroupPairs(sortedForWeight, roster, userPoints);
+    assignGroupPairs(sortedForWeight, roster, userPoints).assignments;
   const myPairs = shufflePairs(
     assignments[userId] ?? [],
     `${meetupId}:${userId}`,

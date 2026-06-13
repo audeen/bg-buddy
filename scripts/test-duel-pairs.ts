@@ -43,12 +43,22 @@ const userPoints = buildUserPointsMap(picks);
 const pairs = allPairs(pool12);
 assert(pairs.length === 66, "12 games = 66 pairs");
 
-const assignments = assignGroupPairs(pairs, participants, userPoints);
+const { assignments, autoPairs } = assignGroupPairs(
+  pairs,
+  participants,
+  userPoints,
+);
 const assignedTotal = Object.values(assignments).reduce(
   (s, arr) => s + arr.length,
   0,
 );
-assert(assignedTotal === 66, "all 66 pairs assigned once");
+assert(
+  assignedTotal + autoPairs.length === 66,
+  "all 66 pairs assigned once (incl. auto)",
+);
+// Every game is picked by a single participant here, so no pair can have
+// all judges biased -> no auto pairs.
+assert(autoPairs.length === 0, "no conflict pairs when picks are disjoint");
 const keys = new Set<string>();
 for (const list of Object.values(assignments)) {
   for (const p of list) {

@@ -15,7 +15,11 @@ function isBestAtCount(meta: GameTieMeta, playerCount: number): boolean {
   return meta.bestPlayerCounts.includes(playerCount);
 }
 
-function deterministicPick(gameA: number, gameB: number, seed: string): number {
+export function deterministicPick(
+  gameA: number,
+  gameB: number,
+  seed: string,
+): number {
   let h = 0;
   for (let i = 0; i < seed.length; i++) {
     h = (h * 31 + seed.charCodeAt(i)) >>> 0;

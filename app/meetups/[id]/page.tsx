@@ -140,19 +140,19 @@ export default async function MeetupDetail({
     },
   });
 
-  const combinedByCount = buildCombinedByCount(votes, id);
+  const expected = meetup.expectedPlayerCount;
+  const frozen = parseDuelFrozenData(meetup.duelFrozenData, expected);
+  const combinedByCount = buildCombinedByCount(votes, id, frozen);
   const playerCounts = playerCountsFromVotes(
     meetup.expectedPlayerCount,
     votes,
   );
 
-  const expected = meetup.expectedPlayerCount;
   const pickPhase = await getPickPhaseState(id, expected, prisma);
   const groupPicks = votes.filter(
     (v) => v.mode === "PICK" && v.playerCount === expected,
   );
   const pickCounts = buildPickCounts(groupPicks);
-  const frozen = parseDuelFrozenData(meetup.duelFrozenData, expected);
   const poolIds = frozen?.poolGameIds ?? poolGameIds(pickCounts);
   const pickPoolSize = poolIds.length;
 

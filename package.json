@@ -22,6 +22,7 @@
     "test:duel-pairs": "tsx scripts/test-duel-pairs.ts",
     "test:duel-tiebreaker": "tsx scripts/test-duel-tiebreaker.ts",
     "test:group-duels": "tsx scripts/test-group-duels.ts",
+    "sim:duels": "tsx scripts/simulate-duels.ts",
     "test:expansion-duel": "tsx scripts/test-expansion-duel.ts",
     "test:expansion-ranking": "tsx scripts/test-expansion-ranking.ts",
     "test:winner-expansion-family": "tsx scripts/test-winner-expansion-family.ts",

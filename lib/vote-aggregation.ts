@@ -1,6 +1,6 @@
 import type { RankEntry } from "@/lib/types/ranking";
 import { buildCopelandForCount } from "@/lib/copeland";
-import { pairCount } from "@/lib/duel-pairs";
+import { type DuelFrozenData, pairCount } from "@/lib/duel-pairs";
 import {
   buildGameTieMetaMap,
   type DuelTieBreakContext,
@@ -70,6 +70,7 @@ export function buildRankingByCount(
 export function buildDuelCopelandByCount(
   votes: VoteRow[],
   meetupId?: string,
+  frozen?: DuelFrozenData | null,
 ): Record<number, RankEntry[]> {
   const picksByCount = new Map<number, { gameId: number; points: number }[]>();
   for (const v of votes) {
@@ -140,13 +141,14 @@ export function buildDuelCopelandByCount(
             ),
           }
         : undefined;
-    const { winsByGame } = buildCopelandForCount(
-      duelVotes,
-      pc,
-      phase,
-      totalPairs,
-      tieBreak ? { tieBreak } : undefined,
-    );
+    const autoPairs =
+      phase === "GROUP" && frozen?.playerCount === pc
+        ? frozen.autoPairs
+        : undefined;
+    const { winsByGame } = buildCopelandForCount(duelVotes, pc, phase, totalPairs, {
+      ...(tieBreak ? { tieBreak } : {}),
+      ...(autoPairs && autoPairs.length > 0 ? { autoPairs, meetupId } : {}),
+    });
 
     const entries: RankEntry[] = [];
     for (const [gameId, wins] of Object.entries(winsByGame)) {
@@ -174,6 +176,7 @@ export function buildDuelCopelandByCount(
 export function buildCombinedByCount(
   votes: VoteRow[],
   meetupId?: string,
+  frozen?: DuelFrozenData | null,
 ): Record<number, RankEntry[]> {
   const picksByCount = new Map<number, Record<number, number>>();
   for (const v of votes) {
@@ -185,7 +188,7 @@ export function buildCombinedByCount(
     c[v.gameId] = (c[v.gameId] ?? 0) + v.points;
   }
 
-  const duelByCount = buildDuelCopelandByCount(votes, meetupId);
+  const duelByCount = buildDuelCopelandByCount(votes, meetupId, frozen);
 
   const playerCounts = new Set([
     ...picksByCount.keys(),

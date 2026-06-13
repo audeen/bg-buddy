@@ -5,6 +5,7 @@ import {
 } from "@/lib/duel-pairs";
 import {
   breakDuelTie,
+  deterministicPick,
   type DuelTieBreakContext,
 } from "@/lib/duel-tiebreaker";
 
@@ -24,6 +25,10 @@ export type CopelandResult = {
 
 export type CopelandOptions = {
   tieBreak?: DuelTieBreakContext;
+  /** GROUP pairs without a neutral judge -- decided by deterministic chance. */
+  autoPairs?: { a: number; b: number }[];
+  /** Seed source for the chance resolution of `autoPairs`. */
+  meetupId?: string;
 };
 
 function tallyPairVotes(
@@ -99,6 +104,21 @@ export function buildCopelandForCount(
     if (winnerId != null) {
       decidedPairs++;
       winsByGame[winnerId] = (winsByGame[winnerId] ?? 0) + 1;
+    }
+  }
+
+  if (phase === "GROUP" && options?.autoPairs) {
+    for (const pair of options.autoPairs) {
+      const key = pairKey(pair.a, pair.b);
+      // A real vote always wins over the chance fallback.
+      if (byPair.has(key)) continue;
+      const winner = deterministicPick(
+        pair.a,
+        pair.b,
+        `${options.meetupId ?? ""}:${key}`,
+      );
+      winsByGame[winner] = (winsByGame[winner] ?? 0) + 1;
+      decidedPairs++;
     }
   }
 

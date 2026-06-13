@@ -198,6 +198,7 @@ export async function loadExpansionPhaseState(
       game: v.game,
     })),
     meetupId,
+    frozen,
   );
 
   const winner = winnerFromCombined(combinedByCount[expectedPlayerCount]);
