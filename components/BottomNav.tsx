@@ -34,6 +34,22 @@ function storeMeetupId(id: string) {
   for (const listener of lastMeetupListeners) listener();
 }
 
+function clearStoredMeetupId() {
+  localStorage.removeItem(LAST_MEETUP_KEY);
+  for (const listener of lastMeetupListeners) listener();
+}
+
+async function meetupExists(id: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/meetups/${id}/exists`);
+    if (!res.ok) return false;
+    const data = (await res.json()) as { exists?: boolean };
+    return data.exists === true;
+  } catch {
+    return false;
+  }
+}
+
 function subscribeStoredMeetupId(listener: () => void): () => void {
   lastMeetupListeners.add(listener);
   return () => {
@@ -87,12 +103,29 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
     () => null,
   );
   const [hash, setHash] = useState("");
+  // IDs, deren Treffen nachweislich gelöscht wurde (deckt auch einen
+  // veralteten fallbackMeetupId ab, da das Layout bei Client-Navigation
+  // nicht neu rendert).
+  const [invalidIds, setInvalidIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+
+  const markMeetupInvalid = useCallback((id: string) => {
+    if (readStoredMeetupId() === id) clearStoredMeetupId();
+    setInvalidIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, []);
 
   const pathMeetupId = meetupIdFromPath(pathname);
 
   useEffect(() => {
-    if (pathMeetupId) storeMeetupId(pathMeetupId);
-  }, [pathMeetupId]);
+    if (pathMeetupId && !invalidIds.has(pathMeetupId)) {
+      storeMeetupId(pathMeetupId);
+    }
+  }, [pathMeetupId, invalidIds]);
 
   useEffect(() => {
     const syncHash = () => setHash(window.location.hash);
@@ -101,14 +134,46 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
     return () => window.removeEventListener("hashchange", syncHash);
   }, [pathname]);
 
+  // Gespeicherte ID einmal gegen die Datenbank validieren, damit Buttons
+  // nach dem Löschen eines Treffens korrekt deaktiviert werden.
+  useEffect(() => {
+    if (!storedMeetupId || storedMeetupId === pathMeetupId) return;
+    let cancelled = false;
+    void meetupExists(storedMeetupId).then((exists) => {
+      if (cancelled || exists) return;
+      clearStoredMeetupId();
+      setInvalidIds((prev) => {
+        const next = new Set(prev);
+        next.add(storedMeetupId);
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [storedMeetupId, pathMeetupId]);
+
   const chromeHidden = useScrollChromeHidden();
   useVisualViewportBottomGap();
-  const meetupId = pathMeetupId ?? storedMeetupId ?? fallbackMeetupId;
-  const voteHref = meetupId ? `/meetups/${meetupId}/pick` : "/";
+  const meetupId =
+    [pathMeetupId, storedMeetupId, fallbackMeetupId].find(
+      (id): id is string => id != null && !invalidIds.has(id),
+    ) ?? null;
 
   const handleTreffenClick = useCallback(() => {
     if (!isMeetupDetailPage(pathname)) {
-      router.push(meetupId ? `/meetups/${meetupId}` : "/");
+      if (!meetupId) {
+        if (pathname !== "/") router.push("/");
+        return;
+      }
+      void meetupExists(meetupId).then((exists) => {
+        if (exists) {
+          router.push(`/meetups/${meetupId}`);
+          return;
+        }
+        markMeetupInvalid(meetupId);
+        if (pathname !== "/") router.push("/");
+      });
       return;
     }
 
@@ -120,12 +185,39 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
     }
 
     router.push("/");
-  }, [pathname, meetupId, router]);
+  }, [pathname, meetupId, router, markMeetupInvalid]);
+
+  const handleVoteClick = useCallback(() => {
+    if (!meetupId) return;
+    const target = `/meetups/${meetupId}/pick`;
+    if (pathname === target) return;
+    void meetupExists(meetupId).then((exists) => {
+      if (exists) {
+        router.push(target);
+        return;
+      }
+      markMeetupInvalid(meetupId);
+      // Nur wegnavigieren, wenn man auf einer Seite des gelöschten
+      // Treffens steht (z. B. dessen 404-Pick-Seite).
+      if (pathMeetupId === meetupId) router.push("/");
+    });
+  }, [pathname, meetupId, pathMeetupId, router, markMeetupInvalid]);
 
   const handleErgebnisseClick = useCallback(() => {
     if (!meetupId) return;
-    navigateToErgebnisse(meetupId, pathname, router, () => setHash("#ergebnisse"));
-  }, [pathname, meetupId, router]);
+    if (isMeetupDetailPage(pathname)) {
+      navigateToErgebnisse(meetupId, pathname, router, () => setHash("#ergebnisse"));
+      return;
+    }
+    void meetupExists(meetupId).then((exists) => {
+      if (exists) {
+        navigateToErgebnisse(meetupId, pathname, router, () => setHash("#ergebnisse"));
+        return;
+      }
+      markMeetupInvalid(meetupId);
+      if (pathMeetupId === meetupId) router.push("/");
+    });
+  }, [pathname, meetupId, pathMeetupId, router, markMeetupInvalid]);
 
   const items = useMemo(
     (): NavItem[] => [
@@ -144,9 +236,9 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
         label: "Stimmen",
         icon: <BallotIcon />,
         ariaLabel: "Stimmen vergeben",
-        href: voteHref,
         active: /^\/meetups\/[^/]+\/pick$/.test(pathname),
         disabled: !meetupId,
+        onClick: handleVoteClick,
       },
       {
         key: "ergebnisse",
@@ -164,7 +256,14 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
         active: pathname.startsWith("/games"),
       },
     ],
-    [pathname, hash, voteHref, meetupId, handleTreffenClick, handleErgebnisseClick],
+    [
+      pathname,
+      hash,
+      meetupId,
+      handleTreffenClick,
+      handleVoteClick,
+      handleErgebnisseClick,
+    ],
   );
 
   return (

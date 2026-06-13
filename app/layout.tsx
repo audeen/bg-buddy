@@ -37,13 +37,15 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [fallbackMeetup, user] = await Promise.all([
-    prisma.meetup.findFirst({
-      orderBy: [{ scheduledAt: "asc" }, { createdAt: "desc" }],
-      select: { id: true },
-    }),
-    getCurrentUser(),
-  ]);
+  const user = await getCurrentUser();
+  // Fallback für die BottomNav: nächstes Treffen, bei dem der Nutzer angemeldet ist.
+  const fallbackMeetup = user
+    ? await prisma.meetup.findFirst({
+        where: { registrations: { some: { userId: user.id } } },
+        orderBy: [{ scheduledAt: "asc" }, { createdAt: "desc" }],
+        select: { id: true },
+      })
+    : null;
 
   return (
     <html
