@@ -28,45 +28,6 @@ type VoteRow = {
   };
 };
 
-export function buildRankingByCount(
-  votes: VoteRow[],
-  mode?: "PICK" | "DUEL",
-): Record<number, RankEntry[]> {
-  const filtered = mode ? votes.filter((v) => v.mode === mode) : votes;
-  const byCount = new Map<
-    number,
-    Map<number, { entry: RankEntry; voters: Set<string> }>
-  >();
-
-  for (const v of filtered) {
-    if (!byCount.has(v.playerCount)) byCount.set(v.playerCount, new Map());
-    const games = byCount.get(v.playerCount)!;
-    if (!games.has(v.gameId)) {
-      games.set(v.gameId, {
-        entry: {
-          id: v.game.id,
-          name: v.game.name,
-          thumbnail: resolveCoverSrc(v.game),
-          points: 0,
-          voters: 0,
-        },
-        voters: new Set(),
-      });
-    }
-    const g = games.get(v.gameId)!;
-    g.entry.points += v.points;
-    g.voters.add(v.userId);
-  }
-
-  const rankingByCount: Record<number, RankEntry[]> = {};
-  for (const [pc, games] of byCount) {
-    rankingByCount[pc] = Array.from(games.values())
-      .map(({ entry, voters }) => ({ ...entry, voters: voters.size }))
-      .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
-  }
-  return rankingByCount;
-}
-
 export function buildDuelCopelandByCount(
   votes: VoteRow[],
   meetupId?: string,
