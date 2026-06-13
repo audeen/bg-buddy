@@ -238,7 +238,10 @@ export function buildCombinedByCount(
     }
 
     out[pc] = entries.sort(
-      (a, b) => b.points - a.points || a.name.localeCompare(b.name),
+      (a, b) =>
+        b.points - a.points ||
+        (b.pickCount ?? 0) - (a.pickCount ?? 0) ||
+        a.name.localeCompare(b.name),
     );
   }
 
