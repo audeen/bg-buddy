@@ -61,7 +61,15 @@
   border-color: var(--border);
 }
 
+/* Verhindert das iOS-„Gummiband" / Pull-to-Refresh, bei dem sich die ganze
+   Seite verschieben lässt. So fühlt sich die App app-artiger an und man
+   verschiebt den Browser nicht aus Versehen. */
+html {
+  overscroll-behavior: none;
+}
+
 body {
+  overscroll-behavior: none;
   background:
     radial-gradient(
       120% 80% at 50% -15%,
@@ -673,9 +681,17 @@ h3 {
     display: flex;
     gap: 0.9rem;
     overflow-x: auto;
+    overflow-y: hidden;
     overscroll-behavior-x: contain;
-    scroll-snap-type: x mandatory;
+    /* Kein touch-action: pan-x — der Browser sperrt die Geste selbst auf die
+       dominante Achse (wie bei Reddit): vertikaler Wisch scrollt die Seite,
+       horizontaler pannt das Deck. So bleibt vertikales Scrollen auf der Karte
+       erhalten. */
+    /* proximity statt mandatory: ein kräftiger Wisch läuft mit vollem Schwung
+       aus (wie vertikales Scrollen) und rastet erst beim Anhalten ein. */
+    scroll-snap-type: x proximity;
     scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     padding-block: 0.5rem;
     /* Symmetrischer Rand, damit auch erste/letzte Karte zentriert snappen. */
