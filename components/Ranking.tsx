@@ -151,9 +151,20 @@ export function Ranking({
   const [podiumRevealed, setPodiumRevealed] = useState(0);
   const [restRevealed, setRestRevealed] = useState(0);
   const [revealDone, setRevealDone] = useState(!animateReveal);
+  // Pro Spieleranzahl: hat der Nutzer die Zwischenstände bewusst eingeblendet?
+  const [revealedExtra, setRevealedExtra] = useState<Set<number>>(
+    () => new Set(),
+  );
   const layoutFollowCleanup = useRef<(() => void) | null>(null);
 
   const entries = rankingByCount[selected] ?? [];
+
+  // Solange das Duell für eine andere Spieleranzahl nicht abgeschlossen ist,
+  // bleiben deren Picks hinter einem eigenen Spoiler verborgen.
+  const selectedGated =
+    selected !== expected &&
+    !completedCounts.includes(selected) &&
+    !revealedExtra.has(selected);
 
   useEffect(() => {
     return () => {
@@ -162,6 +173,7 @@ export function Ranking({
   }, []);
 
   useEffect(() => {
+    if (selectedGated) return;
     if (!animateReveal || entries.length === 0) return;
     if (lastAnimatedTab === selected) return;
 
@@ -210,11 +222,26 @@ export function Ranking({
     return () => {
       cancelled = true;
     };
-  }, [animateReveal, selected, lastAnimatedTab, entries.length]);
+  }, [animateReveal, selected, lastAnimatedTab, entries.length, selectedGated]);
 
   function startLayoutFollow() {
     layoutFollowCleanup.current?.();
     layoutFollowCleanup.current = followErgebnisseLayoutGrowth();
+  }
+
+  function revealSelectedTab() {
+    setRevealedExtra((prev) => {
+      const next = new Set(prev);
+      next.add(selected);
+      return next;
+    });
+    if (animateReveal && !prefersReducedMotion()) {
+      setPodiumRevealed(0);
+      setRestRevealed(0);
+      setRevealDone(false);
+      setLastAnimatedTab(null);
+    }
+    startLayoutFollow();
   }
 
   function handleTabChange(pc: number) {
@@ -275,7 +302,17 @@ export function Ranking({
         </div>
       )}
 
-      {entries.length === 0 ? (
+      {selectedGated ? (
+        <div className="card card-pad flex flex-col items-center gap-3 text-center">
+          <button
+            type="button"
+            onClick={revealSelectedTab}
+            className="btn btn-ghost btn-lg"
+          >
+            Ergebnisse anzeigen
+          </button>
+        </div>
+      ) : entries.length === 0 ? (
         <p className="text-[var(--muted)] text-sm">
           Für {selected} Spieler gibt es noch keine Stimmen.
         </p>
