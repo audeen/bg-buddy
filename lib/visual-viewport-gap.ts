@@ -2,24 +2,29 @@
 
 import { useEffect } from "react";
 
-const CSS_VAR = "--vv-bottom-gap";
+const CSS_VAR = "--vv-visible-bottom";
 
 /**
- * Größere Lücken stammen von der Bildschirmtastatur — darüber soll die
- * Navigation nicht schweben. Browser-Toolbars (z.B. Firefox iOS) sind <100px.
+ * Eine große Differenz zwischen Layout- und sichtbarem Viewport stammt von der
+ * Bildschirmtastatur — dann soll die Navigation nicht mitten im Bild schweben,
+ * sondern (wie zuvor) am Layout-Boden hinter der Tastatur verschwinden.
+ * Browser-Toolbars (z. B. Firefox iOS) sind deutlich kleiner.
  */
-const MAX_GAP_PX = 140;
+const KEYBOARD_THRESHOLD_PX = 140;
 
 /**
- * Misst, wie weit der sichtbare Viewport-Boden über dem Layout-Viewport-Boden
- * endet, und stellt die Differenz als CSS-Variable `--vv-bottom-gap` bereit.
+ * Stellt als CSS-Variable `--vv-visible-bottom` bereit, wie weit (in px vom
+ * oberen Layout-Viewport-Rand) der sichtbare Viewport unten endet.
  *
- * Hintergrund: Firefox iOS verankert `position: fixed; bottom: 0` am
- * Layout-Viewport, dessen unterer Bereich von der einklappbaren
- * Browser-Toolbar überdeckt wird. Safari/Chrome passen den Layout-Viewport
- * an (Lücke = 0), dort ändert sich nichts.
+ * Hintergrund: Firefox iOS verkleinert beim Einblenden der Toolbar sowohl
+ * `window.innerHeight` als auch `visualViewport.height` gemeinsam, sodass eine
+ * Höhen-*Differenz* die Toolbar nicht erkennt. Gleichzeitig verankert der
+ * Browser `position: fixed; bottom: 0` weiterhin hinter der Toolbar
+ * (Firefox-Bug 1978012). Statt den Boden zu korrigieren, verankern wir feste
+ * Elemente per `top: var(--vv-visible-bottom)` direkt an der sichtbaren
+ * Unterkante — diesen Wert melden Safari, Chrome und Firefox auf iOS konsistent.
  */
-export function useVisualViewportBottomGap() {
+export function useVisualViewportBottom() {
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
@@ -28,12 +33,13 @@ export function useVisualViewportBottomGap() {
     const update = () => {
       raf = 0;
       // Beim Überscrollen am Seitenanfang (Gummiband/Pull-to-Refresh) wird
-      // offsetTop negativ — das ist keine Toolbar-Überdeckung und darf die
-      // Lücke nicht vergrößern, sonst wandert die Nav nach oben.
+      // offsetTop negativ — das darf die sichtbare Unterkante nicht verschieben.
       const offsetTop = Math.max(vv.offsetTop, 0);
-      const gap = Math.round(window.innerHeight - (vv.height + offsetTop));
-      const clamped = gap > 0 && gap <= MAX_GAP_PX ? gap : 0;
-      document.documentElement.style.setProperty(CSS_VAR, `${clamped}px`);
+      const visibleBottom = Math.round(offsetTop + vv.height);
+      const keyboardGap = window.innerHeight - visibleBottom;
+      const value =
+        keyboardGap > KEYBOARD_THRESHOLD_PX ? window.innerHeight : visibleBottom;
+      document.documentElement.style.setProperty(CSS_VAR, `${value}px`);
     };
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(update);

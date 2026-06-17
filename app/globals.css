@@ -279,8 +279,7 @@ h3 {
 
   .pb-nav {
     padding-bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) +
-        var(--vv-bottom-gap, 0px)
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)
     );
     transition: padding-bottom 0.25s ease;
   }
@@ -332,8 +331,7 @@ h3 {
     position: sticky;
     z-index: 15;
     bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) +
-        var(--vv-bottom-gap, 0px)
+      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)
     );
     transition: bottom 0.25s ease;
   }
@@ -1527,14 +1525,18 @@ h3 {
   }
 
   .bottom-nav-chrome {
-    /* Hebt die Leiste über einklappbare Browser-Toolbars (Firefox iOS),
-       die fixed bottom:0 überdecken; Lücke via --vv-bottom-gap gemessen. */
-    bottom: var(--vv-bottom-gap, 0px);
+    /* Verankert die Leiste an der sichtbaren Unterkante (top + translateY),
+       statt an fixed bottom:0 — Letzteres liegt auf Firefox iOS hinter der
+       einklappbaren Toolbar (Bug 1978012). Wert via --vv-visible-bottom. */
+    top: var(--vv-visible-bottom, 100%);
+    bottom: auto;
+    transform: translateY(-100%);
     transition: transform 0.25s ease;
+    will-change: transform, top;
   }
 
   .bottom-nav-chrome.chrome-hidden {
-    transform: translateY(100%);
+    transform: translateY(0);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1564,35 +1566,34 @@ h3 {
     background: var(--surface);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-md);
-    bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) +
-        var(--vv-bottom-gap, 0px) + 1rem
+    /* An die sichtbare Unterkante verankert (analog zu .bottom-nav-chrome),
+       knapp über der Bottom-Nav statt an fixed bottom:0. */
+    top: var(--vv-visible-bottom, 100%);
+    bottom: auto;
+    transform: translateY(
+      calc(
+        -100% - var(--bottom-nav-height) - env(safe-area-inset-bottom, 0px) -
+          1rem
+      )
     );
-    transition: bottom 0.25s ease;
+    transition: transform 0.25s ease;
+  }
+
+  .scroll-to-top-above-footer {
+    transform: translateY(
+      calc(
+        -100% - var(--bottom-nav-height) - env(safe-area-inset-bottom, 0px) -
+          5rem
+      )
+    );
   }
 
   @media (max-width: 767px) {
     html.scroll-chrome-hidden .scroll-to-top,
     html.scroll-chrome-hidden .scroll-to-top-above-footer {
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
-    }
-
-  }
-
-  .scroll-to-top-above-footer {
-    bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) +
-        var(--vv-bottom-gap, 0px) + 5rem
-    );
-  }
-
-  @media (min-width: 768px) {
-    .scroll-to-top {
-      bottom: calc(var(--bottom-nav-height) + 1rem);
-    }
-
-    .scroll-to-top-above-footer {
-      bottom: calc(var(--bottom-nav-height) + 5rem);
+      transform: translateY(
+        calc(-100% - env(safe-area-inset-bottom, 0px) - 1rem)
+      );
     }
   }
 
