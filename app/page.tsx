@@ -177,6 +177,7 @@ export default async function Home() {
           latestPool={latestPool}
           hotnessGame={hotness?.game ?? null}
           hotnessRank={hotness?.rank}
+          hotnessTop={hotness?.top ?? []}
         />
       </section>
     ) : null;

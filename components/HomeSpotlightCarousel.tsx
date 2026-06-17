@@ -12,6 +12,8 @@ import {
   GameOfTheDayCard,
   GameOfTheDayEmpty,
 } from "@/components/GameOfTheDayCard";
+import { BggHotnessModal } from "@/components/BggHotnessModal";
+import type { BggHotItem } from "@/lib/bgg";
 import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import { pickLatestGameFromPool } from "@/lib/spotlight-pick";
 import { prefersReducedMotion } from "@/lib/motion";
@@ -114,6 +116,7 @@ export function HomeSpotlightCarousel({
   latestPool,
   hotnessGame,
   hotnessRank,
+  hotnessTop = [],
 }: {
   gotdGame: GameDetailData | null;
   gotdPlayerCount?: number;
@@ -121,6 +124,7 @@ export function HomeSpotlightCarousel({
   latestPool: GameDetailData[];
   hotnessGame: GameDetailData | null;
   hotnessRank?: number;
+  hotnessTop?: BggHotItem[];
 }) {
   const [store] = useState(() => createLatestGameStore(latestPool));
   const latestGame = useSyncExternalStore(
@@ -178,6 +182,7 @@ export function HomeSpotlightCarousel({
   const [stopped, setStopped] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [hotnessListOpen, setHotnessListOpen] = useState(false);
   const [pageHidden, setPageHidden] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
@@ -207,11 +212,12 @@ export function HomeSpotlightCarousel({
   }, []);
 
   useEffect(() => {
-    if (stopped || hovering || modalOpen || pageHidden || count < 2) return;
+    if (stopped || hovering || modalOpen || hotnessListOpen || pageHidden || count < 2)
+      return;
     if (prefersReducedMotion()) return;
     const timer = setInterval(() => step(1, false), AUTO_ADVANCE_MS);
     return () => clearInterval(timer);
-  }, [stopped, hovering, modalOpen, pageHidden, count, step]);
+  }, [stopped, hovering, modalOpen, hotnessListOpen, pageHidden, count, step]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0]?.clientX ?? null;
@@ -243,18 +249,43 @@ export function HomeSpotlightCarousel({
       <div className="relative">
         <div
           key={slide.key}
-          className="spotlight-slide-enter"
+          className="relative pb-7 spotlight-slide-enter"
           role="group"
           aria-roledescription="Slide"
           aria-label={`${slide.label} (${safeIndex + 1} von ${count})`}
         >
-          <GameOfTheDayCard
-            game={slide.game}
-            playerCount={slide.playerCount}
-            ownedExpansions={slide.ownedExpansions}
-            label={slide.label}
-            onOpenChange={setModalOpen}
-          />
+          {slide.key === "hotness" && hotnessTop.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setHotnessListOpen(true)}
+              aria-label="Top 10 der BGG-Hotness anzeigen"
+              className="hotness-peek-enter absolute inset-x-3 bottom-0 z-0 flex h-16 items-end justify-center rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-2)] pb-1.5 text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+          )}
+
+          <div className="relative z-[1]">
+            <GameOfTheDayCard
+              game={slide.game}
+              playerCount={slide.playerCount}
+              ownedExpansions={slide.ownedExpansions}
+              label={slide.label}
+              onOpenChange={setModalOpen}
+            />
+          </div>
         </div>
 
         {count > 1 && (
@@ -266,7 +297,7 @@ export function HomeSpotlightCarousel({
       </div>
 
       {count > 1 && (
-        <div className="flex items-center justify-center">
+        <div className="-mt-2 flex items-center justify-center">
           {slides.map((s, i) => (
             <button
               key={s.key}
@@ -287,6 +318,13 @@ export function HomeSpotlightCarousel({
             </button>
           ))}
         </div>
+      )}
+
+      {hotnessListOpen && (
+        <BggHotnessModal
+          items={hotnessTop}
+          onClose={() => setHotnessListOpen(false)}
+        />
       )}
     </div>
   );

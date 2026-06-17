@@ -661,6 +661,28 @@ h3 {
     }
   }
 
+  /* Die "zweite Karte" der Hotness wird hinter der Hauptkarte hervorgeschoben. */
+  .hotness-peek-enter {
+    animation: hotness-peek-reveal 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.14s both;
+  }
+
+  @keyframes hotness-peek-reveal {
+    from {
+      transform: translateY(-1.75rem);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hotness-peek-enter {
+      animation: none;
+    }
+  }
+
   /* Gestaffeltes Einblenden der Sammlung (Index via --reveal-i). */
   .card-reveal {
     animation: card-reveal 0.45s ease-out both;

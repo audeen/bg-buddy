@@ -6,6 +6,8 @@ import type { GameDetailData } from "@/lib/types/game";
 export type HotnessSpotlight = {
   game: GameDetailData;
   rank: number;
+  /** Aktuelle BGG-Hotness-Liste (fuer die "Mehr"-Liste auf der Startseite). */
+  top: BggHotItem[];
 };
 
 /** Pool size for the daily pick: variety without leaving the actual "hot" zone. */
@@ -73,6 +75,9 @@ async function loadHotnessSpotlight(
   return {
     game: thingDetailsToGameDetailData(details, picked),
     rank: picked.rank,
+    // Komplette Hotness-Liste (BGG liefert bis zu 50); die Startseite zeigt
+    // sie in der "Mehr"-Liste in 10er-Schritten.
+    top: hotItems,
   };
 }
 
