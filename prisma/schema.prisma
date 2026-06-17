@@ -88,6 +88,7 @@ model Meetup {
   id                         String    @id @default(cuid())
   title                      String
   scheduledAt                DateTime?
+  durationMinutes            Int       @default(240)
   location                   String?
   expectedPlayerCount        Int       @default(4)
   initialExpectedPlayerCount Int       @default(4)

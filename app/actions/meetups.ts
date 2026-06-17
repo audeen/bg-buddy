@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, isAdmin } from "@/lib/auth";
 import { getPickPhaseState } from "@/lib/pick-phase";
+import { isMeetupPast } from "@/lib/meetup-time";
 import {
   cancelActiveDuel,
   loadMeetupParticipantData,
@@ -18,18 +19,45 @@ export async function createMeetupAction(formData: FormData) {
   if (!user) return { error: "Bitte zuerst anmelden." };
 
   const title = String(formData.get("title") ?? "").trim();
-  if (!title) return { error: "Bitte einen Titel angeben." };
-
   const dateRaw = String(formData.get("scheduledAt") ?? "").trim();
   const location = String(formData.get("location") ?? "").trim() || null;
   const expected = parseInt(String(formData.get("expectedPlayerCount") ?? "4"), 10);
+  const durationHours = parseFloat(
+    String(formData.get("durationHours") ?? "4"),
+  );
+
+  // Eingegebene Rohwerte fuer den Fall, dass eine Validierung fehlschlaegt:
+  // So bleibt das Formular nach dem React-19-Reset gefuellt.
+  const values = {
+    title,
+    scheduledAt: dateRaw,
+    durationHours: String(formData.get("durationHours") ?? ""),
+    expectedPlayerCount: String(formData.get("expectedPlayerCount") ?? ""),
+    location: String(formData.get("location") ?? ""),
+  };
+
+  if (!title) return { error: "Bitte einen Titel angeben.", values };
 
   const expectedCount = Number.isFinite(expected) ? Math.max(1, expected) : 4;
+
+  const durationMinutes =
+    Number.isFinite(durationHours) && durationHours > 0
+      ? Math.max(30, Math.round(durationHours * 60))
+      : 240;
+
+  const scheduledAt = dateRaw ? new Date(dateRaw) : null;
+  if (scheduledAt && Number.isNaN(scheduledAt.getTime())) {
+    return { error: "Ungültiges Datum.", values };
+  }
+  if (scheduledAt && isMeetupPast({ scheduledAt, durationMinutes })) {
+    return { error: "Das Treffen darf nicht in der Vergangenheit liegen.", values };
+  }
 
   const meetup = await prisma.meetup.create({
     data: {
       title,
-      scheduledAt: dateRaw ? new Date(dateRaw) : null,
+      scheduledAt,
+      durationMinutes,
       location,
       expectedPlayerCount: expectedCount,
       initialExpectedPlayerCount: expectedCount,

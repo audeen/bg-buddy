@@ -13,6 +13,7 @@ import { MeetupParticipants } from "@/components/MeetupParticipants";
 import { JoinMeetupButton } from "@/components/JoinMeetupButton";
 import { MeetupSpielsteuerungClient } from "@/components/MeetupSpielsteuerungClient";
 import { PageHeader } from "@/components/PageHeader";
+import { meetupEndsAt } from "@/lib/meetup-time";
 import {
   buildCombinedByCount,
   playerCountsFromVotes,
@@ -45,16 +46,26 @@ import type { RankEntry } from "@/lib/types/ranking";
 
 export const dynamic = "force-dynamic";
 
-function formatDate(d: Date | null): string {
-  if (!d) return "Termin offen";
-  return new Intl.DateTimeFormat("de-DE", {
+function formatSchedule(
+  scheduledAt: Date | null,
+  durationMinutes: number,
+): string {
+  if (!scheduledAt) return "Termin offen";
+  const start = new Intl.DateTimeFormat("de-DE", {
     weekday: "long",
     day: "2-digit",
     month: "long",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(d);
+  }).format(scheduledAt);
+  const end = meetupEndsAt({ scheduledAt, durationMinutes });
+  return end
+    ? `${start}–${new Intl.DateTimeFormat("de-DE", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(end)} Uhr`
+    : start;
 }
 
 export default async function MeetupDetail({
@@ -409,7 +420,7 @@ export default async function MeetupDetail({
       <PageHeader id="meetup-page-top" eyebrow="Treffen" title={meetup.title}>
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm text-[var(--muted)]">
-            {formatDate(meetup.scheduledAt)}
+            {formatSchedule(meetup.scheduledAt, meetup.durationMinutes)}
             {meetup.location ? ` · ${meetup.location}` : ""} · von{" "}
             {meetup.createdBy.name}
           </p>

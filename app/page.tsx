@@ -3,8 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { LoginForm } from "@/components/LoginForm";
 import { MeetupOverviewCard } from "@/components/MeetupOverviewCard";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
+import { NewMeetupButton } from "@/components/NewMeetupButton";
 import { PageHeader } from "@/components/PageHeader";
 import { HomeSpotlightCarousel } from "@/components/HomeSpotlightCarousel";
+import { isMeetupPast } from "@/lib/meetup-time";
 import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import {
   berlinDateKey,
@@ -28,32 +31,6 @@ import {
 } from "@/lib/meetup-participants";
 
 export const dynamic = "force-dynamic";
-
-function NewMeetupIconButton() {
-  return (
-    <Link
-      href="/meetups/new"
-      className="btn btn-primary shrink-0"
-      style={{ width: "2.75rem", height: "2.75rem", padding: 0 }}
-      aria-label="Neues Treffen"
-      title="Neues Treffen"
-    >
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <path d="M12 5v14M5 12h14" />
-      </svg>
-    </Link>
-  );
-}
 
 type HomeMeetup = Awaited<
   ReturnType<
@@ -119,9 +96,18 @@ export default async function Home() {
     duelCounts.map((d) => [d.meetupId, d._count._all > 0]),
   );
 
-  const nextMeetup = meetups[0] ?? null;
-  const otherMeetups = meetups.slice(1);
-  const upcomingMeetup = findUpcomingMeetup(meetups);
+  const now = new Date();
+  const upcomingMeetups = meetups.filter((m) => !isMeetupPast(m, now));
+  const pastMeetups = meetups
+    .filter((m) => isMeetupPast(m, now))
+    .sort(
+      (a, b) =>
+        (b.scheduledAt?.getTime() ?? 0) - (a.scheduledAt?.getTime() ?? 0),
+    );
+
+  const nextMeetup = upcomingMeetups[0] ?? null;
+  const otherMeetups = upcomingMeetups.slice(1);
+  const upcomingMeetup = findUpcomingMeetup(meetups, now);
 
   let gotdGame: GameOfTheDayCandidate | null = null;
   let gotdPlayerCount: number | null = null;
@@ -168,6 +154,7 @@ export default async function Home() {
         meetupId={m.id}
         title={m.title}
         scheduledAt={m.scheduledAt}
+        durationMinutes={m.durationMinutes}
         location={m.location}
         expected={m.expectedPlayerCount}
         hostName={m.createdBy.name}
@@ -215,7 +202,7 @@ export default async function Home() {
             <div>
               <h1 className="page-title">BG Buddy</h1>
             </div>
-            <NewMeetupIconButton />
+            <NewMeetupButton />
           </header>
 
           <section className="flex flex-col gap-4">
@@ -245,6 +232,19 @@ export default async function Home() {
                 ))}
               </ul>
             </section>
+          )}
+
+          {pastMeetups.length > 0 && (
+            <CollapsibleSection
+              title="Vergangene Treffen"
+              count={pastMeetups.length}
+            >
+              <ul className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+                {pastMeetups.map((m) => (
+                  <li key={m.id}>{renderMeetupCard(m)}</li>
+                ))}
+              </ul>
+            </CollapsibleSection>
           )}
         </>
       ) : (

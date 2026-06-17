@@ -4,6 +4,7 @@ import {
   mergedBestPlayerCounts,
   type BestPlayerCountFields,
 } from "@/lib/effective-player-count";
+import { isMeetupPast } from "@/lib/meetup-time";
 
 const BERLIN_TZ = "Europe/Berlin";
 
@@ -69,16 +70,22 @@ export function findTodayMeetup(
   };
 }
 
-/** First meetup in homepage order (scheduledAt asc, then createdAt desc). */
+/**
+ * First non-past meetup in homepage order (scheduledAt asc, then createdAt desc).
+ * Past meetups (end time before now) are skipped so the Game of the Day no longer
+ * orients itself on a meetup that already happened.
+ */
 export function findUpcomingMeetup(
   meetups: {
     id: string;
     title: string;
     scheduledAt: Date | null;
+    durationMinutes?: number | null;
     expectedPlayerCount: number;
   }[],
+  now: Date = new Date(),
 ): UpcomingMeetup | null {
-  const first = meetups[0];
+  const first = meetups.find((m) => !isMeetupPast(m, now));
   if (!first) return null;
   return {
     id: first.id,

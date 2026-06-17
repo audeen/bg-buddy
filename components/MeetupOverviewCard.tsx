@@ -3,23 +3,37 @@ import { MeetupParticipants } from "@/components/MeetupParticipants";
 import { JoinMeetupButton } from "@/components/JoinMeetupButton";
 import type { RegisteredPlayer } from "@/lib/meetup-participants";
 import { canLeaveMeetup, isUserRegistered } from "@/lib/meetup-participants";
+import { meetupEndsAt } from "@/lib/meetup-time";
 
-function formatDate(d: Date | null): string {
-  if (!d) return "Termin offen";
+function formatTime(d: Date): string {
   return new Intl.DateTimeFormat("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
+}
+
+function formatSchedule(
+  scheduledAt: Date | null,
+  durationMinutes: number,
+): string {
+  if (!scheduledAt) return "Termin offen";
+  const start = new Intl.DateTimeFormat("de-DE", {
     weekday: "short",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(d);
+  }).format(scheduledAt);
+  const end = meetupEndsAt({ scheduledAt, durationMinutes });
+  return end ? `${start}–${formatTime(end)}` : start;
 }
 
 export function MeetupOverviewCard({
   meetupId,
   title,
   scheduledAt,
+  durationMinutes,
   location,
   expected,
   hostName,
@@ -32,6 +46,7 @@ export function MeetupOverviewCard({
   meetupId: string;
   title: string;
   scheduledAt: Date | null;
+  durationMinutes: number;
   location: string | null;
   expected: number;
   hostName: string;
@@ -69,7 +84,7 @@ export function MeetupOverviewCard({
           </span>
         </div>
         <span className="text-sm text-[var(--muted)]">
-          📅 {formatDate(scheduledAt)}
+          📅 {formatSchedule(scheduledAt, durationMinutes)}
           {location ? ` · ${location}` : ""}
         </span>
       </div>

@@ -50,17 +50,31 @@ type Scenario = {
   creatorPicksLeft?: 1 | 2 | 3;
   /** All four dummy users with 3/3 picks — duell-ready. */
   allReady?: boolean;
+  /**
+   * Offset in days relative to "now" for the scheduled date.
+   * Negative values create past meetups so the "Vergangene Treffen" section
+   * is testable in the dev environment.
+   */
+  dayOffset: number;
 };
 
 const SCENARIOS: Scenario[] = [
-  { label: "Direktduelle · dir 3 Picks", poolSize: POOL_FULL, creatorPicksLeft: 3 },
-  { label: "Direktduelle · dir 2 Picks", poolSize: POOL_FULL, creatorPicksLeft: 2 },
-  { label: "Direktduelle · dir 1 Pick", poolSize: POOL_FULL, creatorPicksLeft: 1 },
-  { label: "Gruppenduelle · dir 3 Picks", poolSize: POOL_GROUP, creatorPicksLeft: 3 },
-  { label: "Gruppenduelle · dir 2 Picks", poolSize: POOL_GROUP, creatorPicksLeft: 2 },
-  { label: "Gruppenduelle · dir 1 Pick", poolSize: POOL_GROUP, creatorPicksLeft: 1 },
-  { label: "Duell bereit · 4/4", poolSize: POOL_FULL, allReady: true },
+  { label: "Direktduelle · dir 3 Picks", poolSize: POOL_FULL, creatorPicksLeft: 3, dayOffset: -10 },
+  { label: "Direktduelle · dir 2 Picks", poolSize: POOL_FULL, creatorPicksLeft: 2, dayOffset: -3 },
+  { label: "Direktduelle · dir 1 Pick", poolSize: POOL_FULL, creatorPicksLeft: 1, dayOffset: 2 },
+  { label: "Gruppenduelle · dir 3 Picks", poolSize: POOL_GROUP, creatorPicksLeft: 3, dayOffset: 5 },
+  { label: "Gruppenduelle · dir 2 Picks", poolSize: POOL_GROUP, creatorPicksLeft: 2, dayOffset: 9 },
+  { label: "Gruppenduelle · dir 1 Pick", poolSize: POOL_GROUP, creatorPicksLeft: 1, dayOffset: 14 },
+  { label: "Duell bereit · 4/4", poolSize: POOL_FULL, allReady: true, dayOffset: 21 },
 ];
+
+/** Scheduled date at 18:00 local time, `dayOffset` days from now. */
+function scheduledAtFromOffset(dayOffset: number, now: Date = new Date()): Date {
+  const d = new Date(now);
+  d.setDate(d.getDate() + dayOffset);
+  d.setHours(18, 0, 0, 0);
+  return d;
+}
 
 export async function ensureDummyUsers(
   db: PrismaClient = prisma,
@@ -186,10 +200,12 @@ async function createMeetup(
   db: PrismaClient,
   createdById: string,
   label: string,
+  scheduledAt: Date | null,
 ): Promise<string> {
   const meetup = await db.meetup.create({
     data: {
       title: `${DUMMY_MEETUP_PREFIX}${label}`,
+      scheduledAt,
       expectedPlayerCount: EXPECTED,
       initialExpectedPlayerCount: EXPECTED,
       registrationPeakCount: 1,
@@ -242,7 +258,12 @@ export async function createAllDummyMeetups(
           ...dummyPicksForPool(users, pool),
           ...creatorPicks(createdById, pool, scenario.creatorPicksLeft ?? 3),
         ];
-    const id = await createMeetup(db, createdById, scenario.label);
+    const id = await createMeetup(
+      db,
+      createdById,
+      scenario.label,
+      scheduledAtFromOffset(scenario.dayOffset),
+    );
     await insertPicks(db, id, picks);
     meetupIds.push(id);
   }
