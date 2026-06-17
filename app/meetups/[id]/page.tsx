@@ -10,6 +10,8 @@ import { MeetupVoteActions } from "@/components/MeetupVoteActions";
 import { MeetupExpansionActions } from "@/components/MeetupExpansionActions";
 import { MeetupRankings } from "@/components/MeetupRankings";
 import { MeetupParticipants } from "@/components/MeetupParticipants";
+import { MeetupTableToolsClient } from "@/components/MeetupTableToolsClient";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { JoinMeetupButton } from "@/components/JoinMeetupButton";
 import { MeetupSpielsteuerungClient } from "@/components/MeetupSpielsteuerungClient";
 import { PageHeader } from "@/components/PageHeader";
@@ -500,6 +502,12 @@ export default async function MeetupDetail({
             }
           />
         )}
+      </div>
+
+      <div className="card card-pad">
+        <CollapsibleSection title="Tisch-Tools">
+          <MeetupTableToolsClient players={registeredPlayers} />
+        </CollapsibleSection>
       </div>
 
       <MeetupRankings
