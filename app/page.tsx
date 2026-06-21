@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
@@ -45,6 +46,22 @@ type HomeMeetup = Awaited<
     }>
   >
 >[number];
+
+function HomeSpotlightSkeleton() {
+  return (
+    <div className="card overflow-hidden" aria-busy="true">
+      <div className="aspect-[4/3] w-full animate-pulse bg-[var(--surface-2)]" />
+      <div className="card-pad flex flex-col gap-3">
+        <div className="h-3 w-28 animate-pulse rounded-full bg-[var(--surface-2)]" />
+        <div className="h-5 w-3/4 animate-pulse rounded-full bg-[var(--surface-2)]" />
+        <div className="h-4 w-1/2 animate-pulse rounded-full bg-[var(--surface-2)]" />
+      </div>
+      <p className="sr-only" role="status">
+        Empfehlungen werden geladen …
+      </p>
+    </div>
+  );
+}
 
 export default async function Home() {
   const user = await getCurrentUser();
@@ -113,18 +130,22 @@ export default async function Home() {
   let gotdPlayerCount: number | null = null;
   let latestPool: GameDetailData[] = [];
   let spotlightExpansions: Record<string, GameCardGame[]> = {};
-  let hotness: HotnessSpotlight | null = null;
+  let hotnessPromise: Promise<HotnessSpotlight | null> = Promise.resolve(null);
 
   if (gameCount > 0) {
-    const [games, expansionsByBase, hotnessResult] = await Promise.all([
+    const [games, expansionsByBase] = await Promise.all([
       prisma.game.findMany({
         where: { isExpansion: false, listedInCollection: true },
         select: { ...gameCardSelect, lentOut: true, addedToCollectionAt: true },
       }),
       loadOwnedExpansionsByBaseGame(),
-      getHotnessSpotlight(berlinDateKey(new Date())).catch(() => null),
     ]);
-    hotness = hotnessResult;
+    // Bewusst NICHT awaiten: Die (oft langsame, gedrosselte) BGG-Hotness
+    // streamt ueber <Suspense> nach und blockiert so nicht den ersten
+    // Seitenaufbau.
+    hotnessPromise = getHotnessSpotlight(berlinDateKey(new Date())).catch(
+      () => null,
+    );
     const gotd = resolveGameOfTheDay(
       games,
       expansionsByBase,
@@ -170,15 +191,15 @@ export default async function Home() {
   const gotdSection =
     gameCount > 0 ? (
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <HomeSpotlightCarousel
-          gotdGame={gotdGame}
-          gotdPlayerCount={gotdPlayerCount ?? undefined}
-          expansionsByBaseId={spotlightExpansions}
-          latestPool={latestPool}
-          hotnessGame={hotness?.game ?? null}
-          hotnessRank={hotness?.rank}
-          hotnessTop={hotness?.top ?? []}
-        />
+        <Suspense fallback={<HomeSpotlightSkeleton />}>
+          <HomeSpotlightCarousel
+            gotdGame={gotdGame}
+            gotdPlayerCount={gotdPlayerCount ?? undefined}
+            expansionsByBaseId={spotlightExpansions}
+            latestPool={latestPool}
+            hotnessPromise={hotnessPromise}
+          />
+        </Suspense>
       </section>
     ) : null;
 

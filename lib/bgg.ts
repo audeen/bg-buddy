@@ -406,10 +406,13 @@ function parseRetryAfterMs(header: string | null): number | null {
  *
  * Requires the BGG_TOKEN env var (see https://boardgamegeek.com/applications).
  */
-export async function fetchThingBatch(ids: number[]): Promise<ThingDetails[]> {
+export async function fetchThingBatch(
+  ids: number[],
+  options?: BggFetchOptions,
+): Promise<ThingDetails[]> {
   if (ids.length === 0) return [];
   const url = `https://boardgamegeek.com/xmlapi2/thing?id=${ids.join(",")}&stats=1`;
-  const xml = await fetchBggXml(url);
+  const xml = await fetchBggXml(url, options);
   return parseThingXml(xml);
 }
 
@@ -442,12 +445,32 @@ export function parseSearchXml(xml: string): BggSearchItem[] {
     .filter((item): item is BggSearchItem => item != null);
 }
 
-async function fetchBggXml(url: string): Promise<string> {
+/** Optionen fuer BGG-XML-Requests. */
+export type BggFetchOptions = {
+  /**
+   * Wenn gesetzt, wird der Next Data Cache (stale-while-revalidate) mit dieser
+   * TTL in Sekunden genutzt, statt `no-store`. Gedacht fuer stabile, ueber
+   * Serverless-Instanzen hinweg teilbare Daten (z. B. die Hotness), damit
+   * kalte Instanzen BGG nicht erneut anfragen.
+   */
+  revalidate?: number;
+};
+
+type BggRequestInit = RequestInit & { next?: { revalidate?: number } };
+
+async function fetchBggXml(
+  url: string,
+  options?: BggFetchOptions,
+): Promise<string> {
   const headers = buildHeaders();
+  const cacheInit: BggRequestInit =
+    options?.revalidate != null
+      ? { next: { revalidate: options.revalidate } }
+      : { cache: "no-store" };
   return enqueueBggRequest(async () => {
     let attempt = 0;
     while (attempt < 5) {
-      const res = await fetch(url, { headers, cache: "no-store" });
+      const res = await fetch(url, { headers, ...cacheInit });
       if (res.status === 200) {
         return res.text();
       }
@@ -525,9 +548,11 @@ export function parseHotXml(xml: string): BggHotItem[] {
  * Fetches the current BGG Hotness list (top 50 board games).
  * Requires BGG_TOKEN (see https://boardgamegeek.com/applications).
  */
-export async function fetchHotGames(): Promise<BggHotItem[]> {
+export async function fetchHotGames(
+  options?: BggFetchOptions,
+): Promise<BggHotItem[]> {
   const url = "https://boardgamegeek.com/xmlapi2/hot?type=boardgame";
-  const xml = await fetchBggXml(url);
+  const xml = await fetchBggXml(url, options);
   return parseHotXml(xml);
 }
 

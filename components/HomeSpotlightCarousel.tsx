@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  use,
   useCallback,
   useEffect,
   useMemo,
@@ -13,7 +14,7 @@ import {
   GameOfTheDayEmpty,
 } from "@/components/GameOfTheDayCard";
 import { BggHotnessModal } from "@/components/BggHotnessModal";
-import type { BggHotItem } from "@/lib/bgg";
+import type { HotnessSpotlight } from "@/lib/bgg/hotness";
 import type { GameCardGame, GameDetailData } from "@/lib/types/game";
 import { pickLatestGameFromPool } from "@/lib/spotlight-pick";
 import { prefersReducedMotion } from "@/lib/motion";
@@ -114,18 +115,21 @@ export function HomeSpotlightCarousel({
   gotdPlayerCount,
   expansionsByBaseId,
   latestPool,
-  hotnessGame,
-  hotnessRank,
-  hotnessTop = [],
+  hotnessPromise,
 }: {
   gotdGame: GameDetailData | null;
   gotdPlayerCount?: number;
   expansionsByBaseId: Record<string, GameCardGame[]>;
   latestPool: GameDetailData[];
-  hotnessGame: GameDetailData | null;
-  hotnessRank?: number;
-  hotnessTop?: BggHotItem[];
+  hotnessPromise: Promise<HotnessSpotlight | null>;
 }) {
+  // Loest erst auf, wenn die (nachstreamende) BGG-Hotness vorliegt; bis dahin
+  // zeigt die umgebende <Suspense>-Grenze den Skeleton.
+  const hotness = use(hotnessPromise);
+  const hotnessGame = hotness?.game ?? null;
+  const hotnessRank = hotness?.rank;
+  const hotnessTop = hotness?.top ?? [];
+
   const [store] = useState(() => createLatestGameStore(latestPool));
   const latestGame = useSyncExternalStore(
     store.subscribe,

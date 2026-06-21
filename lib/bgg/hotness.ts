@@ -1,5 +1,9 @@
-import { fetchHotGames, type BggHotItem, type ThingDetails } from "@/lib/bgg";
-import { bggClient } from "@/lib/bgg/client";
+import {
+  fetchHotGames,
+  fetchThingBatch,
+  type BggHotItem,
+  type ThingDetails,
+} from "@/lib/bgg";
 import { deterministicIndex } from "@/lib/game-of-the-day";
 import type { GameDetailData } from "@/lib/types/game";
 
@@ -53,6 +57,13 @@ export function thingDetailsToGameDetailData(
 
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
+/**
+ * TTL fuer den instanzuebergreifenden Next Data Cache der BGG-Requests.
+ * So muss eine kalte Serverless-Instanz BGG nicht erneut (langsam, gedrosselt)
+ * anfragen, sondern bekommt die zuletzt gecachte Antwort.
+ */
+const HOTNESS_REVALIDATE_S = 60 * 60;
+
 type HotnessCache = {
   dateKey: string;
   fetchedAt: number;
@@ -65,11 +76,13 @@ let pending: Promise<HotnessSpotlight | null> | null = null;
 async function loadHotnessSpotlight(
   dateKey: string,
 ): Promise<HotnessSpotlight | null> {
-  const hotItems = await fetchHotGames();
+  const hotItems = await fetchHotGames({ revalidate: HOTNESS_REVALIDATE_S });
   const picked = pickHotnessItem(hotItems, dateKey);
   if (!picked) return null;
 
-  const [details] = await bggClient.getThings([picked.bggId]);
+  const [details] = await fetchThingBatch([picked.bggId], {
+    revalidate: HOTNESS_REVALIDATE_S,
+  });
   if (!details) return null;
 
   return {
