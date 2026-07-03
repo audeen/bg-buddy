@@ -10,6 +10,8 @@ import type { MandatoryExpansionFamily } from "@/lib/types/meetup";
 
 export function MeetupExpansionActions({
   meetupId,
+  roundId,
+  roundQuery = "",
   isHost,
   expansionDuelAvailable,
   expansionDuelStarted,
@@ -21,6 +23,8 @@ export function MeetupExpansionActions({
   winnerHasExpansionsAtStar,
 }: {
   meetupId: string;
+  roundId: string;
+  roundQuery?: string;
   isHost: boolean;
   expansionDuelAvailable: boolean;
   expansionDuelStarted: boolean;
@@ -56,7 +60,7 @@ export function MeetupExpansionActions({
           </span>
         </p>
         <Link
-          href={`/meetups/${meetupId}/erweiterung`}
+          href={`/meetups/${meetupId}/erweiterung${roundQuery}`}
           className="btn btn-primary btn-lg w-full sm:w-auto text-center"
         >
           Erweiterungs-Duell
@@ -93,7 +97,7 @@ export function MeetupExpansionActions({
       </p>
 
       <MeetupMandatoryExpansions
-        meetupId={meetupId}
+        roundId={roundId}
         family={winnerFamily}
         mandatoryKeys={mandatoryKeys}
       />
@@ -111,7 +115,7 @@ export function MeetupExpansionActions({
             onClick={() => {
               setError(null);
               startTransition(async () => {
-                const res = await startExpansionDuelAction(meetupId);
+                const res = await startExpansionDuelAction(roundId);
                 if (res && "error" in res && res.error) {
                   setError(res.error);
                   return;

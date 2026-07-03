@@ -62,12 +62,14 @@ function buildSummaryText({
 
 export function MeetupSpielsteuerungClient({
   meetupId,
+  roundId,
   forcedGame,
   hostChoiceGames,
   hostChoiceMode,
   guestGames = [],
 }: {
   meetupId: string;
+  roundId: string;
   forcedGame: SpielsteuerungGameRow | null;
   hostChoiceGames: SpielsteuerungGameRow[];
   hostChoiceMode: HostChoiceMode;
@@ -176,7 +178,7 @@ export function MeetupSpielsteuerungClient({
   function handleClearHostChoice() {
     setError(null);
     startTransition(async () => {
-      const res = await clearHostChoiceGamesAction(meetupId);
+      const res = await clearHostChoiceGamesAction(roundId);
       if (res && "error" in res && res.error) {
         setError(res.error);
         return;
@@ -284,7 +286,7 @@ export function MeetupSpielsteuerungClient({
                         }
                         onClick={() =>
                           runAction(() =>
-                            addHostChoiceGameAction(meetupId, g.id),
+                            addHostChoiceGameAction(roundId, g.id),
                           )
                         }
                       >
@@ -318,7 +320,7 @@ export function MeetupSpielsteuerungClient({
               className="btn btn-ghost btn-sm shrink-0"
               disabled={pending}
               onClick={() =>
-                runAction(() => clearForcedMeetupGameAction(meetupId))
+                runAction(() => clearForcedMeetupGameAction(roundId))
               }
             >
               Aufheben
@@ -389,7 +391,7 @@ export function MeetupSpielsteuerungClient({
                     }
                     onClick={() =>
                       runAction(() =>
-                        addHostChoiceGameAction(meetupId, selectedGame.id),
+                        addHostChoiceGameAction(roundId, selectedGame.id),
                       )
                     }
                   >
@@ -418,7 +420,7 @@ export function MeetupSpielsteuerungClient({
                     disabled={pending}
                     onClick={() =>
                       runAction(() =>
-                        forceMeetupGameAction(meetupId, forceConfirmGame.id),
+                        forceMeetupGameAction(roundId, forceConfirmGame.id),
                       )
                     }
                   >
@@ -451,7 +453,7 @@ export function MeetupSpielsteuerungClient({
                   disabled={pending}
                   onChange={() =>
                     runAction(() =>
-                      setHostChoiceModeAction(meetupId, "HIGHLIGHT"),
+                      setHostChoiceModeAction(roundId, "HIGHLIGHT"),
                     )
                   }
                 />
@@ -465,7 +467,7 @@ export function MeetupSpielsteuerungClient({
                   disabled={pending}
                   onChange={() =>
                     runAction(() =>
-                      setHostChoiceModeAction(meetupId, "RESTRICT"),
+                      setHostChoiceModeAction(roundId, "RESTRICT"),
                     )
                   }
                 />
@@ -496,7 +498,7 @@ export function MeetupSpielsteuerungClient({
                     disabled={pending}
                     onClick={() =>
                       runAction(() =>
-                        removeHostChoiceGameAction(meetupId, g.id),
+                        removeHostChoiceGameAction(roundId, g.id),
                       )
                     }
                   >

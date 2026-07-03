@@ -4,6 +4,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { DuellClient } from "@/components/DuellClient";
 import { DuellGateCard } from "@/components/DuellGateCard";
 import { DuellSessionGuard } from "@/components/DuellSessionGuard";
+import { RoundSwitcher } from "@/components/RoundSwitcher";
+import { RoundParticipationToggle } from "@/components/RoundControls";
+import { isRoundParticipant, resolveRound } from "@/lib/round-resolve";
 import { PageHeader } from "@/components/PageHeader";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import {
@@ -22,41 +25,79 @@ export const dynamic = "force-dynamic";
 
 export default async function DuellPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  const sp = await searchParams;
+  const roundParam = typeof sp.runde === "string" ? sp.runde : undefined;
   const user = await getCurrentUser();
   if (!user) redirect("/#login");
 
+  const resolved = await resolveRound(id, roundParam);
+  if (!resolved) notFound();
+  const { rounds, activeRoundId, multiRound } = resolved;
+  const roundQuery = multiRound ? `?runde=${activeRoundId}` : "";
+
   const meetup = await prisma.meetup.findUnique({
     where: { id },
+    select: { title: true, createdBy: { select: { id: true } } },
+  });
+  const round = await prisma.meetupRound.findUnique({
+    where: { id: activeRoundId },
     select: {
-      title: true,
       expectedPlayerCount: true,
       duelFrozenData: true,
       hostForcedGameId: true,
-      createdBy: { select: { id: true } },
     },
   });
-  if (!meetup) notFound();
+  if (!meetup || !round) notFound();
 
-  if (meetup.hostForcedGameId != null) {
-    redirect(`/meetups/${id}`);
+  if (round.hostForcedGameId != null) {
+    redirect(`/meetups/${id}${roundQuery}`);
   }
 
   const isHost = user.id === meetup.createdBy.id;
-  const expected = meetup.expectedPlayerCount;
+  const expected = round.expectedPlayerCount;
+
+  // Nicht-Teilnehmer sehen bei mehreren Runden Hinweis + Mitspielen-Button
+  // statt der Duell-UI.
+  if (multiRound && !(await isRoundParticipant(activeRoundId, user.id))) {
+    return (
+      <div className="container-app flex flex-col gap-4">
+        <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
+        <RoundSwitcher
+          meetupId={id}
+          segment="duell"
+          rounds={rounds}
+          activeRoundId={activeRoundId}
+        />
+        <div className="card card-pad flex flex-col gap-3">
+          <p className="text-sm text-[var(--muted)]">
+            Du nimmst an dieser Spielrunde noch nicht teil. Tritt bei, um
+            mitzustimmen.
+          </p>
+          <RoundParticipationToggle
+            roundId={activeRoundId}
+            isParticipant={false}
+            canLeave={false}
+          />
+        </div>
+      </div>
+    );
+  }
 
   const [{ phase, summary }, groupPicks, duelVotes] = await Promise.all([
-    loadPickPhaseSummary(id, expected, prisma),
+    loadPickPhaseSummary(activeRoundId, expected, prisma),
     prisma.vote.findMany({
-      where: { meetupId: id, mode: "PICK", playerCount: expected },
+      where: { roundId: activeRoundId, mode: "PICK", playerCount: expected },
       select: { userId: true, gameId: true, points: true },
     }),
     prisma.vote.findMany({
       where: {
-        meetupId: id,
+        roundId: activeRoundId,
         mode: "DUEL",
         playerCount: expected,
       },
@@ -70,7 +111,7 @@ export default async function DuellPage({
   ]);
 
   const pickCounts = buildPickCounts(groupPicks);
-  const frozen = parseDuelFrozenData(meetup.duelFrozenData, expected);
+  const frozen = parseDuelFrozenData(round.duelFrozenData, expected);
   const ids = frozen?.poolGameIds ?? poolGameIds(pickCounts);
   const initialDuelVoteCount = duelVotes.length;
 
@@ -78,6 +119,7 @@ export default async function DuellPage({
     return (
       <DuellSessionGuard
         meetupId={id}
+        roundId={multiRound ? activeRoundId : undefined}
         initialDuelVoteCount={initialDuelVoteCount}
       >
         {content}
@@ -93,7 +135,7 @@ export default async function DuellPage({
     return withSessionGuard(
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
-        <DuellGateCard title="Noch zu wenige Stimmen" ctaHref={`/meetups/${id}/pick`}>
+        <DuellGateCard title="Noch zu wenige Stimmen" ctaHref={`/meetups/${id}/pick${roundQuery}`}>
           <p className="text-[var(--muted)] text-sm">
             Für {expected} Spieler ★ braucht es mindestens zwei nominierte
             Spiele von der Gruppe, bevor Duelle starten können.
@@ -107,7 +149,7 @@ export default async function DuellPage({
     return withSessionGuard(
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
-        <DuellGateCard title="Erst Stimmen vergeben" ctaHref={`/meetups/${id}/pick`}>
+        <DuellGateCard title="Erst Stimmen vergeben" ctaHref={`/meetups/${id}/pick${roundQuery}`}>
           <p className="text-[var(--muted)] text-sm">
             Du brauchst {MAX_PICK_POINTS}/{MAX_PICK_POINTS} Stimmen bei{" "}
             {expected} Spielern ★, um Duelle zu spielen.
@@ -123,7 +165,7 @@ export default async function DuellPage({
         <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
         <DuellGateCard
           title="Noch nicht alle Stimmen vergeben"
-          ctaHref={`/meetups/${id}/pick`}
+          ctaHref={`/meetups/${id}/pick${roundQuery}`}
         >
           <p className="text-[var(--muted)] text-sm">
             Du hast {myPickSum}/{MAX_PICK_POINTS} Stimmen bei {expected}{" "}
@@ -143,7 +185,7 @@ export default async function DuellPage({
     return withSessionGuard(
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
-        <DuellGateCard title="Warten auf alle Stimmen" ctaHref={`/meetups/${id}/pick`}>
+        <DuellGateCard title="Warten auf alle Stimmen" ctaHref={`/meetups/${id}/pick${roundQuery}`}>
           <p className="text-[var(--muted)] text-sm">
             Duell-Modus startet, wenn {expected} Spieler je {MAX_PICK_POINTS}/
             {MAX_PICK_POINTS} Stimmen bei ★ gesetzt haben.
@@ -173,7 +215,7 @@ export default async function DuellPage({
     userPoints: buildUserPointsMap(groupPicks),
     userId: user.id,
     participantIds: duelParticipantIds(groupPicks),
-    meetupId: id,
+    meetupId: activeRoundId,
     frozen,
   });
 
@@ -202,7 +244,7 @@ export default async function DuellPage({
   const tieBreak =
     ids.length >= 2
       ? {
-          meetupId: id,
+          meetupId: activeRoundId,
           expectedPlayerCount: expected,
           pickCounts,
           games: buildGameTieMetaMap(games),
@@ -215,7 +257,7 @@ export default async function DuellPage({
     totalParticipants,
   } = getDuelProgressForCount(ids, duelRows, expected, {
     picks: groupPicks,
-    meetupId: id,
+    meetupId: activeRoundId,
     tieBreak,
     frozen,
   });
@@ -227,8 +269,17 @@ export default async function DuellPage({
     <div className="container-app flex flex-col gap-3 sm:gap-4">
       <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
 
+      <RoundSwitcher
+        meetupId={id}
+        segment="duell"
+        rounds={rounds}
+        activeRoundId={activeRoundId}
+      />
+
       <DuellClient
         meetupId={id}
+        roundId={activeRoundId}
+        roundQuery={roundQuery}
         expected={expected}
         games={games}
         myPairs={plan.myPairs}

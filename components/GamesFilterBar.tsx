@@ -69,8 +69,9 @@ export function GamesFilterBar({
   const navigate = (next: GameFilters, nextSort: GameSort = sort) => {
     const params = filtersToSearchParams(next, nextSort);
     const qs = params.toString();
+    const sep = basePath.includes("?") ? "&" : "?";
     startTransition(() => {
-      router.push(qs ? `${basePath}?${qs}` : basePath, { scroll: false });
+      router.push(qs ? `${basePath}${sep}${qs}` : basePath, { scroll: false });
       if (scrollToId) scrollToElement(scrollToId);
     });
   };

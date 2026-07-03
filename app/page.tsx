@@ -30,6 +30,7 @@ import {
   buildRegisteredPlayers,
   groupPickVotersByMeetup,
 } from "@/lib/meetup-participants";
+import { roundOrderBy } from "@/lib/round-resolve";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,9 @@ type HomeMeetup = Awaited<
         registrations: {
           include: { user: { select: { id: true; name: true } } };
         };
-        _count: { select: { votes: true } };
+        rounds: {
+          select: { id: true; expectedPlayerCount: true; sortOrder: true };
+        };
       };
     }>
   >
@@ -74,7 +77,10 @@ export default async function Home() {
         registrations: {
           include: { user: { select: { id: true, name: true } } },
         },
-        _count: { select: { votes: true } },
+        rounds: {
+          orderBy: [...roundOrderBy],
+          select: { id: true, expectedPlayerCount: true, sortOrder: true },
+        },
       },
     }),
     prisma.game.count({
@@ -82,36 +88,65 @@ export default async function Home() {
     }),
   ]);
 
-  const meetupIds = meetups.map((m) => m.id);
+  // Runden -> Treffen-Zuordnung, um runden-scoped Votes je Treffen zu aggregieren.
+  const roundToMeetup = new Map<string, string>();
+  for (const m of meetups) {
+    for (const r of m.rounds) roundToMeetup.set(r.id, m.id);
+  }
+  const roundIds = [...roundToMeetup.keys()];
+
   const pickVotes =
-    meetupIds.length > 0
+    roundIds.length > 0
       ? await prisma.vote.findMany({
-          where: { meetupId: { in: meetupIds }, mode: "PICK" },
+          where: { roundId: { in: roundIds }, mode: "PICK" },
           select: {
-            meetupId: true,
+            roundId: true,
             userId: true,
             user: { select: { name: true } },
           },
         })
       : [];
 
-  const pickVotersByMeetup = groupPickVotersByMeetup(pickVotes);
+  const pickVotersByMeetup = groupPickVotersByMeetup(
+    pickVotes.map((v) => ({
+      meetupId: roundToMeetup.get(v.roundId) ?? v.roundId,
+      userId: v.userId,
+      user: v.user,
+    })),
+  );
 
-  const duelCounts =
-    meetupIds.length > 0
+  const voteGroups =
+    roundIds.length > 0
       ? await prisma.vote.groupBy({
-          by: ["meetupId"],
-          where: {
-            meetupId: { in: meetupIds },
-            mode: "DUEL",
-          },
+          by: ["roundId"],
+          where: { roundId: { in: roundIds } },
           _count: { _all: true },
         })
       : [];
+  const voteCountByMeetup = new Map<string, number>();
+  for (const g of voteGroups) {
+    const mId = roundToMeetup.get(g.roundId);
+    if (!mId) continue;
+    voteCountByMeetup.set(
+      mId,
+      (voteCountByMeetup.get(mId) ?? 0) + g._count._all,
+    );
+  }
 
-  const duelsStartedByMeetup = new Map(
-    duelCounts.map((d) => [d.meetupId, d._count._all > 0]),
-  );
+  const duelGroups =
+    roundIds.length > 0
+      ? await prisma.vote.groupBy({
+          by: ["roundId"],
+          where: { roundId: { in: roundIds }, mode: "DUEL" },
+          _count: { _all: true },
+        })
+      : [];
+  const duelsStartedByMeetup = new Map<string, boolean>();
+  for (const g of duelGroups) {
+    const mId = roundToMeetup.get(g.roundId);
+    if (!mId) continue;
+    if (g._count._all > 0) duelsStartedByMeetup.set(mId, true);
+  }
 
   const now = new Date();
   const upcomingMeetups = meetups.filter((m) => !isMeetupPast(m, now));
@@ -124,7 +159,16 @@ export default async function Home() {
 
   const nextMeetup = upcomingMeetups[0] ?? null;
   const otherMeetups = upcomingMeetups.slice(1);
-  const upcomingMeetup = findUpcomingMeetup(meetups, now);
+  const upcomingMeetup = findUpcomingMeetup(
+    meetups.map((m) => ({
+      id: m.id,
+      title: m.title,
+      scheduledAt: m.scheduledAt,
+      durationMinutes: m.durationMinutes,
+      expectedPlayerCount: m.rounds[0]?.expectedPlayerCount ?? 4,
+    })),
+    now,
+  );
 
   let gotdGame: GameOfTheDayCandidate | null = null;
   let gotdPlayerCount: number | null = null;
@@ -177,9 +221,10 @@ export default async function Home() {
         scheduledAt={m.scheduledAt}
         durationMinutes={m.durationMinutes}
         location={m.location}
-        expected={m.expectedPlayerCount}
+        expected={m.rounds[0]?.expectedPlayerCount ?? 4}
         hostName={m.createdBy.name}
-        voteCount={m._count.votes}
+        voteCount={voteCountByMeetup.get(m.id) ?? 0}
+        roundCount={m.rounds.length}
         players={players}
         duelsStarted={duelsStartedByMeetup.get(m.id) ?? false}
         currentUserId={user?.id}

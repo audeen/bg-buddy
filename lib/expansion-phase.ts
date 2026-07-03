@@ -26,7 +26,7 @@ export type ExpansionPhaseState = {
 };
 
 export async function loadExpansionPhaseState(
-  meetupId: string,
+  roundId: string,
   expectedPlayerCount: number,
   db: PrismaClient,
   options?: {
@@ -34,8 +34,8 @@ export async function loadExpansionPhaseState(
     mandatoryByBase?: Map<number, number[]>;
   },
 ): Promise<ExpansionPhaseState> {
-  const meetup = await db.meetup.findUnique({
-    where: { id: meetupId },
+  const meetup = await db.meetupRound.findUnique({
+    where: { id: roundId },
     select: {
       duelFrozenData: true,
       expansionDuelStartedAt: true,
@@ -99,7 +99,7 @@ export async function loadExpansionPhaseState(
   const [groupPicks, duelVotes, expansionVotes, allVotes] = await Promise.all([
     db.vote.findMany({
       where: {
-        meetupId,
+        roundId,
         mode: "PICK",
         playerCount: expectedPlayerCount,
       },
@@ -107,7 +107,7 @@ export async function loadExpansionPhaseState(
     }),
     db.vote.findMany({
       where: {
-        meetupId,
+        roundId,
         mode: "DUEL",
         playerCount: expectedPlayerCount,
       },
@@ -120,7 +120,7 @@ export async function loadExpansionPhaseState(
     }),
     db.vote.findMany({
       where: {
-        meetupId,
+        roundId,
         mode: "EXPANSION_DUEL",
         playerCount: expectedPlayerCount,
       },
@@ -131,7 +131,7 @@ export async function loadExpansionPhaseState(
       },
     }),
     db.vote.findMany({
-      where: { meetupId },
+      where: { roundId },
       include: {
         game: {
           select: {
@@ -156,7 +156,7 @@ export async function loadExpansionPhaseState(
   const tieBreak =
     poolIds.length >= 2
       ? {
-          meetupId,
+          meetupId: roundId,
           expectedPlayerCount,
           pickCounts,
           games: buildGameTieMetaMap(
@@ -179,7 +179,7 @@ export async function loadExpansionPhaseState(
     expectedPlayerCount,
     {
       picks: groupPicks,
-      meetupId,
+      meetupId: roundId,
       tieBreak,
       frozen,
     },
@@ -197,7 +197,7 @@ export async function loadExpansionPhaseState(
       mode: v.mode,
       game: v.game,
     })),
-    meetupId,
+    roundId,
     frozen,
   );
 

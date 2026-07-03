@@ -10,6 +10,7 @@ import { cancelActiveDuel } from "@/lib/meetup-participants";
 import {
   normalizeBarcode,
   requireMeetupHost,
+  requireRoundHost,
   revalidateMeetupPaths,
   validatePickPoolGame,
 } from "@/app/actions/shared";
@@ -120,7 +121,6 @@ export async function removeAllGuestGamesFromMeetupAction(meetupId: string) {
   if ("error" in hostCheck) {
     return { error: hostCheck.error };
   }
-  const { meetup } = hostCheck;
 
   const guestLinks = await prisma.meetupGuestGame.findMany({
     where: { meetupId },
@@ -131,16 +131,32 @@ export async function removeAllGuestGamesFromMeetupAction(meetupId: string) {
     return { ok: true, removed: 0 };
   }
 
-  const phase = await getPickPhaseState(
-    meetupId,
-    meetup.expectedPlayerCount,
-    prisma,
-  );
+  const rounds = await prisma.meetupRound.findMany({
+    where: { meetupId },
+    select: { id: true, expectedPlayerCount: true },
+  });
+  const roundIds = rounds.map((r) => r.id);
+
+  // Duell-Status je Runde vor dem Löschen festhalten.
+  const lockedRounds: { id: string; expectedPlayerCount: number }[] = [];
+  for (const round of rounds) {
+    const phase = await getPickPhaseState(
+      round.id,
+      round.expectedPlayerCount,
+      prisma,
+    );
+    if (phase.picksLocked) {
+      lockedRounds.push({
+        id: round.id,
+        expectedPlayerCount: round.expectedPlayerCount,
+      });
+    }
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.vote.deleteMany({
       where: {
-        meetupId,
+        roundId: { in: roundIds },
         OR: [
           { gameId: { in: gameIds } },
           { opponentGameId: { in: gameIds } },
@@ -166,8 +182,8 @@ export async function removeAllGuestGamesFromMeetupAction(meetupId: string) {
     }
   });
 
-  if (phase.picksLocked) {
-    await cancelActiveDuel(meetupId, meetup.expectedPlayerCount, prisma);
+  for (const round of lockedRounds) {
+    await cancelActiveDuel(round.id, round.expectedPlayerCount, prisma);
   }
 
   revalidateMeetupPaths(meetupId);
@@ -175,29 +191,30 @@ export async function removeAllGuestGamesFromMeetupAction(meetupId: string) {
   return { ok: true, removed: gameIds.length };
 }
 
-export async function forceMeetupGameAction(meetupId: string, gameId: number) {
+export async function forceMeetupGameAction(roundId: string, gameId: number) {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
-  const hostCheck = await requireMeetupHost(meetupId, user.id, HOST_SETTING_ERROR);
+  const hostCheck = await requireRoundHost(roundId, user.id, HOST_SETTING_ERROR);
   if ("error" in hostCheck) return { error: hostCheck.error };
+  const { round } = hostCheck;
 
-  const gameCheck = await validatePickPoolGame(meetupId, gameId, {
+  const gameCheck = await validatePickPoolGame(round.meetupId, gameId, {
     expansion: "Erweiterungen können nicht festgelegt werden.",
     notInPool: "Dieses Spiel ist nicht verfügbar.",
   });
   if ("error" in gameCheck) return { error: gameCheck.error };
 
   const phase = await getPickPhaseState(
-    meetupId,
-    hostCheck.meetup.expectedPlayerCount,
+    roundId,
+    round.expectedPlayerCount,
     prisma,
   );
 
   await prisma.$transaction(async (tx) => {
-    await tx.meetupHostChoiceGame.deleteMany({ where: { meetupId } });
-    await tx.meetup.update({
-      where: { id: meetupId },
+    await tx.meetupHostChoiceGame.deleteMany({ where: { roundId } });
+    await tx.meetupRound.update({
+      where: { id: roundId },
       data: {
         hostForcedGameId: gameId,
         hostForcedAt: new Date(),
@@ -207,156 +224,157 @@ export async function forceMeetupGameAction(meetupId: string, gameId: number) {
   });
 
   if (phase.picksLocked) {
-    await cancelActiveDuel(
-      meetupId,
-      hostCheck.meetup.expectedPlayerCount,
-      prisma,
-    );
+    await cancelActiveDuel(roundId, round.expectedPlayerCount, prisma);
   }
 
-  revalidateMeetupPaths(meetupId);
+  revalidateMeetupPaths(round.meetupId);
   revalidatePath("/");
   return { ok: true as const, name: gameCheck.game.name };
 }
 
-export async function clearForcedMeetupGameAction(meetupId: string) {
+export async function clearForcedMeetupGameAction(roundId: string) {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
-  const hostCheck = await requireMeetupHost(meetupId, user.id, HOST_SETTING_ERROR);
+  const hostCheck = await requireRoundHost(roundId, user.id, HOST_SETTING_ERROR);
   if ("error" in hostCheck) return { error: hostCheck.error };
-  if (hostCheck.meetup.hostForcedGameId == null) {
+  const { round } = hostCheck;
+  if (round.hostForcedGameId == null) {
     return { ok: true };
   }
 
-  await prisma.meetup.update({
-    where: { id: meetupId },
+  await prisma.meetupRound.update({
+    where: { id: roundId },
     data: { hostForcedGameId: null, hostForcedAt: null },
   });
 
-  revalidateMeetupPaths(meetupId);
+  revalidateMeetupPaths(round.meetupId);
   revalidatePath("/");
   return { ok: true };
 }
 
-export async function addHostChoiceGameAction(meetupId: string, gameId: number) {
+export async function addHostChoiceGameAction(roundId: string, gameId: number) {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
-  const hostCheck = await requireMeetupHost(meetupId, user.id, HOST_SETTING_ERROR);
+  const hostCheck = await requireRoundHost(roundId, user.id, HOST_SETTING_ERROR);
   if ("error" in hostCheck) return { error: hostCheck.error };
-  if (hostCheck.meetup.hostForcedGameId != null) {
+  const { round } = hostCheck;
+  if (round.hostForcedGameId != null) {
     return { error: "Spiel ist festgelegt — Vorauswahl nicht möglich." };
   }
 
-  const gameCheck = await validatePickPoolGame(meetupId, gameId, {
+  const gameCheck = await validatePickPoolGame(round.meetupId, gameId, {
     expansion: "Erweiterungen können nicht ausgewählt werden.",
     notInPool: "Dieses Spiel ist nicht verfügbar.",
   });
   if ("error" in gameCheck) return { error: gameCheck.error };
 
   const existing = await prisma.meetupHostChoiceGame.findUnique({
-    where: { meetupId_gameId: { meetupId, gameId } },
+    where: { roundId_gameId: { roundId, gameId } },
     select: { id: true },
   });
   if (existing) {
     return { error: "Spiel ist bereits in der Vorauswahl." };
   }
 
-  const count = await prisma.meetupHostChoiceGame.count({ where: { meetupId } });
+  const count = await prisma.meetupHostChoiceGame.count({ where: { roundId } });
 
   await prisma.meetupHostChoiceGame.create({
-    data: { meetupId, gameId, sortOrder: count },
+    data: { roundId, gameId, sortOrder: count },
   });
 
-  if (hostCheck.meetup.hostChoiceMode === "NONE") {
-    await prisma.meetup.update({
-      where: { id: meetupId },
+  if (round.hostChoiceMode === "NONE") {
+    await prisma.meetupRound.update({
+      where: { id: roundId },
       data: { hostChoiceMode: "HIGHLIGHT" },
     });
   }
 
-  revalidateMeetupPaths(meetupId);
+  revalidateMeetupPaths(round.meetupId);
   return { ok: true as const, name: gameCheck.game.name };
 }
 
 export async function removeHostChoiceGameAction(
-  meetupId: string,
+  roundId: string,
   gameId: number,
 ) {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
-  const hostCheck = await requireMeetupHost(meetupId, user.id, HOST_SETTING_ERROR);
+  const hostCheck = await requireRoundHost(roundId, user.id, HOST_SETTING_ERROR);
   if ("error" in hostCheck) return { error: hostCheck.error };
-  if (hostCheck.meetup.hostForcedGameId != null) {
+  const { round } = hostCheck;
+  if (round.hostForcedGameId != null) {
     return { error: "Spiel ist festgelegt — Vorauswahl nicht änderbar." };
   }
 
   await prisma.meetupHostChoiceGame.deleteMany({
-    where: { meetupId, gameId },
+    where: { roundId, gameId },
   });
 
-  const remaining = await prisma.meetupHostChoiceGame.count({ where: { meetupId } });
-  if (remaining === 0 && hostCheck.meetup.hostChoiceMode !== "NONE") {
-    await prisma.meetup.update({
-      where: { id: meetupId },
+  const remaining = await prisma.meetupHostChoiceGame.count({ where: { roundId } });
+  if (remaining === 0 && round.hostChoiceMode !== "NONE") {
+    await prisma.meetupRound.update({
+      where: { id: roundId },
       data: { hostChoiceMode: "NONE" },
     });
   }
 
-  revalidateMeetupPaths(meetupId);
+  revalidateMeetupPaths(round.meetupId);
   return { ok: true };
 }
 
 export async function setHostChoiceModeAction(
-  meetupId: string,
+  roundId: string,
   mode: HostChoiceMode,
 ) {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
-  const hostCheck = await requireMeetupHost(meetupId, user.id, HOST_SETTING_ERROR);
+  const hostCheck = await requireRoundHost(roundId, user.id, HOST_SETTING_ERROR);
   if ("error" in hostCheck) return { error: hostCheck.error };
-  if (hostCheck.meetup.hostForcedGameId != null) {
+  const { round } = hostCheck;
+  if (round.hostForcedGameId != null) {
     return { error: "Spiel ist festgelegt — Vorauswahl nicht änderbar." };
   }
 
   if (mode !== "NONE") {
-    const count = await prisma.meetupHostChoiceGame.count({ where: { meetupId } });
+    const count = await prisma.meetupHostChoiceGame.count({ where: { roundId } });
     if (count === 0) {
       return { error: "Zuerst Spiele zur Vorauswahl hinzufügen." };
     }
   }
 
-  await prisma.meetup.update({
-    where: { id: meetupId },
+  await prisma.meetupRound.update({
+    where: { id: roundId },
     data: { hostChoiceMode: mode === "NONE" ? "NONE" : mode },
   });
 
-  revalidateMeetupPaths(meetupId);
+  revalidateMeetupPaths(round.meetupId);
   return { ok: true };
 }
 
-export async function clearHostChoiceGamesAction(meetupId: string) {
+export async function clearHostChoiceGamesAction(roundId: string) {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
-  const hostCheck = await requireMeetupHost(meetupId, user.id, HOST_SETTING_ERROR);
+  const hostCheck = await requireRoundHost(roundId, user.id, HOST_SETTING_ERROR);
   if ("error" in hostCheck) return { error: hostCheck.error };
-  if (hostCheck.meetup.hostForcedGameId != null) {
+  const { round } = hostCheck;
+  if (round.hostForcedGameId != null) {
     return { error: "Spiel ist festgelegt — Vorauswahl nicht änderbar." };
   }
 
   await prisma.$transaction([
-    prisma.meetupHostChoiceGame.deleteMany({ where: { meetupId } }),
-    prisma.meetup.update({
-      where: { id: meetupId },
+    prisma.meetupHostChoiceGame.deleteMany({ where: { roundId } }),
+    prisma.meetupRound.update({
+      where: { id: roundId },
       data: { hostChoiceMode: "NONE" },
     }),
   ]);
 
-  revalidateMeetupPaths(meetupId);
+  revalidateMeetupPaths(round.meetupId);
   return { ok: true };
 }
 

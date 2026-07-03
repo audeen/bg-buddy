@@ -99,7 +99,8 @@ test("Phase 2: Smoke — alle Routen", async ({ page }) => {
 
   for (const route of routes) {
     const res = await page.goto(route.path);
-    const ok = res?.ok() ?? false;
+    // res kann bei client-seitiger Navigation null sein — dann reicht sichtbarer Body.
+    const ok = res ? res.ok() : await page.locator("body").isVisible();
     if (route.expect) {
       await expect(page.locator("body")).toContainText(route.expect, { timeout: 10_000 });
     }
@@ -136,13 +137,13 @@ test("Phase 3: Auth & Treffen-Verwaltung", async ({ page }) => {
   await page.goto(`/meetups/${meetupId}`);
 
   // ExpectedCountControl (Host)
-  await expect(page.getByText("Erwartete Spieler festlegen:")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("Erwartete Spieler:")).toBeVisible({ timeout: 10_000 });
   const countEl = page.locator(".tabular-nums").filter({ hasText: /^\d+$/ }).first();
   const countBefore = await countEl.textContent();
-  await page.getByRole("button", { name: "mehr" }).click();
+  await page.getByRole("button", { name: "Mehr Spieler" }).click();
   await page.waitForTimeout(1500);
   await page.reload();
-  await expect(page.getByText("Erwartete Spieler festlegen:")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("Erwartete Spieler:")).toBeVisible({ timeout: 10_000 });
   const countAfter = await countEl.textContent();
   const countPersisted = countBefore !== countAfter;
   record(
@@ -152,10 +153,10 @@ test("Phase 3: Auth & Treffen-Verwaltung", async ({ page }) => {
     `${countBefore} → ${countAfter}`,
   );
 
-  // MeetupActionsMenu nur für Host (desktop viewport — im Meetup-Header-Bereich)
+  // MeetupActionsMenu nur für Host (im Meetup-Header-Bereich)
   const hostMenuVisible = await page
-    .locator(".hidden.md\\:flex")
-    .getByRole("button", { name: "Menü" })
+    .locator("main")
+    .getByRole("button", { name: "Menü", exact: true })
     .isVisible();
   record(
     "Auth/Meetups",

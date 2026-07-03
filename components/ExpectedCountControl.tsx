@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { updateExpectedCountAction } from "@/app/actions";
 
 export function ExpectedCountControl({
-  meetupId,
+  roundId,
   value,
 }: {
-  meetupId: string;
+  roundId: string;
   value: number;
 }) {
   const router = useRouter();
@@ -28,7 +28,7 @@ export function ExpectedCountControl({
     setCount(clamped);
     setError(null);
     startTransition(async () => {
-      const res = await updateExpectedCountAction(meetupId, clamped);
+      const res = await updateExpectedCountAction(roundId, clamped);
       if (res && "error" in res && res.error) {
         setError(res.error);
         // Rollback auf den letzten vom Server bestätigten Wert.

@@ -8,6 +8,7 @@ import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
 export function MeetupVoteActions({
   meetupId,
+  roundQuery = "",
   readyForDuels,
   picksLocked,
   duelComplete,
@@ -21,6 +22,7 @@ export function MeetupVoteActions({
   hostChoiceMode = "NONE",
 }: {
   meetupId: string;
+  roundQuery?: string;
   readyForDuels: boolean;
   picksLocked: boolean;
   duelComplete: boolean;
@@ -61,7 +63,7 @@ export function MeetupVoteActions({
       )}
       <div className="flex flex-col sm:flex-row gap-2">
         <Link
-          href={`/meetups/${meetupId}/pick`}
+          href={`/meetups/${meetupId}/pick${roundQuery}`}
           className="btn btn-primary btn-lg sm:flex-1"
         >
           Stimmen vergeben
@@ -79,7 +81,7 @@ export function MeetupVoteActions({
           </span>
         ) : (
           <Link
-            href={`/meetups/${meetupId}/duell`}
+            href={`/meetups/${meetupId}/duell${roundQuery}`}
             className="btn btn-ghost btn-lg sm:flex-1"
           >
             Duell-Modus

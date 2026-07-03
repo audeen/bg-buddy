@@ -75,37 +75,69 @@ export function canKickParticipant({
   return isHost && !targetIsHost;
 }
 
+/** Entfernt einen Nutzer aus einer einzelnen Runde (Opt-in + Picks dieser Runde). */
+export async function removeUserFromRound(
+  roundId: string,
+  userId: string,
+  db: PrismaClient,
+): Promise<void> {
+  await db.$transaction([
+    db.meetupRoundParticipant.deleteMany({
+      where: { roundId, userId },
+    }),
+    db.vote.deleteMany({
+      where: { roundId, userId, mode: "PICK" },
+    }),
+  ]);
+  await syncExpectedPlayerCount(roundId, db, "down");
+}
+
+/**
+ * Entfernt einen Nutzer komplett aus einem Treffen: Meetup-Anmeldung, alle
+ * Runden-Opt-ins und alle Pick-Stimmen in allen Runden. Erwartete Spielerzahl
+ * jeder Runde wird anschliessend nachgezogen.
+ */
 export async function removeUserFromMeetup(
   meetupId: string,
   userId: string,
   db: PrismaClient,
 ): Promise<void> {
+  const rounds = await db.meetupRound.findMany({
+    where: { meetupId },
+    select: { id: true },
+  });
+  const roundIds = rounds.map((r) => r.id);
+
   await db.$transaction([
-    db.meetupRegistration.deleteMany({
-      where: { meetupId, userId },
+    db.meetupRegistration.deleteMany({ where: { meetupId, userId } }),
+    db.meetupRoundParticipant.deleteMany({
+      where: { roundId: { in: roundIds }, userId },
     }),
     db.vote.deleteMany({
-      where: { meetupId, userId, mode: "PICK" },
+      where: { roundId: { in: roundIds }, userId, mode: "PICK" },
     }),
   ]);
-  await syncExpectedPlayerCount(meetupId, db, "down");
+
+  for (const roundId of roundIds) {
+    await syncExpectedPlayerCount(roundId, db, "down");
+  }
 }
 
 export async function cancelActiveDuel(
-  meetupId: string,
+  roundId: string,
   expectedPlayerCount: number,
   db: PrismaClient,
 ): Promise<void> {
   await db.$transaction([
     db.vote.deleteMany({
       where: {
-        meetupId,
+        roundId,
         playerCount: expectedPlayerCount,
         mode: { in: ["DUEL", "EXPANSION_DUEL"] },
       },
     }),
-    db.meetup.update({
-      where: { id: meetupId },
+    db.meetupRound.update({
+      where: { id: roundId },
       data: {
         duelFrozenAt: null,
         duelFrozenData: Prisma.DbNull,
@@ -118,23 +150,26 @@ export async function cancelActiveDuel(
 
 const MAX_EXPECTED = 20;
 
-export async function loadMeetupParticipantData(
-  meetupId: string,
+/** Laedt Teilnehmer- und Phasen-Daten fuer eine einzelne Runde. */
+export async function loadRoundParticipantData(
+  roundId: string,
   db: PrismaClient,
 ) {
-  const meetup = await db.meetup.findUnique({
-    where: { id: meetupId },
+  const round = await db.meetupRound.findUnique({
+    where: { id: roundId },
     include: {
-      createdBy: { select: { id: true, name: true } },
-      registrations: {
+      meetup: {
+        include: { createdBy: { select: { id: true, name: true } } },
+      },
+      participants: {
         include: { user: { select: { id: true, name: true } } },
       },
     },
   });
-  if (!meetup) return null;
+  if (!round) return null;
 
   const pickVotes = await db.vote.findMany({
-    where: { meetupId, mode: "PICK" },
+    where: { roundId, mode: "PICK" },
     select: { userId: true, user: { select: { id: true, name: true } } },
     distinct: ["userId"],
   });
@@ -144,26 +179,24 @@ export async function loadMeetupParticipantData(
     name: v.user.name,
   }));
 
-  const manualRegistrations = meetup.registrations.map((r) => ({
-    userId: r.userId,
-    name: r.user.name,
+  const roundParticipants = round.participants.map((p) => ({
+    userId: p.userId,
+    name: p.user.name,
   }));
 
   const players = buildRegisteredPlayers(
-    meetup.createdBy,
+    round.meetup.createdBy,
     pickVoters,
-    manualRegistrations,
+    roundParticipants,
   );
 
   const duelVoteCount = await db.vote.count({
-    where: {
-      meetupId,
-      mode: "DUEL",
-    },
+    where: { roundId, mode: "DUEL" },
   });
 
   return {
-    meetup,
+    round,
+    meetup: round.meetup,
     players,
     registeredCount: players.length,
     duelVoteCount,
@@ -172,35 +205,35 @@ export async function loadMeetupParticipantData(
 }
 
 export async function syncExpectedPlayerCount(
-  meetupId: string,
+  roundId: string,
   db: PrismaClient,
   mode: "up" | "down",
 ): Promise<number> {
-  const data = await loadMeetupParticipantData(meetupId, db);
+  const data = await loadRoundParticipantData(roundId, db);
   if (!data) return 0;
 
-  const { meetup, registeredCount, duelsStarted } = data;
-  if (duelsStarted) return meetup.expectedPlayerCount;
+  const { round, registeredCount, duelsStarted } = data;
+  if (duelsStarted) return round.expectedPlayerCount;
 
-  const peak = Math.max(meetup.registrationPeakCount, registeredCount);
-  let expected = meetup.expectedPlayerCount;
+  const peak = Math.max(round.registrationPeakCount, registeredCount);
+  let expected = round.expectedPlayerCount;
 
   if (mode === "up" && registeredCount > expected) {
     expected = Math.min(MAX_EXPECTED, registeredCount);
   } else if (mode === "down" && registeredCount < expected) {
     const floor =
-      peak > meetup.initialExpectedPlayerCount
+      peak > round.initialExpectedPlayerCount
         ? 1
-        : meetup.initialExpectedPlayerCount;
+        : round.initialExpectedPlayerCount;
     expected = Math.max(registeredCount, floor);
   }
 
   if (
-    expected !== meetup.expectedPlayerCount ||
-    peak !== meetup.registrationPeakCount
+    expected !== round.expectedPlayerCount ||
+    peak !== round.registrationPeakCount
   ) {
-    await db.meetup.update({
-      where: { id: meetupId },
+    await db.meetupRound.update({
+      where: { id: roundId },
       data: {
         expectedPlayerCount: expected,
         registrationPeakCount: peak,

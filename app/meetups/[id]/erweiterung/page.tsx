@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { ExpansionDuellClient } from "@/components/ExpansionDuellClient";
 import { DuellGateCard } from "@/components/DuellGateCard";
+import { RoundSwitcher } from "@/components/RoundSwitcher";
+import { RoundParticipationToggle } from "@/components/RoundControls";
+import { isRoundParticipant, resolveRound } from "@/lib/round-resolve";
 import { PageHeader } from "@/components/PageHeader";
 import {
   buildExpansionDuelPairs,
@@ -18,42 +21,81 @@ export const dynamic = "force-dynamic";
 
 export default async function ErweiterungPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  const sp = await searchParams;
+  const roundParam = typeof sp.runde === "string" ? sp.runde : undefined;
   const user = await getCurrentUser();
   if (!user) redirect("/#login");
 
+  const resolved = await resolveRound(id, roundParam);
+  if (!resolved) notFound();
+  const { rounds, activeRoundId, multiRound } = resolved;
+  const roundQuery = multiRound ? `?runde=${activeRoundId}` : "";
+
   const meetup = await prisma.meetup.findUnique({
     where: { id },
+    select: { title: true },
+  });
+  const round = await prisma.meetupRound.findUnique({
+    where: { id: activeRoundId },
     select: {
-      title: true,
       expectedPlayerCount: true,
       expansionDuelStartedAt: true,
       expansionDuelFrozenData: true,
     },
   });
-  if (!meetup) notFound();
-  if (!meetup.expansionDuelStartedAt) {
-    redirect(`/meetups/${id}`);
+  if (!meetup || !round) notFound();
+  if (!round.expansionDuelStartedAt) {
+    redirect(`/meetups/${id}${roundQuery}`);
   }
 
-  const expected = meetup.expectedPlayerCount;
+  // Nicht-Teilnehmer sehen bei mehreren Runden Hinweis + Mitspielen-Button
+  // statt der Erweiterungs-UI.
+  if (multiRound && !(await isRoundParticipant(activeRoundId, user.id))) {
+    return (
+      <div className="container-app flex flex-col gap-4">
+        <PageHeader eyebrow={meetup.title} title="Erweiterungs-Duell" />
+        <RoundSwitcher
+          meetupId={id}
+          segment="erweiterung"
+          rounds={rounds}
+          activeRoundId={activeRoundId}
+        />
+        <div className="card card-pad flex flex-col gap-3">
+          <p className="text-sm text-[var(--muted)]">
+            Du nimmst an dieser Spielrunde noch nicht teil. Tritt bei, um
+            mitzustimmen.
+          </p>
+          <RoundParticipationToggle
+            roundId={activeRoundId}
+            isParticipant={false}
+            canLeave={false}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const expected = round.expectedPlayerCount;
   const frozen = parseExpansionDuelFrozenData(
-    meetup.expansionDuelFrozenData,
+    round.expansionDuelFrozenData,
     expected,
   );
   if (!frozen) notFound();
 
   const [groupPicks, expansionVotes, baseGame, expansions] = await Promise.all([
     prisma.vote.findMany({
-      where: { meetupId: id, mode: "PICK", playerCount: expected },
+      where: { roundId: activeRoundId, mode: "PICK", playerCount: expected },
       select: { userId: true, gameId: true, points: true },
     }),
     prisma.vote.findMany({
       where: {
-        meetupId: id,
+        roundId: activeRoundId,
         mode: "EXPANSION_DUEL",
         playerCount: expected,
       },
@@ -103,7 +145,7 @@ export default async function ErweiterungPage({
     return (
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Erweiterungs-Duell" />
-        <DuellGateCard title="Erst Stimmen vergeben" ctaHref={`/meetups/${id}/pick`}>
+        <DuellGateCard title="Erst Stimmen vergeben" ctaHref={`/meetups/${id}/pick${roundQuery}`}>
           <p className="text-[var(--muted)] text-sm">
             Du brauchst {MAX_PICK_POINTS}/{MAX_PICK_POINTS} Stimmen bei ★.
           </p>
@@ -138,8 +180,16 @@ export default async function ErweiterungPage({
   return (
     <div className="container-app flex flex-col gap-3 sm:gap-4">
       <PageHeader eyebrow={meetup.title} title="Erweiterungs-Duell" />
+      <RoundSwitcher
+        meetupId={id}
+        segment="erweiterung"
+        rounds={rounds}
+        activeRoundId={activeRoundId}
+      />
       <ExpansionDuellClient
         meetupId={id}
+        roundId={activeRoundId}
+        roundQuery={roundQuery}
         expected={expected}
         winnerName={baseGame.name}
         choices={choices}

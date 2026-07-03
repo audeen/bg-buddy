@@ -498,7 +498,9 @@ export function filterUrl(
 ): string {
   const params = filtersToSearchParams(filters, sort);
   const qs = params.toString();
-  return qs ? `${path}?${qs}` : path;
+  if (!qs) return path;
+  const sep = path.includes("?") ? "&" : "?";
+  return `${path}${sep}${qs}`;
 }
 
 export function hasActiveFilters(filters: GameFilters): boolean {

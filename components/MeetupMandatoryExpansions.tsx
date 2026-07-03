@@ -5,11 +5,11 @@ import { toggleMandatoryExpansionAction } from "@/app/actions";
 import type { MandatoryExpansionFamily } from "@/lib/types/meetup";
 
 export function MeetupMandatoryExpansions({
-  meetupId,
+  roundId,
   family,
   mandatoryKeys,
 }: {
-  meetupId: string;
+  roundId: string;
   family: MandatoryExpansionFamily;
   mandatoryKeys: string[];
 }) {
@@ -21,7 +21,7 @@ export function MeetupMandatoryExpansions({
     setError(null);
     startTransition(async () => {
       const res = await toggleMandatoryExpansionAction(
-        meetupId,
+        roundId,
         baseGameId,
         expansionGameId,
         checked,

@@ -110,8 +110,21 @@ async function main() {
     ),
   );
   const meetup = await prisma.meetup.create({
-    data: { title: "Testabend", expectedPlayerCount: 4, createdById: users[0].id },
+    data: {
+      title: "Testabend",
+      createdById: users[0].id,
+      rounds: {
+        create: {
+          sortOrder: 0,
+          expectedPlayerCount: 4,
+          initialExpectedPlayerCount: 4,
+          registrationPeakCount: 1,
+        },
+      },
+    },
+    include: { rounds: { select: { id: true } } },
   });
+  const roundId = meetup.rounds[0].id;
 
   const eligible = games.filter(
     (g) =>
@@ -127,7 +140,7 @@ async function main() {
     const u = users[i];
     await prisma.vote.create({
       data: {
-        meetupId: meetup.id,
+        roundId,
         userId: u.id,
         gameId: top.id,
         playerCount: 4,
@@ -137,7 +150,7 @@ async function main() {
     });
     await prisma.vote.create({
       data: {
-        meetupId: meetup.id,
+        roundId,
         userId: u.id,
         gameId: other.id,
         playerCount: 4,
@@ -147,7 +160,7 @@ async function main() {
     });
     await prisma.vote.create({
       data: {
-        meetupId: meetup.id,
+        roundId,
         userId: u.id,
         gameId: third.id,
         playerCount: 4,
@@ -159,7 +172,7 @@ async function main() {
 
   await prisma.vote.create({
     data: {
-      meetupId: meetup.id,
+      roundId,
       userId: users[0].id,
       gameId: top.id,
       opponentGameId: other.id,
@@ -170,13 +183,13 @@ async function main() {
 
   const duelRanking = await prisma.vote.groupBy({
     by: ["gameId"],
-    where: { meetupId: meetup.id, playerCount: 4, mode: "DUEL" },
+    where: { roundId, playerCount: 4, mode: "DUEL" },
     _sum: { points: true },
     orderBy: { _sum: { points: "desc" } },
   });
   const pickRanking = await prisma.vote.groupBy({
     by: ["gameId"],
-    where: { meetupId: meetup.id, playerCount: 4, mode: "PICK" },
+    where: { roundId, playerCount: 4, mode: "PICK" },
     _sum: { points: true },
     orderBy: { _sum: { points: "desc" } },
   });

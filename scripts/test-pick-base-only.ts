@@ -34,8 +34,14 @@ async function main() {
       data: {
         title: "Test: Pick nur Basisspiel",
         createdById: host.id,
-        expectedPlayerCount: 4,
-        initialExpectedPlayerCount: 4,
+        rounds: {
+          create: {
+            sortOrder: 0,
+            expectedPlayerCount: 4,
+            initialExpectedPlayerCount: 4,
+            registrationPeakCount: 1,
+          },
+        },
       },
     });
 

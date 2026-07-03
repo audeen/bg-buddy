@@ -29,7 +29,7 @@ import {
   getPickPhaseState,
 } from "@/lib/pick-phase";
 import { MAX_PICK_POINTS, MAX_POINTS_PER_GAME } from "@/lib/vote-limits";
-import { loadMeetupParticipantData, syncExpectedPlayerCount } from "@/lib/meetup-participants";
+import { loadRoundParticipantData, syncExpectedPlayerCount } from "@/lib/meetup-participants";
 import {
   revalidateExpansionPaths,
   validatePickPoolGame,
@@ -41,9 +41,9 @@ function revalidateMeetupVotePaths(meetupId: string) {
   revalidatePath(`/meetups/${meetupId}/duell`);
 }
 
-function fetchGroupPicks(meetupId: string, playerCount: number) {
+function fetchGroupPicks(roundId: string, playerCount: number) {
   return prisma.vote.findMany({
-    where: { meetupId, mode: "PICK", playerCount },
+    where: { roundId, mode: "PICK", playerCount },
     select: { userId: true, gameId: true, points: true },
   });
 }
@@ -59,7 +59,7 @@ function userPickSum(
 
 /** Prüft, ob der Nutzer für dieses Paar (in beliebiger Richtung) schon abgestimmt hat. */
 async function hasDuplicateDuelVote(
-  meetupId: string,
+  roundId: string,
   userId: string,
   playerCount: number,
   mode: "DUEL" | "EXPANSION_DUEL",
@@ -68,7 +68,7 @@ async function hasDuplicateDuelVote(
 ): Promise<boolean> {
   const existing = await prisma.vote.findFirst({
     where: {
-      meetupId,
+      roundId,
       userId,
       playerCount,
       mode,
@@ -83,7 +83,7 @@ async function hasDuplicateDuelVote(
 }
 
 export async function setPickPointsAction(
-  meetupId: string,
+  roundId: string,
   gameId: number,
   playerCount: number,
   points: number,
@@ -91,22 +91,26 @@ export async function setPickPointsAction(
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
-  const meetup = await prisma.meetup.findUnique({
-    where: { id: meetupId },
-    select: { expectedPlayerCount: true, hostForcedGameId: true },
+  const round = await prisma.meetupRound.findUnique({
+    where: { id: roundId },
+    select: {
+      meetupId: true,
+      expectedPlayerCount: true,
+      hostForcedGameId: true,
+    },
   });
-  if (!meetup) return { error: "Treffen nicht gefunden." };
-  if (meetup.hostForcedGameId != null) {
+  if (!round) return { error: "Spielrunde nicht gefunden." };
+  if (round.hostForcedGameId != null) {
     return { error: "Der Host hat bereits ein Spiel festgelegt — keine Abstimmung." };
   }
 
-  const gameCheck = await validatePickPoolGame(meetupId, gameId, {
+  const gameCheck = await validatePickPoolGame(round.meetupId, gameId, {
     expansion: "Stimmen können nur für Basisspiele vergeben werden.",
     notInPool: "Dieses Spiel ist nicht in der Abstimmungsliste.",
   });
   if ("error" in gameCheck) return { error: gameCheck.error };
 
-  const beforeData = await loadMeetupParticipantData(meetupId, prisma);
+  const beforeData = await loadRoundParticipantData(roundId, prisma);
   const beforeCount = beforeData?.registeredCount ?? 0;
 
   const next = Math.round(points);
@@ -114,10 +118,10 @@ export async function setPickPointsAction(
     return { error: `Maximal ${MAX_POINTS_PER_GAME} Stimmen pro Spiel.` };
   }
 
-  if (playerCount === meetup.expectedPlayerCount) {
+  if (playerCount === round.expectedPlayerCount) {
     const phase = await getPickPhaseState(
-      meetupId,
-      meetup.expectedPlayerCount,
+      roundId,
+      round.expectedPlayerCount,
       prisma,
     );
     if (phase.picksLocked) {
@@ -127,7 +131,7 @@ export async function setPickPointsAction(
 
   const existing = await prisma.vote.findFirst({
     where: {
-      meetupId,
+      roundId,
       userId: user.id,
       gameId,
       playerCount,
@@ -137,7 +141,7 @@ export async function setPickPointsAction(
 
   const others = await prisma.vote.aggregate({
     where: {
-      meetupId,
+      roundId,
       userId: user.id,
       playerCount,
       mode: "PICK",
@@ -164,7 +168,7 @@ export async function setPickPointsAction(
   } else {
     await prisma.vote.create({
       data: {
-        meetupId,
+        roundId,
         userId: user.id,
         gameId,
         playerCount,
@@ -174,21 +178,21 @@ export async function setPickPointsAction(
     });
   }
 
-  const afterData = await loadMeetupParticipantData(meetupId, prisma);
+  const afterData = await loadRoundParticipantData(roundId, prisma);
   const afterCount = afterData?.registeredCount ?? beforeCount;
   if (afterCount > beforeCount) {
-    await syncExpectedPlayerCount(meetupId, prisma, "up");
+    await syncExpectedPlayerCount(roundId, prisma, "up");
   } else if (afterCount < beforeCount) {
-    await syncExpectedPlayerCount(meetupId, prisma, "down");
+    await syncExpectedPlayerCount(roundId, prisma, "down");
   }
 
   revalidatePath("/");
-  revalidateMeetupVotePaths(meetupId);
+  revalidateMeetupVotePaths(round.meetupId);
   return { ok: true, points: next };
 }
 
 export async function duelVoteAction(
-  meetupId: string,
+  roundId: string,
   winnerGameId: number,
   opponentGameId: number,
   playerCount: number,
@@ -200,28 +204,29 @@ export async function duelVoteAction(
     return { error: "Gewinner und Gegner müssen verschieden sein." };
   }
 
-  const meetup = await prisma.meetup.findUnique({
-    where: { id: meetupId },
+  const round = await prisma.meetupRound.findUnique({
+    where: { id: roundId },
     select: {
+      meetupId: true,
       expectedPlayerCount: true,
       duelFrozenData: true,
       hostForcedGameId: true,
     },
   });
-  if (!meetup) return { error: "Treffen nicht gefunden." };
-  if (meetup.hostForcedGameId != null) {
+  if (!round) return { error: "Spielrunde nicht gefunden." };
+  if (round.hostForcedGameId != null) {
     return { error: "Der Host hat bereits ein Spiel festgelegt — keine Duelle." };
   }
-  if (playerCount !== meetup.expectedPlayerCount) {
+  if (playerCount !== round.expectedPlayerCount) {
     return { error: "Duelle nur für die erwartete Spieleranzahl." };
   }
 
   const frozenExisting = parseDuelFrozenData(
-    meetup.duelFrozenData,
+    round.duelFrozenData,
     playerCount,
   );
 
-  const phase = await getPickPhaseState(meetupId, playerCount, prisma);
+  const phase = await getPickPhaseState(roundId, playerCount, prisma);
   if (phase.duelComplete) {
     return {
       error:
@@ -232,7 +237,7 @@ export async function duelVoteAction(
     return { error: formatDuellNotReadyMessage(phase) };
   }
 
-  const groupPicks = await fetchGroupPicks(meetupId, playerCount);
+  const groupPicks = await fetchGroupPicks(roundId, playerCount);
 
   const pickCounts = buildPickCounts(groupPicks);
   const pool = frozenExisting?.poolGameIds ?? poolGameIds(pickCounts);
@@ -262,7 +267,7 @@ export async function duelVoteAction(
     userPoints: buildUserPointsMap(groupPicks),
     userId: user.id,
     participantIds,
-    meetupId,
+    meetupId: roundId,
     frozen,
   });
 
@@ -273,7 +278,7 @@ export async function duelVoteAction(
 
   if (
     await hasDuplicateDuelVote(
-      meetupId,
+      roundId,
       user.id,
       playerCount,
       "DUEL",
@@ -286,8 +291,8 @@ export async function duelVoteAction(
 
   await prisma.$transaction(async (tx) => {
     if (!frozenExisting) {
-      await tx.meetup.update({
-        where: { id: meetupId },
+      await tx.meetupRound.update({
+        where: { id: roundId },
         data: {
           duelFrozenAt: new Date(),
           duelFrozenData: duelFrozenToJson(frozen),
@@ -297,7 +302,7 @@ export async function duelVoteAction(
 
     await tx.vote.create({
       data: {
-        meetupId,
+        roundId,
         userId: user.id,
         gameId: winnerGameId,
         opponentGameId,
@@ -308,12 +313,12 @@ export async function duelVoteAction(
     });
   });
 
-  revalidateMeetupVotePaths(meetupId);
+  revalidateMeetupVotePaths(round.meetupId);
   return { ok: true };
 }
 
 export async function toggleMandatoryExpansionAction(
-  meetupId: string,
+  roundId: string,
   baseGameId: number,
   expansionGameId: number,
   mandatory: boolean,
@@ -321,27 +326,28 @@ export async function toggleMandatoryExpansionAction(
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
-  const meetup = await prisma.meetup.findUnique({
-    where: { id: meetupId },
+  const round = await prisma.meetupRound.findUnique({
+    where: { id: roundId },
     select: {
-      createdById: true,
+      meetupId: true,
       expectedPlayerCount: true,
       expansionDuelStartedAt: true,
+      meetup: { select: { createdById: true } },
     },
   });
-  if (!meetup) return { error: "Treffen nicht gefunden." };
-  if (meetup.createdById !== user.id) {
+  if (!round) return { error: "Spielrunde nicht gefunden." };
+  if (round.meetup.createdById !== user.id) {
     return { error: "Nur der Host kann Pflicht-Erweiterungen festlegen." };
   }
-  if (meetup.expansionDuelStartedAt) {
+  if (round.expansionDuelStartedAt) {
     return {
       error: "Pflicht-Erweiterungen können nach Start der Abstimmung nicht mehr geändert werden.",
     };
   }
 
   const expansionPhase = await loadExpansionPhaseState(
-    meetupId,
-    meetup.expectedPlayerCount,
+    roundId,
+    round.expectedPlayerCount,
     prisma,
   );
   if (!expansionPhase.mainDuelComplete || !expansionPhase.winnerGameId) {
@@ -373,7 +379,7 @@ export async function toggleMandatoryExpansionAction(
     !isPlayableAtCount(
       expansion.minPlayers,
       expansion.maxPlayers,
-      meetup.expectedPlayerCount,
+      round.expectedPlayerCount,
     )
   ) {
     return { error: "Erweiterung ist bei der erwarteten Spieleranzahl nicht spielbar." };
@@ -382,50 +388,51 @@ export async function toggleMandatoryExpansionAction(
   if (mandatory) {
     await prisma.meetupMandatoryExpansion.upsert({
       where: {
-        meetupId_baseGameId_expansionGameId: {
-          meetupId,
+        roundId_baseGameId_expansionGameId: {
+          roundId,
           baseGameId,
           expansionGameId,
         },
       },
       update: {},
-      create: { meetupId, baseGameId, expansionGameId },
+      create: { roundId, baseGameId, expansionGameId },
     });
   } else {
     await prisma.meetupMandatoryExpansion.deleteMany({
-      where: { meetupId, baseGameId, expansionGameId },
+      where: { roundId, baseGameId, expansionGameId },
     });
   }
 
-  revalidateExpansionPaths(meetupId);
+  revalidateExpansionPaths(round.meetupId);
   return { ok: true };
 }
 
-export async function startExpansionDuelAction(meetupId: string) {
+export async function startExpansionDuelAction(roundId: string) {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
-  const meetup = await prisma.meetup.findUnique({
-    where: { id: meetupId },
+  const round = await prisma.meetupRound.findUnique({
+    where: { id: roundId },
     select: {
+      meetupId: true,
       expectedPlayerCount: true,
-      createdById: true,
       expansionDuelStartedAt: true,
+      meetup: { select: { createdById: true } },
       mandatoryExpansions: {
         select: { baseGameId: true, expansionGameId: true },
       },
     },
   });
-  if (!meetup) return { error: "Treffen nicht gefunden." };
-  if (meetup.createdById !== user.id) {
+  if (!round) return { error: "Spielrunde nicht gefunden." };
+  if (round.meetup.createdById !== user.id) {
     return { error: "Nur der Host kann die Erweiterungs-Abstimmung starten." };
   }
-  if (meetup.expansionDuelStartedAt) {
+  if (round.expansionDuelStartedAt) {
     return { error: "Erweiterungs-Abstimmung läuft bereits." };
   }
 
-  const expected = meetup.expectedPlayerCount;
-  const expansionPhase = await loadExpansionPhaseState(meetupId, expected, prisma);
+  const expected = round.expectedPlayerCount;
+  const expansionPhase = await loadExpansionPhaseState(roundId, expected, prisma);
   if (!expansionPhase.mainDuelComplete || !expansionPhase.winnerGameId) {
     return { error: "Haupt-Duelle müssen zuerst abgeschlossen sein." };
   }
@@ -435,12 +442,12 @@ export async function startExpansionDuelAction(meetupId: string) {
 
   await prisma.meetupMandatoryExpansion.deleteMany({
     where: {
-      meetupId,
+      roundId,
       baseGameId: { not: expansionPhase.winnerGameId },
     },
   });
 
-  const mandatory = meetup.mandatoryExpansions
+  const mandatory = round.mandatoryExpansions
     .filter((m) => m.baseGameId === expansionPhase.winnerGameId)
     .map((m) => m.expansionGameId);
 
@@ -492,20 +499,20 @@ export async function startExpansionDuelAction(meetupId: string) {
     poolVoteGameIds: configs.map((c) => c.voteGameId),
   };
 
-  await prisma.meetup.update({
-    where: { id: meetupId },
+  await prisma.meetupRound.update({
+    where: { id: roundId },
     data: {
       expansionDuelStartedAt: new Date(),
       expansionDuelFrozenData: expansionDuelFrozenToJson(frozen),
     },
   });
 
-  revalidateExpansionPaths(meetupId);
+  revalidateExpansionPaths(round.meetupId);
   return { ok: true };
 }
 
 export async function expansionDuelVoteAction(
-  meetupId: string,
+  roundId: string,
   winnerGameId: number,
   opponentGameId: number,
   playerCount: number,
@@ -517,24 +524,25 @@ export async function expansionDuelVoteAction(
     return { error: "Gewinner und Gegner müssen verschieden sein." };
   }
 
-  const meetup = await prisma.meetup.findUnique({
-    where: { id: meetupId },
+  const round = await prisma.meetupRound.findUnique({
+    where: { id: roundId },
     select: {
+      meetupId: true,
       expectedPlayerCount: true,
       expansionDuelStartedAt: true,
       expansionDuelFrozenData: true,
     },
   });
-  if (!meetup) return { error: "Treffen nicht gefunden." };
-  if (!meetup.expansionDuelStartedAt) {
+  if (!round) return { error: "Spielrunde nicht gefunden." };
+  if (!round.expansionDuelStartedAt) {
     return { error: "Erweiterungs-Abstimmung wurde noch nicht gestartet." };
   }
-  if (playerCount !== meetup.expectedPlayerCount) {
+  if (playerCount !== round.expectedPlayerCount) {
     return { error: "Abstimmung nur für die erwartete Spieleranzahl." };
   }
 
   const frozen = parseExpansionDuelFrozenData(
-    meetup.expansionDuelFrozenData,
+    round.expansionDuelFrozenData,
     playerCount,
   );
   if (!frozen) return { error: "Erweiterungs-Duell-Daten fehlen." };
@@ -553,7 +561,7 @@ export async function expansionDuelVoteAction(
     return { error: "Dieses Paar ist nicht vorgesehen." };
   }
 
-  const groupPicks = await fetchGroupPicks(meetupId, playerCount);
+  const groupPicks = await fetchGroupPicks(roundId, playerCount);
 
   if (userPickSum(groupPicks, user.id) < MAX_PICK_POINTS) {
     return {
@@ -563,7 +571,7 @@ export async function expansionDuelVoteAction(
 
   if (
     await hasDuplicateDuelVote(
-      meetupId,
+      roundId,
       user.id,
       playerCount,
       "EXPANSION_DUEL",
@@ -576,7 +584,7 @@ export async function expansionDuelVoteAction(
 
   await prisma.vote.create({
     data: {
-      meetupId,
+      roundId,
       userId: user.id,
       gameId: winnerGameId,
       opponentGameId,
@@ -586,6 +594,6 @@ export async function expansionDuelVoteAction(
     },
   });
 
-  revalidateExpansionPaths(meetupId);
+  revalidateExpansionPaths(round.meetupId);
   return { ok: true };
 }

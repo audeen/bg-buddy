@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { PickClient } from "@/components/PickClient";
 import { PageHeader } from "@/components/PageHeader";
+import { RoundSwitcher } from "@/components/RoundSwitcher";
+import { RoundParticipationToggle } from "@/components/RoundControls";
+import { isRoundParticipant, resolveRound } from "@/lib/round-resolve";
 import { loadPickPhaseSummary } from "@/lib/pick-phase";
 import { loadOwnedExpansionsByBaseGame, serializeExpansionsByBaseId } from "@/lib/owned-expansions";
 import { pickGamesWhereForMeetup } from "@/lib/meetup-guest-games";
@@ -21,15 +24,24 @@ export default async function PickPage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
+  const roundParam = typeof sp.runde === "string" ? sp.runde : undefined;
   const activeFilters = parseGameFilters(sp);
   const sort = parseGameSort(sp);
   const user = await getCurrentUser();
   if (!user) redirect("/#login");
 
+  const resolved = await resolveRound(id, roundParam);
+  if (!resolved) notFound();
+  const { rounds, activeRoundId, multiRound } = resolved;
+  const roundQuery = multiRound ? `?runde=${activeRoundId}` : "";
+
   const meetup = await prisma.meetup.findUnique({
     where: { id },
+    select: { title: true },
+  });
+  const round = await prisma.meetupRound.findUnique({
+    where: { id: activeRoundId },
     select: {
-      title: true,
       expectedPlayerCount: true,
       hostChoiceMode: true,
       hostForcedGameId: true,
@@ -42,16 +54,50 @@ export default async function PickPage({
       },
     },
   });
-  if (!meetup) notFound();
+  if (!meetup || !round) notFound();
 
-  const hostChoiceGameIds = meetup.hostChoiceGames.map((g) => g.gameId);
-  const hostForced = meetup.hostForcedGameId != null;
+  const hostChoiceGameIds = round.hostChoiceGames.map((g) => g.gameId);
+  const hostForced = round.hostForcedGameId != null;
+
+  // Nicht-Teilnehmer sehen bei mehreren Runden einen Hinweis mit
+  // Mitspielen-Button statt der Vote-UI (kein versehentliches Opt-in).
+  const participant = multiRound
+    ? await isRoundParticipant(activeRoundId, user.id)
+    : true;
+  if (!participant) {
+    return (
+      <div className="container-app flex flex-col gap-6">
+        <PageHeader
+          id="pick-page-top"
+          eyebrow={meetup.title}
+          title="Stimmen vergeben"
+        />
+        <RoundSwitcher
+          meetupId={id}
+          segment="pick"
+          rounds={rounds}
+          activeRoundId={activeRoundId}
+        />
+        <div className="card card-pad flex flex-col gap-3">
+          <p className="text-sm text-[var(--muted)]">
+            Du nimmst an dieser Spielrunde noch nicht teil. Tritt bei, um
+            mitzustimmen.
+          </p>
+          <RoundParticipationToggle
+            roundId={activeRoundId}
+            isParticipant={false}
+            canLeave={false}
+          />
+        </div>
+      </div>
+    );
+  }
 
   const [games, guestGameIds, myVotes, { phase, summary }, expansionsByBase] = await Promise.all([
     prisma.game.findMany({
       where: pickGamesWhereForMeetup(
         id,
-        meetup.hostChoiceMode,
+        round.hostChoiceMode,
         hostChoiceGameIds,
       ),
       select: {
@@ -84,10 +130,10 @@ export default async function PickPage({
       select: { gameId: true },
     }).then((rows) => rows.map((r) => r.gameId)),
     prisma.vote.findMany({
-      where: { meetupId: id, userId: user.id, mode: "PICK" },
+      where: { roundId: activeRoundId, userId: user.id, mode: "PICK" },
       select: { gameId: true, playerCount: true, points: true },
     }),
-    loadPickPhaseSummary(id, meetup.expectedPlayerCount, prisma),
+    loadPickPhaseSummary(activeRoundId, round.expectedPlayerCount, prisma),
     loadOwnedExpansionsByBaseGame(),
   ]);
 
@@ -99,10 +145,19 @@ export default async function PickPage({
         title="Stimmen vergeben"
       />
 
-      <PickClient
-        key={meetup.expectedPlayerCount}
+      <RoundSwitcher
         meetupId={id}
-        expected={meetup.expectedPlayerCount}
+        segment="pick"
+        rounds={rounds}
+        activeRoundId={activeRoundId}
+      />
+
+      <PickClient
+        key={activeRoundId}
+        meetupId={id}
+        roundId={activeRoundId}
+        roundQuery={roundQuery}
+        expected={round.expectedPlayerCount}
         games={games}
         initialPicks={myVotes}
         scrollTargetId="pick-page-top"
@@ -112,9 +167,9 @@ export default async function PickPage({
         expansionsByBaseId={serializeExpansionsByBaseId(expansionsByBase)}
         guestGameIds={guestGameIds}
         hostChoiceGameIds={hostChoiceGameIds}
-        hostChoiceMode={meetup.hostChoiceMode}
+        hostChoiceMode={round.hostChoiceMode}
         hostForced={hostForced}
-        hostForcedGame={meetup.hostForcedGame}
+        hostForcedGame={round.hostForcedGame}
         activeFilters={activeFilters}
         sort={sort}
       />

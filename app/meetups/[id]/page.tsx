@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, isAdmin } from "@/lib/auth";
 import { ExpectedCountControl } from "@/components/ExpectedCountControl";
@@ -14,7 +15,13 @@ import { MeetupTableToolsClient } from "@/components/MeetupTableToolsClient";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { JoinMeetupButton } from "@/components/JoinMeetupButton";
 import { MeetupSpielsteuerungClient } from "@/components/MeetupSpielsteuerungClient";
+import {
+  AddRoundButton,
+  RoundAdminBar,
+  RoundParticipationToggle,
+} from "@/components/RoundControls";
 import { PageHeader } from "@/components/PageHeader";
+import { roundOrderBy } from "@/lib/round-resolve";
 import { meetupEndsAt } from "@/lib/meetup-time";
 import {
   buildCombinedByCount,
@@ -70,6 +77,54 @@ function formatSchedule(
     : start;
 }
 
+function formatTime(date: Date | null): string | null {
+  if (!date) return null;
+  return new Intl.DateTimeFormat("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function toLocalInputValue(date: Date | null): string {
+  if (!date) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+    date.getDate(),
+  )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+const roundInclude = {
+  hostChoiceGames: {
+    include: {
+      game: {
+        select: {
+          id: true,
+          name: true,
+          thumbnail: true,
+          image: true,
+          coverUrl: true,
+        },
+      },
+    },
+    orderBy: { sortOrder: "asc" as const },
+  },
+  hostForcedGame: {
+    select: {
+      id: true,
+      name: true,
+      thumbnail: true,
+      image: true,
+      coverUrl: true,
+    },
+  },
+  mandatoryExpansions: {
+    select: { baseGameId: true, expansionGameId: true },
+  },
+  participants: {
+    include: { user: { select: { id: true, name: true } } },
+  },
+};
+
 export default async function MeetupDetail({
   params,
 }: {
@@ -82,9 +137,6 @@ export default async function MeetupDetail({
     where: { id },
     include: {
       createdBy: { select: { id: true, name: true } },
-      registrations: {
-        include: { user: { select: { id: true, name: true } } },
-      },
       guestGames: {
         include: {
           game: {
@@ -99,43 +151,121 @@ export default async function MeetupDetail({
         },
         orderBy: { createdAt: "asc" },
       },
-      hostChoiceGames: {
-        include: {
-          game: {
-            select: {
-              id: true,
-              name: true,
-              thumbnail: true,
-              image: true,
-              coverUrl: true,
-            },
-          },
-        },
-        orderBy: { sortOrder: "asc" },
-      },
-      hostForcedGame: {
-        select: {
-          id: true,
-          name: true,
-          thumbnail: true,
-          image: true,
-          coverUrl: true,
-        },
-      },
-      mandatoryExpansions: {
-        select: { baseGameId: true, expansionGameId: true },
+      rounds: {
+        orderBy: [...roundOrderBy],
+        include: roundInclude,
       },
     },
   });
   if (!meetup) notFound();
 
   const guestGames = meetup.guestGames.map((g) => g.game);
-  const hostChoiceGames = meetup.hostChoiceGames.map((g) => g.game);
-  const forcedGame = meetup.hostForcedGame;
-  const hostForced = meetup.hostForcedGameId != null;
+  const isHost = user?.id === meetup.createdBy.id;
+  const canDeleteMeetup = isHost || isAdmin(user);
+  const multiRound = meetup.rounds.length > 1;
+
+  // Meetup-weite Teilnehmerliste (Vereinigung aller Runden) für Tisch-Tools.
+  const roundIds = meetup.rounds.map((r) => r.id);
+  const allPickVotes = await prisma.vote.findMany({
+    where: { roundId: { in: roundIds }, mode: "PICK" },
+    select: { userId: true, user: { select: { name: true } } },
+  });
+  const pickVoterMap = new Map<string, string>();
+  for (const v of allPickVotes) pickVoterMap.set(v.userId, v.user.name);
+  const participantMap = new Map<string, string>();
+  for (const round of meetup.rounds) {
+    for (const p of round.participants) participantMap.set(p.userId, p.user.name);
+  }
+  const meetupPlayers = buildRegisteredPlayers(
+    meetup.createdBy,
+    [...pickVoterMap.entries()].map(([userId, name]) => ({ userId, name })),
+    [...participantMap.entries()].map(([userId, name]) => ({ userId, name })),
+  );
+
+  return (
+    <div className="container-app flex flex-col gap-6">
+      <PageHeader id="meetup-page-top" eyebrow="Treffen" title={meetup.title}>
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-sm text-[var(--muted)]">
+            {formatSchedule(meetup.scheduledAt, meetup.durationMinutes)}
+            {meetup.location ? ` · ${meetup.location}` : ""} · von{" "}
+            {meetup.createdBy.name}
+          </p>
+          <div className="flex shrink-0 items-center gap-1">
+            <MeetupShareQr meetupId={meetup.id} title={meetup.title} />
+            {canDeleteMeetup && (
+              <MeetupActionsMenu meetupId={meetup.id} title={meetup.title} />
+            )}
+          </div>
+        </div>
+      </PageHeader>
+
+      <DuellResetNotice />
+
+      {meetup.rounds.map((round, index) => (
+        <RoundCard
+          key={round.id}
+          round={round}
+          index={index}
+          meetupId={meetup.id}
+          meetupCreatedBy={meetup.createdBy}
+          guestGames={guestGames}
+          userId={user?.id ?? null}
+          isHost={isHost}
+          multiRound={multiRound}
+        />
+      ))}
+
+      {isHost && <AddRoundButton meetupId={meetup.id} />}
+
+      <div className="card card-pad">
+        <CollapsibleSection title="Tisch-Tools">
+          <MeetupTableToolsClient players={meetupPlayers} />
+        </CollapsibleSection>
+      </div>
+    </div>
+  );
+}
+
+type RoundWithRelations = Prisma.MeetupRoundGetPayload<{
+  include: typeof roundInclude;
+}>;
+
+async function RoundCard({
+  round,
+  index,
+  meetupId,
+  meetupCreatedBy,
+  guestGames,
+  userId,
+  isHost,
+  multiRound,
+}: {
+  round: RoundWithRelations;
+  index: number;
+  meetupId: string;
+  meetupCreatedBy: { id: string; name: string };
+  guestGames: {
+    id: number;
+    name: string;
+    thumbnail: string | null;
+    image: string | null;
+    coverUrl: string | null;
+  }[];
+  userId: string | null;
+  isHost: boolean;
+  multiRound: boolean;
+}) {
+  const roundId = round.id;
+  const expected = round.expectedPlayerCount;
+  const roundQuery = multiRound ? `?runde=${roundId}` : "";
+
+  const hostChoiceGames = round.hostChoiceGames.map((g) => g.game);
+  const forcedGame = round.hostForcedGame;
+  const hostForced = round.hostForcedGameId != null;
 
   const votes = await prisma.vote.findMany({
-    where: { meetupId: id },
+    where: { roundId },
     include: {
       game: {
         select: {
@@ -153,15 +283,11 @@ export default async function MeetupDetail({
     },
   });
 
-  const expected = meetup.expectedPlayerCount;
-  const frozen = parseDuelFrozenData(meetup.duelFrozenData, expected);
-  const combinedByCount = buildCombinedByCount(votes, id, frozen);
-  const playerCounts = playerCountsFromVotes(
-    meetup.expectedPlayerCount,
-    votes,
-  );
+  const frozen = parseDuelFrozenData(round.duelFrozenData, expected);
+  const combinedByCount = buildCombinedByCount(votes, roundId, frozen);
+  const playerCounts = playerCountsFromVotes(expected, votes);
 
-  const pickPhase = await getPickPhaseState(id, expected, prisma);
+  const pickPhase = await getPickPhaseState(roundId, expected, prisma);
   const groupPicks = votes.filter(
     (v) => v.mode === "PICK" && v.playerCount === expected,
   );
@@ -181,7 +307,7 @@ export default async function MeetupDetail({
   const tieBreak =
     poolIds.length >= 2
       ? {
-          meetupId: id,
+          meetupId: roundId,
           expectedPlayerCount: expected,
           pickCounts,
           games: buildGameTieMetaMap(
@@ -210,17 +336,18 @@ export default async function MeetupDetail({
     totalParticipants,
   } = getDuelProgressForCount(poolIds, duelRows, expected, {
     picks: groupPicks,
-    meetupId: id,
+    meetupId: roundId,
     tieBreak,
     frozen,
   });
 
-  const duelRoundComplete =
-    hostForced || (duelComplete && totalPairs > 0);
-  const isHost = user?.id === meetup.createdBy.id;
-  const canDeleteMeetup = isHost || isAdmin(user);
+  const duelRoundComplete = hostForced || (duelComplete && totalPairs > 0);
 
-  const expansionPhase = await loadExpansionPhaseState(id, expected, prisma);
+  const expansionPhase = await loadExpansionPhaseState(
+    roundId,
+    expected,
+    prisma,
+  );
   const winnerFamily =
     duelRoundComplete && expansionPhase.winnerGameId
       ? await loadWinnerExpansionFamily(expansionPhase.winnerGameId, expected)
@@ -228,7 +355,7 @@ export default async function MeetupDetail({
   const mandatoryKeys =
     expansionPhase.winnerGameId != null
       ? mandatoryExpansionKeysForWinner(
-          meetup.mandatoryExpansions,
+          round.mandatoryExpansions,
           expansionPhase.winnerGameId,
         )
       : [];
@@ -269,7 +396,7 @@ export default async function MeetupDetail({
       }),
       prisma.vote.findMany({
         where: {
-          meetupId: id,
+          roundId,
           mode: "EXPANSION_DUEL",
           playerCount: expected,
         },
@@ -283,22 +410,22 @@ export default async function MeetupDetail({
 
     if (baseGame) {
       if (expansionPhase.expansionDuelStarted) {
-        const frozen = parseExpansionDuelFrozenData(
-          meetup.expansionDuelFrozenData,
+        const expFrozen = parseExpansionDuelFrozenData(
+          round.expansionDuelFrozenData,
           expected,
         );
-        if (frozen && frozen.configs.length > 0) {
+        if (expFrozen && expFrozen.configs.length > 0) {
           const gamesById = new Map([
             [baseGame.id, baseGame],
             ...ownedExpansions.map((e) => [e.id, e] as const),
           ]);
           const covers = coverByVoteGameIdForConfigs(
-            frozen.configs,
+            expFrozen.configs,
             gamesById,
             baseGame,
           );
           expansionRanking = buildExpansionRankingEntries(
-            frozen.configs,
+            expFrozen.configs,
             expansionVotes,
             covers,
           );
@@ -331,15 +458,15 @@ export default async function MeetupDetail({
       [] as { userId: string; name: string }[],
     );
 
-  const manualRegistrations = meetup.registrations.map((r) => ({
-    userId: r.userId,
-    name: r.user.name,
+  const roundParticipants = round.participants.map((p) => ({
+    userId: p.userId,
+    name: p.user.name,
   }));
 
   const registeredPlayers = buildRegisteredPlayers(
-    meetup.createdBy,
+    meetupCreatedBy,
     pickVoters,
-    manualRegistrations,
+    roundParticipants,
   );
 
   const pickPointsAtExpected = sumPickPointsAtExpected(
@@ -350,21 +477,17 @@ export default async function MeetupDetail({
         playerCount: v.playerCount,
         points: v.points,
       })),
-    meetup.expectedPlayerCount,
+    expected,
   );
 
   const duelVoteCount = votes.filter((v) => v.mode === "DUEL").length;
   const duelsStarted = duelVoteCount > 0;
 
-  const isRegistered = user
-    ? isUserRegistered(user.id, registeredPlayers)
+  const isRegistered = userId
+    ? isUserRegistered(userId, registeredPlayers)
     : false;
-  const leaveAllowed = user
-    ? canLeaveMeetup({
-        isHost,
-        isRegistered,
-        duelsStarted,
-      })
+  const leaveAllowed = userId
+    ? canLeaveMeetup({ isHost, isRegistered, duelsStarted })
     : false;
 
   const completedCounts = playerCounts.filter((pc) => {
@@ -386,7 +509,7 @@ export default async function MeetupDetail({
     const countTieBreak =
       countPool.length >= 2
         ? {
-            meetupId: id,
+            meetupId: roundId,
             expectedPlayerCount: pc,
             pickCounts: countPickCounts,
             games: buildGameTieMetaMap(
@@ -408,72 +531,91 @@ export default async function MeetupDetail({
             ),
           }
         : undefined;
-    const countFrozen = parseDuelFrozenData(meetup.duelFrozenData, pc);
+    const countFrozen = parseDuelFrozenData(round.duelFrozenData, pc);
     return getDuelProgressForCount(countPool, countDuels, pc, {
       picks: countPicks,
-      meetupId: id,
+      meetupId: roundId,
       tieBreak: countTieBreak,
       frozen: countFrozen,
     }).duelComplete;
   });
 
+  const time = formatTime(round.startsAt);
+  const headerParts = [`Runde ${index + 1}`];
+  if (time) headerParts.push(`${time} Uhr`);
+  if (round.label) headerParts.push(round.label);
+
   return (
-    <div className="container-app flex flex-col gap-6">
-      <PageHeader id="meetup-page-top" eyebrow="Treffen" title={meetup.title}>
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-sm text-[var(--muted)]">
-            {formatSchedule(meetup.scheduledAt, meetup.durationMinutes)}
-            {meetup.location ? ` · ${meetup.location}` : ""} · von{" "}
-            {meetup.createdBy.name}
-          </p>
-          <div className="flex shrink-0 items-center gap-1">
-            <MeetupShareQr meetupId={meetup.id} title={meetup.title} />
-            {canDeleteMeetup && (
-              <MeetupActionsMenu meetupId={meetup.id} title={meetup.title} />
-            )}
-          </div>
+    <div className="card card-pad flex flex-col gap-4">
+      {multiRound && (
+        <div className="flex items-start justify-between gap-2 border-b border-[var(--border)] pb-3">
+          <h2 className="text-base font-semibold">
+            {headerParts.join(" · ")}
+          </h2>
+          {isHost && (
+            <RoundAdminBar
+              roundId={roundId}
+              label={round.label ?? ""}
+              startsAtLocal={toLocalInputValue(round.startsAt)}
+              canDelete
+            />
+          )}
         </div>
-      </PageHeader>
+      )}
 
-      <DuellResetNotice />
+      {isHost ? (
+        <>
+          <ExpectedCountControl
+            key={expected}
+            roundId={roundId}
+            value={expected}
+          />
+          <MeetupSpielsteuerungClient
+            meetupId={meetupId}
+            roundId={roundId}
+            forcedGame={forcedGame}
+            hostChoiceGames={hostChoiceGames}
+            hostChoiceMode={round.hostChoiceMode}
+            guestGames={guestGames}
+          />
+        </>
+      ) : (
+        <ExpectedCountReadOnly count={expected} />
+      )}
 
-      <div className="card card-pad flex flex-col gap-4">
-        {isHost ? (
-          <>
-            <ExpectedCountControl
-              key={meetup.expectedPlayerCount}
-              meetupId={meetup.id}
-              value={meetup.expectedPlayerCount}
-            />
-            <MeetupSpielsteuerungClient
-              meetupId={meetup.id}
-              forcedGame={forcedGame}
-              hostChoiceGames={hostChoiceGames}
-              hostChoiceMode={meetup.hostChoiceMode}
-              guestGames={guestGames}
-            />
-          </>
+      <MeetupParticipants
+        expected={expected}
+        players={registeredPlayers}
+        pickPointsAtExpected={pickPointsAtExpected}
+        meetupId={meetupId}
+        kickEnabled={isHost}
+        duelActive={pickPhase.picksLocked}
+      />
+
+      {userId &&
+        (multiRound ? (
+          <RoundParticipationToggle
+            roundId={roundId}
+            isParticipant={isRegistered}
+            canLeave={leaveAllowed}
+          />
         ) : (
-          <ExpectedCountReadOnly count={meetup.expectedPlayerCount} />
-        )}
-        <MeetupParticipants
-          expected={meetup.expectedPlayerCount}
-          players={registeredPlayers}
-          pickPointsAtExpected={pickPointsAtExpected}
-          meetupId={meetup.id}
-          kickEnabled={isHost}
-          duelActive={pickPhase.picksLocked}
-        />
-        {user && (
           <JoinMeetupButton
-            meetupId={meetup.id}
+            meetupId={meetupId}
             isLoggedIn
             isRegistered={isRegistered}
             canLeave={leaveAllowed}
           />
-        )}
+        ))}
+
+      {multiRound && userId && !isRegistered ? (
+        <p className="text-xs text-[var(--muted)] rounded-lg border border-[var(--border)] px-3 py-2">
+          Du nimmst an dieser Runde noch nicht teil. Tritt bei, um mitzustimmen.
+        </p>
+      ) : (
         <MeetupVoteActions
-          meetupId={meetup.id}
+          meetupId={meetupId}
+          roundQuery={roundQuery}
           readyForDuels={pickPhase.readyForDuels}
           picksLocked={pickPhase.picksLocked}
           duelComplete={duelRoundComplete}
@@ -484,35 +626,30 @@ export default async function MeetupDetail({
           duellLinkTitle={duellLinkTitle}
           hostForced={hostForced}
           hostForcedGameName={forcedGame?.name ?? null}
-          hostChoiceMode={meetup.hostChoiceMode}
+          hostChoiceMode={round.hostChoiceMode}
         />
-        {duelRoundComplete && (
-          <MeetupExpansionActions
-            meetupId={meetup.id}
-            isHost={isHost}
-            expansionDuelAvailable={expansionPhase.expansionDuelAvailable}
-            expansionDuelStarted={expansionPhase.expansionDuelStarted}
-            expansionDuelComplete={expansionPhase.expansionDuelComplete}
-            winnerName={expansionPhase.winnerName}
-            winnerFamily={winnerFamily}
-            mandatoryKeys={mandatoryKeys}
-            optionalExpansionCount={expansionPhase.optionalExpansionCount}
-            winnerHasExpansionsAtStar={
-              expansionPhase.winnerHasExpansionsAtStar
-            }
-          />
-        )}
-      </div>
+      )}
 
-      <div className="card card-pad">
-        <CollapsibleSection title="Tisch-Tools">
-          <MeetupTableToolsClient players={registeredPlayers} />
-        </CollapsibleSection>
-      </div>
+      {duelRoundComplete && (
+        <MeetupExpansionActions
+          meetupId={meetupId}
+          roundId={roundId}
+          roundQuery={roundQuery}
+          isHost={isHost}
+          expansionDuelAvailable={expansionPhase.expansionDuelAvailable}
+          expansionDuelStarted={expansionPhase.expansionDuelStarted}
+          expansionDuelComplete={expansionPhase.expansionDuelComplete}
+          winnerName={expansionPhase.winnerName}
+          winnerFamily={winnerFamily}
+          mandatoryKeys={mandatoryKeys}
+          optionalExpansionCount={expansionPhase.optionalExpansionCount}
+          winnerHasExpansionsAtStar={expansionPhase.winnerHasExpansionsAtStar}
+        />
+      )}
 
       <MeetupRankings
-        key={expected}
-        meetupId={id}
+        key={`${roundId}:${expected}`}
+        meetupId={roundId}
         expected={expected}
         playerCounts={playerCounts}
         combinedByCount={combinedByCount}

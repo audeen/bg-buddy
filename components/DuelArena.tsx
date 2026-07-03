@@ -94,14 +94,16 @@ export function DuelChoiceCard({
 /** CTA zur Treffen-Seite, scrollt dort direkt zu den Ergebnissen. */
 export function DuelRankingLink({
   meetupId,
+  hrefSuffix = "",
   className = "btn btn-primary btn-lg w-full max-w-sm",
 }: {
   meetupId: string;
+  hrefSuffix?: string;
   className?: string;
 }) {
   return (
     <Link
-      href={`/meetups/${meetupId}`}
+      href={`/meetups/${meetupId}${hrefSuffix}`}
       scroll={false}
       onClick={() => markScrollToErgebnisse()}
       className={className}
@@ -114,6 +116,7 @@ export function DuelRankingLink({
 /** Abschluss-Karte, wenn alle eigenen Duelle erledigt sind. */
 export function DuelFinishedCard({
   meetupId,
+  hrefSuffix = "",
   title,
   meta,
   done,
@@ -121,6 +124,7 @@ export function DuelFinishedCard({
   extra,
 }: {
   meetupId: string;
+  hrefSuffix?: string;
   title: string;
   meta: ReactNode;
   done: number;
@@ -138,7 +142,7 @@ export function DuelFinishedCard({
         <DuelProgressBar done={done} total={total} complete />
       </div>
       {extra}
-      <DuelRankingLink meetupId={meetupId} />
+      <DuelRankingLink meetupId={meetupId} hrefSuffix={hrefSuffix} />
     </div>
   );
 }

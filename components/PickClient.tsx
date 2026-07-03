@@ -53,6 +53,8 @@ function eligible(g: PickGame, n: number, expansions: GameCardGame[]): boolean {
 
 export function PickClient({
   meetupId,
+  roundId,
+  roundQuery = "",
   expected,
   games,
   initialPicks,
@@ -70,6 +72,8 @@ export function PickClient({
   sort,
 }: {
   meetupId: string;
+  roundId: string;
+  roundQuery?: string;
   expected: number;
   games: PickGame[];
   initialPicks: { gameId: number; playerCount: number; points: number }[];
@@ -93,7 +97,7 @@ export function PickClient({
   sort: GameSort;
 }) {
   const filters = activeFilters;
-  const filterBasePath = `/meetups/${meetupId}/pick`;
+  const filterBasePath = `/meetups/${meetupId}/pick${roundQuery}`;
   const filterListKey = filtersToSearchParams(filters, sort).toString();
 
   const genres = useMemo(
@@ -267,7 +271,7 @@ export function PickClient({
     persistChainRef.current = persistChainRef.current
       .then(async () => {
         const res = await setPickPointsAction(
-          meetupId,
+          roundId,
           gameId,
           playerCount,
           attemptedPoints,

@@ -73,19 +73,27 @@ async function main() {
       data: {
         title: "Test: Host-Spielsteuerung",
         createdById: host.id,
-        expectedPlayerCount: 4,
-        initialExpectedPlayerCount: 4,
+        rounds: {
+          create: {
+            sortOrder: 0,
+            expectedPlayerCount: 4,
+            initialExpectedPlayerCount: 4,
+            registrationPeakCount: 1,
+          },
+        },
       },
+      include: { rounds: { select: { id: true } } },
     });
+    const roundId = meetup.rounds[0].id;
 
     await prisma.meetupHostChoiceGame.createMany({
       data: [
-        { meetupId: meetup.id, gameId: COLLECTION_GAME_A, sortOrder: 0 },
-        { meetupId: meetup.id, gameId: COLLECTION_GAME_B, sortOrder: 1 },
+        { roundId, gameId: COLLECTION_GAME_A, sortOrder: 0 },
+        { roundId, gameId: COLLECTION_GAME_B, sortOrder: 1 },
       ],
     });
-    await prisma.meetup.update({
-      where: { id: meetup.id },
+    await prisma.meetupRound.update({
+      where: { id: roundId },
       data: { hostChoiceMode: "RESTRICT" },
     });
 
@@ -145,11 +153,11 @@ async function main() {
       },
     });
     await prisma.meetupHostChoiceGame.create({
-      data: { meetupId: meetup.id, gameId: GUEST_GAME, sortOrder: 2 },
+      data: { roundId, gameId: GUEST_GAME, sortOrder: 2 },
     });
 
     const guestChoice = await prisma.meetupHostChoiceGame.findFirst({
-      where: { meetupId: meetup.id, gameId: GUEST_GAME },
+      where: { roundId, gameId: GUEST_GAME },
     });
     assert(!!guestChoice, "guest game in MeetupHostChoiceGame");
 
@@ -166,8 +174,8 @@ async function main() {
       "guest game in host choice visible in pick pool",
     );
 
-    await prisma.meetup.update({
-      where: { id: meetup.id },
+    await prisma.meetupRound.update({
+      where: { id: roundId },
       data: {
         hostForcedGameId: COLLECTION_GAME_A,
         hostForcedAt: new Date(),
@@ -175,12 +183,12 @@ async function main() {
       },
     });
     await prisma.meetupHostChoiceGame.deleteMany({
-      where: { meetupId: meetup.id },
+      where: { roundId },
     });
 
     const expansionPhase = await loadExpansionPhaseState(
-      meetup.id,
-      meetup.expectedPlayerCount,
+      roundId,
+      4,
       prisma,
     );
     assert(
@@ -192,23 +200,19 @@ async function main() {
       "no expansion duel after host force",
     );
 
-    const pickPhase = await getPickPhaseState(
-      meetup.id,
-      meetup.expectedPlayerCount,
-      prisma,
-    );
+    const pickPhase = await getPickPhaseState(roundId, 4, prisma);
     assert(pickPhase.hostForced && pickPhase.picksLocked, "forced meetup locks picks");
 
-    await prisma.meetup.update({
-      where: { id: meetup.id },
+    await prisma.meetupRound.update({
+      where: { id: roundId },
       data: {
         expectedPlayerCount: 3,
         hostForcedGameId: null,
         hostForcedAt: null,
       },
     });
-    const afterStar = await prisma.meetup.findUnique({
-      where: { id: meetup.id },
+    const afterStar = await prisma.meetupRound.findUnique({
+      where: { id: roundId },
       select: { hostForcedGameId: true },
     });
     assert(afterStar?.hostForcedGameId == null, "star change clears forced game");
@@ -217,8 +221,14 @@ async function main() {
       data: {
         title: "Test: HostControl foreign",
         createdById: guest.id,
-        expectedPlayerCount: 4,
-        initialExpectedPlayerCount: 4,
+        rounds: {
+          create: {
+            sortOrder: 0,
+            expectedPlayerCount: 4,
+            initialExpectedPlayerCount: 4,
+            registrationPeakCount: 1,
+          },
+        },
       },
     });
     assert(

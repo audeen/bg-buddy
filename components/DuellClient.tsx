@@ -26,6 +26,8 @@ export interface DuellGame {
 
 export function DuellClient({
   meetupId,
+  roundId,
+  roundQuery = "",
   expected,
   games,
   myPairs,
@@ -38,6 +40,8 @@ export function DuellClient({
   isHost,
 }: {
   meetupId: string;
+  roundId: string;
+  roundQuery?: string;
   expected: number;
   games: DuellGame[];
   myPairs: DuelPair[];
@@ -59,7 +63,7 @@ export function DuellClient({
       myPairs,
       initialCompletedKeys,
       vote: (winnerId, loserId) =>
-        duelVoteAction(meetupId, winnerId, loserId, expected),
+        duelVoteAction(roundId, winnerId, loserId, expected),
     });
 
   const gameA = current ? gameMap.get(current.a) : null;
@@ -77,6 +81,7 @@ export function DuellClient({
     return (
       <DuelFinishedCard
         meetupId={meetupId}
+        hrefSuffix={roundQuery}
         title="Deine Duelle sind erledigt!"
         meta={
           <>
@@ -151,6 +156,7 @@ export function DuellClient({
       <DuelStickyFooter>
         <DuelRankingLink
           meetupId={meetupId}
+          hrefSuffix={roundQuery}
           className="btn btn-primary w-full sm:w-auto text-center"
         />
       </DuelStickyFooter>

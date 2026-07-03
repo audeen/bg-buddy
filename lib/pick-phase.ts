@@ -96,18 +96,18 @@ export function formatDuellNotReadyMessage(phase: PickPhaseState): string {
 }
 
 export async function getPickPhaseState(
-  meetupId: string,
+  roundId: string,
   expectedPlayerCount: number,
   db: PrismaClient,
 ): Promise<PickPhaseState> {
-  const [meetup, groupPicks, duelVotes] = await Promise.all([
-    db.meetup.findUnique({
-      where: { id: meetupId },
+  const [round, groupPicks, duelVotes] = await Promise.all([
+    db.meetupRound.findUnique({
+      where: { id: roundId },
       select: { duelFrozenData: true, hostForcedGameId: true },
     }),
     db.vote.findMany({
       where: {
-        meetupId,
+        roundId,
         mode: "PICK",
         playerCount: expectedPlayerCount,
       },
@@ -115,7 +115,7 @@ export async function getPickPhaseState(
     }),
     db.vote.findMany({
       where: {
-        meetupId,
+        roundId,
         mode: "DUEL",
         playerCount: expectedPlayerCount,
       },
@@ -130,14 +130,14 @@ export async function getPickPhaseState(
 
   const pickCounts = buildPickCounts(groupPicks);
   const frozen = parseDuelFrozenData(
-    meetup?.duelFrozenData,
+    round?.duelFrozenData,
     expectedPlayerCount,
   );
   const poolIds = frozen?.poolGameIds ?? poolGameIds(pickCounts);
   const tieBreak =
     poolIds.length >= 2
       ? {
-          meetupId,
+          meetupId: roundId,
           expectedPlayerCount,
           pickCounts,
           games: buildGameTieMetaMap(
@@ -159,7 +159,7 @@ export async function getPickPhaseState(
     expectedPlayerCount,
     {
       picks: groupPicks,
-      meetupId,
+      meetupId: roundId,
       tieBreak,
       frozen,
     },
@@ -170,7 +170,7 @@ export async function getPickPhaseState(
     expectedPlayerCount,
     duelVotes.length,
     duelComplete,
-    meetup?.hostForcedGameId != null,
+    round?.hostForcedGameId != null,
   );
 }
 
@@ -182,11 +182,11 @@ export type PickPhaseSummary = {
 };
 
 export async function loadPickPhaseSummary(
-  meetupId: string,
+  roundId: string,
   expectedPlayerCount: number,
   db: PrismaClient,
 ): Promise<{ phase: PickPhaseState; summary: PickPhaseSummary }> {
-  const phase = await getPickPhaseState(meetupId, expectedPlayerCount, db);
+  const phase = await getPickPhaseState(roundId, expectedPlayerCount, db);
 
   const partialIds = phase.partialPickers.map((p) => p.userId);
   const partialPickerNames =

@@ -8,10 +8,12 @@ const POLL_MS = 5000;
 
 export function DuellSessionGuard({
   meetupId,
+  roundId,
   initialDuelVoteCount,
   children,
 }: {
   meetupId: string;
+  roundId?: string;
   initialDuelVoteCount: number;
   children: React.ReactNode;
 }) {
@@ -22,17 +24,22 @@ export function DuellSessionGuard({
   useEffect(() => {
     if (initialDuelVoteCount === 0) return;
 
+    const query = roundId ? `?runde=${roundId}` : "";
+    const backHref = roundId
+      ? `/meetups/${meetupId}?runde=${roundId}`
+      : `/meetups/${meetupId}`;
+
     async function check() {
       if (redirected.current || inFlight.current) return;
       inFlight.current = true;
       try {
-        const res = await fetch(`/api/meetups/${meetupId}/pick-phase`);
+        const res = await fetch(`/api/meetups/${meetupId}/pick-phase${query}`);
         if (!res.ok) return;
         const data = (await res.json()) as { duelVoteCount?: number };
         if (data.duelVoteCount === 0) {
           redirected.current = true;
           markDuellResetNotice();
-          router.replace(`/meetups/${meetupId}`);
+          router.replace(backHref);
         }
       } catch {
         // ignore transient network errors
@@ -52,7 +59,7 @@ export function DuellSessionGuard({
       document.removeEventListener("visibilitychange", onVisible);
       window.clearInterval(id);
     };
-  }, [meetupId, initialDuelVoteCount, router]);
+  }, [meetupId, roundId, initialDuelVoteCount, router]);
 
   return <>{children}</>;
 }

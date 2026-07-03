@@ -63,7 +63,7 @@ async function main() {
 
   const duelVoteCount = await prisma.vote.count({
     where: {
-      meetupId: { in: meetupIds },
+      round: { meetupId: { in: meetupIds } },
       mode: "DUEL",
     },
   });
@@ -80,15 +80,19 @@ async function main() {
     const meetup = await prisma.meetup.findFirst({
       where: { title: `${DUMMY_MEETUP_PREFIX}${label}` },
       include: {
-        votes: {
-          where: { mode: "PICK", playerCount: 4 },
-          select: { userId: true, gameId: true, points: true },
+        rounds: {
+          include: {
+            votes: {
+              where: { mode: "PICK", playerCount: 4 },
+              select: { userId: true, gameId: true, points: true },
+            },
+          },
         },
       },
     });
     assert(!!meetup, `missing ${label}`);
 
-    const picks = meetup!.votes;
+    const picks = meetup!.rounds.flatMap((r) => r.votes);
     const poolSize = poolSizeFromPicks(picks);
 
     for (const pickerId of dummyPickerIds) {
@@ -119,14 +123,18 @@ async function main() {
   const allReadyMeetup = await prisma.meetup.findFirst({
     where: { title: `${DUMMY_MEETUP_PREFIX}Duell bereit · 4/4` },
     include: {
-      votes: {
-        where: { mode: "PICK", playerCount: 4 },
-        select: { userId: true, gameId: true, points: true },
+      rounds: {
+        include: {
+          votes: {
+            where: { mode: "PICK", playerCount: 4 },
+            select: { userId: true, gameId: true, points: true },
+          },
+        },
       },
     },
   });
   assert(!!allReadyMeetup, "missing Duell bereit · 4/4");
-  const allReadyPicks = allReadyMeetup!.votes;
+  const allReadyPicks = allReadyMeetup!.rounds.flatMap((r) => r.votes);
   const allReadyPhase = assessPickPhase(allReadyPicks, 4, 0);
   assert(allReadyPhase.readyForDuels, "Duell bereit · 4/4: should be duell-ready");
   assert(
@@ -153,7 +161,7 @@ async function main() {
 
   const dummyDuelVotes = await prisma.vote.count({
     where: {
-      meetupId: allReadyMeetup!.id,
+      round: { meetupId: allReadyMeetup!.id },
       mode: "DUEL",
       userId: { in: [...dummyUsers.all] },
     },
@@ -163,8 +171,15 @@ async function main() {
   const realMeetup = await prisma.meetup.create({
     data: {
       title: "Echtes Treffen (Test)",
-      expectedPlayerCount: 4,
       createdById: user.id,
+      rounds: {
+        create: {
+          sortOrder: 0,
+          expectedPlayerCount: 4,
+          initialExpectedPlayerCount: 4,
+          registrationPeakCount: 1,
+        },
+      },
     },
   });
 

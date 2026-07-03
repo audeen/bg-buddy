@@ -119,3 +119,17 @@ export async function createMeetup(
   }
   return id;
 }
+
+/** Fügt einem geöffneten Treffen (als Host) eine weitere Spielrunde hinzu. */
+export async function addRound(
+  page: Page,
+  label: string,
+  expectedCount = 4,
+): Promise<void> {
+  await page.getByRole("button", { name: "+ Spielrunde hinzufügen" }).click();
+  const dialog = page.getByRole("dialog", { name: "Spielrunde hinzufügen" });
+  await dialog.getByLabel("Bezeichnung (optional)").fill(label);
+  await dialog.getByLabel("Erwartete Spieler").fill(String(expectedCount));
+  await dialog.getByRole("button", { name: "Hinzufügen" }).click();
+  await page.waitForTimeout(1200);
+}

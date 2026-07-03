@@ -201,30 +201,36 @@ async function createMeetup(
   createdById: string,
   label: string,
   scheduledAt: Date | null,
-): Promise<string> {
+): Promise<{ meetupId: string; roundId: string }> {
   const meetup = await db.meetup.create({
     data: {
       title: `${DUMMY_MEETUP_PREFIX}${label}`,
       scheduledAt,
-      expectedPlayerCount: EXPECTED,
-      initialExpectedPlayerCount: EXPECTED,
-      registrationPeakCount: 1,
       createdById,
+      rounds: {
+        create: {
+          sortOrder: 0,
+          expectedPlayerCount: EXPECTED,
+          initialExpectedPlayerCount: EXPECTED,
+          registrationPeakCount: 1,
+        },
+      },
     },
+    include: { rounds: { select: { id: true } } },
   });
-  return meetup.id;
+  return { meetupId: meetup.id, roundId: meetup.rounds[0].id };
 }
 
 async function insertPicks(
   db: PrismaClient,
-  meetupId: string,
+  roundId: string,
   picks: PickRow[],
   playerCount = EXPECTED,
 ): Promise<void> {
   if (picks.length === 0) return;
   await db.vote.createMany({
     data: picks.map((p) => ({
-      meetupId,
+      roundId,
       userId: p.userId,
       gameId: p.gameId,
       playerCount,
@@ -258,14 +264,14 @@ export async function createAllDummyMeetups(
           ...dummyPicksForPool(users, pool),
           ...creatorPicks(createdById, pool, scenario.creatorPicksLeft ?? 3),
         ];
-    const id = await createMeetup(
+    const { meetupId, roundId } = await createMeetup(
       db,
       createdById,
       scenario.label,
       scheduledAtFromOffset(scenario.dayOffset),
     );
-    await insertPicks(db, id, picks);
-    meetupIds.push(id);
+    await insertPicks(db, roundId, picks);
+    meetupIds.push(meetupId);
   }
 
   return { meetupIds, count: meetupIds.length };
@@ -300,17 +306,26 @@ export async function completeDummyDuelsForMeetup(
     where: { id: meetupId },
     select: {
       title: true,
-      expectedPlayerCount: true,
-      duelFrozenData: true,
+      rounds: {
+        orderBy: { sortOrder: "asc" },
+        select: {
+          id: true,
+          expectedPlayerCount: true,
+          duelFrozenData: true,
+        },
+      },
     },
   });
   if (!meetup) return { error: "Treffen nicht gefunden." };
   if (!isDummyMeetupTitle(meetup.title)) {
     return { error: "Nur für Dummy-Treffen verfügbar." };
   }
+  const round = meetup.rounds[0];
+  if (!round) return { error: "Spielrunde nicht gefunden." };
 
-  const playerCount = meetup.expectedPlayerCount;
-  const phase = await getPickPhaseState(meetupId, playerCount, db);
+  const roundId = round.id;
+  const playerCount = round.expectedPlayerCount;
+  const phase = await getPickPhaseState(roundId, playerCount, db);
   if (phase.duelComplete) {
     return { error: "Duelle bei dieser Spieleranzahl sind bereits abgeschlossen." };
   }
@@ -325,7 +340,7 @@ export async function completeDummyDuelsForMeetup(
 
   const groupPicks = await db.vote.findMany({
     where: {
-      meetupId,
+      roundId,
       mode: "PICK",
       playerCount,
     },
@@ -341,7 +356,7 @@ export async function completeDummyDuelsForMeetup(
   const pickCounts = buildPickCounts(groupPicks);
   const pool = poolGameIds(pickCounts);
   const frozenExisting = parseDuelFrozenData(
-    meetup.duelFrozenData,
+    round.duelFrozenData,
     playerCount,
   );
   const frozen =
@@ -354,7 +369,7 @@ export async function completeDummyDuelsForMeetup(
 
   const existingDuelVotes = await db.vote.findMany({
     where: {
-      meetupId,
+      roundId,
       mode: "DUEL",
       playerCount,
     },
@@ -367,7 +382,7 @@ export async function completeDummyDuelsForMeetup(
   });
 
   const votesToCreate: {
-    meetupId: string;
+    roundId: string;
     userId: string;
     gameId: number;
     opponentGameId: number;
@@ -385,7 +400,7 @@ export async function completeDummyDuelsForMeetup(
       userPoints,
       userId,
       participantIds: frozen.participantIds,
-      meetupId,
+      meetupId: roundId,
       frozen,
     });
 
@@ -403,7 +418,7 @@ export async function completeDummyDuelsForMeetup(
       const loserId = winnerId === pair.a ? pair.b : pair.a;
 
       votesToCreate.push({
-        meetupId,
+        roundId,
         userId,
         gameId: winnerId,
         opponentGameId: loserId,
@@ -421,8 +436,8 @@ export async function completeDummyDuelsForMeetup(
 
   await db.$transaction(async (tx) => {
     if (!frozenExisting) {
-      await tx.meetup.update({
-        where: { id: meetupId },
+      await tx.meetupRound.update({
+        where: { id: roundId },
         data: {
           duelFrozenAt: new Date(),
           duelFrozenData: duelFrozenToJson(frozen),

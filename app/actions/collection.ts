@@ -480,7 +480,7 @@ export async function purgeCollectionAction() {
     if (count === 0) return 0;
 
     await tx.game.deleteMany({});
-    await tx.meetup.updateMany({
+    await tx.meetupRound.updateMany({
       data: { duelFrozenAt: null, duelFrozenData: Prisma.DbNull },
     });
     return count;

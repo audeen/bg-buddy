@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { summarizePickSums } from "@/lib/pick-phase";
-import { getPickPhaseState } from "@/lib/pick-phase";
+import { getPickPhaseState, summarizePickSums } from "@/lib/pick-phase";
+import { roundOrderBy } from "@/lib/round-resolve";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getCurrentUser();
@@ -16,30 +16,45 @@ export async function GET(
   }
 
   const { id } = await params;
+  const roundParam = new URL(request.url).searchParams.get("runde");
+
   const meetup = await prisma.meetup.findUnique({
     where: { id },
     select: {
       id: true,
       title: true,
-      expectedPlayerCount: true,
-      hostForcedGameId: true,
-      hostForcedGame: { select: { name: true } },
+      rounds: {
+        orderBy: [...roundOrderBy],
+        select: {
+          id: true,
+          expectedPlayerCount: true,
+          hostForcedGameId: true,
+          hostForcedGame: { select: { name: true } },
+        },
+      },
     },
   });
   if (!meetup) {
     return NextResponse.json({ error: "Treffen nicht gefunden." }, { status: 404 });
   }
 
-  const expected = meetup.expectedPlayerCount;
+  const round =
+    (roundParam && meetup.rounds.find((r) => r.id === roundParam)) ||
+    meetup.rounds[0];
+  if (!round) {
+    return NextResponse.json({ error: "Spielrunde nicht gefunden." }, { status: 404 });
+  }
+
+  const expected = round.expectedPlayerCount;
   const [phase, picks, duelVoteCount] = await Promise.all([
-    getPickPhaseState(id, expected, prisma),
+    getPickPhaseState(round.id, expected, prisma),
     prisma.vote.findMany({
-      where: { meetupId: id, mode: "PICK", playerCount: expected },
+      where: { roundId: round.id, mode: "PICK", playerCount: expected },
       select: { userId: true, gameId: true, points: true },
     }),
     prisma.vote.count({
       where: {
-        meetupId: id,
+        roundId: round.id,
         playerCount: expected,
         mode: "DUEL",
       },
@@ -66,13 +81,20 @@ export async function GET(
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return NextResponse.json({
-    meetup,
+    meetup: {
+      id: meetup.id,
+      title: meetup.title,
+      roundId: round.id,
+      expectedPlayerCount: expected,
+      hostForcedGameId: round.hostForcedGameId,
+      hostForcedGame: round.hostForcedGame,
+    },
     phase,
     duelVoteCount,
     pickers,
-    hostForced: meetup.hostForcedGameId != null,
-    hostForcedGameName: meetup.hostForcedGame?.name ?? null,
-    hint: meetup.hostForcedGameId != null
+    hostForced: round.hostForcedGameId != null,
+    hostForcedGameName: round.hostForcedGame?.name ?? null,
+    hint: round.hostForcedGameId != null
       ? "Host hat Spiel festgelegt"
       : phase.readyForDuels
         ? "Duell frei (readyForDuels=true)"

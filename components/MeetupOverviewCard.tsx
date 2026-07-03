@@ -38,6 +38,7 @@ export function MeetupOverviewCard({
   expected,
   hostName,
   voteCount,
+  roundCount = 1,
   players,
   duelsStarted,
   currentUserId,
@@ -51,6 +52,7 @@ export function MeetupOverviewCard({
   expected: number;
   hostName: string;
   voteCount: number;
+  roundCount?: number;
   players: RegisteredPlayer[];
   duelsStarted: boolean;
   currentUserId?: string;
@@ -79,9 +81,14 @@ export function MeetupOverviewCard({
       <div className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
           <span className="section-title">{title}</span>
-          <span className="chip chip-accent shrink-0 tabular-nums">
-            {expected} ★
-          </span>
+          <div className="flex shrink-0 items-center gap-1">
+            {roundCount > 1 && (
+              <span className="chip chip-meta tabular-nums">
+                {roundCount} Runden
+              </span>
+            )}
+            <span className="chip chip-accent tabular-nums">{expected} ★</span>
+          </div>
         </div>
         <span className="text-sm text-[var(--muted)]">
           📅 {formatSchedule(scheduledAt, durationMinutes)}

@@ -16,6 +16,7 @@ model User {
   votes                Vote[]
   meetupRegistrations  MeetupRegistration[]
   guestGamesAdded      MeetupGuestGame[]
+  roundParticipations  MeetupRoundParticipant[]
 }
 
 model Game {
@@ -57,7 +58,7 @@ model Game {
   votesAsOpponent  Vote[]             @relation("VoteOpponent")
   meetupGuestGames    MeetupGuestGame[]
   meetupHostChoiceGames MeetupHostChoiceGame[]
-  meetupsForcedAsGame Meetup[] @relation("MeetupForcedGame")
+  roundsForcedAsGame MeetupRound[] @relation("RoundForcedGame")
   coverImage          GameCoverImage?
 
   @@index([addedToCollectionAt])
@@ -90,37 +91,70 @@ model Meetup {
   scheduledAt                DateTime?
   durationMinutes            Int       @default(240)
   location                   String?
-  expectedPlayerCount        Int       @default(4)
-  initialExpectedPlayerCount Int       @default(4)
-  registrationPeakCount      Int       @default(1)
   createdById                String
   createdBy                  User      @relation(fields: [createdById], references: [id])
   createdAt                  DateTime  @default(now())
+
+  rounds               MeetupRound[]
+  registrations        MeetupRegistration[]
+  guestGames           MeetupGuestGame[]
+}
+
+/// Eine Spielrunde innerhalb eines Treffens. Jedes Treffen hat mindestens
+/// eine Runde. Runden tragen den kompletten Abstimmungs-Zustand (Picks,
+/// Duelle, Erweiterungen) sowie eine eigene erwartete Spieleranzahl, so dass
+/// z. B. eine Aufwaerm-Runde um 19 Uhr und die Hauptrunde um 20 Uhr getrennt
+/// abstimmen koennen.
+model MeetupRound {
+  id                         String    @id @default(cuid())
+  meetupId                   String
+  meetup                     Meetup    @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  label                      String?
+  startsAt                   DateTime?
+  sortOrder                  Int       @default(0)
+  expectedPlayerCount        Int       @default(4)
+  initialExpectedPlayerCount Int       @default(4)
+  registrationPeakCount      Int       @default(1)
   duelFrozenAt               DateTime?
   duelFrozenData             Json?
   expansionDuelStartedAt     DateTime?
   expansionDuelFrozenData    Json?
   hostForcedGameId           Int?
-  hostForcedGame             Game?          @relation("MeetupForcedGame", fields: [hostForcedGameId], references: [id], onDelete: SetNull)
+  hostForcedGame             Game?          @relation("RoundForcedGame", fields: [hostForcedGameId], references: [id], onDelete: SetNull)
   hostForcedAt               DateTime?
   hostChoiceMode             HostChoiceMode @default(NONE)
+  createdAt                  DateTime  @default(now())
 
   votes                Vote[]
-  registrations        MeetupRegistration[]
-  guestGames           MeetupGuestGame[]
+  participants         MeetupRoundParticipant[]
   hostChoiceGames      MeetupHostChoiceGame[]
   mandatoryExpansions  MeetupMandatoryExpansion[]
+
+  @@index([meetupId])
+}
+
+/// Explizites Opt-in eines Nutzers fuer eine einzelne Spielrunde.
+model MeetupRoundParticipant {
+  id        String      @id @default(cuid())
+  roundId   String
+  round     MeetupRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@unique([roundId, userId])
+  @@index([roundId])
 }
 
 model MeetupMandatoryExpansion {
-  id              String @id @default(cuid())
-  meetupId        String
-  meetup          Meetup @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  id              String      @id @default(cuid())
+  roundId         String
+  round           MeetupRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
   baseGameId      Int
   expansionGameId Int
 
-  @@unique([meetupId, baseGameId, expansionGameId])
-  @@index([meetupId, baseGameId])
+  @@unique([roundId, baseGameId, expansionGameId])
+  @@index([roundId, baseGameId])
 }
 
 model MeetupGuestGame {
@@ -138,16 +172,16 @@ model MeetupGuestGame {
 }
 
 model MeetupHostChoiceGame {
-  id        String   @id @default(cuid())
-  meetupId  String
-  meetup    Meetup   @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  id        String      @id @default(cuid())
+  roundId   String
+  round     MeetupRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
   gameId    Int
-  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
+  game      Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  sortOrder Int         @default(0)
+  createdAt DateTime    @default(now())
 
-  @@unique([meetupId, gameId])
-  @@index([meetupId])
+  @@unique([roundId, gameId])
+  @@index([roundId])
 }
 
 model MeetupRegistration {
@@ -164,8 +198,8 @@ model MeetupRegistration {
 
 model Vote {
   id          String   @id @default(cuid())
-  meetupId    String
-  meetup      Meetup   @relation(fields: [meetupId], references: [id], onDelete: Cascade)
+  roundId     String
+  round       MeetupRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   gameId           Int
@@ -177,6 +211,6 @@ model Vote {
   mode        VoteMode
   createdAt   DateTime @default(now())
 
-  @@index([meetupId, playerCount])
-  @@index([meetupId, gameId, playerCount])
+  @@index([roundId, playerCount])
+  @@index([roundId, gameId, playerCount])
 }

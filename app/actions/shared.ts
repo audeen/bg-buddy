@@ -27,6 +27,13 @@ export function revalidateCollectionPaths(gameId?: number) {
 }
 
 export type HostMeetup = {
+  id: string;
+  createdById: string;
+};
+
+export type HostRound = {
+  id: string;
+  meetupId: string;
   createdById: string;
   expectedPlayerCount: number;
   hostForcedGameId: number | null;
@@ -41,18 +48,46 @@ export async function requireMeetupHost(
 ): Promise<{ error: string } | { meetup: HostMeetup }> {
   const meetup = await prisma.meetup.findUnique({
     where: { id: meetupId },
-    select: {
-      createdById: true,
-      expectedPlayerCount: true,
-      hostForcedGameId: true,
-      hostChoiceMode: true,
-    },
+    select: { id: true, createdById: true },
   });
   if (!meetup) return { error: "Treffen nicht gefunden." };
   if (meetup.createdById !== userId) {
     return { error: notHostError };
   }
   return { meetup };
+}
+
+/** Lädt eine Runde inkl. Treffen und stellt sicher, dass der Nutzer der Host ist. */
+export async function requireRoundHost(
+  roundId: string,
+  userId: string,
+  notHostError: string,
+): Promise<{ error: string } | { round: HostRound }> {
+  const round = await prisma.meetupRound.findUnique({
+    where: { id: roundId },
+    select: {
+      id: true,
+      meetupId: true,
+      expectedPlayerCount: true,
+      hostForcedGameId: true,
+      hostChoiceMode: true,
+      meetup: { select: { createdById: true } },
+    },
+  });
+  if (!round) return { error: "Spielrunde nicht gefunden." };
+  if (round.meetup.createdById !== userId) {
+    return { error: notHostError };
+  }
+  return {
+    round: {
+      id: round.id,
+      meetupId: round.meetupId,
+      createdById: round.meetup.createdById,
+      expectedPlayerCount: round.expectedPlayerCount,
+      hostForcedGameId: round.hostForcedGameId,
+      hostChoiceMode: round.hostChoiceMode,
+    },
+  };
 }
 
 /**

@@ -29,10 +29,18 @@ async function main() {
       data: {
         title: "Test: Mitbringspiel",
         createdById: host.id,
-        expectedPlayerCount: 4,
-        initialExpectedPlayerCount: 4,
+        rounds: {
+          create: {
+            sortOrder: 0,
+            expectedPlayerCount: 4,
+            initialExpectedPlayerCount: 4,
+            registrationPeakCount: 1,
+          },
+        },
       },
+      include: { rounds: { select: { id: true, expectedPlayerCount: true } } },
     });
+    const round = meetup.rounds[0];
 
     await prisma.game.upsert({
       where: { id: TEMP_BGG_ID },
@@ -83,10 +91,10 @@ async function main() {
 
     await prisma.vote.create({
       data: {
-        meetupId: meetup.id,
+        roundId: round.id,
         userId: host.id,
         gameId: TEMP_BGG_ID,
-        playerCount: meetup.expectedPlayerCount,
+        playerCount: round.expectedPlayerCount,
         mode: "PICK",
         points: 1,
       },
@@ -94,9 +102,9 @@ async function main() {
 
     const picks = await prisma.vote.findMany({
       where: {
-        meetupId: meetup.id,
+        roundId: round.id,
         mode: "PICK",
-        playerCount: meetup.expectedPlayerCount,
+        playerCount: round.expectedPlayerCount,
       },
       select: { gameId: true, points: true },
     });
@@ -105,7 +113,7 @@ async function main() {
 
     await prisma.vote.deleteMany({
       where: {
-        meetupId: meetup.id,
+        roundId: round.id,
         OR: [
           { gameId: TEMP_BGG_ID },
           { opponentGameId: TEMP_BGG_ID },

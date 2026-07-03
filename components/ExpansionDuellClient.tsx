@@ -25,6 +25,8 @@ export type ExpansionDuellChoice = {
 
 export function ExpansionDuellClient({
   meetupId,
+  roundId,
+  roundQuery = "",
   expected,
   winnerName,
   choices,
@@ -34,6 +36,8 @@ export function ExpansionDuellClient({
   initialCompletedKeys,
 }: {
   meetupId: string;
+  roundId: string;
+  roundQuery?: string;
   expected: number;
   winnerName: string;
   choices: ExpansionDuellChoice[];
@@ -52,7 +56,7 @@ export function ExpansionDuellClient({
       myPairs,
       initialCompletedKeys,
       vote: (winnerId, loserId) =>
-        expansionDuelVoteAction(meetupId, winnerId, loserId, expected),
+        expansionDuelVoteAction(roundId, winnerId, loserId, expected),
     });
 
   const choiceA = current ? choiceMap.get(current.a) : null;
@@ -62,6 +66,7 @@ export function ExpansionDuellClient({
     return (
       <DuelFinishedCard
         meetupId={meetupId}
+        hrefSuffix={roundQuery}
         title="Erweiterungs-Duelle erledigt!"
         meta={
           <>
@@ -130,7 +135,7 @@ export function ExpansionDuellClient({
 
       <DuelStickyFooter>
         <Link
-          href={`/meetups/${meetupId}`}
+          href={`/meetups/${meetupId}${roundQuery}`}
           className="btn btn-ghost w-full sm:w-auto text-center"
         >
           Zurück zum Treffen
