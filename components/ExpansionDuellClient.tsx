@@ -21,7 +21,16 @@ export type ExpansionDuellChoice = {
   thumbnail: string | null;
   image: string | null;
   coverUrl?: string | null;
+  variant: "base" | "expansion";
 };
+
+function expansionDuelCoverBanner(
+  variant: ExpansionDuellChoice["variant"],
+): { label: string; variant: "base" | "expansion" } {
+  return variant === "base"
+    ? { label: "Basisspiel", variant: "base" }
+    : { label: "Erweiterung", variant: "expansion" };
+}
 
 export function ExpansionDuellClient({
   meetupId,
@@ -112,6 +121,7 @@ export function ExpansionDuellClient({
               side="left"
               outcome={outcomeFor(choiceA.voteGameId)}
               disabled={busy}
+              coverBanner={expansionDuelCoverBanner(choiceA.variant)}
               onClick={() => choose(choiceA.voteGameId, choiceB.voteGameId)}
             />
           }
@@ -123,6 +133,7 @@ export function ExpansionDuellClient({
               side="right"
               outcome={outcomeFor(choiceB.voteGameId)}
               disabled={busy}
+              coverBanner={expansionDuelCoverBanner(choiceB.variant)}
               onClick={() => choose(choiceB.voteGameId, choiceA.voteGameId)}
             />
           }

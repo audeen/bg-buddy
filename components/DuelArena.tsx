@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { DuelCoverBanner } from "@/components/DuelCoverBanner";
 import { GameCover } from "@/components/GameCover";
 import { markScrollToErgebnisse } from "@/lib/scroll-ergebnisse";
 
@@ -45,6 +46,7 @@ export function DuelChoiceCard({
   outcome,
   onClick,
   labelLines = 3,
+  coverBanner,
 }: {
   coverSrc: string | null;
   label: string;
@@ -53,6 +55,7 @@ export function DuelChoiceCard({
   outcome?: "winner" | "loser";
   onClick: () => void;
   labelLines?: 2 | 3;
+  coverBanner?: { label: string; variant: "base" | "expansion" };
 }) {
   const enterClass =
     side === "left" ? "duel-card-enter-left" : "duel-card-enter-right";
@@ -71,12 +74,15 @@ export function DuelChoiceCard({
       onClick={onClick}
       className={`card card-game relative overflow-hidden flex flex-col h-full w-full min-h-[2.75rem] ${enterClass} ${outcomeClass}`}
     >
-      <div className="relative flex-1 min-h-0 w-full">
+      <div className="relative isolate flex-1 min-h-0 w-full overflow-hidden">
         <GameCover
           src={coverSrc}
           alt={label}
           className="h-full w-full min-h-[8rem] card-game-cover sm:aspect-square sm:min-h-0"
         />
+        {coverBanner && (
+          <DuelCoverBanner label={coverBanner.label} variant={coverBanner.variant} />
+        )}
       </div>
       {/* Padding liegt auf dem Wrapper: line-clamp + padding-bottom würde sonst
           die verborgene Folgezeile halb durch den Padding-Bereich scheinen lassen. */}

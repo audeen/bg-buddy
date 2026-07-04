@@ -12,6 +12,7 @@ export function choicesFromConfigs(
   label: string;
   thumbnail: string | null;
   image: string | null;
+  variant: "base" | "expansion";
 }[] {
   return configs.map((config) => {
     const coverGame =
@@ -23,6 +24,7 @@ export function choicesFromConfigs(
       label: config.label,
       thumbnail: coverGame.thumbnail,
       image: coverGame.image,
+      variant: config.optionalExpansionId == null ? "base" : "expansion",
     };
   });
 }
