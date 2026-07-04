@@ -69,11 +69,17 @@ function RankingRow({
           <span className="font-semibold leading-tight truncate">
             {entry.name}
           </span>
-          {showPickDuelBreakdown &&
-          (entry.pickCount !== undefined || entry.duelWins !== undefined) ? (
-            <span className="chip chip-meta text-xs shrink-0 w-fit">
-              {entry.pickCount ?? 0} Stimmen + {entry.duelWins ?? 0} Siege
-            </span>
+          {showPickDuelBreakdown && entry.pickCount !== undefined ? (
+            entry.duelWins !== undefined ? (
+              <span className="chip chip-meta text-xs shrink-0 w-fit">
+                {entry.pickCount} Stimmen + {entry.duelWins} Siege
+              </span>
+            ) : (
+              <span className="chip chip-meta text-xs shrink-0 w-fit">
+                {entry.pickCount}{" "}
+                {entry.pickCount === 1 ? "Stimme" : "Stimmen"}
+              </span>
+            )
           ) : (
             <span className="chip chip-accent shrink-0 w-fit sm:ml-auto">
               {entry.points}{" "}

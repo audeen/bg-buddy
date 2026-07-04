@@ -273,8 +273,8 @@ export function MeetupRankings({
           playerCounts={playerCounts}
           rankingByCount={activeRankingByCount}
           completedCounts={completedCounts}
-          showPickDuelBreakdown={view === "base"}
-          pointsLabel={view === "expansion" ? "Siege" : "Punkte"}
+          showPickDuelBreakdown
+          pointsLabel={view === "expansion" ? "Stimmen" : "Punkte"}
           animateReveal={totalPairs > 0 && (duelComplete || userRevealed)}
           subtitle={view === "expansion" ? expansionSubtitle : undefined}
           hidePlayerCountTabs={view === "expansion"}

@@ -1,6 +1,6 @@
 import type { RankEntry } from "@/lib/types/ranking";
 import {
-  buildExpansionCopelandWins,
+  buildExpansionVoteCounts,
   type ExpansionConfig,
   type ExpansionConfigGame,
   type ExpansionDuelVoteRow,
@@ -40,18 +40,18 @@ export function buildExpansionRankingEntries(
 ): RankEntry[] {
   if (configs.length === 0) return [];
 
-  const wins = buildExpansionCopelandWins(configs, expansionVotes);
+  const voteCounts = buildExpansionVoteCounts(configs, expansionVotes);
 
   const entries: RankEntry[] = configs.map((config) => {
     const cover = coverByVoteGameId.get(config.voteGameId);
-    const duelWins = wins[config.voteGameId] ?? 0;
+    const pickCount = voteCounts[config.voteGameId] ?? 0;
     return {
       id: config.voteGameId,
       name: config.label,
       thumbnail: cover ? resolveCoverSrc(cover) : null,
-      points: duelWins,
+      points: pickCount,
       voters: 0,
-      duelWins,
+      pickCount,
     };
   });
 

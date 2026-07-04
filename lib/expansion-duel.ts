@@ -140,6 +140,32 @@ export type ExpansionDuelVoteRow = {
   userId: string;
 };
 
+/** Raw vote counts per variant from all expansion duel pairs. */
+export function buildExpansionVoteCounts(
+  configs: ExpansionConfig[],
+  votes: ExpansionDuelVoteRow[],
+): Record<number, number> {
+  const poolIds = new Set(configs.map((c) => c.voteGameId));
+  const counts: Record<number, number> = {};
+  for (const id of poolIds) counts[id] = 0;
+
+  const pairs = buildExpansionDuelPairs(configs);
+  for (const pair of pairs) {
+    const pairVotes = votes.filter(
+      (v) =>
+        (v.gameId === pair.a && v.opponentGameId === pair.b) ||
+        (v.gameId === pair.b && v.opponentGameId === pair.a),
+    );
+    for (const v of pairVotes) {
+      if (poolIds.has(v.gameId)) {
+        counts[v.gameId] = (counts[v.gameId] ?? 0) + 1;
+      }
+    }
+  }
+
+  return counts;
+}
+
 /** Copeland wins from base-vs-variant pairs only. */
 export function buildExpansionCopelandWins(
   configs: ExpansionConfig[],

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   buildExpansionConfigs,
+  buildExpansionVoteCounts,
   type ExpansionConfigGame,
 } from "../lib/expansion-duel";
 import {
@@ -57,18 +58,41 @@ const votes = [
   { gameId: leaders.id, opponentGameId: base.id, userId: "u2" },
 ];
 
+const voteCounts = buildExpansionVoteCounts(configs, votes);
+assert.equal(voteCounts[cities.id], 2);
+assert.equal(voteCounts[leaders.id], 2);
+assert.equal(voteCounts[base.id], 0);
+
 const ranking = buildExpansionRankingEntries(configs, votes, covers);
 assert.equal(ranking.length, 3);
 assert.equal(ranking[0]?.id, cities.id);
 assert.equal(ranking[0]?.name, "7 Wonders · Cities");
-assert.equal(ranking[0]?.points, 1);
-assert.equal(ranking[0]?.duelWins, 1);
+assert.equal(ranking[0]?.points, 2);
+assert.equal(ranking[0]?.pickCount, 2);
+assert.equal(ranking[0]?.duelWins, undefined);
 assert.equal(ranking[0]?.thumbnail, "cities-image.jpg");
 
 assert.equal(ranking[1]?.id, leaders.id);
-assert.equal(ranking[1]?.points, 1);
+assert.equal(ranking[1]?.points, 2);
+assert.equal(ranking[1]?.pickCount, 2);
 
 assert.equal(ranking[2]?.id, base.id);
 assert.equal(ranking[2]?.points, 0);
+assert.equal(ranking[2]?.pickCount, 0);
+
+// Basis sammelt Stimmen aus allen Duellen
+const mixedVotes = [
+  { gameId: cities.id, opponentGameId: base.id, userId: "u1" },
+  { gameId: cities.id, opponentGameId: base.id, userId: "u2" },
+  { gameId: cities.id, opponentGameId: base.id, userId: "u3" },
+  { gameId: base.id, opponentGameId: cities.id, userId: "u4" },
+  { gameId: base.id, opponentGameId: cities.id, userId: "u5" },
+  { gameId: base.id, opponentGameId: leaders.id, userId: "u1" },
+  { gameId: leaders.id, opponentGameId: base.id, userId: "u2" },
+];
+const mixedCounts = buildExpansionVoteCounts(configs, mixedVotes);
+assert.equal(mixedCounts[cities.id], 3);
+assert.equal(mixedCounts[base.id], 3);
+assert.equal(mixedCounts[leaders.id], 1);
 
 console.log("test-expansion-ranking: ok");
