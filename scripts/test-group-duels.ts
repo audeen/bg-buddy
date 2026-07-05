@@ -56,22 +56,90 @@ assert(
   "all 28 pairs accounted for (assigned + auto)",
 );
 
-// Neutrality: nobody may judge a pair containing one of their own picks.
+// Partition: every one of the 28 pairs has exactly one judge (or is auto).
+const allJudgedKeys = [
+  ...Object.values(assignments).flatMap((list) =>
+    list.map((p) => pairKey(p.a, p.b)),
+  ),
+  ...autoPairs.map((p) => pairKey(p.a, p.b)),
+];
+assert(
+  new Set(allJudgedKeys).size === 28,
+  "each of the 28 pairs is judged exactly once",
+);
+
+// Each player's own picks are represented at most once per point and never
+// face each other in that player's own duels.
 for (const userId of participants) {
-  const ownGames = new Set(Object.keys(userPoints[userId] ?? {}).map(Number));
+  const pts = userPoints[userId] ?? {};
+  const ownGames = new Set(Object.keys(pts).map(Number));
+  const ownSeen = new Map<number, number>();
   for (const p of assignments[userId] ?? []) {
     assert(
-      !ownGames.has(p.a) && !ownGames.has(p.b),
-      `user ${userId} must not judge own pair ${pairKey(p.a, p.b)}`,
+      !(ownGames.has(p.a) && ownGames.has(p.b)),
+      `user ${userId} must not judge own-vs-own pair ${pairKey(p.a, p.b)}`,
+    );
+    for (const g of [p.a, p.b]) {
+      if (ownGames.has(g)) ownSeen.set(g, (ownSeen.get(g) ?? 0) + 1);
+    }
+  }
+  for (const g of ownGames) {
+    const count = ownSeen.get(g) ?? 0;
+    assert(
+      count <= (pts[g] ?? 0),
+      `user ${userId} own game ${g} represented ${count}x, max ${pts[g]}`,
     );
   }
 }
 
-// Conflict pair: games 1 and 4 are each picked by two users such that every
-// participant is biased -> (1,4) cannot have a neutral judge -> auto.
+// A pick weighted with 3 points earns three duels for that game, each against
+// a game the player did not pick.
+{
+  const concentrated: DuelPickRow[] = [
+    { userId: "a1", gameId: 1, points: 3 },
+    { userId: "a2", gameId: 2, points: 1 },
+    { userId: "a2", gameId: 3, points: 1 },
+    { userId: "a2", gameId: 4, points: 1 },
+    { userId: "a3", gameId: 5, points: 1 },
+    { userId: "a3", gameId: 6, points: 1 },
+    { userId: "a3", gameId: 7, points: 1 },
+    { userId: "a4", gameId: 8, points: 1 },
+    { userId: "a4", gameId: 5, points: 1 },
+    { userId: "a4", gameId: 6, points: 1 },
+  ];
+  const cPoints = buildUserPointsMap(concentrated);
+  const cParticipants = duelParticipantIds(concentrated);
+  assert(cParticipants.includes("a1"), "a1 has full 3/3 budget");
+  const { assignments: cAssign } = assignGroupPairs(
+    allPairs(pool8),
+    cParticipants,
+    cPoints,
+  );
+  const a1Game1 = (cAssign["a1"] ?? []).filter((p) => p.a === 1 || p.b === 1);
+  assert(
+    a1Game1.length === 3,
+    `a1 must get 3 duels for game 1, got ${a1Game1.length}`,
+  );
+  for (const p of a1Game1) {
+    const other = p.a === 1 ? p.b : p.a;
+    assert(other !== 1, "no self pair");
+    assert(
+      (cPoints["a1"]?.[other] ?? 0) === 0,
+      `a1 game-1 duel must be vs a non-own game, got ${pairKey(p.a, p.b)}`,
+    );
+  }
+}
+
+// Games 1 and 4 are each picked such that every participant is biased, so
+// (1,4) has no neutral judge. It must therefore be covered by one of its
+// owners (own-pick exposure) or, failing that, auto-resolved -- never dropped.
+const pair14Owner = participants.find((id) =>
+  (assignments[id] ?? []).some((p) => pairKey(p.a, p.b) === pairKey(1, 4)),
+);
 assert(
-  autoPairs.some((p) => pairKey(p.a, p.b) === pairKey(1, 4)),
-  "pair (1,4) has no neutral judge and is auto-resolved",
+  pair14Owner != null ||
+    autoPairs.some((p) => pairKey(p.a, p.b) === pairKey(1, 4)),
+  "pair (1,4) is either covered by an owner or auto-resolved",
 );
 // Every auto pair must genuinely have no neutral judge.
 for (const p of autoPairs) {
@@ -205,27 +273,36 @@ assert(
   "countFullyVotedPairs counts frozen assignments + auto pairs",
 );
 
-// Auto pairs are decided by deterministic chance in Copeland.
+// Auto pairs are decided by deterministic chance in Copeland. Own-pick
+// coverage may leave no auto pairs for this fixture, so exercise the
+// auto-resolution path with an explicit set of no-judge pairs.
 const autoSeedMeetup = "m-group";
+const autoFixture = [
+  { a: 1, b: 4 },
+  { a: 2, b: 5 },
+];
 const copelandAuto = buildCopelandForCount([], 4, "GROUP", 28, {
-  autoPairs,
+  autoPairs: autoFixture,
   meetupId: autoSeedMeetup,
 });
 assert(
-  copelandAuto.decidedPairs === autoPairs.length,
+  copelandAuto.decidedPairs === autoFixture.length,
   "every auto pair is decided by chance",
 );
 const totalAutoWins = Object.values(copelandAuto.winsByGame).reduce(
   (s, w) => s + w,
   0,
 );
-assert(totalAutoWins === autoPairs.length, "each auto pair yields one winner");
+assert(
+  totalAutoWins === autoFixture.length,
+  "each auto pair yields one winner",
+);
 // Deterministic: identical seed -> identical outcome.
 const copelandAuto2 = buildCopelandForCount([], 4, "GROUP", 28, {
-  autoPairs,
+  autoPairs: autoFixture,
   meetupId: autoSeedMeetup,
 });
-for (const p of autoPairs) {
+for (const p of autoFixture) {
   assert(
     (copelandAuto.winsByGame[p.a] ?? 0) === (copelandAuto2.winsByGame[p.a] ?? 0),
     "auto resolution is deterministic across runs",
@@ -233,7 +310,7 @@ for (const p of autoPairs) {
 }
 
 // A real vote on an auto pair beats the chance fallback (no double count).
-const [confictPair] = autoPairs;
+const [confictPair] = autoFixture;
 if (confictPair) {
   const withVote = buildCopelandForCount(
     [
@@ -247,10 +324,10 @@ if (confictPair) {
     4,
     "GROUP",
     28,
-    { autoPairs, meetupId: autoSeedMeetup },
+    { autoPairs: autoFixture, meetupId: autoSeedMeetup },
   );
   assert(
-    withVote.decidedPairs === autoPairs.length,
+    withVote.decidedPairs === autoFixture.length,
     "a real vote replaces the chance fallback without double counting",
   );
   assert(

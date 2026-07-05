@@ -84,10 +84,30 @@ function sortPairs(
   });
 }
 
+function ownGamesOf(
+  userId: string,
+  userPoints: Record<string, Record<number, number>>,
+): number[] {
+  return Object.entries(userPoints[userId] ?? {})
+    .filter(([, pts]) => (pts ?? 0) > 0)
+    .map(([g]) => Number(g))
+    .sort((x, y) => x - y);
+}
+
 /**
- * Assign each pair to a neutral judge (stake 0: picked neither game).
- * Pairs where every participant is biased land in `autoPairs` and are
- * resolved by deterministic chance instead of a partial human vote.
+ * Group-phase assignment in two passes:
+ *
+ * 1. Each player's own picks are represented in their own duels. A pick
+ *    weighted with N points earns N duels for that game, each against a game
+ *    the player did NOT pick -- so a player's own picks never deliberately
+ *    face each other. (A pair of two own picks may still be judged by a
+ *    neutral third party in pass 2.)
+ * 2. Remaining pairs go to a neutral judge (stake 0: picked neither game),
+ *    balancing load. Pairs where every participant is biased land in
+ *    `autoPairs` and are resolved by deterministic chance.
+ *
+ * Every pair still gets exactly one judge, so the one-vote-per-pair scoring
+ * model is unchanged.
  */
 export function assignGroupPairs(
   pairs: DuelPair[],
@@ -104,7 +124,34 @@ export function assignGroupPairs(
     return { assignments, autoPairs: [...pairs] };
   }
 
+  const usedPairKeys = new Set<string>();
+
+  // Pass 1: represent each player's own picks once per point, always against a
+  // game the player did not pick, so their own picks never face each other.
+  for (const id of sortedParticipants) {
+    const own = new Set(ownGamesOf(id, userPoints));
+    const points = userPoints[id] ?? {};
+    for (const game of ownGamesOf(id, userPoints)) {
+      const needed = points[game] ?? 0;
+      let assigned = 0;
+      for (const pair of pairs) {
+        if (assigned >= needed) break;
+        const key = pairKey(pair.a, pair.b);
+        if (usedPairKeys.has(key)) continue;
+        if (pair.a !== game && pair.b !== game) continue;
+        const other = pair.a === game ? pair.b : pair.a;
+        // Never deliberately pit the player's own picks against each other.
+        if (own.has(other)) continue;
+        assignments[id].push(pair);
+        usedPairKeys.add(key);
+        assigned += 1;
+      }
+    }
+  }
+
+  // Pass 2: assign the rest to a neutral judge, balancing load.
   for (const pair of pairs) {
+    if (usedPairKeys.has(pairKey(pair.a, pair.b))) continue;
     // Only participants who picked neither game may judge this pair.
     const neutral = sortedParticipants.filter(
       (id) => userStake(id, pair, userPoints) === 0,

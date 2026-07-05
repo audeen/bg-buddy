@@ -30,8 +30,10 @@ export const DUMMY_USER_NAMES = [
 const EXPECTED = 4;
 
 /** 6 games = 15 pairs → Direktduelle (FULL). 8 games = 28 pairs → Gruppenduelle. */
-const POOL_FULL = 6;
-const POOL_GROUP = 8;
+export const DUMMY_POOL_FULL_SIZE = 6;
+export const DUMMY_POOL_GROUP_SIZE = 8;
+const POOL_FULL = DUMMY_POOL_FULL_SIZE;
+const POOL_GROUP = DUMMY_POOL_GROUP_SIZE;
 
 type PickRow = { userId: string; gameId: number; points: number };
 
@@ -275,6 +277,88 @@ export async function createAllDummyMeetups(
   }
 
   return { meetupIds, count: meetupIds.length };
+}
+
+/** 8-game pool, all four dummy users at 3/3 — GROUP phase, duell-ready. */
+export async function createGroupReadyMeetup(
+  createdById: string,
+  db: PrismaClient = prisma,
+): Promise<{ meetupId: string; roundId: string; poolGameIds: number[] }> {
+  const users = await ensureDummyUsers(db);
+  const games = await eligibleGameIds(POOL_GROUP, EXPECTED, db);
+  if (games.length < POOL_GROUP) {
+    throw new Error(
+      `Mindestens ${POOL_GROUP} spielbare Spiele nötig (gefunden: ${games.length}).`,
+    );
+  }
+  const pool = games.slice(0, POOL_GROUP);
+  const picks = fullPicksForAll(users, pool);
+  const { meetupId, roundId } = await createMeetup(
+    db,
+    createdById,
+    "Gruppenduelle · 4/4 (Test)",
+    scheduledAtFromOffset(28),
+  );
+  await insertPicks(db, roundId, picks);
+  return { meetupId, roundId, poolGameIds: pool };
+}
+
+function distributedPicksForUser(
+  userId: string,
+  pool: number[],
+  startIdx: number,
+): PickRow[] {
+  const picks: PickRow[] = [];
+  for (let i = 0; i < MAX_PICK_POINTS; i++) {
+    picks.push({
+      userId,
+      gameId: pool[(startIdx + i) % pool.length],
+      points: 1,
+    });
+  }
+  return picks;
+}
+
+/** 8-game pool, Alice 3/3 on one game, others 3/3 distributed — GROUP, duell-ready. */
+export async function createGroupConcentratedMeetup(
+  createdById: string,
+  db: PrismaClient = prisma,
+): Promise<{
+  meetupId: string;
+  roundId: string;
+  poolGameIds: number[];
+  concentratedUserId: string;
+  concentratedGameId: number;
+}> {
+  const users = await ensureDummyUsers(db);
+  const games = await eligibleGameIds(POOL_GROUP, EXPECTED, db);
+  if (games.length < POOL_GROUP) {
+    throw new Error(
+      `Mindestens ${POOL_GROUP} spielbare Spiele nötig (gefunden: ${games.length}).`,
+    );
+  }
+  const pool = games.slice(0, POOL_GROUP);
+  const concentratedGameId = pool[0];
+  const picks: PickRow[] = [
+    { userId: users.alice, gameId: concentratedGameId, points: 3 },
+    ...distributedPicksForUser(users.bob, pool, 1),
+    ...distributedPicksForUser(users.carol, pool, 4),
+    ...distributedPicksForUser(users.dave, pool, 7),
+  ];
+  const { meetupId, roundId } = await createMeetup(
+    db,
+    createdById,
+    "Gruppenduelle · 3 Punkte (Test)",
+    scheduledAtFromOffset(35),
+  );
+  await insertPicks(db, roundId, picks);
+  return {
+    meetupId,
+    roundId,
+    poolGameIds: pool,
+    concentratedUserId: users.alice,
+    concentratedGameId,
+  };
 }
 
 export function expectedDuelPhase(poolSize: number): "FULL" | "GROUP" {

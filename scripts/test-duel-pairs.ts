@@ -68,16 +68,21 @@ for (const list of Object.values(assignments)) {
   }
 }
 
-// Azul fan (3 on game 1) gets fewer game-1 pairs than others
+// A pick weighted with 3 points on game 1 earns exactly three game-1 duels,
+// each against a game the player did not pick.
 const aPairs = assignments["a"] ?? [];
-const aWith1 = aPairs.filter((p) => p.a === 1 || p.b === 1).length;
-const bWith1 = (assignments["b"] ?? []).filter(
-  (p) => p.a === 1 || p.b === 1,
-).length;
+const aWith1 = aPairs.filter((p) => p.a === 1 || p.b === 1);
 assert(
-  aWith1 <= bWith1,
-  `min-stake: user a should not get more game-1 pairs than b (a=${aWith1}, b=${bWith1})`,
+  aWith1.length === 3,
+  `game-1 fan should get 3 game-1 duels (got ${aWith1.length})`,
 );
+for (const p of aWith1) {
+  const other = p.a === 1 ? p.b : p.a;
+  assert(
+    other !== 1 && (userPoints["a"]?.[other] ?? 0) === 0,
+    `game-1 duel must be vs a non-own game, got ${p.a}:${p.b}`,
+  );
+}
 
 // Copeland FULL majority
 const copeland = buildCopelandForCount(

@@ -2,6 +2,8 @@ import { PrismaClient } from "@prisma/client";
 import {
   completeDummyDuelsForMeetup,
   createAllDummyMeetups,
+  createGroupConcentratedMeetup,
+  createGroupReadyMeetup,
   creatorPickSum,
   DUMMY_MEETUP_PREFIX,
   DUMMY_SCENARIO_COUNT,
@@ -11,12 +13,49 @@ import {
   poolSizeFromPicks,
   purgeDummyMeetups,
 } from "../lib/dummy-meetups";
-import { pairCount } from "../lib/duel-pairs";
+import {
+  buildDuelFrozenSnapshot,
+  buildDuellPlan,
+  buildUserPointsMap,
+  duelParticipantIds,
+  pairCount,
+} from "../lib/duel-pairs";
 import { assessPickPhase } from "../lib/pick-phase";
 import { FULL_THRESHOLD } from "../lib/vote-limits";
 
 function assert(cond: boolean, msg: string) {
   if (!cond) throw new Error(msg);
+}
+
+function assertOwnPickRepresentation(
+  userId: string,
+  ownPoints: Record<number, number>,
+  pairs: { a: number; b: number }[],
+) {
+  const ownGameIds = new Set(
+    Object.entries(ownPoints)
+      .filter(([, pts]) => (pts ?? 0) > 0)
+      .map(([g]) => Number(g)),
+  );
+  const seen = new Map<number, number>();
+  for (const p of pairs) {
+    assert(
+      !(ownGameIds.has(p.a) && ownGameIds.has(p.b)),
+      `user ${userId} must not judge own-vs-own pair ${p.a}:${p.b}`,
+    );
+    for (const g of [p.a, p.b]) {
+      if (ownGameIds.has(g)) {
+        seen.set(g, (seen.get(g) ?? 0) + 1);
+      }
+    }
+  }
+  for (const g of ownGameIds) {
+    const count = seen.get(g) ?? 0;
+    assert(
+      count <= (ownPoints[g] ?? 0),
+      `user ${userId} own game ${g} represented ${count}x, max ${ownPoints[g]}`,
+    );
+  }
 }
 
 const prisma = new PrismaClient();
@@ -168,6 +207,158 @@ async function main() {
   });
   assert(dummyDuelVotes > 0, "dummy users should have duel votes");
 
+  // GROUP phase with 4/4 full picks: each dummy user sees own picks at most once.
+  const groupReady = await createGroupReadyMeetup(user.id, prisma);
+  const groupMeetup = await prisma.meetup.findUnique({
+    where: { id: groupReady.meetupId },
+    include: {
+      rounds: {
+        include: {
+          votes: {
+            where: { mode: "PICK", playerCount: 4 },
+            select: { userId: true, gameId: true, points: true },
+          },
+        },
+      },
+    },
+  });
+  assert(!!groupMeetup, "group ready meetup exists");
+  const groupPicks = groupMeetup!.rounds.flatMap((r) => r.votes);
+  assert(
+    assessPickPhase(groupPicks, 4, 0).readyForDuels,
+    "group ready: all four participants duell-ready",
+  );
+  assert(poolSizeFromPicks(groupPicks) === 8, "group ready: pool 8");
+  assert(expectedDuelPhase(8) === "GROUP", "8 games -> GROUP");
+
+  const frozen = buildDuelFrozenSnapshot({
+    playerCount: 4,
+    picks: groupPicks,
+    poolGameIds: groupReady.poolGameIds,
+  });
+  assert(frozen.phase === "GROUP", "frozen snapshot is GROUP");
+  assert(frozen.assignments != null, "frozen has assignments");
+
+  const assignedTotal = Object.values(frozen.assignments!).reduce(
+    (sum, list) => sum + list.length,
+    0,
+  );
+  assert(
+    assignedTotal + (frozen.autoPairs?.length ?? 0) === pairCount(8),
+    "all 28 pairs accounted for in group ready snapshot",
+  );
+
+  const userPoints = buildUserPointsMap(groupPicks);
+  const participantIds = duelParticipantIds(groupPicks);
+  assert(participantIds.length === 4, "four duel participants in group ready");
+
+  for (const userId of dummyUsers.all) {
+    const plan = buildDuellPlan({
+      poolGameIds: groupReady.poolGameIds,
+      pickCounts: frozen.pickCounts,
+      userPoints,
+      userId,
+      participantIds,
+      meetupId: groupReady.meetupId,
+      frozen,
+    });
+    assert(plan.phase === "GROUP", `user ${userId}: GROUP phase`);
+    assert(plan.myPairs.length >= 1, `user ${userId} gets at least one pair`);
+    assertOwnPickRepresentation(userId, userPoints[userId] ?? {}, plan.myPairs);
+  }
+
+  const groupComplete = await completeDummyDuelsForMeetup(
+    groupReady.meetupId,
+    prisma,
+  );
+  assert(!("error" in groupComplete), "complete group dummy duels should succeed");
+  if ("error" in groupComplete) throw new Error(groupComplete.error);
+  assert(
+    groupComplete.votesAdded > 0,
+    `group ready: expected duel votes added, got ${groupComplete.votesAdded}`,
+  );
+
+  const groupRound = await prisma.meetupRound.findUnique({
+    where: { id: groupReady.roundId },
+    select: { duelFrozenData: true },
+  });
+  assert(groupRound?.duelFrozenData != null, "group ready: duelFrozenData persisted");
+
+  // GROUP phase with one player concentrating 3 points on a single game.
+  const concentrated = await createGroupConcentratedMeetup(user.id, prisma);
+  const concMeetup = await prisma.meetup.findUnique({
+    where: { id: concentrated.meetupId },
+    include: {
+      rounds: {
+        include: {
+          votes: {
+            where: { mode: "PICK", playerCount: 4 },
+            select: { userId: true, gameId: true, points: true },
+          },
+        },
+      },
+    },
+  });
+  assert(!!concMeetup, "concentrated group meetup exists");
+  const concPicks = concMeetup!.rounds.flatMap((r) => r.votes);
+  assert(
+    assessPickPhase(concPicks, 4, 0).readyForDuels,
+    "concentrated: all four participants duell-ready",
+  );
+  const concFrozen = buildDuelFrozenSnapshot({
+    playerCount: 4,
+    picks: concPicks,
+    poolGameIds: concentrated.poolGameIds,
+  });
+  const concUserPoints = buildUserPointsMap(concPicks);
+  const concParticipants = duelParticipantIds(concPicks);
+  const concPlan = buildDuellPlan({
+    poolGameIds: concentrated.poolGameIds,
+    pickCounts: concFrozen.pickCounts,
+    userPoints: concUserPoints,
+    userId: concentrated.concentratedUserId,
+    participantIds: concParticipants,
+    meetupId: concentrated.meetupId,
+    frozen: concFrozen,
+  });
+  assert(concPlan.phase === "GROUP", "concentrated: GROUP phase");
+  const concGameId = concentrated.concentratedGameId;
+  const withConcGame = concPlan.myPairs.filter(
+    (p) => p.a === concGameId || p.b === concGameId,
+  );
+  assert(
+    withConcGame.length === 3,
+    `concentrated user must get 3 duels for game ${concGameId}, got ${withConcGame.length}`,
+  );
+  for (const p of withConcGame) {
+    const other = p.a === concGameId ? p.b : p.a;
+    assert(
+      (concUserPoints[concentrated.concentratedUserId]?.[other] ?? 0) === 0,
+      `concentrated duel must be vs non-own game, got ${p.a}:${p.b}`,
+    );
+  }
+  assertOwnPickRepresentation(
+    concentrated.concentratedUserId,
+    concUserPoints[concentrated.concentratedUserId] ?? {},
+    concPlan.myPairs,
+  );
+
+  const concComplete = await completeDummyDuelsForMeetup(
+    concentrated.meetupId,
+    prisma,
+  );
+  assert(!("error" in concComplete), "complete concentrated dummy duels should succeed");
+  if ("error" in concComplete) throw new Error(concComplete.error);
+  assert(
+    concComplete.votesAdded > 0,
+    `concentrated: expected duel votes added, got ${concComplete.votesAdded}`,
+  );
+  const concRound = await prisma.meetupRound.findUnique({
+    where: { id: concentrated.roundId },
+    select: { duelFrozenData: true },
+  });
+  assert(concRound?.duelFrozenData != null, "concentrated: duelFrozenData persisted");
+
   const realMeetup = await prisma.meetup.create({
     data: {
       title: "Echtes Treffen (Test)",
@@ -185,8 +376,8 @@ async function main() {
 
   const deleted = await purgeDummyMeetups(prisma);
   assert(
-    deleted === DUMMY_SCENARIO_COUNT,
-    `purge should delete ${DUMMY_SCENARIO_COUNT}, deleted ${deleted}`,
+    deleted === DUMMY_SCENARIO_COUNT + 2,
+    `purge should delete ${DUMMY_SCENARIO_COUNT + 2}, deleted ${deleted}`,
   );
 
   const realStill = await prisma.meetup.findUnique({
