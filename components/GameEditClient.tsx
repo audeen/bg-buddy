@@ -7,6 +7,7 @@ import { useState, useTransition } from "react";
 import { setGameCoverAction, updateGameMetadataAction } from "@/app/actions";
 import { SYNC_FIELD_LABELS, type SyncFieldName } from "@/lib/game-sync";
 import { CoverPickerDialog } from "@/components/CoverPickerDialog";
+import { BggNamePicker } from "@/components/BggNamePicker";
 import { GameCover } from "@/components/GameCover";
 import { resolveCoverSrc } from "@/lib/cover-image";
 
@@ -90,6 +91,7 @@ export function GameEditClient({
   const [coverDialogOpen, setCoverDialogOpen] = useState(false);
   const [coverPending, startCoverTransition] = useTransition();
   const [coverError, setCoverError] = useState<string | null>(null);
+  const [nameValue, setNameValue] = useState(game.name);
 
   function resetCover() {
     setCoverError(null);
@@ -133,6 +135,7 @@ export function GameEditClient({
 
     const form = e.currentTarget;
     const formData = new FormData(form);
+    formData.set("name", nameValue);
     if (isExpansion) {
       formData.set("expandsGameIds", selectedBaseIds.join(", "));
     } else {
@@ -162,11 +165,11 @@ export function GameEditClient({
         <h2 className="section-title">Stammdaten</h2>
         <div>
           <FieldLabel htmlFor="name" field="name" manual={manual} />
-          <input
-            id="name"
-            name="name"
-            className="input"
-            defaultValue={game.name}
+          <BggNamePicker
+            gameId={game.id}
+            inputId="name"
+            value={nameValue}
+            onChange={setNameValue}
             required
           />
         </div>

@@ -564,3 +564,147 @@ export function chunk<T>(arr: T[], size: number): T[][] {
   }
   return out;
 }
+
+export type BggNameOptionKind = "primary" | "alternate" | "version";
+
+/** Ein Anzeigename aus der BGG-Thing-API (Primary, Alternate oder Version). */
+export type BggNameOption = {
+  name: string;
+  kind: BggNameOptionKind;
+  language: string | null;
+  publisher: string | null;
+  year: number | null;
+};
+
+const BGG_NAME_KIND_ORDER: Record<BggNameOptionKind, number> = {
+  primary: 0,
+  alternate: 1,
+  version: 2,
+};
+
+function parseVersionNameOptions(
+  item: Record<string, unknown>,
+): BggNameOption[] {
+  const versionsNode = item.versions as
+    | { item?: Record<string, unknown> | Record<string, unknown>[] }
+    | undefined;
+  const versions = asArray(versionsNode?.item);
+  const results: BggNameOption[] = [];
+
+  for (const version of versions) {
+    const name = decodeBggText(attrValue(version.name));
+    if (!name) continue;
+
+    const links = asArray(
+      version.link as Record<string, string>[] | undefined,
+    );
+    const language =
+      links
+        .filter((l) => l.type === "language")
+        .map((l) => decodeBggText(l.value))
+        .find((v): v is string => v != null) ?? null;
+    const publisher =
+      links
+        .filter((l) => l.type === "boardgamepublisher")
+        .map((l) => decodeBggText(l.value))
+        .find((v): v is string => v != null) ?? null;
+
+    results.push({
+      name,
+      kind: "version",
+      language,
+      publisher,
+      year: toInt(attrValue(version.yearpublished)),
+    });
+  }
+
+  return results;
+}
+
+/** Liest Primary-, Alternate- und Versionsnamen aus einem Thing-XML-Item. */
+export function parseBggNameOptionsFromItem(
+  item: Record<string, unknown>,
+): BggNameOption[] {
+  const options: BggNameOption[] = [];
+
+  for (const entry of asArray(item.name as Record<string, string>[] | undefined)) {
+    const name = decodeBggText(entry.value);
+    if (!name) continue;
+
+    const type = entry.type ?? "primary";
+    if (type === "primary") {
+      options.push({
+        name,
+        kind: "primary",
+        language: null,
+        publisher: null,
+        year: null,
+      });
+    } else if (type === "alternate") {
+      options.push({
+        name,
+        kind: "alternate",
+        language: null,
+        publisher: null,
+        year: null,
+      });
+    }
+  }
+
+  options.push(...parseVersionNameOptions(item));
+  return dedupeAndSortBggNameOptions(options);
+}
+
+/** Parst Namensoptionen aus thing?id=…&versions=1-XML. */
+export function parseBggNameOptionsXml(xml: string): BggNameOption[] {
+  const parsed = xmlParser.parse(xml);
+  const items = asArray(parsed?.items?.item);
+  if (items.length === 0) return [];
+  return parseBggNameOptionsFromItem(items[0] as Record<string, unknown>);
+}
+
+export function dedupeAndSortBggNameOptions(
+  options: BggNameOption[],
+): BggNameOption[] {
+  const seen = new Set<string>();
+  const out: BggNameOption[] = [];
+
+  for (const opt of options) {
+    const key = [
+      opt.kind,
+      opt.name.toLowerCase(),
+      opt.language ?? "",
+      opt.publisher ?? "",
+      opt.year ?? "",
+    ].join("\0");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(opt);
+  }
+
+  out.sort((a, b) => {
+    const byKind = BGG_NAME_KIND_ORDER[a.kind] - BGG_NAME_KIND_ORDER[b.kind];
+    if (byKind !== 0) return byKind;
+
+    const aDe = a.language === "German" ? 0 : 1;
+    const bDe = b.language === "German" ? 0 : 1;
+    if (aDe !== bDe) return aDe - bDe;
+
+    return a.name.localeCompare(b.name, "de");
+  });
+
+  return out;
+}
+
+/**
+ * Lädt alle bekannten Anzeigenamen eines Spiels von BGG
+ * (Primary, Alternate, Versionen mit Sprache/Verlag).
+ */
+export async function fetchBggNameOptions(
+  id: number,
+  options?: BggFetchOptions,
+): Promise<BggNameOption[]> {
+  const url = `https://boardgamegeek.com/xmlapi2/thing?id=${id}&versions=1`;
+  const xml = await fetchBggXml(url, options);
+  return parseBggNameOptionsXml(xml);
+}
