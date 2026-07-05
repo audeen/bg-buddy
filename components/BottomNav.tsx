@@ -12,6 +12,7 @@ import {
 } from "react";
 import { navigateToErgebnisse } from "@/lib/scroll-ergebnisse";
 import { useScrollChromeHidden } from "@/lib/scroll-chrome";
+import { useVisualViewportBottom } from "@/lib/visual-viewport-gap";
 import { scrollBehavior } from "@/lib/scroll";
 import {
   BallotIcon,
@@ -153,6 +154,7 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
   }, [storedMeetupId, pathMeetupId]);
 
   const chromeHidden = useScrollChromeHidden();
+  useVisualViewportBottom();
   const meetupId =
     [pathMeetupId, storedMeetupId, fallbackMeetupId].find(
       (id): id is string => id != null && !invalidIds.has(id),

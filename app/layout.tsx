@@ -6,7 +6,6 @@ import "./globals.css";
 import { BottomNav } from "@/components/BottomNav";
 import { FooterBrand } from "@/components/FooterBrand";
 import { SwipeBackHandler } from "@/components/SwipeBackHandler";
-import { ViewportChromeSync } from "@/components/ViewportChromeSync";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -65,10 +64,7 @@ export default async function RootLayout({
           {children}
         </main>
         <footer id="site-footer" className="container-app pt-4 md:pt-6 pb-nav">
-          <div
-            id="site-footer-content"
-            className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-[var(--border)] pt-5 text-sm text-[var(--muted)]"
-          >
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-[var(--border)] pt-5 text-sm text-[var(--muted)]">
             <FooterBrand userName={user?.name ?? null} />
             <a
               href="https://boardgamegeek.com"
@@ -85,10 +81,8 @@ export default async function RootLayout({
               />
             </a>
           </div>
-          <div id="bottom-chrome-spacer" className="md:hidden" aria-hidden="true" />
         </footer>
         <BottomNav fallbackMeetupId={fallbackMeetup?.id ?? null} />
-        <ViewportChromeSync />
         <SwipeBackHandler />
         <Analytics />
       </body>
