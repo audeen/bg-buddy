@@ -1,11 +1,9 @@
 "use client";
 
-import { useBottomChromeHeight } from "@/lib/bottom-chrome-sync";
-import { useVisualViewportBottom } from "@/lib/visual-viewport-gap";
+import { useViewportChromeSync } from "@/lib/bottom-chrome-sync";
 
-/** Zentraler Mount für Viewport- und Bottom-Chrome-Sync (Nav-Höhe, sichtbare Unterkante). */
+/** Zentraler Mount für Viewport- und Bottom-Chrome-Sync (Nav-Höhe, sichtbare Unterkante, Footer-Guard). */
 export function ViewportChromeSync() {
-  useVisualViewportBottom();
-  useBottomChromeHeight();
+  useViewportChromeSync();
   return null;
 }

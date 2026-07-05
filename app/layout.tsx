@@ -65,7 +65,10 @@ export default async function RootLayout({
           {children}
         </main>
         <footer id="site-footer" className="container-app pt-4 md:pt-6 pb-nav">
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-[var(--border)] pt-5 text-sm text-[var(--muted)]">
+          <div
+            id="site-footer-content"
+            className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-[var(--border)] pt-5 text-sm text-[var(--muted)]"
+          >
             <FooterBrand userName={user?.name ?? null} />
             <a
               href="https://boardgamegeek.com"

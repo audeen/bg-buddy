@@ -14,6 +14,13 @@ function isNearPageEnd(): boolean {
   return scrollY + innerHeight >= scrollHeight - PAGE_END_THRESHOLD;
 }
 
+function isFooterInView(): boolean {
+  const footer = document.getElementById("site-footer-content");
+  if (!footer) return false;
+  const rect = footer.getBoundingClientRect();
+  return rect.top < window.innerHeight && rect.bottom > 0;
+}
+
 type Listener = (hidden: boolean) => void;
 
 class ScrollChromeStore {
@@ -47,7 +54,7 @@ class ScrollChromeStore {
       if (!this.mq?.matches) return;
 
       const y = window.scrollY;
-      if (y <= TOP_THRESHOLD || isNearPageEnd()) {
+      if (y <= TOP_THRESHOLD || isNearPageEnd() || isFooterInView()) {
         this.setHidden(false);
       } else {
         const delta = y - this.lastScrollY;
