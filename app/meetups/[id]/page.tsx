@@ -18,7 +18,6 @@ import { MeetupSpielsteuerungClient } from "@/components/MeetupSpielsteuerungCli
 import {
   AddRoundButton,
   RoundAdminBar,
-  RoundParticipationToggle,
 } from "@/components/RoundControls";
 import { PageHeader } from "@/components/PageHeader";
 import { roundOrderBy } from "@/lib/round-resolve";
@@ -52,6 +51,8 @@ import {
   coverByVoteGameIdForConfigs,
 } from "@/lib/expansion-ranking";
 import type { RankEntry } from "@/lib/types/ranking";
+import { PickedGamesStrip } from "@/components/PickedGamesStrip";
+import { resolveCoverSrc } from "@/lib/cover-image";
 
 export const dynamic = "force-dynamic";
 
@@ -182,16 +183,40 @@ export default async function MeetupDetail({
     [...participantMap.entries()].map(([userId, name]) => ({ userId, name })),
   );
 
+  const duelVoteCount = await prisma.vote.count({
+    where: { roundId: { in: roundIds }, mode: "DUEL" },
+  });
+  const duelsStarted = duelVoteCount > 0;
+  const isMeetupRegistered = user?.id
+    ? isUserRegistered(user.id, meetupPlayers)
+    : false;
+  const canLeaveMeetupNow = user?.id
+    ? canLeaveMeetup({
+        isHost,
+        isRegistered: isMeetupRegistered,
+        duelsStarted,
+      })
+    : false;
+
   return (
     <div className="container-app flex flex-col gap-6">
       <PageHeader id="meetup-page-top" eyebrow="Treffen" title={meetup.title}>
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm text-[var(--muted)]">
+          <p className="min-w-0 flex-1 text-sm text-[var(--muted)]">
             {formatSchedule(meetup.scheduledAt, meetup.durationMinutes)}
             {meetup.location ? ` · ${meetup.location}` : ""} · von{" "}
             {meetup.createdBy.name}
           </p>
           <div className="flex shrink-0 items-center gap-1">
+            {user && (
+              <JoinMeetupButton
+                meetupId={meetup.id}
+                isLoggedIn
+                isRegistered={isMeetupRegistered}
+                canLeave={canLeaveMeetupNow}
+                variant="icon"
+              />
+            )}
             <MeetupShareQr meetupId={meetup.id} title={meetup.title} />
             {canDeleteMeetup && (
               <MeetupActionsMenu meetupId={meetup.id} title={meetup.title} />
@@ -213,6 +238,7 @@ export default async function MeetupDetail({
           userId={user?.id ?? null}
           isHost={isHost}
           multiRound={multiRound}
+          meetupRegistered={isMeetupRegistered}
         />
       ))}
 
@@ -240,6 +266,7 @@ async function RoundCard({
   userId,
   isHost,
   multiRound,
+  meetupRegistered,
 }: {
   round: RoundWithRelations;
   index: number;
@@ -255,6 +282,7 @@ async function RoundCard({
   userId: string | null;
   isHost: boolean;
   multiRound: boolean;
+  meetupRegistered: boolean;
 }) {
   const roundId = round.id;
   const expected = round.expectedPlayerCount;
@@ -294,6 +322,24 @@ async function RoundCard({
   const pickCounts = buildPickCounts(groupPicks);
   const poolIds = frozen?.poolGameIds ?? poolGameIds(pickCounts);
   const pickPoolSize = poolIds.length;
+
+  const myPickStrip = userId
+    ? votes
+        .filter(
+          (v) =>
+            v.mode === "PICK" &&
+            v.playerCount === expected &&
+            v.userId === userId &&
+            v.points > 0,
+        )
+        .sort((a, b) => b.points - a.points)
+        .map((v) => ({
+          id: v.gameId,
+          name: v.game.name,
+          coverSrc: resolveCoverSrc(v.game),
+          points: v.points,
+        }))
+    : [];
 
   const duelRows = votes
     .filter((v) => v.mode === "DUEL" && v.playerCount === expected)
@@ -480,16 +526,6 @@ async function RoundCard({
     expected,
   );
 
-  const duelVoteCount = votes.filter((v) => v.mode === "DUEL").length;
-  const duelsStarted = duelVoteCount > 0;
-
-  const isRegistered = userId
-    ? isUserRegistered(userId, registeredPlayers)
-    : false;
-  const leaveAllowed = userId
-    ? canLeaveMeetup({ isHost, isRegistered, duelsStarted })
-    : false;
-
   const completedCounts = playerCounts.filter((pc) => {
     if (pc === expected && !duelRoundComplete) return false;
     const countPicks = votes.filter(
@@ -592,31 +628,20 @@ async function RoundCard({
         duelActive={pickPhase.picksLocked}
       />
 
-      {userId &&
-        (multiRound ? (
-          <RoundParticipationToggle
-            roundId={roundId}
-            isParticipant={isRegistered}
-            canLeave={leaveAllowed}
-          />
-        ) : (
-          <JoinMeetupButton
-            meetupId={meetupId}
-            isLoggedIn
-            isRegistered={isRegistered}
-            canLeave={leaveAllowed}
-          />
-        ))}
-
-      {multiRound && userId && !isRegistered ? (
+      {userId && !meetupRegistered ? (
         <p className="text-xs text-[var(--muted)] rounded-lg border border-[var(--border)] px-3 py-2">
-          Du nimmst an dieser Runde noch nicht teil. Tritt bei, um mitzustimmen.
+          Du nimmst am Treffen noch nicht teil. Tritt oben bei, um mitzustimmen.
         </p>
       ) : (
-        <MeetupVoteActions
-          meetupId={meetupId}
-          roundQuery={roundQuery}
-          readyForDuels={pickPhase.readyForDuels}
+        <>
+          <PickedGamesStrip
+            games={myPickStrip}
+            title={`Deine Picks für ${expected} Spieler ★`}
+          />
+          <MeetupVoteActions
+            meetupId={meetupId}
+            roundQuery={roundQuery}
+            readyForDuels={pickPhase.readyForDuels}
           picksLocked={pickPhase.picksLocked}
           duelComplete={duelRoundComplete}
           pickPoolSize={pickPoolSize}
@@ -627,7 +652,8 @@ async function RoundCard({
           hostForced={hostForced}
           hostForcedGameName={forcedGame?.name ?? null}
           hostChoiceMode={round.hostChoiceMode}
-        />
+          />
+        </>
       )}
 
       {duelRoundComplete && (

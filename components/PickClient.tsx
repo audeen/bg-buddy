@@ -39,6 +39,7 @@ import {
 } from "@/lib/game-filters";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 import { CheckIcon } from "@/components/icons";
+import { PickedGamesStrip } from "@/components/PickedGamesStrip";
 
 export type PickGame = GameDetailData & { lentOut?: boolean };
 
@@ -144,6 +145,21 @@ export function PickClient({
   const usedPoints = pointsForCount(points, selected);
   const budgetLeft = MAX_PICK_POINTS - usedPoints;
   const atLimit = budgetLeft <= 0;
+
+  const myPicks = useMemo(
+    () =>
+      games
+        .map((g) => ({ g, pts: points[pointsKey(g.id, selected)] ?? 0 }))
+        .filter((x) => x.pts > 0)
+        .sort((a, b) => b.pts - a.pts)
+        .map(({ g, pts }) => ({
+          id: g.id,
+          name: g.name,
+          coverSrc: resolveCoverSrc(g),
+          points: pts,
+        })),
+    [games, points, selected],
+  );
 
   const availableCounts = useMemo(() => {
     let maxP = 0;
@@ -416,6 +432,11 @@ export function PickClient({
           </div>
         )}
       </div>
+
+      <PickedGamesStrip
+        games={myPicks}
+        title={`Deine Picks für ${selected} Spieler${selected === expected ? " ★" : ""}`}
+      />
 
       <p
         className="text-sm text-[var(--muted)] leading-relaxed rounded-lg border border-[var(--border)] px-3 py-2"

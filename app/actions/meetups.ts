@@ -346,16 +346,14 @@ export async function joinMeetupAction(meetupId: string) {
     create: { meetupId: id, userId: user.id },
   });
 
-  // Bei genau einer Runde automatisch dieser Runde beitreten, damit sich das
-  // Standard-Treffen (eine Runde) wie bisher verhält.
-  if (meetup.rounds.length === 1) {
-    const roundId = meetup.rounds[0].id;
+  // Allen Runden beitreten — Mitspielen gilt treffenweit.
+  for (const round of meetup.rounds) {
     await prisma.meetupRoundParticipant.upsert({
-      where: { roundId_userId: { roundId, userId: user.id } },
+      where: { roundId_userId: { roundId: round.id, userId: user.id } },
       update: {},
-      create: { roundId, userId: user.id },
+      create: { roundId: round.id, userId: user.id },
     });
-    await syncExpectedPlayerCount(roundId, prisma, "up");
+    await syncExpectedPlayerCount(round.id, prisma, "up");
   }
 
   revalidatePath("/");

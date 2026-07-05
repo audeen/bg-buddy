@@ -310,7 +310,7 @@ export function RoundParticipationToggle({
   const [error, setError] = useState<string | null>(null);
 
   if (isParticipant && !canLeave) {
-    return <p className="text-xs text-[var(--muted)]">Du spielst mit</p>;
+    return null;
   }
 
   function handleClick() {
