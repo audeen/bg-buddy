@@ -6,6 +6,7 @@ import "./globals.css";
 import { BottomNav } from "@/components/BottomNav";
 import { FooterBrand } from "@/components/FooterBrand";
 import { SwipeBackHandler } from "@/components/SwipeBackHandler";
+import { ViewportChromeSync } from "@/components/ViewportChromeSync";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -55,7 +56,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <main
           id="app-main"
-          className="flex-1 w-full pb-nav"
+          className="flex-1 w-full"
           style={{
             paddingBlock:
               "calc(env(safe-area-inset-top, 0px) + var(--space-section)) var(--space-section)",
@@ -63,7 +64,7 @@ export default async function RootLayout({
         >
           {children}
         </main>
-        <footer className="container-app pt-4 md:pt-6 pb-nav">
+        <footer id="site-footer" className="container-app pt-4 md:pt-6 pb-nav">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-[var(--border)] pt-5 text-sm text-[var(--muted)]">
             <FooterBrand userName={user?.name ?? null} />
             <a
@@ -81,8 +82,10 @@ export default async function RootLayout({
               />
             </a>
           </div>
+          <div id="bottom-chrome-spacer" className="md:hidden" aria-hidden="true" />
         </footer>
         <BottomNav fallbackMeetupId={fallbackMeetup?.id ?? null} />
+        <ViewportChromeSync />
         <SwipeBackHandler />
         <Analytics />
       </body>

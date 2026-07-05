@@ -12,6 +12,35 @@ const CSS_VAR = "--vv-visible-bottom";
  */
 const KEYBOARD_THRESHOLD_PX = 140;
 
+/** Puffer gegen Toolbar-Flackern auf Mobile (Firefox iOS u. a.). */
+const MOBILE_VV_BUFFER_PX = 6;
+
+function isFirefoxIOS(): boolean {
+  return /FxiOS/i.test(navigator.userAgent);
+}
+
+function computeVisibleBottom(vv: VisualViewport): number {
+  const offsetTop = Math.max(vv.offsetTop, 0);
+  let visibleBottom = Math.round(offsetTop + vv.height);
+  const keyboardGap = window.innerHeight - visibleBottom;
+
+  if (keyboardGap > KEYBOARD_THRESHOLD_PX) {
+    return visibleBottom;
+  }
+
+  const clientHeight = document.documentElement.clientHeight;
+
+  if (isFirefoxIOS()) {
+    visibleBottom = clientHeight;
+  }
+
+  if (window.matchMedia("(max-width: 767px)").matches) {
+    visibleBottom = Math.min(clientHeight, visibleBottom + MOBILE_VV_BUFFER_PX);
+  }
+
+  return visibleBottom;
+}
+
 /**
  * Stellt als CSS-Variable `--vv-visible-bottom` bereit, wie weit (in px vom
  * oberen Layout-Viewport-Rand) der sichtbare Viewport unten endet.
@@ -32,10 +61,7 @@ export function useVisualViewportBottom() {
     let raf = 0;
     const update = () => {
       raf = 0;
-      // Beim Überscrollen am Seitenanfang (Gummiband/Pull-to-Refresh) wird
-      // offsetTop negativ — das darf die sichtbare Unterkante nicht verschieben.
-      const offsetTop = Math.max(vv.offsetTop, 0);
-      const visibleBottom = Math.round(offsetTop + vv.height);
+      const visibleBottom = computeVisibleBottom(vv);
       const keyboardGap = window.innerHeight - visibleBottom;
       const value =
         keyboardGap > KEYBOARD_THRESHOLD_PX ? window.innerHeight : visibleBottom;

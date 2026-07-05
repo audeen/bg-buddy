@@ -5,7 +5,14 @@ import { useEffect, useState } from "react";
 const MOBILE_MQ = "(max-width: 767px)";
 const SCROLL_DELTA = 10;
 const TOP_THRESHOLD = 16;
+const PAGE_END_THRESHOLD = 32;
 const HTML_CLASS = "scroll-chrome-hidden";
+
+function isNearPageEnd(): boolean {
+  const { scrollY, innerHeight } = window;
+  const { scrollHeight } = document.documentElement;
+  return scrollY + innerHeight >= scrollHeight - PAGE_END_THRESHOLD;
+}
 
 type Listener = (hidden: boolean) => void;
 
@@ -40,7 +47,7 @@ class ScrollChromeStore {
       if (!this.mq?.matches) return;
 
       const y = window.scrollY;
-      if (y <= TOP_THRESHOLD) {
+      if (y <= TOP_THRESHOLD || isNearPageEnd()) {
         this.setHidden(false);
       } else {
         const delta = y - this.lastScrollY;

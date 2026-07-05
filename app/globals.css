@@ -278,14 +278,33 @@ h3 {
   }
 
   .pb-nav {
-    padding-bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)
+    padding-bottom: var(
+      --bottom-chrome-height,
+      calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))
     );
     transition: padding-bottom 0.25s ease;
   }
 
-  html.scroll-chrome-hidden .pb-nav {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Mobile: In-Flow-Spacer reserviert Platz; Desktop: klassisches Footer-Padding. */
+  #site-footer.pb-nav {
+    padding-bottom: 0;
+  }
+
+  @media (min-width: 768px) {
+    #site-footer.pb-nav {
+      padding-bottom: var(
+        --bottom-chrome-height,
+        calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))
+      );
+    }
+  }
+
+  #bottom-chrome-spacer {
+    flex-shrink: 0;
+    height: var(
+      --bottom-chrome-height,
+      calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))
+    );
   }
 
   .tabs-scroll {
@@ -467,8 +486,9 @@ h3 {
   .sticky-above-nav {
     position: sticky;
     z-index: 15;
-    bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)
+    bottom: var(
+      --bottom-chrome-height,
+      calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))
     );
     transition: bottom 0.25s ease;
   }
@@ -1731,8 +1751,10 @@ h3 {
     bottom: auto;
     transform: translateY(
       calc(
-        -100% - var(--bottom-nav-height) - env(safe-area-inset-bottom, 0px) -
-          1rem
+        -100% - var(
+            --bottom-chrome-height,
+            calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))
+          ) - 1rem
       )
     );
     transition: transform 0.25s ease;
@@ -1741,8 +1763,10 @@ h3 {
   .scroll-to-top-above-footer {
     transform: translateY(
       calc(
-        -100% - var(--bottom-nav-height) - env(safe-area-inset-bottom, 0px) -
-          5rem
+        -100% - var(
+            --bottom-chrome-height,
+            calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))
+          ) - 5rem
       )
     );
   }
@@ -1770,7 +1794,10 @@ h3 {
     position: fixed;
     left: 0;
     top: env(safe-area-inset-top, 0px);
-    bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+    bottom: var(
+      --bottom-chrome-height,
+      calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))
+    );
     width: 3px;
     z-index: 5;
     pointer-events: none;
