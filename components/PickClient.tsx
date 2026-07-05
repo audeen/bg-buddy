@@ -234,6 +234,7 @@ export function PickClient({
 
   const expectedLocked =
     hostForced || (picksLocked && selected === expected);
+  const showLockedBanner = picksLocked && selected === expected;
 
   function renderGameCard(g: PickGame, options?: { hostRecommendation?: boolean }) {
     const key = pointsKey(g.id, selected);
@@ -331,8 +332,8 @@ export function PickClient({
   }
 
   const phaseBanner = (() => {
-    if (picksLocked && selected === expected) {
-      return `★-Stimmen gesperrt — Duelle laufen. Andere Spielerzahlen weiter bearbeitbar.`;
+    if (showLockedBanner) {
+      return null;
     }
     if (picksLocked && selected !== expected) {
       return `Vorbereitung für ${selected} Spieler — Duelle laufen nur bei ★ (${expected}).`;
@@ -439,12 +440,27 @@ export function PickClient({
       </div>
 
       <p
-        className="text-sm text-[var(--muted)] leading-relaxed rounded-lg border border-[var(--border)] px-3 py-2"
+        className={
+          showLockedBanner
+            ? "text-sm leading-relaxed rounded-lg border border-[var(--warning)]/45 bg-[color-mix(in_srgb,var(--warning)_12%,var(--surface))] px-3 py-2.5 text-[var(--foreground)]"
+            : "text-sm text-[var(--muted)] leading-relaxed rounded-lg border border-[var(--border)] px-3 py-2"
+        }
         role="status"
       >
-        {hostChoiceMode === "RESTRICT" && hostChoiceIdSet.size > 0
-          ? "Nur Host-Vorauswahl — wähle aus den vom Host vorgeschlagenen Spielen."
-          : phaseBanner}
+        {showLockedBanner ? (
+          <>
+            <span className="font-semibold">
+              ★-Stimmen gesperrt — Duelle laufen.
+            </span>{" "}
+            Für {expected} Spieler kannst du nichts mehr ändern. Wechsle oben
+            die Spieleranzahl, um Vorbereitungen für andere Gruppengrößen zu
+            bearbeiten.
+          </>
+        ) : hostChoiceMode === "RESTRICT" && hostChoiceIdSet.size > 0 ? (
+          "Nur Host-Vorauswahl — wähle aus den vom Host vorgeschlagenen Spielen."
+        ) : (
+          phaseBanner
+        )}
       </p>
 
       <Suspense

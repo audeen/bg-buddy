@@ -98,12 +98,6 @@ export function MeetupVoteActions({
           </Link>
         )}
       </div>
-      {picksLocked && (
-        <p className="text-xs text-[var(--muted)]">
-          ★-Stimmen gesperrt — Duelle laufen. Andere Spielerzahlen weiter über
-          Stimmen vergeben bearbeitbar.
-        </p>
-      )}
       {!readyForDuels && !picksLocked && poolSize >= 2 && (
         <p className="text-xs text-[var(--muted)]">
           Duell-Modus ab {expectedPlayerCount} Spielern mit {MAX_PICK_POINTS}/
