@@ -8,7 +8,7 @@ export function MeetupParticipants({
   players,
   compact = false,
   pickPointsAtExpected,
-  meetupId,
+  roundId,
   kickEnabled = false,
   duelActive = false,
 }: {
@@ -16,7 +16,7 @@ export function MeetupParticipants({
   players: RegisteredPlayer[];
   compact?: boolean;
   pickPointsAtExpected?: PickPointsAtExpected;
-  meetupId?: string;
+  roundId?: string;
   kickEnabled?: boolean;
   duelActive?: boolean;
 }) {
@@ -68,7 +68,7 @@ export function MeetupParticipants({
           {players.map((p) => {
             const showKick =
               kickEnabled &&
-              meetupId != null &&
+              roundId != null &&
               canKickParticipant({ isHost: true, targetIsHost: p.isHost });
 
             if (showPickChips) {
@@ -81,7 +81,7 @@ export function MeetupParticipants({
                   />
                   {showKick && (
                     <KickParticipantButton
-                      meetupId={meetupId}
+                      roundId={roundId}
                       userId={p.userId}
                       name={p.name}
                       duelActive={duelActive}
@@ -99,7 +99,7 @@ export function MeetupParticipants({
                 </span>
                 {showKick && (
                   <KickParticipantButton
-                    meetupId={meetupId}
+                    roundId={roundId}
                     userId={p.userId}
                     name={p.name}
                     duelActive={duelActive}

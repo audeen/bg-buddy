@@ -6,12 +6,10 @@ export {
   updateExpectedCountAction,
   joinMeetupAction,
   leaveMeetupAction,
-  kickParticipantAction,
+  kickFromRoundAction,
   addRoundAction,
   updateRoundAction,
   deleteRoundAction,
-  joinRoundAction,
-  leaveRoundAction,
 } from "@/app/actions/meetups";
 export {
   setPickPointsAction,

@@ -1,12 +1,12 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { DuellClient } from "@/components/DuellClient";
 import { DuellGateCard } from "@/components/DuellGateCard";
 import { DuellSessionGuard } from "@/components/DuellSessionGuard";
 import { RoundSwitcher } from "@/components/RoundSwitcher";
-import { RoundParticipationToggle } from "@/components/RoundControls";
-import { isRoundParticipant, resolveRound } from "@/lib/round-resolve";
+import { isMeetupRegistered, resolveRound } from "@/lib/round-resolve";
 import { PageHeader } from "@/components/PageHeader";
 import { buildPickCounts, poolGameIds } from "@/lib/pick-pool";
 import {
@@ -62,28 +62,27 @@ export default async function DuellPage({
   const isHost = user.id === meetup.createdBy.id;
   const expected = round.expectedPlayerCount;
 
-  // Nicht-Teilnehmer sehen bei mehreren Runden Hinweis + Mitspielen-Button
-  // statt der Duell-UI.
-  if (multiRound && !(await isRoundParticipant(activeRoundId, user.id))) {
+  // Nicht am Treffen angemeldet: Hinweis statt Duell-UI.
+  if (!(await isMeetupRegistered(id, user.id))) {
     return (
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Duell-Modus" />
-        <RoundSwitcher
-          meetupId={id}
-          segment="duell"
-          rounds={rounds}
-          activeRoundId={activeRoundId}
-        />
+        {multiRound && (
+          <RoundSwitcher
+            meetupId={id}
+            segment="duell"
+            rounds={rounds}
+            activeRoundId={activeRoundId}
+          />
+        )}
         <div className="card card-pad flex flex-col gap-3">
           <p className="text-sm text-[var(--muted)]">
-            Du nimmst an dieser Spielrunde noch nicht teil. Tritt bei, um
-            mitzustimmen.
+            Du nimmst am Treffen noch nicht teil. Tritt oben beim Treffen bei,
+            um mitzustimmen.
           </p>
-          <RoundParticipationToggle
-            roundId={activeRoundId}
-            isParticipant={false}
-            canLeave={false}
-          />
+          <Link href={`/meetups/${id}`} className="btn btn-primary w-fit">
+            Zum Treffen
+          </Link>
         </div>
       </div>
     );

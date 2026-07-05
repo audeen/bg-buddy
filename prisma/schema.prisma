@@ -16,7 +16,6 @@ model User {
   votes                Vote[]
   meetupRegistrations  MeetupRegistration[]
   guestGamesAdded      MeetupGuestGame[]
-  roundParticipations  MeetupRoundParticipant[]
 }
 
 model Game {
@@ -126,24 +125,10 @@ model MeetupRound {
   createdAt                  DateTime  @default(now())
 
   votes                Vote[]
-  participants         MeetupRoundParticipant[]
   hostChoiceGames      MeetupHostChoiceGame[]
   mandatoryExpansions  MeetupMandatoryExpansion[]
 
   @@index([meetupId])
-}
-
-/// Explizites Opt-in eines Nutzers fuer eine einzelne Spielrunde.
-model MeetupRoundParticipant {
-  id        String      @id @default(cuid())
-  roundId   String
-  round     MeetupRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime    @default(now())
-
-  @@unique([roundId, userId])
-  @@index([roundId])
 }
 
 model MeetupMandatoryExpansion {

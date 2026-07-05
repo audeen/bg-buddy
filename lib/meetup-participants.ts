@@ -12,11 +12,8 @@ export type PickPointsAtExpected = Map<string, number>;
 export function buildRegisteredPlayers(
   host: { id: string; name: string },
   pickVoters: { userId: string; name: string }[],
-  manualRegistrations: { userId: string; name: string }[],
 ): RegisteredPlayer[] {
   const byId = new Map<string, RegisteredPlayer>();
-
-  byId.set(host.id, { userId: host.id, name: host.name, isHost: true });
 
   for (const v of pickVoters) {
     if (!byId.has(v.userId)) {
@@ -24,16 +21,6 @@ export function buildRegisteredPlayers(
         userId: v.userId,
         name: v.name,
         isHost: v.userId === host.id,
-      });
-    }
-  }
-
-  for (const r of manualRegistrations) {
-    if (!byId.has(r.userId)) {
-      byId.set(r.userId, {
-        userId: r.userId,
-        name: r.name,
-        isHost: r.userId === host.id,
       });
     }
   }
@@ -75,27 +62,22 @@ export function canKickParticipant({
   return isHost && !targetIsHost;
 }
 
-/** Entfernt einen Nutzer aus einer einzelnen Runde (Opt-in + Picks dieser Runde). */
+/** Entfernt einen Nutzer aus einer einzelnen Runde (Pick-Stimmen dieser Runde). */
 export async function removeUserFromRound(
   roundId: string,
   userId: string,
   db: PrismaClient,
 ): Promise<void> {
-  await db.$transaction([
-    db.meetupRoundParticipant.deleteMany({
-      where: { roundId, userId },
-    }),
-    db.vote.deleteMany({
-      where: { roundId, userId, mode: "PICK" },
-    }),
-  ]);
+  await db.vote.deleteMany({
+    where: { roundId, userId, mode: "PICK" },
+  });
   await syncExpectedPlayerCount(roundId, db, "down");
 }
 
 /**
- * Entfernt einen Nutzer komplett aus einem Treffen: Meetup-Anmeldung, alle
- * Runden-Opt-ins und alle Pick-Stimmen in allen Runden. Erwartete Spielerzahl
- * jeder Runde wird anschliessend nachgezogen.
+ * Entfernt einen Nutzer komplett aus einem Treffen: Meetup-Anmeldung und alle
+ * Pick-Stimmen in allen Runden. Erwartete Spielerzahl jeder Runde wird
+ * anschliessend nachgezogen.
  */
 export async function removeUserFromMeetup(
   meetupId: string,
@@ -110,9 +92,6 @@ export async function removeUserFromMeetup(
 
   await db.$transaction([
     db.meetupRegistration.deleteMany({ where: { meetupId, userId } }),
-    db.meetupRoundParticipant.deleteMany({
-      where: { roundId: { in: roundIds }, userId },
-    }),
     db.vote.deleteMany({
       where: { roundId: { in: roundIds }, userId, mode: "PICK" },
     }),
@@ -161,9 +140,6 @@ export async function loadRoundParticipantData(
       meetup: {
         include: { createdBy: { select: { id: true, name: true } } },
       },
-      participants: {
-        include: { user: { select: { id: true, name: true } } },
-      },
     },
   });
   if (!round) return null;
@@ -179,16 +155,7 @@ export async function loadRoundParticipantData(
     name: v.user.name,
   }));
 
-  const roundParticipants = round.participants.map((p) => ({
-    userId: p.userId,
-    name: p.user.name,
-  }));
-
-  const players = buildRegisteredPlayers(
-    round.meetup.createdBy,
-    pickVoters,
-    roundParticipants,
-  );
+  const players = buildRegisteredPlayers(round.meetup.createdBy, pickVoters);
 
   const duelVoteCount = await db.vote.count({
     where: { roundId, mode: "DUEL" },

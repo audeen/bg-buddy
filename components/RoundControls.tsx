@@ -9,8 +9,6 @@ import {
   addRoundAction,
   updateRoundAction,
   deleteRoundAction,
-  joinRoundAction,
-  leaveRoundAction,
 } from "@/app/actions";
 
 type RoundFormValues = {
@@ -291,63 +289,6 @@ export function RoundAdminBar({
             })
           }
         />
-      )}
-    </div>
-  );
-}
-
-export function RoundParticipationToggle({
-  roundId,
-  isParticipant,
-  canLeave,
-}: {
-  roundId: string;
-  isParticipant: boolean;
-  canLeave: boolean;
-}) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-
-  if (isParticipant && !canLeave) {
-    return null;
-  }
-
-  function handleClick() {
-    setError(null);
-    startTransition(async () => {
-      const res = isParticipant
-        ? await leaveRoundAction(roundId)
-        : await joinRoundAction(roundId);
-      if (res && "error" in res && res.error) {
-        setError(res.error);
-        return;
-      }
-      router.refresh();
-    });
-  }
-
-  return (
-    <div className="flex flex-col items-end gap-1">
-      <button
-        type="button"
-        className={`btn ${isParticipant ? "btn-ghost" : "btn-primary"} btn-sm`}
-        onClick={handleClick}
-        disabled={pending}
-        aria-busy={pending}
-      >
-        {pending
-          ? isParticipant
-            ? "Melde ab…"
-            : "Trete bei…"
-          : isParticipant
-            ? "Nicht mehr mitspielen"
-            : "Ich spiele mit"}
-      </button>
-      {error && (
-        <p className="text-xs text-[var(--danger)]" role="alert">
-          {error}
-        </p>
       )}
     </div>
   );

@@ -1,11 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import Link from "next/link";
 import { PickClient } from "@/components/PickClient";
 import { PageHeader } from "@/components/PageHeader";
 import { RoundSwitcher } from "@/components/RoundSwitcher";
-import { RoundParticipationToggle } from "@/components/RoundControls";
-import { isRoundParticipant, resolveRound } from "@/lib/round-resolve";
+import { isMeetupRegistered, resolveRound } from "@/lib/round-resolve";
 import { loadPickPhaseSummary } from "@/lib/pick-phase";
 import { loadOwnedExpansionsByBaseGame, serializeExpansionsByBaseId } from "@/lib/owned-expansions";
 import { pickGamesWhereForMeetup } from "@/lib/meetup-guest-games";
@@ -59,12 +59,9 @@ export default async function PickPage({
   const hostChoiceGameIds = round.hostChoiceGames.map((g) => g.gameId);
   const hostForced = round.hostForcedGameId != null;
 
-  // Nicht-Teilnehmer sehen bei mehreren Runden einen Hinweis mit
-  // Mitspielen-Button statt der Vote-UI (kein versehentliches Opt-in).
-  const participant = multiRound
-    ? await isRoundParticipant(activeRoundId, user.id)
-    : true;
-  if (!participant) {
+  // Nicht am Treffen angemeldet: Hinweis statt Vote-UI.
+  const meetupRegistered = await isMeetupRegistered(id, user.id);
+  if (!meetupRegistered) {
     return (
       <div className="container-app flex flex-col gap-6">
         <PageHeader
@@ -72,22 +69,22 @@ export default async function PickPage({
           eyebrow={meetup.title}
           title="Stimmen vergeben"
         />
-        <RoundSwitcher
-          meetupId={id}
-          segment="pick"
-          rounds={rounds}
-          activeRoundId={activeRoundId}
-        />
+        {multiRound && (
+          <RoundSwitcher
+            meetupId={id}
+            segment="pick"
+            rounds={rounds}
+            activeRoundId={activeRoundId}
+          />
+        )}
         <div className="card card-pad flex flex-col gap-3">
           <p className="text-sm text-[var(--muted)]">
-            Du nimmst an dieser Spielrunde noch nicht teil. Tritt bei, um
-            mitzustimmen.
+            Du nimmst am Treffen noch nicht teil. Tritt oben beim Treffen bei,
+            um mitzustimmen.
           </p>
-          <RoundParticipationToggle
-            roundId={activeRoundId}
-            isParticipant={false}
-            canLeave={false}
-          />
+          <Link href={`/meetups/${id}`} className="btn btn-primary w-fit">
+            Zum Treffen
+          </Link>
         </div>
       </div>
     );

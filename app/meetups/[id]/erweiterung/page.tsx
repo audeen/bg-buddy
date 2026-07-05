@@ -1,11 +1,11 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { ExpansionDuellClient } from "@/components/ExpansionDuellClient";
 import { DuellGateCard } from "@/components/DuellGateCard";
 import { RoundSwitcher } from "@/components/RoundSwitcher";
-import { RoundParticipationToggle } from "@/components/RoundControls";
-import { isRoundParticipant, resolveRound } from "@/lib/round-resolve";
+import { isMeetupRegistered, resolveRound } from "@/lib/round-resolve";
 import { PageHeader } from "@/components/PageHeader";
 import {
   buildExpansionDuelPairs,
@@ -54,28 +54,27 @@ export default async function ErweiterungPage({
     redirect(`/meetups/${id}${roundQuery}`);
   }
 
-  // Nicht-Teilnehmer sehen bei mehreren Runden Hinweis + Mitspielen-Button
-  // statt der Erweiterungs-UI.
-  if (multiRound && !(await isRoundParticipant(activeRoundId, user.id))) {
+  // Nicht am Treffen angemeldet: Hinweis statt Erweiterungs-UI.
+  if (!(await isMeetupRegistered(id, user.id))) {
     return (
       <div className="container-app flex flex-col gap-4">
         <PageHeader eyebrow={meetup.title} title="Erweiterungs-Duell" />
-        <RoundSwitcher
-          meetupId={id}
-          segment="erweiterung"
-          rounds={rounds}
-          activeRoundId={activeRoundId}
-        />
+        {multiRound && (
+          <RoundSwitcher
+            meetupId={id}
+            segment="erweiterung"
+            rounds={rounds}
+            activeRoundId={activeRoundId}
+          />
+        )}
         <div className="card card-pad flex flex-col gap-3">
           <p className="text-sm text-[var(--muted)]">
-            Du nimmst an dieser Spielrunde noch nicht teil. Tritt bei, um
-            mitzustimmen.
+            Du nimmst am Treffen noch nicht teil. Tritt oben beim Treffen bei,
+            um mitzustimmen.
           </p>
-          <RoundParticipationToggle
-            roundId={activeRoundId}
-            isParticipant={false}
-            canLeave={false}
-          />
+          <Link href={`/meetups/${id}`} className="btn btn-primary w-fit">
+            Zum Treffen
+          </Link>
         </div>
       </div>
     );

@@ -9,10 +9,8 @@ import { getPickPhaseState } from "@/lib/pick-phase";
 import { isMeetupPast } from "@/lib/meetup-time";
 import {
   cancelActiveDuel,
-  loadRoundParticipantData,
   removeUserFromMeetup,
   removeUserFromRound,
-  syncExpectedPlayerCount,
 } from "@/lib/meetup-participants";
 import { revalidateMeetupPaths } from "@/app/actions/shared";
 
@@ -68,6 +66,9 @@ export async function createMeetupAction(formData: FormData) {
       durationMinutes,
       location,
       createdById: user.id,
+      registrations: {
+        create: { userId: user.id },
+      },
       rounds: {
         create: {
           sortOrder: 0,
@@ -268,62 +269,6 @@ export async function updateExpectedCountAction(
   return { ok: true };
 }
 
-/** Tritt einer einzelnen Spielrunde bei (Opt-in). */
-export async function joinRoundAction(roundId: string) {
-  const user = await getCurrentUser();
-  if (!user) return { error: "Bitte zuerst anmelden." };
-
-  const round = await prisma.meetupRound.findUnique({
-    where: { id: roundId },
-    select: { id: true, meetupId: true },
-  });
-  if (!round) return { error: "Spielrunde nicht gefunden." };
-
-  await prisma.$transaction([
-    prisma.meetupRegistration.upsert({
-      where: { meetupId_userId: { meetupId: round.meetupId, userId: user.id } },
-      update: {},
-      create: { meetupId: round.meetupId, userId: user.id },
-    }),
-    prisma.meetupRoundParticipant.upsert({
-      where: { roundId_userId: { roundId, userId: user.id } },
-      update: {},
-      create: { roundId, userId: user.id },
-    }),
-  ]);
-
-  await syncExpectedPlayerCount(roundId, prisma, "up");
-
-  revalidatePath("/");
-  revalidateMeetupPaths(round.meetupId);
-  return { ok: true };
-}
-
-/** Verlässt eine einzelne Spielrunde. */
-export async function leaveRoundAction(roundId: string) {
-  const user = await getCurrentUser();
-  if (!user) return { error: "Bitte zuerst anmelden." };
-
-  const data = await loadRoundParticipantData(roundId, prisma);
-  if (!data) return { error: "Spielrunde nicht gefunden." };
-
-  if (data.meetup.createdBy.id === user.id) {
-    return { error: "Der Host kann sich nicht abmelden." };
-  }
-  if (data.duelsStarted) {
-    return { error: "Abmelden nicht mehr möglich — Duelle laufen bereits." };
-  }
-  if (!data.players.some((p) => p.userId === user.id)) {
-    return { error: "Du nimmst an dieser Runde nicht teil." };
-  }
-
-  await removeUserFromRound(roundId, user.id, prisma);
-
-  revalidatePath("/");
-  revalidateMeetupPaths(data.meetup.id);
-  return { ok: true };
-}
-
 export async function joinMeetupAction(meetupId: string) {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
@@ -333,10 +278,7 @@ export async function joinMeetupAction(meetupId: string) {
 
   const meetup = await prisma.meetup.findUnique({
     where: { id },
-    select: {
-      id: true,
-      rounds: { select: { id: true }, orderBy: { sortOrder: "asc" } },
-    },
+    select: { id: true },
   });
   if (!meetup) return { error: "Treffen nicht gefunden." };
 
@@ -345,16 +287,6 @@ export async function joinMeetupAction(meetupId: string) {
     update: {},
     create: { meetupId: id, userId: user.id },
   });
-
-  // Allen Runden beitreten — Mitspielen gilt treffenweit.
-  for (const round of meetup.rounds) {
-    await prisma.meetupRoundParticipant.upsert({
-      where: { roundId_userId: { roundId: round.id, userId: user.id } },
-      update: {},
-      create: { roundId: round.id, userId: user.id },
-    });
-    await syncExpectedPlayerCount(round.id, prisma, "up");
-  }
 
   revalidatePath("/");
   revalidateMeetupPaths(id);
@@ -396,56 +328,47 @@ export async function leaveMeetupAction(meetupId: string) {
   return { ok: true };
 }
 
-export async function kickParticipantAction(
-  meetupId: string,
+export async function kickFromRoundAction(
+  roundId: string,
   targetUserId: string,
 ) {
   const user = await getCurrentUser();
   if (!user) return { error: "Bitte zuerst anmelden." };
 
-  const id = meetupId.trim();
   const targetId = targetUserId.trim();
-  if (!id || !targetId) return { error: "Ungültiges Treffen." };
+  if (!roundId.trim() || !targetId) return { error: "Ungültige Spielrunde." };
 
-  const meetup = await prisma.meetup.findUnique({
-    where: { id },
+  const round = await prisma.meetupRound.findUnique({
+    where: { id: roundId },
     select: {
-      createdById: true,
-      rounds: { select: { id: true, expectedPlayerCount: true } },
+      meetupId: true,
+      expectedPlayerCount: true,
+      meetup: { select: { createdById: true } },
     },
   });
-  if (!meetup) return { error: "Treffen nicht gefunden." };
+  if (!round) return { error: "Spielrunde nicht gefunden." };
 
-  if (meetup.createdById !== user.id) {
+  if (round.meetup.createdById !== user.id) {
     return { error: "Nur der Host kann Teilnehmer entfernen." };
   }
-  if (targetId === meetup.createdById) {
+  if (targetId === round.meetup.createdById) {
     return { error: "Der Host kann nicht entfernt werden." };
   }
 
-  // Duell-Status pro Runde vor dem Entfernen festhalten.
-  const lockedRounds: { id: string; expectedPlayerCount: number }[] = [];
-  for (const round of meetup.rounds) {
-    const phase = await getPickPhaseState(
-      round.id,
-      round.expectedPlayerCount,
-      prisma,
-    );
-    if (phase.picksLocked) {
-      lockedRounds.push({
-        id: round.id,
-        expectedPlayerCount: round.expectedPlayerCount,
-      });
-    }
-  }
+  const phase = await getPickPhaseState(
+    roundId,
+    round.expectedPlayerCount,
+    prisma,
+  );
+  const duelWasLocked = phase.picksLocked;
 
-  await removeUserFromMeetup(id, targetId, prisma);
+  await removeUserFromRound(roundId, targetId, prisma);
 
-  for (const round of lockedRounds) {
-    await cancelActiveDuel(round.id, round.expectedPlayerCount, prisma);
+  if (duelWasLocked) {
+    await cancelActiveDuel(roundId, round.expectedPlayerCount, prisma);
   }
 
   revalidatePath("/");
-  revalidateMeetupPaths(id);
+  revalidateMeetupPaths(round.meetupId);
   return { ok: true };
 }

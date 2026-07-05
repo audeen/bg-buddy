@@ -20,7 +20,7 @@ import {
   RoundAdminBar,
 } from "@/components/RoundControls";
 import { PageHeader } from "@/components/PageHeader";
-import { roundOrderBy } from "@/lib/round-resolve";
+import { roundOrderBy, isMeetupRegistered } from "@/lib/round-resolve";
 import { meetupEndsAt } from "@/lib/meetup-time";
 import {
   buildCombinedByCount,
@@ -37,7 +37,6 @@ import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 import {
   buildRegisteredPlayers,
   canLeaveMeetup,
-  isUserRegistered,
   sumPickPointsAtExpected,
 } from "@/lib/meetup-participants";
 import { loadExpansionPhaseState } from "@/lib/expansion-phase";
@@ -121,9 +120,6 @@ const roundInclude = {
   mandatoryExpansions: {
     select: { baseGameId: true, expansionGameId: true },
   },
-  participants: {
-    include: { user: { select: { id: true, name: true } } },
-  },
 };
 
 export default async function MeetupDetail({
@@ -173,27 +169,22 @@ export default async function MeetupDetail({
   });
   const pickVoterMap = new Map<string, string>();
   for (const v of allPickVotes) pickVoterMap.set(v.userId, v.user.name);
-  const participantMap = new Map<string, string>();
-  for (const round of meetup.rounds) {
-    for (const p of round.participants) participantMap.set(p.userId, p.user.name);
-  }
   const meetupPlayers = buildRegisteredPlayers(
     meetup.createdBy,
     [...pickVoterMap.entries()].map(([userId, name]) => ({ userId, name })),
-    [...participantMap.entries()].map(([userId, name]) => ({ userId, name })),
   );
 
   const duelVoteCount = await prisma.vote.count({
     where: { roundId: { in: roundIds }, mode: "DUEL" },
   });
   const duelsStarted = duelVoteCount > 0;
-  const isMeetupRegistered = user?.id
-    ? isUserRegistered(user.id, meetupPlayers)
+  const userIsMeetupRegistered = user?.id
+    ? await isMeetupRegistered(id, user.id)
     : false;
   const canLeaveMeetupNow = user?.id
     ? canLeaveMeetup({
         isHost,
-        isRegistered: isMeetupRegistered,
+        isRegistered: userIsMeetupRegistered,
         duelsStarted,
       })
     : false;
@@ -212,7 +203,7 @@ export default async function MeetupDetail({
               <JoinMeetupButton
                 meetupId={meetup.id}
                 isLoggedIn
-                isRegistered={isMeetupRegistered}
+                isRegistered={userIsMeetupRegistered}
                 canLeave={canLeaveMeetupNow}
                 variant="icon"
               />
@@ -238,7 +229,7 @@ export default async function MeetupDetail({
           userId={user?.id ?? null}
           isHost={isHost}
           multiRound={multiRound}
-          meetupRegistered={isMeetupRegistered}
+          meetupRegistered={userIsMeetupRegistered}
         />
       ))}
 
@@ -504,15 +495,9 @@ async function RoundCard({
       [] as { userId: string; name: string }[],
     );
 
-  const roundParticipants = round.participants.map((p) => ({
-    userId: p.userId,
-    name: p.user.name,
-  }));
-
   const registeredPlayers = buildRegisteredPlayers(
     meetupCreatedBy,
     pickVoters,
-    roundParticipants,
   );
 
   const pickPointsAtExpected = sumPickPointsAtExpected(
@@ -623,7 +608,7 @@ async function RoundCard({
         expected={expected}
         players={registeredPlayers}
         pickPointsAtExpected={pickPointsAtExpected}
-        meetupId={meetupId}
+        roundId={roundId}
         kickEnabled={isHost}
         duelActive={pickPhase.picksLocked}
       />

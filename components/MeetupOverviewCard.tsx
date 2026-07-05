@@ -2,7 +2,7 @@ import Link from "next/link";
 import { MeetupParticipants } from "@/components/MeetupParticipants";
 import { JoinMeetupButton } from "@/components/JoinMeetupButton";
 import type { RegisteredPlayer } from "@/lib/meetup-participants";
-import { canLeaveMeetup, isUserRegistered } from "@/lib/meetup-participants";
+import { canLeaveMeetup } from "@/lib/meetup-participants";
 import { meetupEndsAt } from "@/lib/meetup-time";
 
 function formatTime(d: Date): string {
@@ -41,7 +41,8 @@ export function MeetupOverviewCard({
   roundCount = 1,
   players,
   duelsStarted,
-  currentUserId,
+  isRegistered,
+  isHost,
   isLoggedIn,
 }: {
   meetupId: string;
@@ -55,16 +56,13 @@ export function MeetupOverviewCard({
   roundCount?: number;
   players: RegisteredPlayer[];
   duelsStarted: boolean;
-  currentUserId?: string;
+  isRegistered: boolean;
+  isHost: boolean;
   isLoggedIn: boolean;
 }) {
-  const isHost = currentUserId != null && players.some(
-    (p) => p.userId === currentUserId && p.isHost,
-  );
-  const registered = isUserRegistered(currentUserId ?? "", players);
   const leaveAllowed = canLeaveMeetup({
     isHost,
-    isRegistered: registered,
+    isRegistered,
     duelsStarted,
   });
 
@@ -106,7 +104,7 @@ export function MeetupOverviewCard({
           <JoinMeetupButton
             meetupId={meetupId}
             isLoggedIn={isLoggedIn}
-            isRegistered={registered}
+            isRegistered={isRegistered}
             canLeave={leaveAllowed}
           />
         </div>

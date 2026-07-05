@@ -38,32 +38,22 @@ export async function resolveRound(
   };
 }
 
-/**
- * Teilnehmer einer Runde = Host + explizite Opt-ins + implizit wer in der
- * Runde bereits Pick-Punkte vergeben hat.
- */
-export async function isRoundParticipant(
-  roundId: string,
+export async function isMeetupRegistered(
+  meetupId: string,
   userId: string,
 ): Promise<boolean> {
-  const round = await prisma.meetupRound.findUnique({
-    where: { id: roundId },
+  const meetup = await prisma.meetup.findUnique({
+    where: { id: meetupId },
     select: {
-      meetup: { select: { createdById: true } },
-      participants: {
+      createdById: true,
+      registrations: {
         where: { userId },
         select: { id: true },
         take: 1,
       },
     },
   });
-  if (!round) return false;
-  if (round.meetup.createdById === userId) return true;
-  if (round.participants.length > 0) return true;
-
-  const pick = await prisma.vote.findFirst({
-    where: { roundId, userId, mode: "PICK" },
-    select: { id: true },
-  });
-  return pick != null;
+  if (!meetup) return false;
+  if (meetup.createdById === userId) return true;
+  return meetup.registrations.length > 0;
 }

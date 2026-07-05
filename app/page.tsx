@@ -204,15 +204,12 @@ export default async function Home() {
 
   function renderMeetupCard(m: HomeMeetup) {
     const pickVoters = pickVotersByMeetup.get(m.id) ?? [];
-    const manualRegistrations = m.registrations.map((r) => ({
-      userId: r.userId,
-      name: r.user.name,
-    }));
-    const players = buildRegisteredPlayers(
-      m.createdBy,
-      pickVoters,
-      manualRegistrations,
-    );
+    const players = buildRegisteredPlayers(m.createdBy, pickVoters);
+    const isHost = user?.id === m.createdBy.id;
+    const isRegistered =
+      isHost ||
+      (user?.id != null &&
+        m.registrations.some((r) => r.userId === user.id));
 
     return (
       <MeetupOverviewCard
@@ -227,7 +224,8 @@ export default async function Home() {
         roundCount={m.rounds.length}
         players={players}
         duelsStarted={duelsStartedByMeetup.get(m.id) ?? false}
-        currentUserId={user?.id}
+        isRegistered={isRegistered}
+        isHost={isHost}
         isLoggedIn={!!user}
       />
     );

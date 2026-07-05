@@ -2,15 +2,15 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { kickParticipantAction } from "@/app/actions";
+import { kickFromRoundAction } from "@/app/actions";
 
 export function KickParticipantButton({
-  meetupId,
+  roundId,
   userId,
   name,
   duelActive = false,
 }: {
-  meetupId: string;
+  roundId: string;
   userId: string;
   name: string;
   duelActive?: boolean;
@@ -20,7 +20,7 @@ export function KickParticipantButton({
   const [error, setError] = useState<string | null>(null);
 
   function handleClick() {
-    const lines = [`„${name}" wirklich aus dem Treffen entfernen?`];
+    const lines = [`„${name}" wirklich aus dieser Runde entfernen?`];
     if (duelActive) {
       lines.push("", "Das laufende Duell wird abgebrochen.");
     }
@@ -28,7 +28,7 @@ export function KickParticipantButton({
 
     setError(null);
     startTransition(async () => {
-      const res = await kickParticipantAction(meetupId, userId);
+      const res = await kickFromRoundAction(roundId, userId);
       if (res && "error" in res && res.error) {
         setError(res.error);
         return;

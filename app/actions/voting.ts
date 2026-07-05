@@ -30,6 +30,7 @@ import {
 } from "@/lib/pick-phase";
 import { MAX_PICK_POINTS, MAX_POINTS_PER_GAME } from "@/lib/vote-limits";
 import { loadRoundParticipantData, syncExpectedPlayerCount } from "@/lib/meetup-participants";
+import { isMeetupRegistered } from "@/lib/round-resolve";
 import {
   revalidateExpansionPaths,
   validatePickPoolGame,
@@ -109,6 +110,10 @@ export async function setPickPointsAction(
     notInPool: "Dieses Spiel ist nicht in der Abstimmungsliste.",
   });
   if ("error" in gameCheck) return { error: gameCheck.error };
+
+  if (!(await isMeetupRegistered(round.meetupId, user.id))) {
+    return { error: "Bitte zuerst dem Treffen beitreten." };
+  }
 
   const beforeData = await loadRoundParticipantData(roundId, prisma);
   const beforeCount = beforeData?.registeredCount ?? 0;
