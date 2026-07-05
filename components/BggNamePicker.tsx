@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import type { BggNameOption, BggNameOptionKind } from "@/lib/bgg";
 
@@ -161,12 +161,11 @@ export function BggNamePicker({
   required,
 }: BggNamePickerProps) {
   const [options, setOptions] = useState<BggNameOption[]>([]);
-  const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const loadNames = useCallback(async () => {
+  async function openNamePicker() {
     setLoading(true);
     setError(null);
     try {
@@ -175,8 +174,13 @@ export function BggNamePicker({
       if (!res.ok) {
         throw new Error(data.error ?? "BGG-Namen konnten nicht geladen werden.");
       }
-      setOptions(data.names ?? []);
-      setLoaded(true);
+      const names = data.names ?? [];
+      setOptions(names);
+      if (names.length === 0) {
+        setError("Keine Namen von BGG erhalten.");
+        return;
+      }
+      setModalOpen(true);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "BGG-Namen konnten nicht geladen werden.",
@@ -184,7 +188,7 @@ export function BggNamePicker({
     } finally {
       setLoading(false);
     }
-  }, [gameId]);
+  }
 
   function handleSelect(name: string) {
     onChange(name);
@@ -203,38 +207,19 @@ export function BggNamePicker({
           required={required}
         />
 
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className="btn btn-ghost"
-            disabled={loading}
-            onClick={() => void loadNames()}
-          >
-            {loading
-              ? "Lade BGG-Namen…"
-              : loaded
-                ? "BGG-Namen aktualisieren"
-                : "BGG-Namen laden"}
-          </button>
-          {loaded && options.length > 0 && (
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={() => setModalOpen(true)}
-            >
-              {options.length} Namen · Auswählen…
-            </button>
-          )}
-        </div>
+        <button
+          type="button"
+          className="btn btn-ghost w-fit"
+          disabled={loading}
+          onClick={() => void openNamePicker()}
+        >
+          {loading ? "Lade BGG-Namen…" : "Namen auswählen"}
+        </button>
 
         {error && (
           <p className="text-sm text-[var(--danger)]" role="alert">
             {error}
           </p>
-        )}
-
-        {loaded && options.length === 0 && !loading && !error && (
-          <p className="text-sm text-[var(--muted)]">Keine Namen von BGG erhalten.</p>
         )}
       </div>
 
