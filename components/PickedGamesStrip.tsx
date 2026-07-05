@@ -1,4 +1,5 @@
 import { GameCover } from "@/components/GameCover";
+import { CheckIcon } from "@/components/icons";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
 
 export type PickedGame = {
@@ -44,6 +45,51 @@ function CardItem({ game }: { game: PickedGame }) {
         <PointsBadge points={game.points} />
       </div>
     </li>
+  );
+}
+
+/**
+ * Kompakte Fortschrittsanzeige: MAX_PICK_POINTS Slots, wobei jeder vergebene
+ * Punkt durch das Cover des gewählten Spiels belegt wird. Freie Punkte bleiben
+ * als leere Checkmarks sichtbar. Ersetzt die getrennte Vote-Check- und
+ * Picks-Anzeige und passt so auch auf schmale Screens.
+ */
+export function PickProgress({ games }: { games: PickedGame[] }) {
+  const used = games.reduce((sum, g) => sum + g.points, 0);
+  const slots: (PickedGame | null)[] = [];
+  for (const game of games) {
+    for (let i = 0; i < game.points && slots.length < MAX_PICK_POINTS; i++) {
+      slots.push(game);
+    }
+  }
+  while (slots.length < MAX_PICK_POINTS) slots.push(null);
+
+  return (
+    <span
+      className="pick-progress"
+      role="status"
+      aria-label={`${used} von ${MAX_PICK_POINTS} Stimmen vergeben`}
+    >
+      {slots.map((game, i) =>
+        game ? (
+          <span
+            key={i}
+            className="pick-progress-slot pick-progress-slot-filled"
+            title={game.name}
+          >
+            <GameCover
+              src={game.coverSrc}
+              alt={game.name}
+              className="h-full w-full"
+            />
+          </span>
+        ) : (
+          <span key={i} className="pick-progress-slot" aria-hidden>
+            <CheckIcon size={13} />
+          </span>
+        ),
+      )}
+    </span>
   );
 }
 

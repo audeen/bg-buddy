@@ -38,8 +38,8 @@ import {
   type RatingBlock,
 } from "@/lib/game-filters";
 import { MAX_PICK_POINTS } from "@/lib/vote-limits";
-import { CheckIcon } from "@/components/icons";
-import { PickedGamesStrip } from "@/components/PickedGamesStrip";
+import { UsersIcon } from "@/components/icons";
+import { PickProgress } from "@/components/PickedGamesStrip";
 
 export type PickGame = GameDetailData & { lentOut?: boolean };
 
@@ -370,73 +370,73 @@ export function PickClient({
     );
   }
 
+  const selectedIdx = availableCounts.indexOf(selected);
+  const canPrevCount = selectedIdx > 0;
+  const canNextCount =
+    selectedIdx >= 0 && selectedIdx < availableCounts.length - 1;
+
+  function stepCount(dir: -1 | 1) {
+    const next = availableCounts[selectedIdx + dir];
+    if (next == null) return;
+    setSelected(next);
+    setLimitMsg(null);
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="picker-top-bar">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-semibold">Spieleranzahl</span>
-          <span
-            className="vote-checks"
-            role="status"
-            aria-label={`${usedPoints} von ${MAX_PICK_POINTS} Stimmen abgegeben`}
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <div
+            className="count-stepper"
+            role="group"
+            aria-label="Spieleranzahl"
           >
-            {Array.from({ length: MAX_PICK_POINTS }, (_, i) => (
-              <span
-                key={i}
-                className={`vote-check${i < usedPoints ? " vote-check-filled" : ""}`}
-                aria-hidden
-              >
-                <CheckIcon size={14} />
-              </span>
-            ))}
-          </span>
-        </div>
-        <div className="tabs-scroll">
-          {availableCounts.map((n) => (
             <button
-              key={n}
               type="button"
-              onClick={() => {
-                setSelected(n);
-                setLimitMsg(null);
-              }}
-              className={`btn btn-tab ${selected === n ? "btn-primary" : "btn-ghost"} ${
-                n === expected ? "btn-tab-expected" : ""
-              }`}
+              onClick={() => stepCount(-1)}
+              disabled={!canPrevCount}
+              aria-label="Weniger Spieler"
             >
-              {n}
-              {n === expected ? " ★" : ""}
+              −
             </button>
-          ))}
+            <span className="count-stepper-value" aria-live="polite">
+              <UsersIcon size={15} />
+              <span>
+                {selected}
+                {selected === expected && (
+                  <span className="count-stepper-star"> ★</span>
+                )}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() => stepCount(1)}
+              disabled={!canNextCount}
+              aria-label="Mehr Spieler"
+            >
+              +
+            </button>
+          </div>
+
+          <PickProgress games={myPicks} />
+
+          <div className="min-w-0 flex-1" />
+
+          {atLimit && (
+            <Link
+              href={`/meetups/${meetupId}`}
+              className="btn btn-primary btn-sm shrink-0"
+            >
+              Fertig
+            </Link>
+          )}
         </div>
         {limitMsg && (
           <p className="text-xs text-[var(--danger)]" role="alert">
             {limitMsg}
           </p>
         )}
-        {atLimit && (
-          <div className="flex flex-col gap-1.5 sm:items-center sm:gap-2">
-            <p className="text-xs text-[var(--muted)] sm:text-center">
-              {MAX_PICK_POINTS} Stimmen für {selected} Spieler vergeben
-              {selected === expected ? " ★" : ""}.
-              {selected === expected && readyForDuels && !picksLocked
-                ? " Duell-Modus ist frei."
-                : null}
-            </p>
-            <Link
-              href={`/meetups/${meetupId}`}
-              className="btn btn-primary w-full sm:w-auto text-center"
-            >
-              Fertig
-            </Link>
-          </div>
-        )}
       </div>
-
-      <PickedGamesStrip
-        games={myPicks}
-        title={`Deine Picks für ${selected} Spieler${selected === expected ? " ★" : ""}`}
-      />
 
       <p
         className="text-sm text-[var(--muted)] leading-relaxed rounded-lg border border-[var(--border)] px-3 py-2"
