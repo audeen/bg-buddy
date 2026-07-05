@@ -20,6 +20,8 @@ export function MeetupVoteActions({
   hostForced = false,
   hostForcedGameName = null,
   hostChoiceMode = "NONE",
+  hasAssignedVotes = false,
+  isHost = false,
 }: {
   meetupId: string;
   roundQuery?: string;
@@ -34,10 +36,18 @@ export function MeetupVoteActions({
   hostForced?: boolean;
   hostForcedGameName?: string | null;
   hostChoiceMode?: HostChoiceMode;
+  hasAssignedVotes?: boolean;
+  isHost?: boolean;
 }) {
   useMeetupPhaseRefresh(true);
 
   const duellLinkDisabled = !readyForDuels || duelComplete;
+  const duellPoolSuffix =
+    isHost && pickPoolSize >= 2 ? ` (${pickPoolSize})` : "";
+  const duellDisabledMeta =
+    isHost && pickPoolSize >= 2
+      ? ` · ${fullPickCount}/${expectedPlayerCount}`
+      : "";
 
   if (hostForced && hostForcedGameName) {
     return (
@@ -64,9 +74,11 @@ export function MeetupVoteActions({
       <div className="flex flex-col sm:flex-row gap-2">
         <Link
           href={`/meetups/${meetupId}/pick${roundQuery}`}
-          className="btn btn-primary btn-lg sm:flex-1"
+          className={`btn btn-lg sm:flex-1 ${
+            hasAssignedVotes ? "btn-ghost" : "btn-primary"
+          }`}
         >
-          Stimmen vergeben
+          {hasAssignedVotes ? "Stimmen ändern" : "Stimmen vergeben"}
         </Link>
         {duellLinkDisabled ? (
           <span
@@ -74,18 +86,15 @@ export function MeetupVoteActions({
             title={duellLinkTitle}
             aria-disabled
           >
-            Duell-Modus
-            {pickPoolSize >= 2
-              ? ` (${pickPoolSize}) · ${fullPickCount}/${expectedPlayerCount}`
-              : ""}
+            Duell-Modus{duellPoolSuffix}
+            {duellDisabledMeta}
           </span>
         ) : (
           <Link
             href={`/meetups/${meetupId}/duell${roundQuery}`}
-            className="btn btn-ghost btn-lg sm:flex-1"
+            className="btn btn-primary btn-lg sm:flex-1"
           >
-            Duell-Modus
-            {pickPoolSize >= 2 ? ` (${pickPoolSize})` : ""}
+            Duell-Modus{duellPoolSuffix}
           </Link>
         )}
       </div>

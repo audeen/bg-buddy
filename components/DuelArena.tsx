@@ -47,6 +47,8 @@ export function DuelChoiceCard({
   onClick,
   labelLines = 3,
   coverBanner,
+  chips,
+  onInfo,
 }: {
   coverSrc: string | null;
   label: string;
@@ -56,6 +58,8 @@ export function DuelChoiceCard({
   onClick: () => void;
   labelLines?: 2 | 3;
   coverBanner?: { label: string; variant: "base" | "expansion" };
+  chips?: ReactNode;
+  onInfo?: () => void;
 }) {
   const enterClass =
     side === "left" ? "duel-card-enter-left" : "duel-card-enter-right";
@@ -68,32 +72,58 @@ export function DuelChoiceCard({
   const clampClass = labelLines === 3 ? "line-clamp-3" : "line-clamp-2";
 
   return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={`card card-game relative overflow-hidden flex flex-col h-full w-full min-h-[2.75rem] ${enterClass} ${outcomeClass}`}
-    >
-      <div className="relative isolate flex-1 min-h-0 w-full overflow-hidden">
-        <GameCover
-          src={coverSrc}
-          alt={label}
-          className="h-full w-full min-h-[8rem] card-game-cover sm:aspect-square sm:min-h-0"
-        />
-        {coverBanner && (
-          <DuelCoverBanner label={coverBanner.label} variant={coverBanner.variant} />
-        )}
-      </div>
-      {/* Padding liegt auf dem Wrapper: line-clamp + padding-bottom würde sonst
-          die verborgene Folgezeile halb durch den Padding-Bereich scheinen lassen. */}
-      <span className="block p-2 sm:p-3 shrink-0 w-full">
-        <span
-          className={`block font-bold text-sm sm:text-base text-center leading-tight ${clampClass}`}
-        >
-          {label}
+    // Wrapper, damit der Info-Button ein Geschwister des Karten-Buttons ist
+    // (verschachtelte <button> wären ungültiges HTML) und die Ecke überlagert.
+    <div className="relative flex h-full w-full">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+        className={`card card-game relative overflow-hidden flex flex-col h-full w-full min-h-[2.75rem] ${enterClass} ${outcomeClass}`}
+      >
+        <div className="relative isolate flex-1 min-h-0 w-full overflow-hidden">
+          <GameCover
+            src={coverSrc}
+            alt={label}
+            className="h-full w-full min-h-[8rem] card-game-cover sm:aspect-square sm:min-h-0"
+          />
+          {coverBanner && (
+            <DuelCoverBanner label={coverBanner.label} variant={coverBanner.variant} />
+          )}
+        </div>
+        {/* Padding liegt auf dem Wrapper: line-clamp + padding-bottom würde sonst
+            die verborgene Folgezeile halb durch den Padding-Bereich scheinen lassen. */}
+        <span className="block p-2 sm:p-3 shrink-0 w-full">
+          <span
+            className={`block font-bold text-sm sm:text-base text-center leading-tight ${clampClass}`}
+          >
+            {label}
+          </span>
+          {chips && <span className="duel-card-chips">{chips}</span>}
         </span>
-      </span>
-    </button>
+      </button>
+      {onInfo && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onInfo();
+          }}
+          className={`absolute top-0.5 z-[3] flex min-h-[2.75rem] min-w-[2.75rem] items-center justify-center ${
+            side === "left" ? "left-0.5" : "right-0.5"
+          }`}
+          aria-label="Details anzeigen"
+        >
+          <span
+            aria-hidden
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] text-sm font-bold border border-[var(--border)] hover:bg-[var(--surface-2)]"
+            style={{ boxShadow: "var(--shadow-md)" }}
+          >
+            ℹ
+          </span>
+        </button>
+      )}
+    </div>
   );
 }
 

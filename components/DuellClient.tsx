@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   DuelArena,
   DuelChoiceCard,
@@ -10,18 +10,43 @@ import {
   DuelStickyFooter,
   DuelVoteError,
 } from "@/components/DuelArena";
+import { GameDetailModal } from "@/components/GameDetailModal";
 import { duelVoteAction } from "@/app/actions";
 import { pairKey, type DuelPair, type DuelPhase } from "@/lib/duel-pairs";
 import { groupProgressText } from "@/lib/duel-progress";
 import { useDuelVoting } from "@/lib/use-duel-voting";
 import { resolveCoverSrc } from "@/lib/cover-image";
+import { buildGameTags, chipClassForVariant } from "@/lib/game-tags";
+import type { GameDetailData } from "@/lib/types/game";
 
-export interface DuellGame {
-  id: number;
-  name: string;
-  thumbnail: string | null;
-  image: string | null;
-  coverUrl?: string | null;
+export type DuellGame = GameDetailData;
+
+/**
+ * Kompakte Chip-Auswahl für eine Duell-Karte: Best-Fit zuerst, dann die
+ * wichtigsten Meta-Chips (Spieleranzahl/Zeit/Komplexität). Bewusst auf max. 3
+ * begrenzt, damit die zwei Karten auf Mobile nicht in die Höhe wachsen.
+ */
+function DuelCardChips({
+  game,
+  expected,
+}: {
+  game: GameDetailData;
+  expected: number;
+}) {
+  const tags = buildGameTags(game, { playerCount: expected });
+  const accent = tags.filter((t) => t.variant === "accent");
+  const meta = tags.filter((t) => t.variant === "meta");
+  const chosen = [...accent, ...meta].slice(0, 3);
+  if (chosen.length === 0) return null;
+  return (
+    <>
+      {chosen.map((tag) => (
+        <span key={tag.label} className={chipClassForVariant(tag.variant)}>
+          {tag.label}
+        </span>
+      ))}
+    </>
+  );
 }
 
 export function DuellClient({
@@ -57,6 +82,8 @@ export function DuellClient({
     () => new Map(games.map((g) => [g.id, g])),
     [games],
   );
+
+  const [detailGame, setDetailGame] = useState<GameDetailData | null>(null);
 
   const { busy, voteError, myDone, finished, current, outcomeFor, choose } =
     useDuelVoting({
@@ -134,6 +161,8 @@ export function DuellClient({
               outcome={outcomeFor(gameA.id)}
               disabled={busy}
               onClick={() => choose(gameA.id, current.b)}
+              chips={<DuelCardChips game={gameA} expected={expected} />}
+              onInfo={() => setDetailGame(gameA)}
             />
           }
           right={
@@ -144,6 +173,8 @@ export function DuellClient({
               outcome={outcomeFor(gameB.id)}
               disabled={busy}
               onClick={() => choose(gameB.id, current.a)}
+              chips={<DuelCardChips game={gameB} expected={expected} />}
+              onInfo={() => setDetailGame(gameB)}
             />
           }
         />
@@ -160,6 +191,12 @@ export function DuellClient({
           className="btn btn-primary w-full sm:w-auto text-center"
         />
       </DuelStickyFooter>
+
+      <GameDetailModal
+        game={detailGame}
+        onClose={() => setDetailGame(null)}
+        playerCount={expected}
+      />
     </div>
   );
 }

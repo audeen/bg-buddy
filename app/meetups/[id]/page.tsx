@@ -637,6 +637,8 @@ async function RoundCard({
           hostForced={hostForced}
           hostForcedGameName={forcedGame?.name ?? null}
           hostChoiceMode={round.hostChoiceMode}
+          hasAssignedVotes={myPickStrip.some((g) => g.points > 0)}
+          isHost={isHost}
           />
         </>
       )}
