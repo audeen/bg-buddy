@@ -33,6 +33,96 @@ type ConfirmState =
   | { type: "purge" }
   | null;
 
+function CollectionGameRowItem({
+  game,
+  isPending,
+  onToggleLentOut,
+  onRemove,
+}: {
+  game: CollectionGameRow;
+  isPending: (check: (a: NonNullable<PendingAction>) => boolean) => boolean;
+  onToggleLentOut: (game: CollectionGameRow) => void;
+  onRemove: (game: CollectionGameRow) => void;
+}) {
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const actionsId = `collection-game-actions-${game.id}`;
+
+  return (
+    <li
+      id={`collection-game-${game.id}`}
+      className="ranking-row flex flex-col gap-3 p-4"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+          <Link
+            href={`/games/${game.id}`}
+            className="font-semibold hover:underline truncate"
+          >
+            {game.name}
+          </Link>
+          <span className="text-xs text-[var(--muted)]">
+            BGG #{game.id}
+            {game.year ? ` · ${game.year}` : ""}
+            {game.isExpansion ? " · Erweiterung" : ""}
+            {game.lentOut ? " · Verliehen" : ""}
+            {game.manuallyEditedFields.length > 0 &&
+              ` · ${game.manuallyEditedFields.length} manuell`}
+          </span>
+        </div>
+        <button
+          type="button"
+          className="btn btn-ghost shrink-0 min-h-[2.75rem]"
+          aria-expanded={actionsOpen}
+          aria-controls={actionsId}
+          aria-label={`Aktionen für ${game.name}`}
+          onClick={() => setActionsOpen((open) => !open)}
+        >
+          Aktionen{" "}
+          <span aria-hidden className="opacity-70">
+            {actionsOpen ? "▴" : "▾"}
+          </span>
+        </button>
+      </div>
+      {actionsOpen && (
+        <div
+          id={actionsId}
+          className="flex flex-col sm:flex-row gap-2 w-full"
+        >
+          <Link
+            href={`/admin/collection/${game.id}`}
+            className="btn btn-ghost w-full sm:w-auto min-h-[2.75rem] text-center"
+          >
+            Bearbeiten
+          </Link>
+          <button
+            type="button"
+            className={`btn w-full sm:w-auto min-h-[2.75rem] ${
+              game.lentOut ? "btn-primary" : "btn-ghost"
+            }`}
+            disabled={isPending((a) => "id" in a && a.id === game.id)}
+            aria-busy={isPending((a) => a.type === "lent" && a.id === game.id)}
+            onClick={() => onToggleLentOut(game)}
+          >
+            {isPending((a) => a.type === "lent" && a.id === game.id)
+              ? "Speichere…"
+              : game.lentOut
+                ? "Zurückgegeben"
+                : "Spiel verliehen"}
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost text-[var(--danger)] w-full sm:w-auto min-h-[2.75rem]"
+            disabled={isPending((a) => "id" in a && a.id === game.id)}
+            onClick={() => onRemove(game)}
+          >
+            Entfernen
+          </button>
+        </div>
+      )}
+    </li>
+  );
+}
+
 export function CollectionManagerClient({
   games,
   onAddGame,
@@ -226,59 +316,13 @@ export function CollectionManagerClient({
       ) : (
         <ul className="card divide-y divide-[var(--border)] overflow-hidden">
           {filtered.map((g) => (
-            <li
+            <CollectionGameRowItem
               key={g.id}
-              id={`collection-game-${g.id}`}
-              className="ranking-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4"
-            >
-              <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                <Link
-                  href={`/games/${g.id}`}
-                  className="font-semibold hover:underline truncate"
-                >
-                  {g.name}
-                </Link>
-                <span className="text-xs text-[var(--muted)]">
-                  BGG #{g.id}
-                  {g.year ? ` · ${g.year}` : ""}
-                  {g.isExpansion ? " · Erweiterung" : ""}
-                  {g.lentOut ? " · Verliehen" : ""}
-                  {g.manuallyEditedFields.length > 0 &&
-                    ` · ${g.manuallyEditedFields.length} manuell`}
-                </span>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                <Link
-                  href={`/admin/collection/${g.id}`}
-                  className="btn btn-ghost w-full sm:w-auto min-h-[2.75rem] text-center"
-                >
-                  Bearbeiten
-                </Link>
-                <button
-                  type="button"
-                  className={`btn w-full sm:w-auto min-h-[2.75rem] ${
-                    g.lentOut ? "btn-primary" : "btn-ghost"
-                  }`}
-                  disabled={isPending((a) => "id" in a && a.id === g.id)}
-                  aria-busy={isPending((a) => a.type === "lent" && a.id === g.id)}
-                  onClick={() => toggleLentOut(g)}
-                >
-                  {isPending((a) => a.type === "lent" && a.id === g.id)
-                    ? "Speichere…"
-                    : g.lentOut
-                      ? "Zurückgegeben"
-                      : "Spiel verliehen"}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost text-[var(--danger)] w-full sm:w-auto min-h-[2.75rem]"
-                  disabled={isPending((a) => "id" in a && a.id === g.id)}
-                  onClick={() => setConfirm({ type: "remove", game: g })}
-                >
-                  Entfernen
-                </button>
-              </div>
-            </li>
+              game={g}
+              isPending={isPending}
+              onToggleLentOut={toggleLentOut}
+              onRemove={(game) => setConfirm({ type: "remove", game })}
+            />
           ))}
         </ul>
       )}
