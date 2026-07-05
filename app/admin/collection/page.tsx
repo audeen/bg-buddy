@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { LoginForm } from "@/components/LoginForm";
 import { CollectionAdminClient } from "@/components/CollectionAdminClient";
 import { PageHeader } from "@/components/PageHeader";
+import { ScrollToTopButton } from "@/components/ScrollToTopButton";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,11 @@ export default async function CollectionAdminPage() {
 
   return (
     <div className="container-app max-w-2xl flex flex-col gap-6">
-      <PageHeader eyebrow="Administration" title="Sammlung bearbeiten">
+      <PageHeader
+        id="collection-page-top"
+        eyebrow="Administration"
+        title="Sammlung bearbeiten"
+      >
         <p className="text-[var(--muted)] text-sm">
           {games.length} {games.length === 1 ? "Spiel" : "Spiele"} in der Datenbank
         </p>
@@ -55,6 +60,8 @@ export default async function CollectionAdminPage() {
           Import →
         </Link>
       </div>
+
+      <ScrollToTopButton scrollTargetId="collection-page-top" title="Nach oben" />
     </div>
   );
 }
