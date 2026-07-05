@@ -15,3 +15,8 @@ export function scrollToElement(id: string) {
       ?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
   });
 }
+
+/** Springt sofort zu einem Element — ohne Animation, vor dem ersten Paint (useLayoutEffect). */
+export function jumpToElement(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: "auto", block: "start" });
+}

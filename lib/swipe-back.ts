@@ -39,7 +39,10 @@ export function resolveSwipeBackTarget(pathname: string): string | null {
 
   if (/^\/games\/\d+$/.test(pathname)) return "/games";
 
-  if (/^\/admin\/collection\/\d+$/.test(pathname)) return "/admin/collection";
+  const collectionEditMatch = pathname.match(/^\/admin\/collection\/(\d+)$/);
+  if (collectionEditMatch) {
+    return `/admin/collection#collection-game-${collectionEditMatch[1]}`;
+  }
 
   return null;
 }

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useLayoutEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { jumpToElement } from "@/lib/scroll";
 import {
   purgeCollectionAction,
   removeGameFromCollectionAction,
@@ -61,6 +62,14 @@ export function CollectionManagerClient({
       return g.name.toLowerCase().includes(q);
     });
   }, [games, query, onlyBase]);
+
+  useLayoutEffect(() => {
+    const id = window.location.hash.slice(1);
+    if (!id.startsWith("collection-game-")) return;
+    if (!document.getElementById(id)) return;
+    jumpToElement(id);
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+  }, []);
 
   function runPurge() {
     setMessage(null);
@@ -219,6 +228,7 @@ export function CollectionManagerClient({
           {filtered.map((g) => (
             <li
               key={g.id}
+              id={`collection-game-${g.id}`}
               className="ranking-row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4"
             >
               <div className="flex flex-col gap-0.5 min-w-0 flex-1">

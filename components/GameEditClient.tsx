@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { setGameCoverAction, updateGameMetadataAction } from "@/app/actions";
 import { SYNC_FIELD_LABELS, type SyncFieldName } from "@/lib/game-sync";
+import { ArrowLeftIcon, CheckIcon, EyeIcon } from "@/components/icons";
 import { CoverPickerDialog } from "@/components/CoverPickerDialog";
 import { BggNamePicker } from "@/components/BggNamePicker";
 import { GameCover } from "@/components/GameCover";
@@ -161,6 +162,49 @@ export function GameEditClient({
   return (
     <>
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <div className="picker-top-bar">
+        <div className="flex flex-row items-stretch gap-2 min-w-0">
+          <Link
+            href={`/admin/collection#collection-game-${game.id}`}
+            scroll={false}
+            className="btn btn-ghost btn-sm flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 min-h-[2.75rem]"
+            aria-label="Zurück zur Sammlung"
+          >
+            <ArrowLeftIcon size={18} />
+            <span className="hidden sm:inline truncate">Zurück</span>
+          </Link>
+          <Link
+            href={`/games/${game.id}`}
+            className="btn btn-ghost btn-sm flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 min-h-[2.75rem]"
+            aria-label="Spiel ansehen"
+          >
+            <EyeIcon size={18} />
+            <span className="hidden sm:inline truncate">Ansehen</span>
+          </Link>
+          <button
+            type="submit"
+            className="btn btn-primary btn-sm flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 min-h-[2.75rem]"
+            disabled={pending}
+            aria-label={pending ? "Speichere…" : "Speichern"}
+          >
+            <CheckIcon size={18} />
+            <span className="hidden sm:inline truncate">
+              {pending ? "Speichere…" : "Speichern"}
+            </span>
+          </button>
+        </div>
+        {message && (
+          <p className="text-sm text-[var(--accent)]" role="status">
+            {message}
+          </p>
+        )}
+        {error && (
+          <p className="text-sm text-[var(--danger)]" role="alert">
+            {error}
+          </p>
+        )}
+      </div>
+
       <section className="card card-pad flex flex-col gap-3">
         <h2 className="section-title">Stammdaten</h2>
         <div>
@@ -490,33 +534,6 @@ export function GameEditClient({
           />
         </div>
       </section>
-
-      {message && (
-        <p className="text-sm text-[var(--accent)]" role="status">
-          {message}
-        </p>
-      )}
-      {error && (
-        <p className="text-sm text-[var(--danger)]" role="alert">
-          {error}
-        </p>
-      )}
-
-      <div className="flex flex-wrap gap-3">
-        <button
-          type="submit"
-          className="btn btn-primary btn-lg"
-          disabled={pending}
-        >
-          {pending ? "Speichere…" : "Speichern"}
-        </button>
-        <Link href="/admin/collection" className="btn btn-ghost btn-lg">
-          Zurück
-        </Link>
-        <Link href={`/games/${game.id}`} className="btn btn-ghost btn-lg">
-          Spiel ansehen
-        </Link>
-      </div>
     </form>
 
     {coverDialogOpen && (

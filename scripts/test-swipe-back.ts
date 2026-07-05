@@ -28,7 +28,7 @@ function testTargets() {
   assert.equal(resolveSwipeBackTarget("/games/42"), "/games");
   assert.equal(
     resolveSwipeBackTarget("/admin/collection/7"),
-    "/admin/collection",
+    "/admin/collection#collection-game-7",
   );
   assert.equal(resolveSwipeBackTarget("/games"), null);
 }

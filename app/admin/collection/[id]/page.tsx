@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
@@ -60,10 +59,6 @@ export default async function GameEditPage({
       </p>
 
       <GameEditClient game={game} baseGames={baseGames} />
-
-      <Link href="/admin/collection" className="btn btn-ghost w-fit">
-        ← Zur Sammlung
-      </Link>
     </div>
   );
 }
