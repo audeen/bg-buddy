@@ -537,8 +537,12 @@ export function PickClient({
                 <div
                   className="flex items-center gap-3"
                   role="separator"
-                  aria-label="Weitere Spiele"
+                  aria-label={`Auch spielbar bei ${selected}`}
                 >
+                  <span className="h-px flex-1 bg-[var(--border)]" />
+                  <span className="shrink-0 text-xs text-[var(--muted)]">
+                    Auch spielbar bei {selected}
+                  </span>
                   <span className="h-px flex-1 bg-[var(--border)]" />
                 </div>
                 <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
