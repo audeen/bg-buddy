@@ -108,6 +108,20 @@ const roundInclude = {
     },
     orderBy: { sortOrder: "asc" as const },
   },
+  excludedGames: {
+    include: {
+      game: {
+        select: {
+          id: true,
+          name: true,
+          thumbnail: true,
+          image: true,
+          coverUrl: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "asc" as const },
+  },
   hostForcedGame: {
     select: {
       id: true,
@@ -280,6 +294,7 @@ async function RoundCard({
   const roundQuery = multiRound ? `?runde=${roundId}` : "";
 
   const hostChoiceGames = round.hostChoiceGames.map((g) => g.game);
+  const excludedGames = round.excludedGames.map((g) => g.game);
   const forcedGame = round.hostForcedGame;
   const hostForced = round.hostForcedGameId != null;
 
@@ -597,6 +612,7 @@ async function RoundCard({
             forcedGame={forcedGame}
             hostChoiceGames={hostChoiceGames}
             hostChoiceMode={round.hostChoiceMode}
+            excludedGames={excludedGames}
             guestGames={guestGames}
           />
         </>

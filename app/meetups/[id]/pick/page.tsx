@@ -52,11 +52,13 @@ export default async function PickPage({
         select: { gameId: true },
         orderBy: { sortOrder: "asc" },
       },
+      excludedGames: { select: { gameId: true } },
     },
   });
   if (!meetup || !round) notFound();
 
   const hostChoiceGameIds = round.hostChoiceGames.map((g) => g.gameId);
+  const excludedGameIds = round.excludedGames.map((g) => g.gameId);
   const hostForced = round.hostForcedGameId != null;
 
   // Nicht am Treffen angemeldet: Hinweis statt Vote-UI.
@@ -96,6 +98,7 @@ export default async function PickPage({
         id,
         round.hostChoiceMode,
         hostChoiceGameIds,
+        excludedGameIds,
       ),
       select: {
         id: true,

@@ -32,6 +32,7 @@ import { MAX_PICK_POINTS, MAX_POINTS_PER_GAME } from "@/lib/vote-limits";
 import { loadRoundParticipantData, syncExpectedPlayerCount } from "@/lib/meetup-participants";
 import { isMeetupRegistered } from "@/lib/round-resolve";
 import {
+  isGameExcludedFromRound,
   revalidateExpansionPaths,
   validatePickPoolGame,
 } from "@/app/actions/shared";
@@ -110,6 +111,9 @@ export async function setPickPointsAction(
     notInPool: "Dieses Spiel ist nicht in der Abstimmungsliste.",
   });
   if ("error" in gameCheck) return { error: gameCheck.error };
+  if (await isGameExcludedFromRound(roundId, gameId)) {
+    return { error: "Dieses Spiel ist für diese Runde ausgeschlossen." };
+  }
 
   if (!(await isMeetupRegistered(round.meetupId, user.id))) {
     return { error: "Bitte zuerst dem Treffen beitreten." };
@@ -221,6 +225,12 @@ export async function duelVoteAction(
   if (!round) return { error: "Spielrunde nicht gefunden." };
   if (round.hostForcedGameId != null) {
     return { error: "Der Host hat bereits ein Spiel festgelegt — keine Duelle." };
+  }
+  if (
+    (await isGameExcludedFromRound(roundId, winnerGameId)) ||
+    (await isGameExcludedFromRound(roundId, opponentGameId))
+  ) {
+    return { error: "Ein Spiel ist für diese Runde ausgeschlossen." };
   }
   if (playerCount !== round.expectedPlayerCount) {
     return { error: "Duelle nur für die erwartete Spieleranzahl." };

@@ -12,7 +12,9 @@ import {
   addHostChoiceGameAction,
   clearForcedMeetupGameAction,
   clearHostChoiceGamesAction,
+  excludeGameFromRoundAction,
   forceMeetupGameAction,
+  includeGameInRoundAction,
   removeAllGuestGamesFromMeetupAction,
   removeHostChoiceGameAction,
   searchCollectionGamesAction,
@@ -34,11 +36,13 @@ function buildSummaryText({
   hostChoiceGames,
   hostChoiceMode,
   guestGames,
+  excludedGames,
 }: {
   forcedGame: SpielsteuerungGameRow | null;
   hostChoiceGames: SpielsteuerungGameRow[];
   hostChoiceMode: HostChoiceMode;
   guestGames: SpielsteuerungGameRow[];
+  excludedGames: SpielsteuerungGameRow[];
 }): string {
   const parts: string[] = [];
   if (forcedGame) {
@@ -49,6 +53,11 @@ function buildSummaryText({
       hostChoiceMode === "RESTRICT" ? "Nur Vorauswahl" : "Hervorheben";
     parts.push(
       `${hostChoiceGames.length} in Vorauswahl (${modeLabel})`,
+    );
+  }
+  if (excludedGames.length > 0) {
+    parts.push(
+      `${excludedGames.length} ausgeschlossen`,
     );
   }
   if (guestGames.length > 0) {
@@ -66,6 +75,7 @@ export function MeetupSpielsteuerungClient({
   forcedGame,
   hostChoiceGames,
   hostChoiceMode,
+  excludedGames = [],
   guestGames = [],
 }: {
   meetupId: string;
@@ -73,6 +83,7 @@ export function MeetupSpielsteuerungClient({
   forcedGame: SpielsteuerungGameRow | null;
   hostChoiceGames: SpielsteuerungGameRow[];
   hostChoiceMode: HostChoiceMode;
+  excludedGames?: SpielsteuerungGameRow[];
   guestGames?: SpielsteuerungGameRow[];
 }) {
   const router = useRouter();
@@ -93,9 +104,16 @@ export function MeetupSpielsteuerungClient({
     id: number;
     name: string;
   } | null>(null);
+  const [excludeConfirmGame, setExcludeConfirmGame] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
 
   const hasConfig =
-    !!forcedGame || hostChoiceGames.length > 0 || guestGames.length > 0;
+    !!forcedGame ||
+    hostChoiceGames.length > 0 ||
+    excludedGames.length > 0 ||
+    guestGames.length > 0;
 
   const choiceIds = useMemo(
     () => new Set(hostChoiceGames.map((g) => g.id)),
@@ -107,11 +125,17 @@ export function MeetupSpielsteuerungClient({
     [guestGames],
   );
 
+  const excludedIds = useMemo(
+    () => new Set(excludedGames.map((g) => g.id)),
+    [excludedGames],
+  );
+
   const summaryText = buildSummaryText({
     forcedGame,
     hostChoiceGames,
     hostChoiceMode,
     guestGames,
+    excludedGames,
   });
 
   useEffect(() => {
@@ -155,6 +179,7 @@ export function MeetupSpielsteuerungClient({
       }
       setSelectedGame(null);
       setForceConfirmGame(null);
+      setExcludeConfirmGame(null);
       setQuery("");
       setSearchResponse({ query: "", games: [] });
       router.refresh();
@@ -278,11 +303,17 @@ export function MeetupSpielsteuerungClient({
                       <button
                         type="button"
                         className="btn btn-ghost btn-sm"
-                        disabled={pending || choiceIds.has(g.id)}
+                        disabled={
+                          pending ||
+                          choiceIds.has(g.id) ||
+                          excludedIds.has(g.id)
+                        }
                         title={
-                          choiceIds.has(g.id)
-                            ? "Bereits in der Vorauswahl"
-                            : undefined
+                          excludedIds.has(g.id)
+                            ? "Für diese Runde ausgeschlossen"
+                            : choiceIds.has(g.id)
+                              ? "Bereits in der Vorauswahl"
+                              : undefined
                         }
                         onClick={() =>
                           runAction(() =>
@@ -291,6 +322,14 @@ export function MeetupSpielsteuerungClient({
                         }
                       >
                         Zur Vorauswahl
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        disabled={pending || excludedIds.has(g.id)}
+                        onClick={() => setExcludeConfirmGame(g)}
+                      >
+                        Ausschließen
                       </button>
                     </div>
                   )}
@@ -338,6 +377,7 @@ export function MeetupSpielsteuerungClient({
                 setQuery(e.target.value);
                 setSelectedGame(null);
                 setForceConfirmGame(null);
+                setExcludeConfirmGame(null);
               }}
               placeholder="Spiel suchen…"
               disabled={pending}
@@ -347,7 +387,10 @@ export function MeetupSpielsteuerungClient({
             {searching && (
               <p className="text-xs text-[var(--muted)]">Suche…</p>
             )}
-            {results.length > 0 && !selectedGame && !forceConfirmGame && (
+            {results.length > 0 &&
+              !selectedGame &&
+              !forceConfirmGame &&
+              !excludeConfirmGame && (
               <ul className="flex flex-col gap-1 max-h-48 overflow-y-auto rounded-lg border border-[var(--border)] p-1">
                 {results.map((g) => (
                   <li key={g.id}>
@@ -368,7 +411,7 @@ export function MeetupSpielsteuerungClient({
                 ))}
               </ul>
             )}
-            {selectedGame && !forceConfirmGame && (
+            {selectedGame && !forceConfirmGame && !excludeConfirmGame && (
               <div className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] p-3">
                 <p className="text-sm font-semibold">{selectedGame.name}</p>
                 <div className="flex flex-wrap gap-2">
@@ -383,11 +426,17 @@ export function MeetupSpielsteuerungClient({
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
-                    disabled={pending || choiceIds.has(selectedGame.id)}
+                    disabled={
+                      pending ||
+                      choiceIds.has(selectedGame.id) ||
+                      excludedIds.has(selectedGame.id)
+                    }
                     title={
-                      choiceIds.has(selectedGame.id)
-                        ? "Bereits in der Vorauswahl"
-                        : undefined
+                      excludedIds.has(selectedGame.id)
+                        ? "Für diese Runde ausgeschlossen"
+                        : choiceIds.has(selectedGame.id)
+                          ? "Bereits in der Vorauswahl"
+                          : undefined
                     }
                     onClick={() =>
                       runAction(() =>
@@ -400,7 +449,48 @@ export function MeetupSpielsteuerungClient({
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
+                    disabled={pending || excludedIds.has(selectedGame.id)}
+                    onClick={() => setExcludeConfirmGame(selectedGame)}
+                  >
+                    Ausschließen
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
                     onClick={() => setSelectedGame(null)}
+                  >
+                    Abbrechen
+                  </button>
+                </div>
+              </div>
+            )}
+            {excludeConfirmGame && (
+              <div className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] p-3">
+                <p className="text-sm">
+                  <strong>{excludeConfirmGame.name}</strong> für diese Runde
+                  ausschließen? Bestehende Stimmen für dieses Spiel werden
+                  entfernt.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    disabled={pending}
+                    onClick={() =>
+                      runAction(() =>
+                        excludeGameFromRoundAction(
+                          roundId,
+                          excludeConfirmGame.id,
+                        ),
+                      )
+                    }
+                  >
+                    Ausschließen
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => setExcludeConfirmGame(null)}
                   >
                     Abbrechen
                   </button>
@@ -539,6 +629,39 @@ export function MeetupSpielsteuerungClient({
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {excludedGames.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-[var(--border)] pt-3">
+            <p className="text-xs font-medium text-[var(--muted)]">
+              Ausgeschlossen
+            </p>
+            <ul className="flex flex-col gap-2">
+              {excludedGames.map((g) => (
+                <li
+                  key={g.id}
+                  className="flex items-center gap-2 rounded-lg border border-[var(--border)] p-2"
+                >
+                  <GameCover
+                    src={resolveCoverSrc(g)}
+                    alt={g.name}
+                    className="h-10 w-8 shrink-0 rounded"
+                  />
+                  <span className="flex-1 text-sm truncate">{g.name}</span>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    disabled={pending}
+                    onClick={() =>
+                      runAction(() => includeGameInRoundAction(roundId, g.id))
+                    }
+                  >
+                    Zulassen
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 

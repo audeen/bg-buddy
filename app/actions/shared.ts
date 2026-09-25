@@ -132,6 +132,18 @@ export async function validatePickPoolGame(
   return { game };
 }
 
+/** true, wenn der Host das Spiel für diese Runde ausgeschlossen hat. */
+export async function isGameExcludedFromRound(
+  roundId: string,
+  gameId: number,
+): Promise<boolean> {
+  const row = await prisma.meetupExcludedGame.findUnique({
+    where: { roundId_gameId: { roundId, gameId } },
+    select: { id: true },
+  });
+  return row != null;
+}
+
 /** Normalisiert einen gescannten Barcode auf Ziffern (oder null). */
 export function normalizeBarcode(raw?: string | null): string | null {
   if (!raw?.trim()) return null;

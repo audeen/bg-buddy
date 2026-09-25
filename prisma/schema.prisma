@@ -57,6 +57,7 @@ model Game {
   votesAsOpponent  Vote[]             @relation("VoteOpponent")
   meetupGuestGames    MeetupGuestGame[]
   meetupHostChoiceGames MeetupHostChoiceGame[]
+  meetupExcludedGames MeetupExcludedGame[]
   roundsForcedAsGame MeetupRound[] @relation("RoundForcedGame")
   coverImage          GameCoverImage?
 
@@ -126,6 +127,7 @@ model MeetupRound {
 
   votes                Vote[]
   hostChoiceGames      MeetupHostChoiceGame[]
+  excludedGames        MeetupExcludedGame[]
   mandatoryExpansions  MeetupMandatoryExpansion[]
 
   @@index([meetupId])
@@ -154,6 +156,19 @@ model MeetupGuestGame {
 
   @@unique([meetupId, gameId])
   @@index([meetupId])
+}
+
+/// Spiel, das der Host für genau diese Runde aus der Abstimmung nimmt.
+model MeetupExcludedGame {
+  id        String      @id @default(cuid())
+  roundId   String
+  round     MeetupRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  gameId    Int
+  game      Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@unique([roundId, gameId])
+  @@index([roundId])
 }
 
 model MeetupHostChoiceGame {

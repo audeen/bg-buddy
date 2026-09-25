@@ -121,6 +121,22 @@ async function main() {
       "full pool still includes other collection games",
     );
 
+    await prisma.meetupExcludedGame.create({
+      data: { roundId, gameId: COLLECTION_GAME_C },
+    });
+    const withoutExcluded = await prisma.game.findMany({
+      where: pickGamesWhereForMeetup(meetup.id, "NONE", [], [COLLECTION_GAME_C]),
+      select: { id: true },
+    });
+    assert(
+      withoutExcluded.every((g) => g.id !== COLLECTION_GAME_C),
+      "excluded game leaves the pick pool",
+    );
+    assert(
+      withoutExcluded.some((g) => g.id === COLLECTION_GAME_A),
+      "other collection games stay in the pool",
+    );
+
     await prisma.game.upsert({
       where: { id: GUEST_GAME },
       update: {

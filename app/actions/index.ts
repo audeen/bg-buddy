@@ -38,6 +38,8 @@ export {
   removeHostChoiceGameAction,
   setHostChoiceModeAction,
   clearHostChoiceGamesAction,
+  excludeGameFromRoundAction,
+  includeGameInRoundAction,
   searchCollectionGamesAction,
 } from "@/app/actions/host-control";
 export {
