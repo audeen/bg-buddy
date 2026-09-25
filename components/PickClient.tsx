@@ -31,6 +31,7 @@ import {
   filtersToSearchParams,
   hasActiveFilters,
   matchesGameFilters,
+  partitionByBestPlayerCount,
   ratingBlocksFromRatings,
   sortGames,
   type GameFilters,
@@ -214,20 +215,27 @@ export function PickClient({
       hostChoiceMode === "HIGHLIGHT" && hostChoiceIdSet.size > 0
         ? filteredEligible.filter((g) => !hostChoiceIdSet.has(g.id))
         : filteredEligible;
-    const sorted = sortGames(pool, sort);
+    const sorted = sortGames(pool, filters.bestFirst ? "name" : sort);
     return sorted.sort((a, b) => {
       const aGuest = guestIdSet.has(a.id);
       const bGuest = guestIdSet.has(b.id);
       if (aGuest !== bGuest) return aGuest ? -1 : 1;
       return 0;
     });
-  }, [filteredEligible, hostChoiceMode, hostChoiceIdSet, sort, guestIdSet]);
+  }, [filteredEligible, hostChoiceMode, hostChoiceIdSet, sort, guestIdSet, filters.bestFirst]);
+
+  const visibleGroups = useMemo(() => {
+    if (!filters.bestFirst) return null;
+    return partitionByBestPlayerCount(visible, selected, "name");
+  }, [filters.bestFirst, visible, selected]);
 
   // Deck-Ansicht: eine gemeinsame Reihenfolge, Host-Empfehlungen zuerst.
-  const deckGames = useMemo(
-    () => [...hostChoiceVisible, ...visible],
-    [hostChoiceVisible, visible],
-  );
+  const deckGames = useMemo(() => {
+    const main = visibleGroups
+      ? [...visibleGroups.best, ...visibleGroups.rest]
+      : visible;
+    return [...hostChoiceVisible, ...main];
+  }, [hostChoiceVisible, visible, visibleGroups]);
 
   const isHostRecommendation = (g: PickGame) =>
     hostChoiceMode === "HIGHLIGHT" && hostChoiceIdSet.has(g.id);
@@ -474,6 +482,7 @@ export function PickClient({
           basePath={filterBasePath}
           hideExpansions
           scrollToId={scrollTargetId}
+          bestFirstCount={selected}
         />
       </Suspense>
 
@@ -513,18 +522,48 @@ export function PickClient({
             </section>
           )}
 
-          {visible.length > 0 && (
-            <ul
-              key={filterListKey}
-              className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
-            >
-              {visible.map((g) => (
-                <li key={g.id} className="flex">
-                  {renderGameCard(g)}
-                </li>
-              ))}
-            </ul>
-          )}
+          {visible.length > 0 &&
+            (visibleGroups &&
+            visibleGroups.best.length > 0 &&
+            visibleGroups.rest.length > 0 ? (
+              <div key={filterListKey} className="flex flex-col gap-4 sm:gap-6">
+                <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                  {visibleGroups.best.map((g) => (
+                    <li key={g.id} className="flex">
+                      {renderGameCard(g)}
+                    </li>
+                  ))}
+                </ul>
+                <div
+                  className="flex items-center gap-3"
+                  role="separator"
+                  aria-label="Weitere Spiele"
+                >
+                  <span className="h-px flex-1 bg-[var(--border)]" />
+                </div>
+                <ul className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                  {visibleGroups.rest.map((g) => (
+                    <li key={g.id} className="flex">
+                      {renderGameCard(g)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <ul
+                key={filterListKey}
+                className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+              >
+                {(visibleGroups
+                  ? [...visibleGroups.best, ...visibleGroups.rest]
+                  : visible
+                ).map((g) => (
+                  <li key={g.id} className="flex">
+                    {renderGameCard(g)}
+                  </li>
+                ))}
+              </ul>
+            ))}
         </>
       )}
 

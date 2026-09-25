@@ -23,6 +23,7 @@ import {
   toggleGameFilter,
   weightLevelFromValue,
   matchesGameFilters,
+  partitionByBestPlayerCount,
   sortGames,
   type GameFilterable,
 } from "../lib/game-filters";
@@ -54,6 +55,13 @@ function testParseGameFilters() {
   assert.equal(filters.rating, 8);
   assert.equal(filters.best, 3);
   assert.equal(filters.includeExpansions, true);
+  assert.equal(filters.bestFirst, true);
+  assert.equal(parseGameFilters({ bestFirst: "0" }).bestFirst, false);
+  assert.equal(
+    filtersToSearchParams(parseGameFilters({ bestFirst: "0" })).get("bestFirst"),
+    "0",
+  );
+  assert.equal(filtersToSearchParams(parseGameFilters({})).has("bestFirst"), false);
   assert.equal(parseGameSort({ sort: "rating-desc" }), "rating-desc");
 }
 
@@ -212,6 +220,24 @@ function testMatchesGameFilters() {
   );
 }
 
+function testPartitionByBestPlayerCount() {
+  const games: GameFilterable[] = [
+    { ...sampleGame, id: 1, name: "Zulu", bestPlayerCounts: [4] },
+    { ...sampleGame, id: 2, name: "Alpha", bestPlayerCounts: [] },
+    { ...sampleGame, id: 3, name: "Mitte", bestPlayerCounts: [4, 5] },
+    { ...sampleGame, id: 4, name: "Beta", bestPlayerCounts: [2] },
+  ];
+  const groups = partitionByBestPlayerCount(games, 4, "name");
+  assert.deepEqual(
+    groups.best.map((g) => g.name),
+    ["Mitte", "Zulu"],
+  );
+  assert.deepEqual(
+    groups.rest.map((g) => g.name),
+    ["Alpha", "Beta"],
+  );
+}
+
 function testSortGames() {
   const games: GameFilterable[] = [
     { ...sampleGame, id: 1, name: "Bravo", bggRating: 6 },
@@ -246,6 +272,7 @@ testPlayerRangeFilterValue();
 testPlaytimeFilterValue();
 testWeightLevelFromValue();
 testMatchesGameFilters();
+testPartitionByBestPlayerCount();
 testSortGames();
 
 console.log("test-game-filters: all passed");

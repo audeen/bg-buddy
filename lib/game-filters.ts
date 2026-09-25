@@ -41,6 +41,8 @@ export interface GameFilters {
   rating: RatingBlock | null;
   best: number | null;
   includeExpansions: boolean;
+  /** Pick-Seite: Spiele mit Chip „Best · nP“ zuerst. Standard an, `bestFirst=0` aus. */
+  bestFirst: boolean;
 }
 
 export type GameFilterSearchParams = Record<string, string | string[] | undefined>;
@@ -143,6 +145,7 @@ export function parseGameFilters(sp: GameFilterSearchParams): GameFilters {
     rating: ratingRaw ? parseRatingBlock(ratingRaw) : null,
     best: Number.isFinite(bestParsed) ? bestParsed : null,
     includeExpansions: paramValue(sp, "exp") === "1",
+    bestFirst: paramValue(sp, "bestFirst") !== "0",
   };
 }
 
@@ -388,6 +391,21 @@ export function sortGames<T extends GameFilterable>(
   return sorted;
 }
 
+/** Zwei alphabetische (bzw. sortierte) Gruppen: zuerst „Best · nP“, dann der Rest. */
+export function partitionByBestPlayerCount<T extends GameFilterable>(
+  games: readonly T[],
+  playerCount: number,
+  sort: GameSort,
+): { best: T[]; rest: T[] } {
+  const best: T[] = [];
+  const rest: T[] = [];
+  for (const game of games) {
+    if (game.bestPlayerCounts.includes(playerCount)) best.push(game);
+    else rest.push(game);
+  }
+  return { best: sortGames(best, sort), rest: sortGames(rest, sort) };
+}
+
 export function buildGameOrderBy(sort: GameSort): Prisma.GameOrderByWithRelationInput[] {
   switch (sort) {
     case "rating-desc":
@@ -487,6 +505,7 @@ export function filtersToSearchParams(
   if (filters.rating != null) params.set("rating", String(filters.rating));
   if (filters.best != null) params.set("best", String(filters.best));
   if (filters.includeExpansions) params.set("exp", "1");
+  if (!filters.bestFirst) params.set("bestFirst", "0");
   if (sort !== "name") params.set("sort", sort);
   return params;
 }

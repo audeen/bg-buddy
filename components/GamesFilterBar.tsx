@@ -26,6 +26,8 @@ type GamesFilterBarProps = {
   basePath?: string;
   hideExpansions?: boolean;
   scrollToId?: string;
+  /** Pick-Seite: Checkbox „Best · nP zuerst“, an die aktuelle Spieleranzahl gebunden. */
+  bestFirstCount?: number;
 };
 
 const EMPTY_FILTERS: GameFilters = {
@@ -40,6 +42,7 @@ const EMPTY_FILTERS: GameFilters = {
   rating: null,
   best: null,
   includeExpansions: false,
+  bestFirst: true,
 };
 
 export function GamesFilterBar({
@@ -48,6 +51,7 @@ export function GamesFilterBar({
   basePath = "/games",
   hideExpansions = false,
   scrollToId,
+  bestFirstCount,
 }: GamesFilterBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -277,6 +281,16 @@ export function GamesFilterBar({
               onChange={(e) => updateField({ includeExpansions: e.target.checked })}
             />
             Erweiterungen anzeigen
+          </label>
+        )}
+        {bestFirstCount != null && (
+          <label className="flex items-center gap-2 text-sm min-h-[2.75rem]">
+            <input
+              type="checkbox"
+              checked={filters.bestFirst}
+              onChange={(e) => updateField({ bestFirst: e.target.checked })}
+            />
+            Best · {bestFirstCount}P zuerst
           </label>
         )}
       </div>
