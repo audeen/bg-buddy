@@ -66,6 +66,24 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+/**
+ * Scrollstrecke, die der Nutzer wirklich erzeugt hat.
+ * Schrumpft die Seite (Footer-Padding fällt weg, wenn die Leiste ausblendet),
+ * klemmt der Browser `scrollY` nach oben. Das ist kein Scroll nach oben.
+ */
+export function userScrollDelta(options: {
+  previousY: number;
+  previousMax: number;
+  y: number;
+  max: number;
+}): number {
+  const raw = options.y - options.previousY;
+  const shrink = options.previousMax - options.max;
+  if (raw >= 0 || shrink <= 0) return raw;
+  const clampedFromLast = Math.min(options.previousY, options.max);
+  return options.y - clampedFromLast;
+}
+
 type Listener = (hidden: boolean) => void;
 
 class ScrollChromeStore {
@@ -73,6 +91,7 @@ class ScrollChromeStore {
   private listeners = new Set<Listener>();
   private subscriberCount = 0;
   private lastScrollY = 0;
+  private lastMaxScroll = 0;
   private pendingDelta = 0;
   private lastDirection: "up" | "down" | null = null;
   /** Höhe der fixierten Leiste — Teiler für das 1:1-Mitlaufen. */
@@ -110,6 +129,7 @@ class ScrollChromeStore {
     this.motionMq = window.matchMedia(REDUCED_MOTION_MQ);
     this.reducedMotion = this.motionMq.matches || prefersReducedMotion();
     this.lastScrollY = window.scrollY;
+    this.lastMaxScroll = this.maxScroll();
     this.measureNav();
     this.writeHide(0, false);
 
@@ -202,12 +222,28 @@ class ScrollChromeStore {
     });
   }
 
+  private maxScroll(): number {
+    return Math.max(
+      0,
+      document.documentElement.scrollHeight - window.innerHeight,
+    );
+  }
+
   private onScroll(): void {
     if (!this.mq?.matches) return;
 
     const y = window.scrollY;
-    const delta = y - this.lastScrollY;
+    const max = this.maxScroll();
+    const delta = userScrollDelta({
+      previousY: this.lastScrollY,
+      previousMax: this.lastMaxScroll,
+      y,
+      max,
+    });
     this.lastScrollY = y;
+    this.lastMaxScroll = max;
+
+    if (delta === 0) return;
 
     if (!this.pageCanHide() || y <= TOP_THRESHOLD_PX) {
       this.pendingDelta = 0;

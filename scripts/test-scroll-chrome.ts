@@ -4,6 +4,7 @@ import {
   nextHideProgress,
   snapHideProgress,
   TOP_THRESHOLD_PX,
+  userScrollDelta,
 } from "../lib/scroll-chrome";
 import { browserBottomInset, KEYBOARD_THRESHOLD_PX } from "../lib/visual-viewport-gap";
 
@@ -180,6 +181,26 @@ function testBrowserInset() {
   );
 }
 
+function testLayoutShrinkIsNotScrollUp() {
+  assert.equal(
+    userScrollDelta({ previousY: 4100, previousMax: 4200, y: 4000, max: 4000 }),
+    0,
+  );
+  assert.equal(
+    userScrollDelta({ previousY: 1000, previousMax: 4200, y: 996, max: 4140 }),
+    -4,
+  );
+  assert.equal(
+    userScrollDelta({ previousY: 4100, previousMax: 4200, y: 3900, max: 4000 }),
+    -100,
+  );
+  assert.equal(
+    userScrollDelta({ previousY: 200, previousMax: 4200, y: 260, max: 4140 }),
+    60,
+  );
+}
+
+testLayoutShrinkIsNotScrollUp();
 testShortPageStaysVisible();
 testScrollFollowsFingerAndSnaps();
 testReducedMotionIsBinary();
