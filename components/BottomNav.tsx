@@ -153,7 +153,7 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
     };
   }, [storedMeetupId, pathMeetupId]);
 
-  const chromeHidden = useScrollChromeHidden();
+  useScrollChromeHidden();
   useVisualViewportBottom();
   const meetupId =
     [pathMeetupId, storedMeetupId, fallbackMeetupId].find(
@@ -269,7 +269,7 @@ export function BottomNav({ fallbackMeetupId }: { fallbackMeetupId: string | nul
   return (
     <nav
       id="bottom-nav-chrome"
-      className={`fixed left-0 right-0 z-30 px-3 safe-bottom bottom-nav-chrome pointer-events-none${chromeHidden ? " chrome-hidden" : ""}`}
+      className="fixed left-0 right-0 z-30 px-3 safe-bottom bottom-nav-chrome pointer-events-none"
       aria-label="Hauptnavigation"
     >
       <ul className="bottom-nav-dock pointer-events-auto mx-auto w-full max-w-md md:max-w-lg">

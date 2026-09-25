@@ -34,6 +34,7 @@ const UNIT_TESTS = [
   "test-cover-image",
   "test-bgg-gallery",
   "test-swipe-back",
+  "test-scroll-chrome",
 ];
 
 let failed = 0;

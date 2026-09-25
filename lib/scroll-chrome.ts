@@ -1,47 +1,101 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { prefersReducedMotion } from "@/lib/motion";
 
 const MOBILE_MQ = "(max-width: 767px)";
-const SCROLL_DELTA = 10;
-const TOP_THRESHOLD = 16;
-const SCROLLABLE_THRESHOLD_PX = 8;
+const REDUCED_MOTION_MQ = "(prefers-reduced-motion: reduce)";
+/** Jitter unterhalb dieser Distanz zählt nicht als Scroll-Geste. */
+export const SCROLL_DEADZONE_PX = 4;
+export const TOP_THRESHOLD_PX = 16;
+const SNAP_IDLE_MS = 160;
 const HTML_CLASS = "scroll-chrome-hidden";
-const SITE_FOOTER_ID = "site-footer";
+const ANIMATING_CLASS = "chrome-animating";
+const HIDE_VAR = "--nav-hide";
 const NAV_ID = "bottom-nav-chrome";
-/** Fallback bis #bottom-nav-chrome gemessen ist (entspricht --bottom-nav-height). */
-const DEFAULT_NAV_HEIGHT_PX = 60;
+/** Fallback bis die Leiste gemessen ist (entspricht --bottom-nav-height). */
+const DEFAULT_NAV_RESERVE_PX = 60;
 
-function isPageScrollable(): boolean {
-  return (
-    document.documentElement.scrollHeight >
-    window.innerHeight + SCROLLABLE_THRESHOLD_PX
-  );
+export function isMeaningfullyScrollable(options: {
+  scrollHeight: number;
+  viewportHeight: number;
+  navReservePx: number;
+  /** pb-nav ist gerade eingeklappt (Leiste voll versteckt). */
+  paddingRemoved: boolean;
+}): boolean {
+  const reserve = Math.max(0, options.navReservePx);
+  const overflow = options.scrollHeight - options.viewportHeight;
+  const stableOverflow = overflow + (options.paddingRemoved ? reserve : 0);
+  const contentOverflow = stableOverflow - reserve;
+  return contentOverflow >= reserve;
+}
+
+export function nextHideProgress(options: {
+  hide: number;
+  deltaY: number;
+  scrollY: number;
+  navHeightPx: number;
+  meaningfullyScrollable: boolean;
+  reducedMotion: boolean;
+}): number {
+  if (!options.meaningfullyScrollable || options.scrollY <= TOP_THRESHOLD_PX) {
+    return 0;
+  }
+  if (options.reducedMotion) {
+    return options.deltaY > 0 ? 1 : 0;
+  }
+  const height = Math.max(1, options.navHeightPx);
+  return clamp(options.hide + options.deltaY / height, 0, 1);
+}
+
+export function snapHideProgress(options: {
+  hide: number;
+  scrollY: number;
+  lastDirection: "up" | "down" | null;
+  meaningfullyScrollable: boolean;
+}): number {
+  if (!options.meaningfullyScrollable || options.scrollY <= TOP_THRESHOLD_PX) {
+    return 0;
+  }
+  if (options.lastDirection === "up") return 0;
+  if (options.hide > 0.5 && options.lastDirection === "down") return 1;
+  return 0;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
 type Listener = (hidden: boolean) => void;
 
 class ScrollChromeStore {
-  private hidden = false;
-  private scrollHidden = false;
-  private footerHidden = false;
-  private footerIntersecting = false;
+  private hide = 0;
   private listeners = new Set<Listener>();
   private subscriberCount = 0;
   private lastScrollY = 0;
-  private navHeightPx = DEFAULT_NAV_HEIGHT_PX;
+  private pendingDelta = 0;
+  private lastDirection: "up" | "down" | null = null;
+  /** Höhe der fixierten Leiste — Teiler für das 1:1-Mitlaufen. */
+  private navHeightPx = DEFAULT_NAV_RESERVE_PX;
+  /** In-Flow-Padding, das bei voll versteckter Leiste wegfällt (`--bottom-nav-height`). */
+  private navReservePx = DEFAULT_NAV_RESERVE_PX;
+  private reducedMotion = false;
+  private writeGeneration = 0;
+  private snapTimer: number | null = null;
   private scrollHandler: (() => void) | null = null;
+  private scrollEndHandler: (() => void) | null = null;
   private layoutHandler: (() => void) | null = null;
   private mq: MediaQueryList | null = null;
   private mqHandler: ((e: MediaQueryListEvent) => void) | null = null;
-  private footerObserver: IntersectionObserver | null = null;
-  private navResizeObserver: ResizeObserver | null = null;
+  private motionMq: MediaQueryList | null = null;
+  private motionHandler: ((e: MediaQueryListEvent) => void) | null = null;
+  private resizeObserver: ResizeObserver | null = null;
 
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
     this.subscriberCount++;
     if (this.subscriberCount === 1) this.attach();
-    listener(this.hidden);
+    listener(this.hide >= 1);
     return () => {
       this.listeners.delete(listener);
       this.subscriberCount--;
@@ -53,48 +107,39 @@ class ScrollChromeStore {
     if (typeof window === "undefined") return;
 
     this.mq = window.matchMedia(MOBILE_MQ);
+    this.motionMq = window.matchMedia(REDUCED_MOTION_MQ);
+    this.reducedMotion = this.motionMq.matches || prefersReducedMotion();
     this.lastScrollY = window.scrollY;
+    this.measureNav();
+    this.writeHide(0, false);
 
-    this.scrollHandler = () => {
-      if (!this.mq?.matches) return;
-
-      const y = window.scrollY;
-      if (y <= TOP_THRESHOLD) {
-        this.setScrollHidden(false);
-      } else {
-        const delta = y - this.lastScrollY;
-        if (delta > SCROLL_DELTA) {
-          this.setScrollHidden(true);
-        } else if (delta < -SCROLL_DELTA) {
-          this.setScrollHidden(false);
-        }
-      }
-      this.lastScrollY = y;
-    };
-
+    this.scrollHandler = () => this.onScroll();
+    this.scrollEndHandler = () => this.finishGesture();
     this.layoutHandler = () => {
-      if (!this.mq?.matches) return;
-      this.syncFooterHidden();
+      this.measureNav();
+      this.ensureVisibleIfNeeded(true);
     };
 
     this.mqHandler = (e: MediaQueryListEvent) => {
-      if (e.matches) {
-        this.setupFooterObserver();
-      } else {
-        this.teardownFooterObserver();
-        this.footerIntersecting = false;
-        this.setFooterHidden(false);
-        this.setScrollHidden(false);
-      }
+      if (!e.matches) this.writeHide(0, true);
+      else this.ensureVisibleIfNeeded(true);
+    };
+    this.motionHandler = (e: MediaQueryListEvent) => {
+      this.reducedMotion = e.matches;
     };
 
     window.addEventListener("scroll", this.scrollHandler, { passive: true });
+    window.addEventListener("scrollend", this.scrollEndHandler);
     window.addEventListener("resize", this.layoutHandler);
     window.addEventListener("orientationchange", this.layoutHandler);
     this.mq.addEventListener("change", this.mqHandler);
+    this.motionMq.addEventListener("change", this.motionHandler);
 
-    if (this.mq.matches) {
-      this.setupFooterObserver();
+    if (typeof ResizeObserver !== "undefined") {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.ensureVisibleIfNeeded(false);
+      });
+      this.resizeObserver.observe(document.documentElement);
     }
   }
 
@@ -103,6 +148,10 @@ class ScrollChromeStore {
       window.removeEventListener("scroll", this.scrollHandler);
       this.scrollHandler = null;
     }
+    if (this.scrollEndHandler) {
+      window.removeEventListener("scrollend", this.scrollEndHandler);
+      this.scrollEndHandler = null;
+    }
     if (this.layoutHandler) {
       window.removeEventListener("resize", this.layoutHandler);
       window.removeEventListener("orientationchange", this.layoutHandler);
@@ -110,97 +159,137 @@ class ScrollChromeStore {
     }
     if (this.mq && this.mqHandler) {
       this.mq.removeEventListener("change", this.mqHandler);
-      this.mqHandler = null;
     }
-    this.teardownFooterObserver();
+    if (this.motionMq && this.motionHandler) {
+      this.motionMq.removeEventListener("change", this.motionHandler);
+    }
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
     this.mq = null;
-    this.scrollHidden = false;
-    this.footerHidden = false;
-    this.footerIntersecting = false;
-    this.applyHidden(false);
+    this.mqHandler = null;
+    this.motionMq = null;
+    this.motionHandler = null;
+    if (this.snapTimer != null) {
+      window.clearTimeout(this.snapTimer);
+      this.snapTimer = null;
+    }
+    this.pendingDelta = 0;
+    this.lastDirection = null;
+    this.writeHide(0, false);
   }
 
-  private readNavHeight(): number {
+  private measureNav(): void {
     const nav = document.getElementById(NAV_ID);
-    if (!nav) return DEFAULT_NAV_HEIGHT_PX;
-    return Math.ceil(nav.getBoundingClientRect().height) || DEFAULT_NAV_HEIGHT_PX;
+    const height = nav ? Math.ceil(nav.getBoundingClientRect().height) : 0;
+    this.navHeightPx = height || DEFAULT_NAV_RESERVE_PX;
+
+    const probe = document.createElement("div");
+    probe.style.cssText =
+      "position:absolute;visibility:hidden;pointer-events:none;height:var(--bottom-nav-height);";
+    document.documentElement.appendChild(probe);
+    const reserve = Math.ceil(probe.getBoundingClientRect().height);
+    probe.remove();
+    this.navReservePx = reserve || DEFAULT_NAV_RESERVE_PX;
   }
 
-  private syncFooterHidden(): void {
-    if (!this.mq?.matches) {
-      this.setFooterHidden(false);
+  private pageCanHide(): boolean {
+    if (!this.mq?.matches) return false;
+    return isMeaningfullyScrollable({
+      scrollHeight: document.documentElement.scrollHeight,
+      viewportHeight: window.innerHeight,
+      navReservePx: this.navReservePx,
+      paddingRemoved: document.documentElement.classList.contains(HTML_CLASS),
+    });
+  }
+
+  private onScroll(): void {
+    if (!this.mq?.matches) return;
+
+    const y = window.scrollY;
+    const delta = y - this.lastScrollY;
+    this.lastScrollY = y;
+
+    if (!this.pageCanHide() || y <= TOP_THRESHOLD_PX) {
+      this.pendingDelta = 0;
+      this.lastDirection = null;
+      this.writeHide(0, true);
       return;
     }
-    if (!isPageScrollable()) {
-      this.setFooterHidden(false);
+
+    this.pendingDelta += delta;
+    if (Math.abs(this.pendingDelta) < SCROLL_DEADZONE_PX) {
+      this.armSnap();
       return;
     }
-    this.setFooterHidden(this.footerIntersecting);
+
+    const applied = this.pendingDelta;
+    this.pendingDelta = 0;
+    this.lastDirection = applied > 0 ? "down" : "up";
+    const next = nextHideProgress({
+      hide: this.hide,
+      deltaY: applied,
+      scrollY: y,
+      navHeightPx: this.navHeightPx,
+      meaningfullyScrollable: true,
+      reducedMotion: this.reducedMotion,
+    });
+    this.writeHide(next, false);
+    this.armSnap();
   }
 
-  private setupFooterObserver(): void {
-    const footer = document.getElementById(SITE_FOOTER_ID);
-    if (!footer) return;
+  private armSnap(): void {
+    if (this.snapTimer != null) window.clearTimeout(this.snapTimer);
+    this.snapTimer = window.setTimeout(() => this.finishGesture(), SNAP_IDLE_MS);
+  }
 
-    this.navHeightPx = this.readNavHeight();
+  private finishGesture(): void {
+    if (this.snapTimer != null) {
+      window.clearTimeout(this.snapTimer);
+      this.snapTimer = null;
+    }
+    if (!this.mq?.matches) return;
+    const next = snapHideProgress({
+      hide: this.hide,
+      scrollY: window.scrollY,
+      lastDirection: this.lastDirection,
+      meaningfullyScrollable: this.pageCanHide(),
+    });
+    this.pendingDelta = 0;
+    this.writeHide(next, true);
+  }
 
-    const nav = document.getElementById(NAV_ID);
-    if (nav && !this.navResizeObserver) {
-      this.navResizeObserver = new ResizeObserver(() => {
-        const next = this.readNavHeight();
-        if (next === this.navHeightPx) return;
-        this.navHeightPx = next;
-        this.setupFooterObserver();
-      });
-      this.navResizeObserver.observe(nav);
+  private ensureVisibleIfNeeded(animate: boolean): void {
+    if (!this.pageCanHide() || window.scrollY <= TOP_THRESHOLD_PX) {
+      this.pendingDelta = 0;
+      this.lastDirection = null;
+      this.writeHide(0, animate);
+    }
+  }
+
+  private writeHide(value: number, animate: boolean): void {
+    const next = clamp(value, 0, 1);
+    const hidden = next >= 1;
+    const changed = Math.abs(this.hide - next) > 0.001;
+    this.hide = next;
+    if (typeof document === "undefined") return;
+
+    const generation = ++this.writeGeneration;
+    const apply = () => {
+      if (generation !== this.writeGeneration) return;
+      document.documentElement.style.setProperty(HIDE_VAR, this.hide.toFixed(4));
+      document.documentElement.classList.toggle(HTML_CLASS, this.hide >= 1);
+    };
+
+    if (animate && changed && !this.reducedMotion) {
+      document.documentElement.classList.add(ANIMATING_CLASS);
+      requestAnimationFrame(apply);
+    } else {
+      document.documentElement.classList.remove(ANIMATING_CLASS);
+      apply();
     }
 
-    this.footerObserver?.disconnect();
-    this.footerObserver = new IntersectionObserver(
-      ([entry]) => {
-        if (!this.mq?.matches) return;
-        this.footerIntersecting = entry.isIntersecting;
-        this.syncFooterHidden();
-      },
-      {
-        root: null,
-        rootMargin: `0px 0px -${this.navHeightPx}px 0px`,
-        threshold: 0,
-      },
-    );
-    this.footerObserver.observe(footer);
-    this.syncFooterHidden();
-  }
-
-  private teardownFooterObserver(): void {
-    this.footerObserver?.disconnect();
-    this.footerObserver = null;
-    this.navResizeObserver?.disconnect();
-    this.navResizeObserver = null;
-  }
-
-  private setScrollHidden(value: boolean): void {
-    if (this.scrollHidden === value) return;
-    this.scrollHidden = value;
-    this.applyHidden();
-  }
-
-  private setFooterHidden(value: boolean): void {
-    if (this.footerHidden === value) return;
-    this.footerHidden = value;
-    this.applyHidden();
-  }
-
-  private applyHidden(force?: boolean): void {
-    const value = force ?? (this.scrollHidden || this.footerHidden);
-    if (this.hidden === value) return;
-    this.hidden = value;
-    if (typeof document !== "undefined") {
-      document.documentElement.classList.toggle(HTML_CLASS, value);
-    }
-    for (const listener of this.listeners) {
-      listener(value);
-    }
+    if (!changed) return;
+    for (const listener of this.listeners) listener(hidden);
   }
 }
 

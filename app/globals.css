@@ -470,9 +470,10 @@ h3 {
     position: sticky;
     z-index: 15;
     bottom: calc(
-      var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)
+      var(--browser-bottom-inset, 0px) +
+        (1 - var(--nav-hide, 0)) *
+        (var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))
     );
-    transition: bottom 0.25s ease;
   }
 
   @media (min-width: 768px) {
@@ -1686,18 +1687,25 @@ h3 {
   }
 
   .bottom-nav-chrome {
-    /* Verankert die Leiste an der sichtbaren Unterkante (top + translateY),
-       statt an fixed bottom:0 — Letzteres liegt auf Firefox iOS hinter der
-       einklappbaren Toolbar (Bug 1978012). Wert via --vv-visible-bottom. */
-    top: var(--vv-visible-bottom, 100%);
-    bottom: auto;
-    transform: translateY(-100%);
-    transition: transform 0.25s ease;
-    will-change: transform, top;
+    /* Abstand vom Layout-Boden, damit die Leiste über der Browser-Toolbar
+       bleibt (Firefox iOS legt fixed bottom:0 dahinter, Bug 1978012). */
+    top: auto;
+    bottom: var(--browser-bottom-inset, 0px);
+    transform: translateY(
+      calc(
+        var(--nav-hide, 0) *
+          (100% + var(--browser-bottom-inset, 0px))
+      )
+    );
+    will-change: transform;
   }
 
-  .bottom-nav-chrome.chrome-hidden {
-    transform: translateY(0);
+  html.chrome-animating .bottom-nav-chrome,
+  html.chrome-animating .sticky-above-nav,
+  html.chrome-animating .scroll-to-top {
+    transition:
+      transform 0.25s ease,
+      bottom 0.25s ease;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -1705,6 +1713,9 @@ h3 {
       transition: none;
     }
 
+    html.chrome-animating .bottom-nav-chrome,
+    html.chrome-animating .sticky-above-nav,
+    html.chrome-animating .scroll-to-top,
     .bottom-nav-chrome,
     .sticky-above-nav,
     .pb-nav,
@@ -1727,25 +1738,13 @@ h3 {
     background: var(--surface);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-md);
-    /* An die sichtbare Unterkante verankert (analog zu .bottom-nav-chrome),
-       knapp über der Bottom-Nav statt an fixed bottom:0. */
-    top: var(--vv-visible-bottom, 100%);
-    bottom: auto;
-    transform: translateY(
-      calc(
-        -100% - var(--bottom-nav-height) - env(safe-area-inset-bottom, 0px) -
-          1rem
-      )
+    top: auto;
+    bottom: calc(
+      var(--browser-bottom-inset, 0px) +
+        (1 - var(--nav-hide, 0)) *
+        (var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)) +
+        1rem
     );
-    transition: transform 0.25s ease;
-  }
-
-  @media (max-width: 767px) {
-    html.scroll-chrome-hidden .scroll-to-top {
-      transform: translateY(
-        calc(-100% - env(safe-area-inset-bottom, 0px) - 1rem)
-      );
-    }
   }
 
   #app-main.swipe-back-transition {
@@ -1762,7 +1761,10 @@ h3 {
     position: fixed;
     left: 0;
     top: env(safe-area-inset-top, 0px);
-    bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+    bottom: calc(
+      var(--browser-bottom-inset, 0px) + var(--bottom-nav-height) +
+        env(safe-area-inset-bottom, 0px)
+    );
     width: 3px;
     z-index: 5;
     pointer-events: none;
